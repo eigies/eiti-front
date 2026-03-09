@@ -506,7 +506,7 @@
       </div>
     </div>
 
-    <div class="modal-panel__actions modal-panel__actions--split">
+    <div class="modal-panel__actions modal-panel__actions--split modal-panel__actions--transport">
       <div class="transport-actions" *ngIf="currentTransport">
         <span class="field__label">Estados</span>
         <div class="transport-actions__row">
@@ -545,7 +545,7 @@
 
 <div class="modal-backdrop" *ngIf="infoModal" (click)="closeInfoModal()"></div>
 <section class="modal-panel" *ngIf="infoModal">
-  <div class="modal-panel__card" (click)="$event.stopPropagation()">
+  <div class="modal-panel__card modal-panel__card--info" (click)="$event.stopPropagation()">
     <div class="modal-panel__head">
       <strong>{{ infoModal.title }}</strong>
       <button class="modal-panel__close" type="button" (click)="closeInfoModal()">x</button>
@@ -556,6 +556,10 @@
         <span>{{ row.label }}</span>
         <strong>{{ row.value }}</strong>
       </div>
+    </div>
+
+    <div class="modal-panel__actions modal-panel__actions--info">
+      <button class="btn btn--ghost" type="button" (click)="closeInfoModal()">Cerrar</button>
     </div>
   </div>
 </section>
