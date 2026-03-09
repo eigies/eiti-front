@@ -1,0 +1,193 @@
+<app-navbar></app-navbar>
+<div class="page">
+    <section class="panel">
+        <div class="head">
+            <div>
+                <p class="eyebrow">Venta completa</p>
+                <h1>Carga guiada de venta</h1>
+            </div><a class="btn btn--ghost" routerLink="/sales">Volver a venta rapida</a>
+        </div>
+        <div class="steps"><button *ngFor="let label of stepLabels; let i = index" type="button" class="step"
+                [class.active]="step===i+1" [disabled]="!canJumpToStep(i+1)" (click)="jumpToStep(i+1)">{{ i+1 }} {{
+                label }}</button></div>
+
+        <div *ngIf="step===1" class="block">
+            <h2>Paso 1. Seleccion de cliente</h2>
+            <div class="row row--mode"><button type="button" class="btn" [class.btn--ghost]="customerMode!=='existing'"
+                    (click)="setCustomerMode('existing')">Buscar existente</button><button type="button" class="btn"
+                    [class.btn--ghost]="customerMode!=='new'" (click)="setCustomerMode('new')">Crear nuevo</button>
+            </div>
+            <div *ngIf="customerMode==='existing'">
+                <form class="row row--search" [formGroup]="searchForm" (ngSubmit)="searchCustomers()"><label class="field field--grow"><span class="field__label">Busqueda de cliente</span><input class="control grow"
+                        type="text" formControlName="query" placeholder="Nombre, email o documento" /></label><button
+                        class="btn btn--secondary" type="submit">Buscar</button></form>
+                <div class="hint">Se muestran clientes de tu empresa actual.</div>
+                <div *ngIf="searchResults.length===0" class="hint">Todavia no hay resultados.</div>
+                <div class="stack"><button *ngFor="let customer of searchResults" type="button" class="card"
+                        [class.selected]="selectedExistingCustomer?.id===customer.id"
+                        (click)="selectExistingCustomer(customer)"><strong>{{ customer.fullName || customer.name
+                            }}</strong><span>{{ customer.email }}</span></button></div>
+            </div>
+            <div *ngIf="customerMode==='new'" class="hint">Completa los datos del cliente en el siguiente paso.</div>
+        </div>
+
+        <form *ngIf="step===2" class="grid" [formGroup]="customerForm">
+            <h2 class="span">Paso 2. Datos del cliente</h2>
+            <label class="field"><span class="field__label">Nombre</span><input class="control" type="text" formControlName="firstName" placeholder="Nombre" /></label>
+            <label class="field"><span class="field__label">Apellido</span><input class="control" type="text" formControlName="lastName" placeholder="Apellido" /></label>
+            <label class="field"><span class="field__label">Email</span><input class="control" type="email" formControlName="email" placeholder="Email" /></label>
+            <label class="field"><span class="field__label">Telefono</span><input class="control" type="text" formControlName="phone" placeholder="Telefono" /></label>
+            <label class="field"><span class="field__label">Tipo de documento</span><select class="control" formControlName="documentType">
+                <option [ngValue]="null">Tipo de documento</option>
+                <option *ngFor="let type of documentTypes" [ngValue]="type.value">{{ type.label }}</option>
+            </select></label>
+            <label class="field"><span class="field__label">Numero de documento</span><input class="control" type="text" formControlName="documentNumber" placeholder="Numero de documento" /></label>
+            <label class="field span"><span class="field__label">CUIT</span><input class="control span" type="text" formControlName="taxId" placeholder="CUIT" /></label>
+        </form>
+
+        <form *ngIf="step===3" class="grid" [formGroup]="addressForm">
+            <h2 class="span">Paso 3. Domicilio principal</h2>
+            <label class="field span"><span class="field__label">Calle</span><input class="control span" type="text" formControlName="street" placeholder="Calle" /></label>
+            <label class="field"><span class="field__label">Numero</span><input class="control" type="text" formControlName="streetNumber" placeholder="Numero" /></label>
+            <label class="field"><span class="field__label">Codigo postal</span><input class="control" type="text" formControlName="postalCode" placeholder="Codigo postal" /></label>
+            <label class="field"><span class="field__label">Localidad</span><input class="control" type="text" formControlName="city" placeholder="Localidad" /></label>
+            <label class="field"><span class="field__label">Provincia</span><input class="control" type="text" formControlName="stateOrProvince" placeholder="Provincia" /></label>
+            <label class="field"><span class="field__label">Pais</span><input class="control" type="text" formControlName="country" placeholder="Pais" /></label>
+            <label class="field"><span class="field__label">Piso</span><input class="control" type="text" formControlName="floor" placeholder="Piso" /></label>
+            <label class="field"><span class="field__label">Depto</span><input class="control" type="text" formControlName="apartment" placeholder="Depto" /></label>
+            <label class="field span"><span class="field__label">Referencia</span><input class="control span" type="text" formControlName="reference" placeholder="Referencia" /></label>
+        </form>
+
+        <div *ngIf="step===4" class="block">
+            <h2>Paso 4. Datos de la venta</h2>
+            <form class="grid" [formGroup]="saleForm">
+                <label class="field"><span class="field__label">Sucursal</span><select class="control" formControlName="branchId" (change)="handleBranchChange()">
+                    <option value="">Sucursal</option>
+                    <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
+                </select></label>
+                <label class="field"><span class="field__label">Estado de venta</span><select class="control" formControlName="idSaleStatus">
+                    <option [ngValue]="1">En espera</option>
+                    <option [ngValue]="2">Pagada</option>
+                </select></label>
+                <div class="field"><span class="field__label">Modalidad de entrega</span><label class="toggle-check">
+                    <input type="checkbox" formControlName="hasDelivery" (change)="handleDeliveryToggle()" />
+                    <span class="toggle-check__track"></span>
+                    <span class="toggle-check__text">{{ requiresDelivery ? 'Con envio' : 'Retiro / sin envio' }}</span>
+                </label></div>
+                <label class="field" *ngIf="isPaid"><span class="field__label">Caja</span><select class="control" formControlName="cashDrawerId">
+                    <option value="">Caja</option>
+                    <option *ngFor="let drawer of cashDrawers" [value]="drawer.id">{{ drawer.name }}</option>
+                </select></label>
+            </form>
+            <div class="row row--product">
+                <div class="toolbar__lead">
+                    <span class="field__label">Productos</span>
+                    <span class="picker-summary">Abri el selector para buscar stock disponible y cargar cantidades.</span>
+                </div>
+                <button *ngIf="auth.hasPermission(permissionCodes.salesCreate)" class="btn btn--secondary" type="button"
+                    (click)="openProductModal()">Buscar y agregar productos</button>
+                <span class="picker-summary" *ngIf="selectedProductsCount > 0">{{ selectedProductsCount }} producto(s)
+                    seleccionado(s)</span>
+            </div>
+            <table *ngIf="draftItems.length>0" class="table">
+                <tr *ngFor="let item of draftItems">
+                    <td>{{ item.product.brand }} / {{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td><button class="btn btn--ghost" type="button"
+                            (click)="removeItem(item.product.id)">Quitar</button></td>
+                </tr>
+            </table>
+        </div>
+
+        <form *ngIf="isTransportStep" class="grid" [formGroup]="transportForm">
+            <h2 class="span">Paso 5. Asignacion de envio</h2>
+            <label class="field"><span class="field__label">Conductor</span><select class="control" formControlName="driverEmployeeId">
+                <option value="">Seleccionar conductor</option>
+                <option *ngFor="let driver of activeDrivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
+            </select></label>
+            <label class="field"><span class="field__label">Vehiculo</span><select class="control" formControlName="vehicleId">
+                <option value="">Seleccionar vehiculo</option>
+                <option *ngFor="let vehicle of activeVehicles" [value]="vehicle.id">{{ vehicle.plate }} / {{
+                    vehicle.model }}</option>
+            </select></label>
+            <label class="field span"><span class="field__label">Notas de envio</span><input class="control span" type="text" formControlName="notes" placeholder="Notas de envio" /></label>
+        </form>
+
+        <div *ngIf="isConfirmationStep" class="block">
+            <h2>Paso {{ confirmationStepNumber }}. Confirmacion</h2>
+            <div class="grid">
+                <button type="button" class="card" (click)="jumpToSummaryStep('customer')"><strong>{{
+                        summaryCustomerName }}</strong><span>{{ summaryDocument }}</span><span>{{ summaryEmail
+                        }}</span></button>
+                <button type="button" class="card" (click)="jumpToSummaryStep('address')"><strong>{{ summaryAddressLine
+                        }}</strong><span>{{ summaryAddressLocation }}</span></button>
+                <button type="button" class="card" (click)="jumpToSummaryStep('sale')"><strong>{{ isPaid ? 'Pagada' :
+                        'En espera' }}</strong><span>{{ requiresDelivery ? 'Con envio' : 'Retiro / sin envio'
+                        }}</span><span>{{ draftItems.length }} item(s)</span></button>
+                <button *ngIf="requiresDelivery" type="button" class="card"
+                    (click)="jumpToSummaryStep('transport')"><strong>{{ selectedDriverName }}</strong><span>{{
+                        selectedVehicleName }}</span><span>{{ transportForm.get('notes')?.value || 'Sin notas'
+                        }}</span></button>
+                <button type="button" class="card span" (click)="jumpToSummaryStep('sale')"><strong>{{ total |
+                        currency:'USD':'symbol':'1.2-2' }}</strong><span>{{ selectedBranchName }}</span><span>{{
+                        selectedDrawerName }}</span></button>
+            </div>
+        </div>
+
+        <div class="modal-backdrop" *ngIf="productModalOpen" (click)="closeProductModal()"></div>
+        <section class="modal-panel" *ngIf="productModalOpen">
+            <div class="modal-panel__card modal-panel__card--wide" (click)="$event.stopPropagation()">
+                <div class="modal-panel__head">
+                    <strong>Selector de productos</strong>
+                    <button class="modal-panel__close" type="button" (click)="closeProductModal()">x</button>
+                </div>
+                <div class="modal-panel__toolbar">
+                    <input class="control" type="text" [value]="productQuery"
+                        (input)="handleProductInput($any($event.target).value)"
+                        placeholder="Buscar por codigo, SKU, marca o producto" autocomplete="off" />
+                </div>
+                <div class="modal-products-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sel.</th>
+                                <th>Producto</th>
+                                <th>Disponible</th>
+                                <th>Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let product of productSuggestions">
+                                <td><input type="checkbox"
+                                        [disabled]="availableForProduct(product.id) <= 0 && !isProductSelected(product.id)"
+                                        [checked]="isProductSelected(product.id)"
+                                        (change)="toggleProductSelection(product, $any($event.target).checked)" /></td>
+                                <td>{{ product.code }} | {{ product.brand }} - {{ product.name }}</td>
+                                <td>{{ availableForProduct(product.id) }}</td>
+                                <td><input class="control control--compact" type="number" min="1"
+                                        [max]="availableForProduct(product.id)" [value]="selectionQuantity(product.id)"
+                                        [disabled]="!isProductSelected(product.id)"
+                                        (input)="setSelectionQuantity(product.id, $any($event.target).value)" /></td>
+                            </tr>
+                            <tr *ngIf="productSuggestions.length === 0">
+                                <td colspan="4">No hay coincidencias.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-panel__actions">
+                    <button class="btn btn--ghost" type="button" (click)="closeProductModal()">Cancelar</button>
+                    <button class="btn" type="button" [disabled]="selectedProductsCount===0"
+                        (click)="addSelectedItems()">Agregar seleccionados ({{ selectedProductsCount }})</button>
+                </div>
+            </div>
+        </section>
+
+        <div class="footer"><button class="btn btn--secondary" type="button" [disabled]="step===1 || saving"
+                (click)="previousStep()">Anterior</button><button *ngIf="!isConfirmationStep" class="btn" type="button"
+                [disabled]="saving" (click)="nextStep()">Siguiente</button><button
+                *ngIf="isConfirmationStep && auth.hasPermission(permissionCodes.salesCreate)" class="btn" type="button"
+                [disabled]="saving" (click)="submit()">{{ saving ? 'Guardando...' : 'Confirmar venta' }}</button></div>
+    </section>
+</div>

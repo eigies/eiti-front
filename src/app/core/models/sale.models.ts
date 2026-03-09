@@ -1,0 +1,46 @@
+export interface CreateSaleRequest {
+    branchId: string;
+    customerId?: string | null;
+    idSaleStatus: number;
+    hasDelivery: boolean;
+    cashDrawerId?: string | null;
+    details: CreateSaleDetailRequest[];
+}
+
+export interface CreateSaleDetailRequest {
+    productId: string;
+    quantity: number;
+}
+
+export interface SaleResponse {
+    id: string;
+    branchId: string;
+    customerId?: string | null;
+    customerFullName?: string | null;
+    customerDocument?: string | null;
+    customerTaxId?: string | null;
+    cashSessionId?: string | null;
+    hasDelivery: boolean;
+    transportAssignmentId?: string | null;
+    driverFullName?: string | null;
+    vehiclePlate?: string | null;
+    transportStatus?: number | null;
+    transportStatusName?: string | null;
+    idSaleStatus: number;
+    saleStatus: string;
+    totalAmount: number;
+    createdAt: string;
+    paidAt?: string | null;
+    updatedAt?: string | null;
+    isModified: boolean;
+    details: SaleDetailResponse[];
+}
+
+export interface SaleDetailResponse {
+    productId: string;
+    productName: string;
+    productBrand: string;
+    quantity: number;
+    unitPrice: number;
+    totalAmount: number;
+}

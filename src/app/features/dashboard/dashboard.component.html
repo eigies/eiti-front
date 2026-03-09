@@ -1,0 +1,106 @@
+<app-navbar></app-navbar>
+<div class="page">
+    <div class="hero">
+        <div class="hero__eyebrow">_ BIENVENIDO</div>
+        <h1 class="hero__title">
+            Hola, <span class="hero__username">{{ user?.username }}</span>
+        </h1>
+        <p class="hero__sub">Centro operativo diario para ventas, clientes y seguimiento comercial.</p>
+    </div>
+
+    <div class="cards-grid">
+        <a routerLink="/customers" class="card card--action">
+            <div class="card__icon">[]</div>
+            <div class="card__body">
+                <span class="card__label">CLIENTES</span>
+                <span class="card__title">Gestionar clientes</span>
+                <span class="card__desc">Crear y revisar registros comerciales.</span>
+            </div>
+            <span class="card__arrow">-></span>
+        </a>
+
+        <a routerLink="/products" class="card card--action">
+            <div class="card__icon card__icon--amber">#</div>
+            <div class="card__body">
+                <span class="card__label">PRODUCTOS</span>
+                <span class="card__title">Gestionar productos</span>
+                <span class="card__desc">Mantener el catalogo listo para nuevas ventas.</span>
+            </div>
+            <span class="card__arrow">-></span>
+        </a>
+
+        <a routerLink="/company" class="card card--action">
+            <div class="card__icon">@</div>
+            <div class="card__body">
+                <span class="card__label">COMPANIA</span>
+                <span class="card__title">Editar compania</span>
+                <span class="card__desc">Actualizar identidad y dominio principal.</span>
+            </div>
+            <span class="card__arrow">-></span>
+        </a>
+
+        <a *ngIf="auth.hasPermission(permissionCodes.salesAccess)" routerLink="/sales" class="card card--action">
+            <div class="card__icon">$</div>
+            <div class="card__body">
+                <span class="card__label">VENTAS</span>
+                <span class="card__title">Gestionar ventas</span>
+                <span class="card__desc">Crear operaciones y retomar ventas en espera.</span>
+            </div>
+            <span class="card__arrow">-></span>
+        </a>
+
+        <a *ngIf="auth.hasPermission(permissionCodes.cashAccess)" routerLink="/cash" class="card card--action">
+            <div class="card__icon card__icon--amber">C$</div>
+            <div class="card__body">
+                <span class="card__label">CAJA</span>
+                <span class="card__title">Operar caja</span>
+                <span class="card__desc">Abrir, cerrar y revisar movimientos de caja.</span>
+            </div>
+            <span class="card__arrow">-></span>
+        </a>
+
+        <a *ngIf="auth.hasPermission(permissionCodes.usersManage)" routerLink="/users" class="card card--action">
+            <div class="card__icon">@U</div>
+            <div class="card__body">
+                <span class="card__label">USUARIOS</span>
+                <span class="card__title">Administrar accesos</span>
+                <span class="card__desc">Asignar roles y permisos internos.</span>
+            </div>
+            <span class="card__arrow">-></span>
+        </a>
+
+        <div class="card card--info">
+            <div class="card__icon card__icon--amber">CAL</div>
+            <div class="card__body">
+                <span class="card__label">HOY</span>
+                <span class="card__title">{{ currentDateLabel }}</span>
+                <span class="card__desc">{{ currentTimeLabel }} - {{ timezoneLabel }}</span>
+            </div>
+        </div>
+
+        <div class="card card--info">
+            <div class="card__icon card__icon--dim">WX</div>
+            <div class="card__body">
+                <span class="card__label">CLIMA</span>
+                <span class="card__title">{{ weatherTitle }}</span>
+                <span class="card__desc">{{ weatherDescription }}</span>
+            </div>
+            <span class="status-dot" [class.status-dot--muted]="weatherLoading"></span>
+        </div>
+    </div>
+
+    <div class="briefing">
+        <div class="briefing__item">
+            <span class="briefing__label">Momento del dia</span>
+            <strong>{{ dayMoment }}</strong>
+        </div>
+        <div class="briefing__item">
+            <span class="briefing__label">Siguiente foco</span>
+            <strong>{{ focusHint }}</strong>
+        </div>
+    </div>
+
+    <div class="ticker">
+        <span class="ticker__text" *ngFor="let t of tickers">{{ t }}</span>
+    </div>
+</div>

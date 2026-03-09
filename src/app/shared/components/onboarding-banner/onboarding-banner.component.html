@@ -1,0 +1,19 @@
+<section class="onboarding-banner" [class.onboarding-banner--success]="variant === 'success'"
+    [class.onboarding-banner--focused]="focused">
+    <div class="onboarding-banner__copy">
+        <div class="onboarding-banner__eyebrow">{{ eyebrow }}</div>
+        <div class="onboarding-banner__title">{{ title }}</div>
+        <p class="onboarding-banner__text">{{ text }}</p>
+        <div class="onboarding-banner__progress" *ngIf="total > 0">
+            <span class="onboarding-banner__step">Paso {{ step }} de {{ total }}</span>
+            <div class="onboarding-banner__track">
+                <span class="onboarding-banner__fill" [style.width.%]="progress"></span>
+            </div>
+        </div>
+    </div>
+
+    <button *ngIf="actionLabel" class="onboarding-banner__action" type="button" [disabled]="actionDisabled"
+        (click)="action.emit()">
+        {{ actionLabel }}
+    </button>
+</section>

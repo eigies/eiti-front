@@ -1,0 +1,91 @@
+<app-navbar></app-navbar>
+<div class="page" [class.page--guided-lock]="isOnboardingFocusLocked">
+    <header class="hero">
+        <div class="eyebrow">_ SUCURSAL</div>
+        <h1>Administracion de sucursales</h1>
+        <p>Crea y edita las sucursales disponibles para ventas, caja y operacion.</p>
+    </header>
+
+    <app-onboarding-banner *ngIf="isOnboardingStep" [step]="1" [total]="5" [focused]="isOnboardingFocusLocked"
+        title="Paso 1. Crea tu primera sucursal"
+        text="Necesitas al menos una sucursal para poder asociar ventas y cajas. Lee este paso y presiona Entendido para habilitar la pantalla."
+        [actionLabel]="isOnboardingFocusLocked ? 'Entendido' : ''" (action)="acceptOnboardingStep()">
+    </app-onboarding-banner>
+
+    <section class="panel">
+        <div class="panel__header"><span>Nueva sucursal</span></div>
+        <form class="inline-form" [formGroup]="createForm" (ngSubmit)="createBranch()">
+            <input class="control" type="text" placeholder="Nombre" formControlName="name" />
+            <input class="control" type="text" placeholder="Codigo" formControlName="code" />
+            <input class="control" type="text" placeholder="Direccion" formControlName="address" />
+            <button class="btn btn--primary" type="submit" [disabled]="savingCreate">Crear sucursal</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="panel__header"><span>Sucursales existentes</span><span>{{ branches.length }}</span></div>
+        <div class="empty" *ngIf="branches.length === 0">No hay sucursales registradas todavia.</div>
+        <div class="branch-list" *ngIf="branches.length > 0">
+            <article class="branch-card" *ngFor="let item of branches">
+                <button type="button" class="branch-card__summary" (click)="toggleBranch(item.branch.id)">
+                    <div class="branch-card__headline">
+                        <strong>{{ item.branch.name }}</strong>
+                        <span>{{ item.branch.code || 'Sin codigo' }}</span>
+                    </div>
+                    <div class="branch-card__metrics">
+                        <span>Ventas: {{ item.branch.salesCount }}</span>
+                        <span>Valor de caja: &#36;{{ item.branch.cashValue | number: '1.2-2' }}</span>
+                    </div>
+                </button>
+
+                <div class="branch-card__body" *ngIf="item.expanded">
+                    <div class="branch-grid">
+                        <div class="branch-detail">
+                            <span class="branch-detail__label">Nombre</span>
+                            <strong>{{ item.branch.name }}</strong>
+                        </div>
+                        <div class="branch-detail">
+                            <span class="branch-detail__label">Codigo</span>
+                            <strong>{{ item.branch.code || 'Sin codigo' }}</strong>
+                        </div>
+                        <div class="branch-detail">
+                            <span class="branch-detail__label">Direccion</span>
+                            <strong>{{ item.branch.address || 'Sin direccion' }}</strong>
+                        </div>
+                        <div class="branch-detail">
+                            <span class="branch-detail__label">Creada</span>
+                            <strong>{{ item.branch.createdAt | date: 'shortDate' }}</strong>
+                        </div>
+                        <div class="branch-detail">
+                            <span class="branch-detail__label">Cantidad de ventas</span>
+                            <strong>{{ item.branch.salesCount }}</strong>
+                        </div>
+                        <div class="branch-detail">
+                            <span class="branch-detail__label">Caja actual</span>
+                            <strong>&#36;{{ item.branch.cashValue | number: '1.2-2' }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="branch-card__actions">
+                        <button class="btn btn--ghost" type="button" (click)="beginEdit(item.branch)">Editar</button>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <div class="modal-backdrop" *ngIf="editingBranch">
+        <section class="modal">
+            <div class="panel__header"><span>Editar sucursal</span></div>
+            <form class="modal__form" [formGroup]="editForm" (ngSubmit)="saveEdit()">
+                <input class="control" type="text" placeholder="Nombre" formControlName="name" />
+                <input class="control" type="text" placeholder="Codigo" formControlName="code" />
+                <input class="control" type="text" placeholder="Direccion" formControlName="address" />
+                <div class="modal__actions">
+                    <button class="btn btn--ghost" type="button" (click)="closeEdit()">Cerrar</button>
+                    <button class="btn btn--primary" type="submit" [disabled]="savingEdit">Guardar cambios</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>

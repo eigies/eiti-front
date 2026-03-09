@@ -1,0 +1,416 @@
+﻿.page {
+    min-height: calc(100vh - 64px);
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    padding: 2.25rem 1.75rem;
+    max-width: 1320px;
+    margin: 0 auto;
+}
+
+.hero {
+    margin-bottom: 1.2rem;
+}
+
+.hero h1 {
+    margin: 0;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(1.7rem, 3vw, 2.45rem);
+}
+
+.hero p {
+    margin: .5rem 0 0;
+    color: var(--text-soft);
+    font-family: 'Crimson Pro', serif;
+    font-size: .95rem;
+}
+
+.eyebrow {
+    color: var(--amber);
+    margin-bottom: .45rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.overview-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .7rem;
+    margin-bottom: 1rem;
+}
+
+.overview-card {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--bg-panel) 95%, transparent);
+    padding: .75rem .85rem;
+    display: grid;
+    gap: .2rem;
+}
+
+.overview-card__label {
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .11em;
+    font-family: 'DM Mono', monospace;
+    font-size: .63rem;
+}
+
+.overview-card strong {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+}
+
+.overview-card small {
+    color: var(--text-mute);
+    font-size: .72rem;
+}
+
+.overview-card--focus {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 30%, transparent);
+    background: color-mix(in srgb, var(--amber) 6%, var(--bg-panel));
+}
+
+.transport-layout {
+    display: grid;
+    grid-template-columns: minmax(680px, 1.6fr) minmax(320px, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.panel {
+    background: color-mix(in srgb, var(--bg-panel) 95%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .95rem;
+}
+
+.panel__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    margin-bottom: .7rem;
+    padding-bottom: .6rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.panel__header--toggle {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0 0 .6rem;
+    cursor: pointer;
+    text-align: left;
+}
+
+.panel__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+}
+
+.panel__chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid var(--border-2);
+    border-radius: 999px;
+    font-size: .74rem;
+    line-height: 1;
+    transition: transform .2s ease;
+    color: var(--text-soft);
+}
+
+.panel__chevron--open {
+    transform: rotate(45deg);
+    color: var(--amber);
+    border-color: var(--amber);
+}
+
+.panel__body {
+    display: grid;
+    gap: .8rem;
+}
+
+.vehicle-form,
+.driver-form,
+.log-form {
+    display: grid;
+    gap: .7rem;
+    border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    padding: .8rem;
+}
+
+.vehicle-form__grid,
+.driver-form__grid,
+.log-form__grid {
+    display: grid;
+    gap: .55rem;
+}
+
+.vehicle-form__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.driver-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.log-form__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.control {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--border-2);
+    background: var(--bg);
+    color: var(--text);
+    padding: .68rem .72rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .79rem;
+    border-radius: 2px;
+    outline: none;
+}
+
+.control:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 14%, transparent);
+}
+
+.btn {
+    border-radius: 2px;
+    padding: .65rem .85rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.btn--primary {
+    border: none;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--amber) 90%, white 10%) 0%, color-mix(in srgb, var(--amber) 74%, black 26%) 100%);
+    color: var(--bg);
+}
+
+.empty {
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: .74rem;
+    padding: .3rem 0;
+}
+
+.vehicle-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+}
+
+.vehicle-card {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    text-align: left;
+    padding: .65rem .7rem;
+    display: grid;
+    gap: .35rem;
+    cursor: pointer;
+    transition: border-color .2s ease, transform .12s ease, background .2s ease;
+}
+
+.vehicle-card:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--amber) 48%, var(--border));
+}
+
+.vehicle-card--active {
+    border-color: var(--amber);
+    background: color-mix(in srgb, var(--amber) 8%, var(--bg));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 40%, transparent);
+}
+
+.vehicle-card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .5rem;
+}
+
+.vehicle-card__top strong {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .84rem;
+}
+
+.vehicle-card__top span {
+    color: var(--text-soft);
+    font-size: .74rem;
+}
+
+.vehicle-card__meta {
+    display: grid;
+    gap: .18rem;
+}
+
+.vehicle-card__meta span {
+    color: var(--text-mute);
+    font-size: .72rem;
+}
+
+.activity-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .7rem;
+    border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    padding: .65rem .75rem;
+}
+
+.activity-vehicle {
+    display: grid;
+    gap: .2rem;
+}
+
+.activity-vehicle strong {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .84rem;
+}
+
+.activity-vehicle span,
+.activity-count {
+    color: var(--text-mute);
+    font-size: .74rem;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-cards--mobile {
+    display: none;
+}
+
+.table th {
+    color: var(--text-subtle);
+    text-align: left;
+    padding: 0 .6rem .55rem 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: .63rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.table td {
+    padding: .62rem .6rem .62rem 0;
+    color: var(--text);
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+    font-family: 'Crimson Pro', serif;
+    font-size: .86rem;
+}
+
+.data-card {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    padding: .8rem .85rem;
+    display: grid;
+    gap: .6rem;
+}
+
+.data-card__row {
+    display: grid;
+    gap: .18rem;
+}
+
+.data-card__row span {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.data-card__row strong {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .78rem;
+}
+
+@media (max-width: 1200px) {
+    .transport-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .vehicle-form__grid,
+    .log-form__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 780px) {
+    .page {
+        padding: 1rem 0.85rem 1.5rem;
+    }
+
+    .overview-strip,
+    .vehicle-gallery,
+    .vehicle-form__grid,
+    .driver-form__grid,
+    .log-form__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .panel,
+    .vehicle-form,
+    .driver-form,
+    .log-form,
+    .overview-card {
+        padding: .9rem;
+    }
+
+    .btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .vehicle-card__top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .table--desktop {
+        display: none;
+    }
+
+    .table-cards--mobile {
+        display: grid;
+        gap: .7rem;
+    }
+}

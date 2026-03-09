@@ -1,0 +1,147 @@
+.page {
+    min-height: calc(100vh - 64px);
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    padding: 3rem 2rem;
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.page__header {
+    margin-bottom: 2rem;
+}
+
+.page__eyebrow,
+.field__label,
+.panel__title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.page__eyebrow {
+    color: var(--amber);
+    margin-bottom: 0.6rem;
+}
+
+.page__title {
+    margin: 0;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+}
+
+.page__sub {
+    margin: 0.75rem 0 0;
+    color: var(--text-soft);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+}
+
+.panel {
+    background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.6rem;
+}
+
+.panel__head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.panel__icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--amber);
+    border: 1px solid color-mix(in srgb, var(--amber) 18%, transparent);
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+}
+
+.panel__title {
+    color: var(--text-dim);
+}
+
+.field {
+    margin-bottom: 1rem;
+}
+
+.field__label {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--text-dim);
+}
+
+.field__input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--border-2);
+    background: var(--bg);
+    color: var(--text);
+    padding: 0.8rem 0.9rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.86rem;
+    border-radius: 2px;
+    outline: none;
+}
+
+.field__input:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px var(--surface-glow);
+}
+
+.field--error .field__input {
+    border-color: var(--danger);
+}
+
+.field__error {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--danger);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+}
+
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1.25rem 0;
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+}
+
+.btn-primary {
+    border: none;
+    border-radius: 2px;
+    padding: 0.85rem 1.1rem;
+    background: var(--amber);
+    color: var(--bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+}
+
+.btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.loading-state {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+}

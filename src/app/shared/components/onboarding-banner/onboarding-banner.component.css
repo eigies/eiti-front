@@ -1,0 +1,131 @@
+.onboarding-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.25rem;
+    margin: 0 0 1.2rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 22%, var(--border));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--amber) 6%, transparent), transparent 42%), color-mix(in srgb, var(--bg-panel) 95%, transparent);
+    border-radius: 4px;
+    transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease
+}
+
+.onboarding-banner--focused {
+    border-color: color-mix(in srgb, var(--amber) 42%, var(--border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent), 0 18px 36px rgba(0, 0, 0, .08);
+    transform: translateY(-1px)
+}
+
+.onboarding-banner--success {
+    border-color: color-mix(in srgb, var(--success) 26%, var(--border));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--success) 6%, transparent), transparent 42%), color-mix(in srgb, var(--bg-panel) 95%, transparent)
+}
+
+.onboarding-banner__copy {
+    display: grid;
+    gap: .35rem;
+    min-width: 0
+}
+
+.onboarding-banner__eyebrow,
+.onboarding-banner__step {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase
+}
+
+.onboarding-banner__title {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .9rem
+}
+
+.onboarding-banner__text {
+    margin: 0;
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: .74rem;
+    line-height: 1.5
+}
+
+.onboarding-banner__progress {
+    display: grid;
+    gap: .4rem;
+    max-width: 320px
+}
+
+.onboarding-banner__track {
+    height: 4px;
+    background: color-mix(in srgb, var(--border) 70%, transparent);
+    border-radius: 999px;
+    overflow: hidden
+}
+
+.onboarding-banner__fill {
+    display: block;
+    height: 100%;
+    background: var(--amber)
+}
+
+.onboarding-banner--success .onboarding-banner__fill {
+    background: var(--success)
+}
+
+.onboarding-banner__action {
+    border: none;
+    border-radius: 2px;
+    padding: .8rem 1rem;
+    background: var(--amber);
+    color: var(--bg);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 24%, transparent), 0 0 18px color-mix(in srgb, var(--amber) 18%, transparent), 0 10px 22px rgba(0, 0, 0, .08);
+    transition: transform .15s ease, box-shadow .2s ease, filter .2s ease
+}
+
+.onboarding-banner__action:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.04);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 34%, transparent), 0 0 24px color-mix(in srgb, var(--amber) 24%, transparent), 0 14px 28px rgba(0, 0, 0, .1)
+}
+
+.onboarding-banner--success .onboarding-banner__action {
+    background: var(--success);
+    color: var(--bg)
+}
+
+.onboarding-banner--success .onboarding-banner__action {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 24%, transparent), 0 0 18px color-mix(in srgb, var(--success) 18%, transparent), 0 10px 22px rgba(0, 0, 0, .08)
+}
+
+.onboarding-banner--success .onboarding-banner__action:hover:not(:disabled) {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 34%, transparent), 0 0 24px color-mix(in srgb, var(--success) 24%, transparent), 0 14px 28px rgba(0, 0, 0, .1)
+}
+
+.onboarding-banner__action:disabled {
+    opacity: .55;
+    cursor: not-allowed
+}
+
+@media (max-width:760px) {
+    .onboarding-banner {
+        flex-direction: column;
+        align-items: flex-start
+    }
+
+    .onboarding-banner__progress {
+        width: 100%;
+        max-width: none
+    }
+
+    .onboarding-banner__action {
+        width: 100%
+    }
+}

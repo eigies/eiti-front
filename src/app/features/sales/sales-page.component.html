@@ -1,0 +1,562 @@
+﻿<app-navbar></app-navbar>
+<div class="page">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">_ VENTAS</p>
+      <h1>Centro de ventas</h1>
+      <p class="hero__copy">Carga rapida, seguimiento, cobro, transporte y exportacion desde una sola vista.</p>
+    </div>
+    <a class="btn btn--ghost btn--guided-cta" routerLink="/sales/full" *ngIf="auth.hasPermission(permissionCodes.salesCreate)">Venta guiada</a>
+  </header>
+
+  <app-onboarding-banner
+    *ngIf="showOnboardingCompleteNotice"
+    [variant]="'success'"
+    [step]="1"
+    [total]="1"
+    title="Configuracion inicial lista"
+    text="Ya podes operar ventas, caja y transporte desde esta pantalla.">
+  </app-onboarding-banner>
+
+  <section class="panel panel--collapsible">
+    <button class="panel__header panel__header--button" type="button" (click)="createExpanded = !createExpanded">
+      <span>Nueva venta rapida</span>
+      <span class="panel__chevron" [class.panel__chevron--open]="createExpanded" aria-hidden="true">▾</span>
+    </button>
+
+    <div class="panel__body" *ngIf="createExpanded">
+      <div class="quick-sale-layout">
+        <section class="quick-sale-card">
+          <div class="quick-sale-card__head">
+            <h2>Configuracion de la venta</h2>
+            <p>Define sucursal, estado, modalidad y caja antes de cargar productos.</p>
+          </div>
+          <form class="grid grid--create" [formGroup]="lineForm">
+            <label class="field">
+              <span class="field__label">Sucursal</span>
+              <select class="control" formControlName="branchId" (change)="handleCreateBranchChange()">
+                <option value="">Seleccionar sucursal</option>
+                <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Estado de venta</span>
+              <select class="control" formControlName="idSaleStatus" (change)="handleCreateBranchChange()">
+                <option [ngValue]="1">En espera</option>
+                <option [ngValue]="2">Pagada</option>
+              </select>
+            </label>
+
+            <div class="field">
+              <span class="field__label">Modalidad de entrega</span>
+              <label class="toggle-check">
+                <input type="checkbox" formControlName="hasDelivery" />
+                <span class="toggle-check__track"></span>
+                <span class="toggle-check__text">{{ lineForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
+              </label>
+            </div>
+
+            <label class="field" *ngIf="isCreatePaid">
+              <span class="field__label">Caja abierta</span>
+              <select class="control" formControlName="cashDrawerId">
+                <option value="">Seleccionar caja</option>
+                <option *ngFor="let drawer of createDrawers" [value]="drawer.id">{{ drawer.name }}</option>
+              </select>
+            </label>
+          </form>
+        </section>
+
+        <section class="quick-sale-card">
+          <div class="quick-sale-card__head">
+            <h2>Carga de productos</h2>
+            <p>Busca en el catalogo y agrega items al borrador de venta.</p>
+          </div>
+          <div class="toolbar toolbar--create toolbar--create-soft">
+            <div class="toolbar__lead">
+              <span class="toolbar__label">Productos de la venta</span>
+            </div>
+            <button class="btn btn--secondary" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" (click)="openCreateProductModal()">Buscar y agregar productos</button>
+            <span class="picker-summary" *ngIf="createSelectedProductsCount > 0">{{ createSelectedProductsCount }} producto(s) seleccionado(s)</span>
+            <span class="picker-summary" *ngIf="loadingProducts">Cargando catalogo...</span>
+          </div>
+        </section>
+      </div>
+
+      <section class="quick-sale-card quick-sale-card--draft">
+        <div class="quick-sale-card__head">
+          <h2>Borrador de venta</h2>
+          <p>Revisa cantidades, disponibilidad y total por item antes de confirmar.</p>
+        </div>
+        <div class="table-wrap" *ngIf="draftItems.length > 0; else emptyDraft">
+          <table class="table table--draft">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Disponible</th>
+                <th>Cantidad</th>
+                <th>Unitario</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of draftItems; trackBy: trackByItem">
+                <td>
+                  <strong>{{ item.product.brand }} / {{ item.product.name }}</strong>
+                  <span>{{ item.product.code }}</span>
+                </td>
+                <td>{{ availableForCreate(item.product.id) }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.product.price | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeDraftItem(item.product.id)">Quitar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <ng-template #emptyDraft>
+        <div class="empty">Todavia no agregaste productos a la venta.</div>
+      </ng-template>
+
+      <div class="summary-row summary-row--create">
+        <div class="metric-card">
+          <span>Total actual</span>
+          <strong>{{ draftTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+        </div>
+        <button class="btn" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" [disabled]="saving || draftItems.length === 0" (click)="createSale()">{{ saving ? 'Guardando...' : 'Crear venta' }}</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" *ngIf="editingSale" #editSection>
+    <div class="panel__header">
+      <span>Editando venta {{ editingSale.id }}</span>
+      <button class="btn btn--secondary btn--sm" type="button" (click)="cancelEdit()">Cerrar</button>
+    </div>
+
+    <form class="grid" [formGroup]="editMetaForm">
+      <label class="field">
+        <span class="field__label">Sucursal</span>
+        <select class="control" formControlName="branchId" (change)="handleEditStatusChange()">
+          <option value="">Seleccionar sucursal</option>
+          <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Estado de venta</span>
+        <select class="control" formControlName="idSaleStatus" (change)="handleEditStatusChange()">
+          <option [ngValue]="1">En espera</option>
+          <option [ngValue]="2">Pagada</option>
+        </select>
+      </label>
+
+      <div class="field">
+        <span class="field__label">Modalidad de entrega</span>
+        <label class="toggle-check">
+          <input type="checkbox" formControlName="hasDelivery" />
+          <span class="toggle-check__track"></span>
+          <span class="toggle-check__text">{{ editMetaForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
+        </label>
+      </div>
+
+      <label class="field" *ngIf="isEditPaid">
+        <span class="field__label">Caja abierta</span>
+        <select class="control" formControlName="cashDrawerId">
+          <option value="">Seleccionar caja</option>
+          <option *ngFor="let drawer of editDrawers" [value]="drawer.id">{{ drawer.name }}</option>
+        </select>
+      </label>
+    </form>
+
+    <div class="editor" #editProductPicker>
+      <div class="editor__head">
+        <h2>Productos de la venta</h2>
+      </div>
+
+      <form class="editor__form" [formGroup]="editLineForm" (ngSubmit)="addEditItem()">
+        <div class="product-picker">
+          <span class="field__label">Producto</span>
+          <input class="control" type="text" [value]="editProductQuery" (input)="handleEditProductInput($any($event.target).value)" placeholder="Buscar producto" autocomplete="off" />
+          <div class="product-picker__menu" *ngIf="showEditProductResults">
+            <button class="product-picker__option" type="button" *ngFor="let product of editProductSuggestions" (click)="selectEditProduct(product)">
+              <strong>{{ product.code }} | {{ product.brand }} / {{ product.name }}</strong>
+              <span>Disponible: {{ availableForEdit(product.id) }}</span>
+            </button>
+            <div class="product-picker__empty" *ngIf="editProductSuggestions.length === 0">No hay coincidencias.</div>
+          </div>
+        </div>
+
+        <label class="field field--compact">
+          <span class="field__label">Cantidad</span>
+          <input class="control qty" type="number" min="1" formControlName="quantity" placeholder="Cantidad" />
+        </label>
+        <button class="btn btn--secondary" type="submit">Agregar</button>
+      </form>
+
+      <div class="table-wrap" *ngIf="editItems.length > 0; else emptyEdit">
+        <table class="table table--edit">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Disponible</th>
+              <th>Cantidad</th>
+              <th>Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of editItems; trackBy: trackByItem">
+              <td>{{ item.product.brand }} / {{ item.product.name }}</td>
+              <td>{{ availableForEdit(item.product.id) }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+              <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeEditItem(item.product.id)">Quitar</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #emptyEdit>
+        <div class="empty">La venta debe tener al menos un item para guardarse.</div>
+      </ng-template>
+
+      <div class="summary-row">
+        <div class="metric-card">
+          <span>Total editado</span>
+          <strong>{{ editTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+        </div>
+        <div class="actions-inline">
+          <button class="btn btn--secondary" type="button" (click)="cancelEdit()">Cancelar</button>
+          <button class="btn" type="button" [disabled]="savingEdit || editItems.length === 0" (click)="saveEdit()">{{ savingEdit ? 'Guardando...' : 'Guardar cambios' }}</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel panel--collapsible">
+    <button class="panel__header panel__header--button" type="button" (click)="listExpanded = !listExpanded">
+      <span>Ventas registradas</span>
+      <span class="panel__header-meta">
+        <span>{{ sales.length }}</span>
+        <span class="panel__chevron" [class.panel__chevron--open]="listExpanded" aria-hidden="true">▾</span>
+      </span>
+    </button>
+
+    <div class="panel__body" *ngIf="listExpanded">
+      <form class="filters" [formGroup]="filterForm" (ngSubmit)="applySaleFilters()">
+        <label class="field">
+          <span class="field__label">Desde</span>
+          <input class="control" type="date" formControlName="dateFrom" />
+        </label>
+        <label class="field">
+          <span class="field__label">Hasta</span>
+          <input class="control" type="date" formControlName="dateTo" />
+        </label>
+        <label class="field">
+          <span class="field__label">Estado</span>
+          <select class="control" formControlName="idSaleStatus">
+            <option value="">Todos los estados</option>
+            <option [ngValue]="1">En espera</option>
+            <option [ngValue]="2">Pagada</option>
+            <option [ngValue]="3">Cancelada</option>
+          </select>
+        </label>
+        <div class="filters__actions">
+          <button class="btn btn--secondary" type="submit">Filtrar</button>
+          <button class="btn btn--ghost" type="button" (click)="clearSaleFilters()">Limpiar filtros</button>
+        </div>
+      </form>
+
+      <div class="list-meta">
+        <span *ngIf="loadingSales">Cargando ventas...</span>
+        <span *ngIf="!loadingSales && sales.length > 0">Mostrando {{ salesPageStart }} a {{ salesPageEnd }} de {{ sales.length }}</span>
+        <label class="page-size">
+          <span>Pagina</span>
+          <select class="control control--compact" [value]="salesPageSize" (change)="changeSalesPageSize($any($event.target).value)">
+            <option *ngFor="let option of salesPageSizeOptions" [value]="option">{{ option }}</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="sales-stack" *ngIf="pagedSales.length > 0; else emptySales">
+        <article class="sale-card" *ngFor="let sale of pagedSales; trackBy: trackBySale" (click)="toggleSaleDetails(sale.id)">
+          <div class="sale-card__top">
+            <div>
+              <p class="sale-card__eyebrow">{{ branchName(sale.branchId) }}</p>
+              <h2>Venta #{{ sale.id }}</h2>
+              <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s)</p>
+            </div>
+            <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>
+          </div>
+
+          <div class="sale-card__chips">
+            <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">
+              <strong>Estado venta:</strong> {{ saleStatusLabel(sale) }}
+            </span>
+            <span class="chip chip--transport" [ngClass]="transportStatusChipClass(sale)">
+              <strong>Estado transporte:</strong> {{ transportStatusChipLabel(sale) }}
+            </span>
+            <span class="chip"><strong>Entrega:</strong> {{ sale.hasDelivery ? 'Con envio' : 'Retiro' }}</span>
+            <span class="chip" *ngIf="sale.customerFullName"><strong>Cliente:</strong> {{ sale.customerFullName }}</span>
+            <span class="chip" *ngIf="sale.driverFullName"><strong>Conductor:</strong> {{ sale.driverFullName }}</span>
+            <span class="chip" *ngIf="sale.vehiclePlate"><strong>Vehiculo:</strong> {{ sale.vehiclePlate }}</span>
+          </div>
+
+          <div class="sale-card__actions">
+            <button class="icon-action icon-action--detail" type="button" [attr.aria-label]="isSaleExpanded(sale.id) ? 'Ocultar detalle' : 'Ver detalle'" [attr.title]="isSaleExpanded(sale.id) ? 'Ocultar detalle' : 'Ver detalle'" (click)="toggleSaleDetails(sale.id); $event.stopPropagation()">
+              <span class="icon-action__image" aria-hidden="true">
+                <img src="assets/buscar.png" alt="" />
+              </span>
+            </button>
+            <button class="icon-action icon-action--info" type="button" *ngIf="sale.customerFullName" aria-label="Ver cliente" title="Cliente" (click)="openCustomerInfo(sale); $event.stopPropagation()">
+              <span class="icon-action__emoji" aria-hidden="true">👤</span>
+            </button>
+            <button class="icon-action icon-action--driver" type="button" *ngIf="sale.driverFullName" aria-label="Ver conductor" title="Conductor" (click)="openDriverInfo(sale); $event.stopPropagation()">
+              <span class="icon-action__image" aria-hidden="true">
+                <img src="assets/volante.png" alt="" />
+              </span>
+            </button>
+            <button class="icon-action icon-action--vehicle" type="button" *ngIf="sale.vehiclePlate" aria-label="Ver vehículo" title="Vehículo" (click)="openVehicleInfo(sale); $event.stopPropagation()">
+              <span class="icon-action__image" aria-hidden="true">
+                <img src="assets/entrega.png" alt="" />
+              </span>
+            </button>
+            <button class="icon-action icon-action--transport" type="button" *ngIf="sale.hasDelivery" aria-label="Gestionar transporte" title="Gestión de transporte" (click)="openTransport(sale); $event.stopPropagation()">
+              <span class="icon-action__image" aria-hidden="true">
+                <img src="assets/carga.png" alt="" />
+              </span>
+            </button>
+            <button class="icon-action icon-action--excel" type="button" aria-label="Exportar a Excel" title="Exportar a Excel" (click)="exportSaleExcel(sale); $event.stopPropagation()">
+              <span class="icon-action__image" aria-hidden="true">
+                <img src="assets/excel-svgrepo-com.svg" alt="" />
+              </span>
+            </button>
+            <button class="icon-action icon-action--pdf" type="button" aria-label="Exportar a PDF" title="Exportar a PDF" (click)="exportSalePdf(sale); $event.stopPropagation()">
+              <span class="icon-action__image" aria-hidden="true">
+                <img src="assets/pdf-svgrepo-com.svg" alt="" />
+              </span>
+            </button>
+            <button class="btn btn--ghost btn--sm btn--danger btn--cancel" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesDelete)" [disabled]="cancelingSaleId === sale.id" (click)="requestCancelSale(sale); $event.stopPropagation()">{{ cancelingSaleId === sale.id ? 'Cancelando...' : 'Cancelar' }}</button>
+            <button class="btn btn--secondary btn--sm btn--edit" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesUpdate)" (click)="beginEdit(sale); $event.stopPropagation()">Editar</button>
+            <button class="btn btn--secondary btn--sm btn--pay" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesPay)" [disabled]="quickPayingSaleId === sale.id" (click)="markAsPaid(sale); $event.stopPropagation()">{{ quickPayingSaleId === sale.id ? 'Cobrando...' : 'Cobrar' }}</button>
+            <button class="btn btn--ghost btn--sm btn--danger" type="button" *ngIf="sale.idSaleStatus === 3 && auth.hasPermission(permissionCodes.salesDelete)" [disabled]="deletingSaleId === sale.id" (click)="deleteSale(sale); $event.stopPropagation()">{{ deletingSaleId === sale.id ? 'Eliminando...' : 'Eliminar' }}</button>
+          </div>
+
+          <div class="sale-card__details" *ngIf="isSaleExpanded(sale.id)">
+            <div class="table-wrap">
+              <table class="table table--details">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Unitario</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let detail of pagedSaleDetails(sale)">
+                    <td>{{ detail.productBrand }} / {{ detail.productName }}</td>
+                    <td>{{ detail.quantity }}</td>
+                    <td>{{ detail.unitPrice | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td>{{ detail.totalAmount | currency:'USD':'symbol':'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination" *ngIf="totalSaleDetailPages(sale) > 1">
+              <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, -1)">Anterior</button>
+              <span>Pagina {{ saleDetailPage(sale.id) }} de {{ totalSaleDetailPages(sale) }}</span>
+              <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, 1)">Siguiente</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #emptySales>
+        <div class="empty">No hay ventas para los filtros aplicados.</div>
+      </ng-template>
+
+      <div class="pagination pagination--footer" *ngIf="sales.length > salesPageSize">
+        <button class="btn btn--secondary btn--sm" type="button" (click)="goToSalesPage(currentSalesPage - 1)">Anterior</button>
+        <span>Pagina {{ currentSalesPage }} de {{ totalSalesPages }}</span>
+        <button class="btn btn--secondary btn--sm" type="button" (click)="goToSalesPage(currentSalesPage + 1)">Siguiente</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop" *ngIf="createProductModalOpen" (click)="closeCreateProductModal()"></div>
+<section class="modal-panel" *ngIf="createProductModalOpen">
+  <div class="modal-panel__card modal-panel__card--wide" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>Selector de productos</strong>
+      <button class="modal-panel__close" type="button" (click)="closeCreateProductModal()">x</button>
+    </div>
+
+    <div class="modal-panel__toolbar">
+      <input class="control" type="text" [value]="createProductQuery" (input)="handleCreateProductInput($any($event.target).value)" placeholder="Buscar por codigo, SKU, marca o producto" autocomplete="off" />
+    </div>
+
+    <div class="modal-products-table">
+      <table class="table table--picker">
+        <thead>
+          <tr>
+            <th>Sel.</th>
+            <th>Producto</th>
+            <th>Disponible</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of createProductSuggestions">
+            <td><input type="checkbox" [checked]="isCreateProductSelected(product.id)" [disabled]="availableForCreate(product.id) <= 0 && !isCreateProductSelected(product.id)" (change)="toggleCreateProductSelection(product, $any($event.target).checked)" /></td>
+            <td>{{ product.code }} | {{ product.brand }} - {{ product.name }}</td>
+            <td>{{ availableForCreate(product.id) }}</td>
+            <td><input class="control control--compact" type="number" min="1" [max]="availableForCreate(product.id)" [value]="createSelectionQuantity(product.id)" [disabled]="!isCreateProductSelected(product.id)" (input)="setCreateSelectionQuantity(product.id, $any($event.target).value)" /></td>
+          </tr>
+          <tr *ngIf="createProductSuggestions.length === 0">
+            <td colspan="4">No hay coincidencias.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-panel__actions">
+      <button class="btn btn--ghost" type="button" (click)="closeCreateProductModal()">Cancelar</button>
+      <button class="btn" type="button" [disabled]="createSelectedProductsCount === 0" (click)="addSelectedCreateProducts()">Agregar seleccionados ({{ createSelectedProductsCount }})</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" *ngIf="transportingSale" (click)="closeTransport()"></div>
+<section class="modal-panel" *ngIf="transportingSale">
+  <div class="modal-panel__card modal-panel__card--transport" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>Gestion de transporte</strong>
+      <button class="modal-panel__close" type="button" (click)="closeTransport()">x</button>
+    </div>
+
+    <div class="transport-modal__summary">
+      <div class="transport-summary-card">
+        <span class="transport-summary-card__label">Venta</span>
+        <strong>#{{ transportingSale.id }}</strong>
+      </div>
+      <div class="transport-summary-card">
+        <span class="transport-summary-card__label">Sucursal</span>
+        <strong>{{ branchName(transportingSale.branchId) }}</strong>
+      </div>
+      <div class="transport-summary-card">
+        <span class="transport-summary-card__label">Entrega</span>
+        <strong>{{ transportingSale.hasDelivery ? 'Con envio' : 'Retiro' }}</strong>
+      </div>
+    </div>
+
+    <form class="transport-modal__form" [formGroup]="transportForm">
+      <label class="field">
+        <span class="field__label">Conductor</span>
+        <select class="control" formControlName="driverEmployeeId">
+          <option value="">Seleccionar conductor</option>
+          <option *ngFor="let driver of drivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">Vehiculo</span>
+        <select class="control" formControlName="vehicleId">
+          <option value="">Seleccionar vehiculo</option>
+          <option *ngFor="let vehicle of activeVehicles" [value]="vehicle.id">{{ vehicle.plate }} / {{ vehicle.model }}</option>
+        </select>
+      </label>
+      <label class="field field--full">
+        <span class="field__label">Notas de envio</span>
+        <textarea class="control control--textarea" rows="3" formControlName="notes" placeholder="Notas de envio, referencias o aclaraciones"></textarea>
+      </label>
+    </form>
+
+    <div class="transport-state-card" *ngIf="currentTransport">
+      <div class="transport-state-card__top">
+        <span class="chip">{{ currentTransport.statusName }}</span>
+        <span class="transport-state-card__muted">Asignacion activa</span>
+      </div>
+      <div class="transport-state-card__grid">
+        <div class="transport-state-card__item">
+          <span>Asignado</span>
+          <strong>{{ currentTransport.assignedAt | date:'short' }}</strong>
+        </div>
+        <div class="transport-state-card__item" *ngIf="currentTransport.dispatchedAt">
+          <span>Salida</span>
+          <strong>{{ currentTransport.dispatchedAt | date:'short' }}</strong>
+        </div>
+        <div class="transport-state-card__item" *ngIf="currentTransport.deliveredAt">
+          <span>Entrega</span>
+          <strong>{{ currentTransport.deliveredAt | date:'short' }}</strong>
+        </div>
+        <div class="transport-state-card__item">
+          <span>Conductor</span>
+          <strong>{{ currentTransport.driverFullName }}</strong>
+        </div>
+        <div class="transport-state-card__item">
+          <span>Vehiculo</span>
+          <strong>{{ currentTransport.vehiclePlate }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-panel__actions modal-panel__actions--split">
+      <div class="transport-actions" *ngIf="currentTransport">
+        <span class="field__label">Estados</span>
+        <div class="transport-actions__row">
+          <button class="btn btn--ghost btn--sm btn--status-assigned" type="button" (click)="setTransportStatus(1)">Asignado</button>
+          <button class="btn btn--ghost btn--sm btn--status-transit" type="button" (click)="setTransportStatus(2)">En transito</button>
+          <button class="btn btn--ghost btn--sm btn--status-delivered" type="button" (click)="setTransportStatus(3)">Entregado</button>
+          <button class="btn btn--ghost btn--sm btn--danger" type="button" (click)="removeTransport()">Quitar</button>
+        </div>
+      </div>
+      <div class="transport-actions transport-actions--footer">
+        <button class="btn btn--ghost" type="button" (click)="closeTransport()">Cerrar</button>
+        <button class="btn" type="button" (click)="saveTransport()">{{ currentTransport ? 'Actualizar transporte' : 'Guardar transporte' }}</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" *ngIf="cancelSaleModal" (click)="closeCancelSaleModal()"></div>
+<section class="modal-panel" *ngIf="cancelSaleModal">
+  <div class="modal-panel__card modal-panel__card--confirm" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>Cancelar venta</strong>
+      <button class="modal-panel__close" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">x</button>
+    </div>
+    <p class="confirm-copy">Vas a cancelar la venta <strong>#{{ cancelSaleModal.id }}</strong>. Esta accion cambia el estado a <strong>Cancelada</strong>.</p>
+    <div class="confirm-meta">
+      <span><strong>Cliente:</strong> {{ cancelSaleModal.customerFullName || 'Sin cliente' }}</span>
+      <span><strong>Total:</strong> {{ cancelSaleModal.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+    </div>
+    <div class="modal-panel__actions">
+      <button class="btn btn--ghost" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">Volver</button>
+      <button class="btn btn--danger-solid" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="confirmCancelSale()">{{ cancelingSaleId === cancelSaleModal.id ? 'Cancelando...' : 'Confirmar cancelacion' }}</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" *ngIf="infoModal" (click)="closeInfoModal()"></div>
+<section class="modal-panel" *ngIf="infoModal">
+  <div class="modal-panel__card" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>{{ infoModal.title }}</strong>
+      <button class="modal-panel__close" type="button" (click)="closeInfoModal()">x</button>
+    </div>
+
+    <div class="info-list">
+      <div class="info-row" *ngFor="let row of infoModal?.rows">
+        <span>{{ row.label }}</span>
+        <strong>{{ row.value }}</strong>
+      </div>
+    </div>
+  </div>
+</section>
+

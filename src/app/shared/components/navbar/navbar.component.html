@@ -1,0 +1,52 @@
+<nav class="navbar">
+    <div class="navbar__brand">
+        <span class="navbar__logo">EITI</span>
+        <span class="navbar__separator">_</span>
+        <span class="navbar__sub">GESTION CLIENTES</span>
+    </div>
+
+    <button
+        class="navbar__menu-toggle"
+        type="button"
+        [attr.aria-expanded]="mobileMenuOpen"
+        aria-label="Abrir menu de navegacion"
+        (click)="toggleMobileMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <div class="navbar__backdrop" *ngIf="mobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+    <div class="navbar__links" [class.navbar__links--open]="mobileMenuOpen">
+        <a routerLink="/dashboard" routerLinkActive="active">Inicio</a>
+        <a routerLink="/customers" routerLinkActive="active">Clientes</a>
+        <a routerLink="/products" routerLinkActive="active">Productos</a>
+        <a routerLink="/company" routerLinkActive="active">Compania</a>
+        <a routerLink="/branches" routerLinkActive="active">Sucursal</a>
+        <a *ngIf="auth.hasPermission(permissionCodes.salesAccess)" routerLink="/sales" routerLinkActive="active">Ventas</a>
+        <a *ngIf="auth.hasPermission(permissionCodes.cashAccess)" routerLink="/cash" routerLinkActive="active">Caja</a>
+        <a *ngIf="auth.hasPermission(permissionCodes.usersManage)" routerLink="/users" routerLinkActive="active">Usuarios</a>
+        <a routerLink="/transport" routerLinkActive="active">Transporte</a>
+
+        <div class="navbar__user" *ngIf="auth.currentUser as user">
+            <a class="navbar__profile" routerLink="/profile" routerLinkActive="active">Perfil</a>
+            <div class="navbar__identity">
+                <span class="navbar__username">{{ user.username }}</span>
+                <span class="navbar__company">{{ companyName }}</span>
+            </div>
+            <span
+                class="navbar__theme"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="theme.isDarkTheme ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+                [attr.title]="theme.isDarkTheme ? 'Modo claro' : 'Modo oscuro'"
+                (click)="theme.toggleTheme()"
+                (keydown.enter)="theme.toggleTheme()"
+                (keydown.space)="theme.toggleTheme(); $event.preventDefault()">
+                {{ theme.isDarkTheme ? '☀' : '☾' }}
+            </span>
+            <button class="navbar__logout" (click)="logout()">Salir</button>
+        </div>
+    </div>
+</nav>

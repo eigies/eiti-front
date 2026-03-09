@@ -1,0 +1,259 @@
+.page {
+    min-height: calc(100vh - 64px);
+    background:
+        radial-gradient(circle at top right, var(--page-radial), transparent 32%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    padding: 3rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.hero {
+    margin-bottom: 3rem;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(1rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero__eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--amber);
+    margin-bottom: 0.75rem;
+}
+
+.hero__title {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 0.5rem;
+}
+
+.hero__username {
+    color: var(--amber);
+}
+
+.hero__sub {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    color: var(--text-mute);
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.card {
+    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.75rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    position: relative;
+    overflow: hidden;
+}
+
+.card:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.card:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.card--action {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.card--action:hover {
+    border-color: var(--amber);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--amber) 30%, transparent), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.card--action:hover::before {
+    opacity: 1;
+}
+
+.card__icon {
+    font-size: 1.1rem;
+    min-width: 2.4rem;
+    color: var(--text-mute);
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+}
+
+.card__icon--amber {
+    color: var(--amber);
+}
+
+.card__icon--dim {
+    color: var(--text-dim);
+}
+
+.card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+}
+
+.card__label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--text-mute);
+}
+
+.card__title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.95rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.card__desc {
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.88rem;
+    color: var(--text-dim);
+}
+
+.card__arrow {
+    font-size: 1.2rem;
+    color: var(--amber);
+    align-self: center;
+    transition: transform 0.2s;
+}
+
+.card--action:hover .card__arrow {
+    transform: translateX(4px);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    align-self: center;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.status-dot--muted {
+    background: var(--text-dim);
+    box-shadow: none;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.briefing {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.briefing__item {
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    padding: 1rem 1.1rem;
+}
+
+.briefing__label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+}
+
+.briefing__item strong {
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.ticker {
+    display: flex;
+    gap: 3rem;
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+    mask: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+}
+
+.ticker__text {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--text-mute);
+    white-space: nowrap;
+    animation: ticker 20s linear infinite;
+}
+
+@keyframes ticker {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@media (max-width: 760px) {
+    .briefing {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,53 @@
+<div class="auth-layout">
+    <div class="auth-panel auth-panel--deco" aria-hidden="true">
+        <div class="deco-lines">
+            <div class="deco-line" *ngFor="let i of lines" [style.animation-delay]="i*0.07+'s'"></div>
+        </div>
+        <div class="deco-text">
+            <span class="deco-label">EITI</span>
+            <span class="deco-tagline">Plataforma de<br>gestion comercial</span>
+        </div>
+    </div>
+
+    <div class="auth-panel auth-panel--form">
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <header class="auth-form__header">
+                <div class="auth-form__tag">_ ACCESO</div>
+                <h1 class="auth-form__title">Iniciar sesion</h1>
+            </header>
+
+            <div class="field" [class.field--error]="isInvalid('usernameOrEmail')">
+                <label class="field__label">Usuario o email</label>
+                <input class="field__input" type="text" formControlName="usernameOrEmail"
+                    placeholder="tu_usuario o correo@ejemplo.com" autocomplete="username" />
+                <span class="field__error" *ngIf="isInvalid('usernameOrEmail')">
+                    Campo requerido
+                </span>
+            </div>
+
+            <div class="field" [class.field--error]="isInvalid('password')">
+                <label class="field__label">Contrasena</label>
+                <div class="field__input-wrap">
+                    <input class="field__input" [type]="showPass ? 'text' : 'password'" formControlName="password"
+                        placeholder="********" autocomplete="current-password" />
+                    <button type="button" class="field__toggle" (click)="showPass = !showPass">
+                        {{ showPass ? 'Ocultar' : 'Ver' }}
+                    </button>
+                </div>
+                <span class="field__error" *ngIf="isInvalid('password')">
+                    Campo requerido
+                </span>
+            </div>
+
+            <button class="btn-primary" type="submit" [disabled]="loading">
+                <span *ngIf="!loading">Entrar</span>
+                <span *ngIf="loading" class="loading-dots">cargando</span>
+            </button>
+
+            <p class="auth-form__link">
+                No tenes cuenta?
+                <a routerLink="/register">Registrate</a>
+            </p>
+        </form>
+    </div>
+</div>

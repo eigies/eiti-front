@@ -1,0 +1,104 @@
+<app-navbar></app-navbar>
+<div class="page">
+    <section class="hero">
+        <div>
+            <p class="eyebrow">_ ACCESOS</p>
+            <h1>Usuarios y roles</h1>
+            <p>Controla quien vende, quien opera caja y quien administra usuarios dentro de la compania.</p>
+        </div>
+        <div class="hero__panel">
+            <span>{{ users.length }} usuarios</span>
+            <span>{{ activeUsersCount }} activos</span>
+        </div>
+    </section>
+
+    <section class="layout">
+        <article class="panel panel--create">
+            <div class="panel__head">
+                <div>
+                    <span class="panel__kicker">Alta interna</span>
+                    <h2>Crear usuario</h2>
+                </div>
+                <span class="panel__hint">Multiples roles permitidos</span>
+            </div>
+
+            <form class="form" [formGroup]="createForm" (ngSubmit)="createUser()">
+                <label class="field">
+                    <span>Usuario</span>
+                    <input class="control" type="text" formControlName="username" placeholder="operador.caja" />
+                </label>
+                <label class="field">
+                    <span>Email</span>
+                    <input class="control" type="email" formControlName="email" placeholder="operador@empresa.com" />
+                </label>
+                <label class="field">
+                    <span>Password inicial</span>
+                    <input class="control" type="password" formControlName="password"
+                        placeholder="Minimo 6 caracteres" />
+                </label>
+
+                <div class="role-grid field--wide">
+                    <button *ngFor="let role of roles" type="button" class="role-chip"
+                        [class.role-chip--active]="isRoleSelected(role.code)" (click)="toggleCreateRole(role.code)">
+                        <strong>{{ role.name }}</strong>
+                        <span>{{ role.description }}</span>
+                    </button>
+                </div>
+
+                <div class="form__actions">
+                    <div class="selection-copy">{{ selectedCreateRolesLabel }}</div>
+                    <button class="btn" type="submit" [disabled]="savingCreate">{{ savingCreate ? 'Guardando...' :
+                        'Crear usuario' }}</button>
+                </div>
+            </form>
+        </article>
+
+        <article class="panel panel--list">
+            <div class="panel__head panel__head--list">
+                <div>
+                    <span class="panel__kicker">Matriz activa</span>
+                    <h2>Equipo habilitado</h2>
+                </div>
+                <button class="btn btn--ghost" type="button" (click)="loadData()">Actualizar</button>
+            </div>
+
+            <div class="empty" *ngIf="loading">Cargando usuarios...</div>
+            <div class="empty" *ngIf="!loading && users.length === 0">Todavia no hay usuarios internos creados.</div>
+
+            <div class="user-stack" *ngIf="users.length > 0">
+                <article class="user-card" *ngFor="let user of users">
+                    <div class="user-card__header">
+                        <div>
+                            <div class="user-card__title-row">
+                                <strong>{{ user.username }}</strong>
+                                <span class="status" [class.status--inactive]="!user.isActive">{{ user.isActive ?
+                                    'Activo' : 'Inactivo' }}</span>
+                            </div>
+                            <div class="user-card__meta">{{ user.email }} · {{ user.employeeName || 'Sin empleado
+                                vinculado' }}</div>
+                        </div>
+                        <button class="btn" [class.btn--danger]="user.isActive" [class.btn--ghost]="!user.isActive"
+                            type="button" (click)="toggleStatus(user)">
+                            {{ user.isActive ? 'Desactivar' : 'Activar' }}
+                        </button>
+                    </div>
+
+                    <div class="role-grid role-grid--compact">
+                        <button *ngFor="let role of roles" type="button" class="role-chip role-chip--compact"
+                            [class.role-chip--active]="hasRole(user, role.code)"
+                            (click)="toggleUserRole(user, role.code)">
+                            <strong>{{ role.name }}</strong>
+                            <span>{{ role.code }}</span>
+                        </button>
+                    </div>
+
+                    <div class="user-card__footer">
+                        <div class="permission-list">
+                            <span *ngFor="let permission of user.permissions">{{ permission }}</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </article>
+    </section>
+</div>

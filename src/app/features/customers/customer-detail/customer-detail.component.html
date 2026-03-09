@@ -1,0 +1,60 @@
+﻿<app-navbar></app-navbar>
+<div class="page">
+    <div class="page__back">
+        <a routerLink="/customers" class="back-link">Volver a clientes</a>
+    </div>
+
+    <div class="loading" *ngIf="loading">
+        <div class="loading__spinner"></div>
+        <span>Buscando cliente...</span>
+    </div>
+
+    <div class="error-state" *ngIf="error && !loading">
+        <span class="error-state__icon">x</span>
+        <span class="error-state__msg">{{ error }}</span>
+        <a routerLink="/customers" class="btn-secondary">Volver</a>
+    </div>
+
+    <div class="customer-card" *ngIf="customer && !loading">
+        <div class="customer-card__header">
+            <div class="customer-card__avatar">
+                {{ customer.name.charAt(0).toUpperCase() }}
+            </div>
+            <div class="customer-card__meta">
+                <div class="customer-card__tag">_ CLIENTE</div>
+                <h1 class="customer-card__name">{{ customer.name }}</h1>
+            </div>
+        </div>
+
+        <div class="fields-grid">
+            <div class="detail-field">
+                <span class="detail-field__label">ID</span>
+                <span class="detail-field__value detail-field__value--mono">{{ customer.id }}</span>
+            </div>
+            <div class="detail-field">
+                <span class="detail-field__label">Email</span>
+                <span class="detail-field__value">{{ customer.email }}</span>
+            </div>
+            <div class="detail-field" *ngIf="customer.address">
+                <span class="detail-field__label">Direccion</span>
+                <span class="detail-field__value">
+                    {{ customer.address.street }} {{ customer.address.streetNumber }}
+                    <span *ngIf="customer.address.city || customer.address.stateOrProvince"> - {{ customer.address.city }}{{ customer.address.city && customer.address.stateOrProvince ? ', ' : '' }}{{ customer.address.stateOrProvince }}</span>
+                    <span *ngIf="customer.address.postalCode"> - CP {{ customer.address.postalCode }}</span>
+                </span>
+            </div>
+            <div class="detail-field">
+                <span class="detail-field__label">Creado el</span>
+                <span class="detail-field__value detail-field__value--mono">
+                    {{ customer.createdAt | date:'dd/MM/yyyy - HH:mm' }}
+                </span>
+            </div>
+            <div class="detail-field" *ngIf="customer.updatedAt">
+                <span class="detail-field__label">Ultima actualizacion</span>
+                <span class="detail-field__value detail-field__value--mono">
+                    {{ customer.updatedAt | date:'dd/MM/yyyy - HH:mm' }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

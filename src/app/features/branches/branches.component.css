@@ -1,0 +1,279 @@
+.page {
+    min-height: calc(100vh - 64px);
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    padding: 3rem 2rem;
+    max-width: 1120px;
+    margin: 0 auto
+}
+
+.page--guided-lock .panel {
+    opacity: .34;
+    pointer-events: none;
+    filter: saturate(.7)
+}
+
+.hero {
+    margin-bottom: 2rem
+}
+
+.hero h1 {
+    margin: 0;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(2rem, 4vw, 2.8rem)
+}
+
+.hero p {
+    margin: .75rem 0 0;
+    color: var(--text-soft);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem
+}
+
+.eyebrow {
+    color: var(--amber);
+    margin-bottom: .6rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase
+}
+
+.panel {
+    background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.35rem;
+    margin-bottom: 1.2rem
+}
+
+.panel__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .75rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    padding-bottom: .85rem;
+    border-bottom: 1px solid var(--border)
+}
+
+.inline-form,
+.modal__form {
+    display: grid;
+    gap: 1rem
+}
+
+.inline-form {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end
+}
+
+.control {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--border-2);
+    background: var(--bg);
+    color: var(--text);
+    padding: .8rem .9rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .84rem;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease
+}
+
+.control:hover {
+    border-color: color-mix(in srgb, var(--amber) 26%, var(--border-2))
+}
+
+.control:focus {
+    border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent)
+}
+
+.btn {
+    border-radius: 2px;
+    padding: .8rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform .15s ease, border-color .2s ease, background .2s ease, color .2s ease
+}
+
+.btn--primary {
+    border: none;
+    background: var(--amber);
+    color: var(--bg)
+}
+
+.btn--ghost {
+    background: transparent;
+    border: 1px solid var(--border-2);
+    color: var(--text-dim)
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px)
+}
+
+.btn--ghost:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
+    color: var(--text);
+    background: color-mix(in srgb, var(--amber) 6%, transparent)
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: .55
+}
+
+.branch-list {
+    display: grid;
+    gap: 1rem
+}
+
+.branch-card {
+    border: 1px solid var(--border);
+    background: var(--bg-soft)
+}
+
+.branch-card__summary {
+    width: 100%;
+    display: grid;
+    gap: .85rem;
+    background: transparent;
+    border: none;
+    padding: 1rem;
+    text-align: left;
+    cursor: pointer
+}
+
+.branch-card__headline {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center
+}
+
+.branch-card__headline strong {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .9rem
+}
+
+.branch-card__headline span {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .74rem;
+    text-transform: uppercase;
+    letter-spacing: .12em
+}
+
+.branch-card__metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: .74rem
+}
+
+.branch-card__body {
+    padding: 0 1rem 1rem
+}
+
+.branch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .85rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-panel) 80%, transparent);
+    padding: 1rem
+}
+
+.branch-detail {
+    display: grid;
+    gap: .3rem
+}
+
+.branch-detail__label {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    letter-spacing: .12em;
+    text-transform: uppercase
+}
+
+.branch-detail strong {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem
+}
+
+.branch-card__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .75rem;
+    margin-top: .9rem
+}
+
+.empty {
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: .78rem
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .26);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    z-index: 120
+}
+
+.modal {
+    width: min(100%, 560px);
+    background: color-mix(in srgb, var(--bg-panel) 97%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.35rem
+}
+
+.modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .75rem
+}
+
+@media (max-width:920px) {
+
+    .inline-form,
+    .branch-grid,
+    .branch-card__metrics {
+        grid-template-columns: 1fr
+    }
+
+    .branch-card__headline,
+    .modal__actions {
+        flex-direction: column;
+        align-items: flex-start
+    }
+
+    .branch-card__actions {
+        justify-content: stretch
+    }
+
+    .branch-card__actions .btn,
+    .modal__actions .btn {
+        width: 100%
+    }
+}

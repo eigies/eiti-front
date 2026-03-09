@@ -1,0 +1,84 @@
+<app-navbar></app-navbar>
+
+<div class="page">
+    <section class="hero">
+        <div class="hero__copy">
+            <p class="eyebrow">_ MI PERFIL</p>
+            <h1>{{ profile?.username || auth.currentUser?.username }}</h1>
+            <p>Resumen de identidad, permisos activos y trazabilidad reciente de roles.</p>
+        </div>
+        <div class="hero__meta" *ngIf="profile">
+            <span>Creado {{ profile.createdAt | date: 'shortDate' }}</span>
+            <span>Ultimo login {{ profile.lastLoginAt ? (profile.lastLoginAt | date: 'short') : 'Sin registro' }}</span>
+            <span [class.hero__meta--off]="!profile.isActive">{{ profile.isActive ? 'Usuario activo' : 'Usuario
+                inactivo' }}</span>
+        </div>
+    </section>
+
+    <section class="grid">
+        <article class="panel panel--identity" *ngIf="profile">
+            <h2>Identidad</h2>
+            <div class="identity">
+                <div>
+                    <span>Usuario</span>
+                    <strong>{{ profile.username }}</strong>
+                </div>
+                <div>
+                    <span>Email</span>
+                    <strong>{{ profile.email }}</strong>
+                </div>
+                <div>
+                    <span>Empleado</span>
+                    <strong>{{ profile.employeeName || 'Sin vinculacion' }}</strong>
+                </div>
+            </div>
+        </article>
+
+        <article class="panel">
+            <h2>Roles activos</h2>
+            <div class="chips">
+                <span *ngFor="let role of profile?.roles" class="chip">{{ role }}</span>
+            </div>
+            <h2 class="panel__sub">Permisos efectivos</h2>
+            <div class="chips chips--perm">
+                <span *ngFor="let permission of profile?.permissions" class="chip chip--perm">{{ permission }}</span>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel panel--audit">
+        <div class="panel__head">
+            <h2>Auditoria de cambios de roles</h2>
+            <button *ngIf="canReadAllAudits" class="btn btn--ghost" type="button"
+                (click)="reloadAudit()">Actualizar</button>
+        </div>
+
+        <p class="panel__hint" *ngIf="!canReadAllAudits">Mostrando cambios aplicados sobre tu usuario.</p>
+
+        <div class="empty" *ngIf="loadingAudit">Cargando auditoria...</div>
+        <div class="empty" *ngIf="!loadingAudit && audits.length === 0">No hay cambios de roles registrados.</div>
+
+        <div class="audit-table" *ngIf="audits.length > 0">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario objetivo</th>
+                        <th>Hecho por</th>
+                        <th>Antes</th>
+                        <th>Despues</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let audit of audits">
+                        <td>{{ audit.changedAt | date: 'short' }}</td>
+                        <td>{{ audit.targetUsername }}</td>
+                        <td>{{ audit.changedByUsername || 'Sistema' }}</td>
+                        <td>{{ formatRoles(audit.previousRoles) }}</td>
+                        <td>{{ formatRoles(audit.newRoles) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,211 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
+import { EmployeeService } from '../../core/services/employee.service';
+import { VehicleService } from '../../core/services/vehicle.service';
+import { DriverResponse } from '../../core/models/employee.models';
+import { FleetLogResponse, VehicleResponse } from '../../core/models/vehicle.models';
+import { ToastService } from '../../shared/services/toast.service';
+
+@Component({
+  selector: 'app-transport',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
+  templateUrl: './transport.component.html',
+  styleUrls: ['./transport.component.css']
+})
+export class TransportComponent implements OnInit {
+  driverForm: FormGroup;
+  vehicleForm: FormGroup;
+  logForm: FormGroup;
+  drivers: DriverResponse[] = [];
+  vehicles: VehicleResponse[] = [];
+  logs: FleetLogResponse[] = [];
+  selectedVehicleId = '';
+  driversExpanded = true;
+  vehiclesExpanded = true;
+  activityExpanded = true;
+
+  constructor(
+    private fb: FormBuilder,
+    private employeeService: EmployeeService,
+    private vehicleService: VehicleService,
+    private toast: ToastService
+  ) {
+    this.driverForm = this.fb.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      documentNumber: [''],
+      phone: [''],
+      licenseNumber: ['', Validators.required],
+      licenseExpiresAt: ['']
+    });
+    this.vehicleForm = this.fb.group({
+      plate: ['', Validators.required],
+      model: ['', Validators.required],
+      brand: [''],
+      year: [null],
+      fuelType: [1, Validators.required],
+      assignedDriverEmployeeId: ['']
+    });
+    this.logForm = this.fb.group({
+      type: [1, Validators.required],
+      occurredAt: [this.toInputDate(new Date()), Validators.required],
+      odometer: [null],
+      fuelLiters: [null],
+      fuelCost: [null],
+      description: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadDrivers();
+    this.loadVehicles();
+  }
+
+  get activeDrivers(): DriverResponse[] {
+    return this.drivers.filter(driver => driver.isActive && !driver.isLicenseExpired);
+  }
+
+  get selectedVehicle(): VehicleResponse | null {
+    return this.vehicles.find(vehicle => vehicle.id === this.selectedVehicleId) ?? null;
+  }
+
+  createDriver(): void {
+    if (this.driverForm.invalid) {
+      this.driverForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.driverForm.getRawValue();
+    this.employeeService.createEmployee({
+      firstName: raw.firstName,
+      lastName: raw.lastName,
+      documentNumber: raw.documentNumber || null,
+      phone: raw.phone || null,
+      email: null,
+      employeeRole: 2
+    }).subscribe({
+      next: employee => {
+        this.employeeService.upsertDriverProfile({
+          employeeId: employee.id,
+          licenseNumber: raw.licenseNumber,
+          licenseExpiresAt: raw.licenseExpiresAt || null
+        }).subscribe({
+          next: () => {
+            this.driverForm.reset({ firstName: '', lastName: '', documentNumber: '', phone: '', licenseNumber: '', licenseExpiresAt: '' });
+            this.toast.success('Conductor creado');
+            this.loadDrivers();
+          },
+          error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo guardar el perfil del conductor')
+        });
+      },
+      error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el conductor')
+    });
+  }
+
+  createVehicle(): void {
+    if (this.vehicleForm.invalid) {
+      this.vehicleForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.vehicleForm.getRawValue();
+    this.vehicleService.createVehicle({
+      plate: raw.plate,
+      model: raw.model,
+      brand: raw.brand || null,
+      year: raw.year ? Number(raw.year) : null,
+      fuelType: Number(raw.fuelType),
+      assignedDriverEmployeeId: raw.assignedDriverEmployeeId || null
+    }).subscribe({
+      next: () => {
+        this.vehicleForm.reset({ plate: '', model: '', brand: '', year: null, fuelType: 1, assignedDriverEmployeeId: '' });
+        this.toast.success('Vehiculo creado');
+        this.loadVehicles();
+      },
+      error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el vehiculo')
+    });
+  }
+
+  selectVehicle(vehicleId: string): void {
+    this.selectedVehicleId = vehicleId;
+    this.loadLogs();
+  }
+
+  createLog(): void {
+    if (!this.selectedVehicle || this.logForm.invalid) {
+      this.logForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.logForm.getRawValue();
+    this.vehicleService.createLog(this.selectedVehicle.id, {
+      type: Number(raw.type),
+      occurredAt: new Date(raw.occurredAt).toISOString(),
+      odometer: raw.odometer ? Number(raw.odometer) : null,
+      fuelLiters: raw.fuelLiters ? Number(raw.fuelLiters) : null,
+      fuelCost: raw.fuelCost ? Number(raw.fuelCost) : null,
+      description: raw.description
+    }).subscribe({
+      next: () => {
+        this.logForm.patchValue({ occurredAt: this.toInputDate(new Date()), odometer: null, fuelLiters: null, fuelCost: null, description: '' });
+        this.toast.success('Registro de flota creado');
+        this.loadVehicles();
+        this.loadLogs();
+      },
+      error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el registro de flota')
+    });
+  }
+
+  private loadDrivers(): void {
+    this.employeeService.listDrivers().subscribe({
+      next: drivers => this.drivers = drivers,
+      error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron cargar los conductores')
+    });
+  }
+
+  private loadVehicles(): void {
+    this.vehicleService.listVehicles().subscribe({
+      next: vehicles => {
+        this.vehicles = vehicles;
+
+        if (!this.selectedVehicleId && vehicles.length > 0) {
+          this.selectedVehicleId = vehicles[0].id;
+          this.loadLogs();
+        }
+      },
+      error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron cargar los vehiculos')
+    });
+  }
+
+  private loadLogs(): void {
+    if (!this.selectedVehicleId) {
+      this.logs = [];
+      return;
+    }
+
+    this.vehicleService.listLogs(this.selectedVehicleId).subscribe({
+      next: logs => this.logs = logs,
+      error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron cargar los registros de flota')
+    });
+  }
+
+  private toInputDate(value: Date): string {
+    const iso = new Date(value.getTime() - value.getTimezoneOffset() * 60000).toISOString();
+    return iso.slice(0, 16);
+  }
+
+  logTypeLabel(typeName: string): string {
+    const labels: Record<string, string> = {
+      FuelLoad: 'Carga de combustible',
+      Maintenance: 'Mantenimiento',
+      Inspection: 'Inspeccion',
+      Incident: 'Incidente',
+      Note: 'Nota'
+    };
+
+    return labels[typeName] ?? typeName;
+  }
+}

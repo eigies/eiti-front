@@ -1,0 +1,226 @@
+﻿<app-navbar></app-navbar>
+<div class="page">
+    <header class="hero">
+        <div class="eyebrow">_ TRANSPORTE</div>
+        <h1>Gestionar conductores y flota</h1>
+        <p>Registra conductores, vehiculos y actividad de flota para los envios.</p>
+    </header>
+
+    <section class="overview-strip">
+        <article class="overview-card">
+            <span class="overview-card__label">Conductores</span>
+            <strong>{{ drivers.length }}</strong>
+            <small>{{ activeDrivers.length }} activos</small>
+        </article>
+        <article class="overview-card">
+            <span class="overview-card__label">Vehiculos cargados</span>
+            <strong>{{ vehicles.length }}</strong>
+            <small *ngIf="selectedVehicle">Seleccionado: {{ selectedVehicle.plate }}</small>
+            <small *ngIf="!selectedVehicle">Sin vehiculo seleccionado</small>
+        </article>
+        <article class="overview-card">
+            <span class="overview-card__label">Actividad de flota</span>
+            <strong>{{ logs.length }}</strong>
+            <small *ngIf="selectedVehicle">Registros de {{ selectedVehicle.plate }}</small>
+            <small *ngIf="!selectedVehicle">Selecciona un vehiculo</small>
+        </article>
+    </section>
+
+    <div class="transport-layout">
+        <div class="stack">
+            <section class="panel panel--vehicles">
+                <button class="panel__header panel__header--toggle" type="button" (click)="vehiclesExpanded = !vehiclesExpanded">
+                    <span>Vehiculos</span>
+                    <span class="panel__meta">
+                        <span>{{ vehicles.length }}</span>
+                        <span class="panel__chevron" [class.panel__chevron--open]="vehiclesExpanded">+</span>
+                    </span>
+                </button>
+
+                <div *ngIf="vehiclesExpanded" class="panel__body panel__body--vehicles">
+                    <form class="vehicle-form" [formGroup]="vehicleForm" (ngSubmit)="createVehicle()">
+                        <div class="vehicle-form__grid">
+                            <input class="control" type="text" placeholder="Patente" formControlName="plate" />
+                            <input class="control" type="text" placeholder="Modelo" formControlName="model" />
+                            <input class="control" type="text" placeholder="Marca" formControlName="brand" />
+                            <input class="control" type="number" min="1900" placeholder="Ano" formControlName="year" />
+                            <select class="control" formControlName="fuelType">
+                                <option [ngValue]="1">Nafta</option>
+                                <option [ngValue]="2">Diesel</option>
+                                <option [ngValue]="3">GNC</option>
+                                <option [ngValue]="4">Electrico</option>
+                                <option [ngValue]="5">Hibrido</option>
+                            </select>
+                            <select class="control" formControlName="assignedDriverEmployeeId">
+                                <option value="">Asignar conductor</option>
+                                <option *ngFor="let driver of activeDrivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
+                            </select>
+                        </div>
+                        <button class="btn btn--primary" type="submit">Crear vehiculo</button>
+                    </form>
+
+                    <div *ngIf="vehicles.length === 0" class="empty">Todavia no hay vehiculos.</div>
+
+                    <div class="vehicle-gallery" *ngIf="vehicles.length > 0">
+                        <button type="button" class="vehicle-card" *ngFor="let vehicle of vehicles"
+                            [class.vehicle-card--active]="vehicle.id === selectedVehicleId" (click)="selectVehicle(vehicle.id)">
+                            <div class="vehicle-card__top">
+                                <strong>{{ vehicle.plate }}</strong>
+                                <span>{{ vehicle.model }}</span>
+                            </div>
+                            <div class="vehicle-card__meta">
+                                <span>{{ vehicle.brand || 'Sin marca' }}<span *ngIf="vehicle.year"> · {{ vehicle.year }}</span></span>
+                                <span>{{ vehicle.fuelTypeName }}</span>
+                                <span>{{ vehicle.assignedDriverFullName || 'Sin conductor asignado' }}</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel panel--activity" *ngIf="selectedVehicle">
+                <button class="panel__header panel__header--toggle" type="button" (click)="activityExpanded = !activityExpanded">
+                    <span>Actividad de flota</span>
+                    <span class="panel__meta">
+                        <span>{{ selectedVehicle.plate }}</span>
+                        <span class="panel__chevron" [class.panel__chevron--open]="activityExpanded">+</span>
+                    </span>
+                </button>
+
+                <div *ngIf="activityExpanded" class="panel__body">
+                    <div class="activity-head">
+                        <div class="activity-vehicle">
+                            <strong>{{ selectedVehicle.plate }} / {{ selectedVehicle.model }}</strong>
+                            <span>{{ selectedVehicle.brand || 'Sin marca' }}<span *ngIf="selectedVehicle.year"> · {{ selectedVehicle.year }}</span> · {{ selectedVehicle.fuelTypeName }}</span>
+                        </div>
+                        <span class="activity-count">{{ logs.length }} registros</span>
+                    </div>
+
+                    <form class="log-form" [formGroup]="logForm" (ngSubmit)="createLog()">
+                        <div class="log-form__grid">
+                            <select class="control" formControlName="type">
+                                <option [ngValue]="1">Carga de combustible</option>
+                                <option [ngValue]="2">Mantenimiento</option>
+                                <option [ngValue]="3">Inspeccion</option>
+                                <option [ngValue]="4">Incidente</option>
+                                <option [ngValue]="5">Nota</option>
+                            </select>
+                            <input class="control" type="datetime-local" formControlName="occurredAt" />
+                            <input class="control" type="number" min="0" step="0.01" placeholder="Odometro" formControlName="odometer" />
+                            <input class="control" type="number" min="0" step="0.01" placeholder="Litros cargados" formControlName="fuelLiters" />
+                            <input class="control" type="number" min="0" step="0.01" placeholder="Costo combustible" formControlName="fuelCost" />
+                            <input class="control" type="text" placeholder="Descripcion" formControlName="description" />
+                        </div>
+                        <button class="btn btn--primary" type="submit">Agregar registro</button>
+                    </form>
+
+                    <div *ngIf="logs.length === 0" class="empty">No hay registros para este vehiculo.</div>
+                    <div *ngIf="logs.length > 0" class="table-cards table-cards--mobile">
+                        <article class="data-card" *ngFor="let log of logs">
+                            <div class="data-card__row">
+                                <span>Fecha</span>
+                                <strong>{{ log.occurredAt | date: 'short' }}</strong>
+                            </div>
+                            <div class="data-card__row">
+                                <span>Tipo</span>
+                                <strong>{{ logTypeLabel(log.typeName) }}</strong>
+                            </div>
+                            <div class="data-card__row">
+                                <span>Odometro</span>
+                                <strong>{{ log.odometer ?? '-' }}</strong>
+                            </div>
+                            <div class="data-card__row">
+                                <span>Descripcion</span>
+                                <strong>{{ log.description }}</strong>
+                            </div>
+                        </article>
+                    </div>
+                    <table *ngIf="logs.length > 0" class="table table--desktop">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Odometro</th>
+                                <th>Descripcion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let log of logs">
+                                <td>{{ log.occurredAt | date: 'short' }}</td>
+                                <td>{{ logTypeLabel(log.typeName) }}</td>
+                                <td>{{ log.odometer ?? '-' }}</td>
+                                <td>{{ log.description }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <div class="stack">
+            <section class="panel panel--drivers">
+                <button class="panel__header panel__header--toggle" type="button" (click)="driversExpanded = !driversExpanded">
+                    <span>Conductores</span>
+                    <span class="panel__meta">
+                        <span>{{ drivers.length }}</span>
+                        <span class="panel__chevron" [class.panel__chevron--open]="driversExpanded">+</span>
+                    </span>
+                </button>
+
+                <div *ngIf="driversExpanded" class="panel__body">
+                    <form class="driver-form" [formGroup]="driverForm" (ngSubmit)="createDriver()">
+                        <div class="driver-form__grid">
+                            <input class="control" type="text" placeholder="Nombre" formControlName="firstName" />
+                            <input class="control" type="text" placeholder="Apellido" formControlName="lastName" />
+                            <input class="control" type="text" placeholder="Documento" formControlName="documentNumber" />
+                            <input class="control" type="text" placeholder="Telefono" formControlName="phone" />
+                            <input class="control" type="text" placeholder="Licencia" formControlName="licenseNumber" />
+                            <input class="control" type="date" formControlName="licenseExpiresAt" />
+                        </div>
+                        <button class="btn btn--primary" type="submit">Crear conductor</button>
+                    </form>
+
+                    <div *ngIf="drivers.length === 0" class="empty">Todavia no hay conductores.</div>
+                    <div *ngIf="drivers.length > 0" class="table-cards table-cards--mobile">
+                        <article class="data-card" *ngFor="let driver of drivers">
+                            <div class="data-card__row">
+                                <span>Nombre</span>
+                                <strong>{{ driver.fullName }}</strong>
+                            </div>
+                            <div class="data-card__row">
+                                <span>Licencia</span>
+                                <strong>{{ driver.licenseNumber }}</strong>
+                            </div>
+                            <div class="data-card__row">
+                                <span>Vence</span>
+                                <strong>{{ driver.licenseExpiresAt ? (driver.licenseExpiresAt | date: 'shortDate') : '-' }}</strong>
+                            </div>
+                            <div class="data-card__row">
+                                <span>Estado</span>
+                                <strong>{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</strong>
+                            </div>
+                        </article>
+                    </div>
+                    <table *ngIf="drivers.length > 0" class="table table--desktop">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Licencia</th>
+                                <th>Vence</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let driver of drivers">
+                                <td>{{ driver.fullName }}</td>
+                                <td>{{ driver.licenseNumber }}</td>
+                                <td>{{ driver.licenseExpiresAt ? (driver.licenseExpiresAt | date: 'shortDate') : '-' }}</td>
+                                <td>{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>

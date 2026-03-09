@@ -1,0 +1,66 @@
+<div class="auth-layout">
+    <div class="auth-panel auth-panel--deco" aria-hidden="true">
+        <div class="deco-grid">
+            <div class="deco-cell" *ngFor="let i of cells"></div>
+        </div>
+        <div class="deco-text">
+            <span class="deco-label">_ NUEVO</span>
+            <span class="deco-tagline">Crea tu cuenta<br>y empeza ahora</span>
+        </div>
+    </div>
+
+    <div class="auth-panel auth-panel--form">
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <header class="auth-form__header">
+                <div class="auth-form__tag">_ REGISTRO</div>
+                <h1 class="auth-form__title">Nueva cuenta</h1>
+            </header>
+
+            <div class="field" [class.field--error]="isInvalid('username')">
+                <label class="field__label">Nombre de usuario</label>
+                <input class="field__input" type="text" formControlName="username" placeholder="tu_usuario"
+                    autocomplete="username" />
+                <span class="field__error" *ngIf="isInvalid('username')">Minimo 3 caracteres</span>
+            </div>
+
+            <div class="field" [class.field--error]="isInvalid('email')">
+                <label class="field__label">Email</label>
+                <input class="field__input" type="email" formControlName="email" placeholder="correo@ejemplo.com"
+                    autocomplete="email" />
+                <span class="field__error" *ngIf="isInvalid('email')">Email invalido</span>
+            </div>
+
+            <div class="field" [class.field--error]="isInvalid('companyName')">
+                <label class="field__label">Compania</label>
+                <input class="field__input" type="text" formControlName="companyName" placeholder="Nombre de tu empresa"
+                    autocomplete="organization" />
+                <span class="field__error" *ngIf="isInvalid('companyName')">Requerido</span>
+            </div>
+
+            <div class="field" [class.field--error]="isInvalid('password')">
+                <label class="field__label">Contrasena</label>
+                <div class="field__input-wrap">
+                    <input class="field__input" [type]="showPass ? 'text' : 'password'" formControlName="password"
+                        placeholder="Minimo 6 caracteres" autocomplete="new-password" />
+                    <button type="button" class="field__toggle" (click)="showPass = !showPass">
+                        {{ showPass ? 'Ocultar' : 'Ver' }}
+                    </button>
+                </div>
+                <div class="password-strength" *ngIf="form.get('password')?.value">
+                    <div class="strength-bar" [class]="strengthClass"></div>
+                    <span class="strength-label">{{ strengthLabel }}</span>
+                </div>
+                <span class="field__error" *ngIf="isInvalid('password')">Minimo 6 caracteres</span>
+            </div>
+
+            <button class="btn-primary" type="submit" [disabled]="loading">
+                <span *ngIf="!loading">Crear cuenta</span>
+                <span *ngIf="loading" class="loading-dots">cargando</span>
+            </button>
+
+            <p class="auth-form__link">
+                Ya tenes cuenta? <a routerLink="/login">Inicia sesion</a>
+            </p>
+        </form>
+    </div>
+</div>

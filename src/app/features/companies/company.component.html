@@ -1,0 +1,41 @@
+<app-navbar></app-navbar>
+<div class="page">
+    <header class="page__header">
+        <div class="page__eyebrow">_ COMPANIA</div>
+        <h1 class="page__title">Datos de tu compania</h1>
+        <p class="page__sub">Actualiza el nombre y el dominio principal sin salir del panel administrativo.</p>
+    </header>
+
+    <section class="panel">
+        <div class="panel__head">
+            <span class="panel__icon">@</span>
+            <span class="panel__title">Perfil actual</span>
+        </div>
+
+        <div class="loading-state" *ngIf="loading">Cargando datos de compania...</div>
+
+        <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" novalidate>
+            <div class="field" [class.field--error]="isInvalid('name')">
+                <label class="field__label">Nombre</label>
+                <input class="field__input" type="text" formControlName="name" />
+                <span class="field__error" *ngIf="isInvalid('name')">Requerido</span>
+            </div>
+
+            <div class="field" [class.field--error]="isInvalid('primaryDomain')">
+                <label class="field__label">Dominio principal</label>
+                <input class="field__input" type="text" formControlName="primaryDomain" />
+                <span class="field__error" *ngIf="isInvalid('primaryDomain')">Requerido</span>
+            </div>
+
+            <div class="meta" *ngIf="company">
+                <span class="meta__item">ID: {{ company.id }}</span>
+                <span class="meta__item">Alta: {{ company.createdAt | date: 'mediumDate' }}</span>
+            </div>
+
+            <button class="btn-primary" type="submit" [disabled]="saving">
+                <span *ngIf="!saving">Guardar cambios</span>
+                <span *ngIf="saving">Guardando...</span>
+            </button>
+        </form>
+    </section>
+</div>
