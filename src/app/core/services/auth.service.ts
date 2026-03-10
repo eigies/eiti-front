@@ -9,6 +9,7 @@ import { OnboardingService } from './onboarding.service';
 export class AuthService {
     private readonly TOKEN_KEY = 'eiti_token';
     private readonly USER_KEY = 'eiti_user';
+    private sessionExpiredHandled = false;
 
     private _currentUser$ = new BehaviorSubject<AuthResponse | null>(this.loadUser());
     currentUser$ = this._currentUser$.asObservable();
@@ -34,6 +35,7 @@ export class AuthService {
         localStorage.removeItem(this.TOKEN_KEY);
         localStorage.removeItem(this.USER_KEY);
         this.onboarding.reset();
+        this.sessionExpiredHandled = false;
         this._currentUser$.next(null);
     }
 
@@ -59,9 +61,19 @@ export class AuthService {
 
     private persist(res: AuthResponse): void {
         this.onboarding.reset();
+        this.sessionExpiredHandled = false;
         localStorage.setItem(this.TOKEN_KEY, res.token);
         localStorage.setItem(this.USER_KEY, JSON.stringify(res));
         this._currentUser$.next(res);
+    }
+
+    markSessionExpiredHandled(): boolean {
+        if (this.sessionExpiredHandled) {
+            return false;
+        }
+
+        this.sessionExpiredHandled = true;
+        return true;
     }
 
     private loadUser(): AuthResponse | null {
