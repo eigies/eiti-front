@@ -1,0 +1,131 @@
+<section class="payment-block" [class.payment-block--compact]="compact">
+  <div class="payment-block__head">
+    <div>
+      <p class="payment-block__eyebrow">Cobro inline</p>
+      <h3>{{ headline }}</h3>
+    </div>
+    <p class="payment-block__copy">{{ description }}</p>
+  </div>
+
+  <div class="payment-shell">
+    <div class="payment-shell__main">
+      <div class="toggle-grid">
+        <div class="field">
+          <span class="field__label">Pago combinado</span>
+          <label class="toggle-check">
+          <input type="checkbox" [checked]="state.hasCombinedPayment" (change)="toggleCombinedPayment($any($event.target).checked)" />
+          <span class="toggle-check__track"></span>
+          <span class="toggle-check__text">{{ state.hasCombinedPayment ? 'Varios metodos de pago' : 'Pago simple' }}</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Canje</span>
+          <label class="toggle-check">
+          <input type="checkbox" [checked]="state.hasTradeIn" (change)="toggleTradeIn($any($event.target).checked)" />
+          <span class="toggle-check__track"></span>
+          <span class="toggle-check__text">{{ state.hasTradeIn ? 'Recibe producto en parte de pago' : 'Sin canje' }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="payment-stack">
+        <div class="section-head">
+          <div>
+            <span class="section-head__eyebrow">Payments</span>
+            <h4>Medios de pago</h4>
+          </div>
+          <button class="action-chip" type="button" *ngIf="state.hasCombinedPayment" (click)="addPaymentLine()">Agregar metodo de pago</button>
+        </div>
+
+        <div class="payment-line" *ngFor="let payment of state.payments; let index = index; trackBy: trackByIndex">
+          <div class="payment-line__row">
+            <label class="field">
+              <span class="field__label">Metodo</span>
+              <select class="control" [value]="payment.idPaymentMethod" (change)="updatePaymentMethod(index, $any($event.target).value)">
+                <option *ngFor="let method of paymentMethods" [value]="method.id">{{ method.label }}</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Monto</span>
+              <input class="control" type="number" min="0" step="0.01" [value]="payment.amount" (input)="updatePaymentAmount(index, $any($event.target).value)" />
+            </label>
+
+            <label class="field field--wide">
+              <span class="field__label">Referencia</span>
+              <input class="control" type="text" maxlength="120" [value]="payment.notes" (input)="updatePaymentNotes(index, $any($event.target).value)" placeholder="Ultimos 4 digitos, banco, observacion" />
+            </label>
+
+            <button class="line-remove" type="button" [disabled]="state.payments.length === 1 && !state.hasCombinedPayment" (click)="removePaymentLine(index)">Quitar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="payment-stack" *ngIf="state.hasTradeIn">
+        <div class="section-head">
+          <div>
+            <span class="section-head__eyebrow">Trade-ins</span>
+            <h4>Productos recibidos en canje</h4>
+          </div>
+          <button class="action-chip" type="button" (click)="addTradeInLine()">Agregar item</button>
+        </div>
+
+        <div class="payment-line payment-line--tradein" *ngFor="let tradeIn of state.tradeIns; let index = index; trackBy: trackByIndex">
+          <div class="payment-line__row payment-line__row--tradein">
+            <label class="field field--wide">
+              <span class="field__label">Producto</span>
+              <select class="control" [value]="tradeIn.productId" (change)="updateTradeInProduct(index, $any($event.target).value)">
+                <option value="">Seleccionar producto</option>
+                <option *ngFor="let product of products" [value]="product.id">{{ product.code }} | {{ product.brand }} / {{ product.name }}</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Cantidad</span>
+              <input class="control" type="number" min="1" step="1" [value]="tradeIn.quantity" (input)="updateTradeInQuantity(index, $any($event.target).value)" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Monto reconocido</span>
+              <input class="control" type="number" min="0" step="0.01" [value]="tradeIn.amount" (input)="updateTradeInAmount(index, $any($event.target).value)" />
+            </label>
+
+            <button class="line-remove" type="button" (click)="removeTradeInLine(index)">Quitar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="payment-summary">
+      <div class="payment-summary__card">
+        <span>Total venta</span>
+        <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
+      </div>
+      <div class="payment-summary__card">
+        <span>Cancelado</span>
+        <strong>{{ coverage | currency:'USD':'symbol':'1.2-2' }}</strong>
+      </div>
+      <div class="payment-summary__card" [class.payment-summary__card--ok]="remaining === 0" [class.payment-summary__card--warn]="remaining > 0" [class.payment-summary__card--over]="remaining < 0">
+        <span>{{ remaining >= 0 ? 'Restante' : 'Excedido' }}</span>
+        <strong>{{ (remaining >= 0 ? remaining : -remaining) | currency:'USD':'symbol':'1.2-2' }}</strong>
+      </div>
+
+      <div class="drawer-card" *ngIf="requiresCashDrawer">
+        <span class="drawer-card__eyebrow">Cash drawer</span>
+        <label class="field">
+          <span class="field__label">Caja obligatoria por efectivo</span>
+          <select class="control" [value]="cashDrawerId ?? ''" (change)="selectCashDrawer($any($event.target).value)">
+            <option value="">Seleccionar caja</option>
+            <option *ngFor="let drawer of cashDrawers" [value]="drawer.id">{{ drawer.name }}</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="summary-note">
+        <p *ngIf="statusId === paidStatusId">Estado pagada: el cobro total debe coincidir exacto con la venta.</p>
+        <p *ngIf="statusId !== paidStatusId">Estado en espera: puedes cargar cobros parciales sin exceder el total.</p>
+      </div>
+    </aside>
+  </div>
+</section>

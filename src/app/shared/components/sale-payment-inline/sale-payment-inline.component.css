@@ -1,0 +1,274 @@
+.payment-block {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    border-radius: 4px;
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--bg-panel) 96%, transparent) 0%, color-mix(in srgb, var(--bg) 88%, transparent) 100%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 12%, transparent);
+}
+
+.payment-block--compact {
+    padding: .9rem;
+}
+
+.payment-block__head,
+.payment-shell,
+.payment-line__row,
+.toggle-grid,
+.section-head {
+    display: flex;
+    gap: .85rem;
+}
+
+.payment-block__head,
+.section-head {
+    align-items: center;
+    justify-content: space-between;
+}
+
+.payment-block__eyebrow,
+.section-head__eyebrow,
+.field__label,
+.drawer-card__eyebrow {
+    display: block;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.payment-block__head h3,
+.section-head h4 {
+    margin: 0;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+}
+
+.payment-block__copy {
+    margin: 0;
+    max-width: 32rem;
+    color: var(--text-dim);
+    font-size: .8rem;
+    line-height: 1.5;
+}
+
+.payment-shell {
+    align-items: flex-start;
+}
+
+.payment-shell__main {
+    flex: 1 1 auto;
+    display: grid;
+    gap: 1rem;
+}
+
+.payment-summary {
+    width: min(100%, 290px);
+    display: grid;
+    gap: .75rem;
+}
+
+.toggle-grid {
+    flex-wrap: wrap;
+}
+
+.payment-line,
+.payment-summary__card,
+.drawer-card,
+.summary-note {
+    border: 1px solid var(--border-2);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+}
+
+.payment-stack {
+    display: grid;
+    gap: .75rem;
+}
+
+.action-chip,
+.line-remove {
+    border: 1px solid color-mix(in srgb, var(--amber) 42%, var(--border-2));
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.action-chip {
+    padding: .45rem .8rem;
+}
+
+.line-remove {
+    align-self: end;
+    min-height: 44px;
+    padding: .45rem .7rem;
+}
+
+.payment-line {
+    display: grid;
+    gap: .55rem;
+    padding: .85rem;
+}
+
+.payment-line__row {
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.payment-line__row--tradein .field--wide {
+    min-width: min(100%, 340px);
+}
+
+.field {
+    flex: 1 1 150px;
+    display: grid;
+    gap: .42rem;
+}
+
+.field--wide {
+    flex-basis: 250px;
+}
+
+.control {
+    width: 100%;
+    box-sizing: border-box;
+    padding: .78rem;
+    border: 1px solid var(--border-2);
+    border-radius: 2px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+}
+
+.toggle-check {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: .75rem;
+    min-height: 44px;
+    padding: .55rem .8rem;
+    border: 1px solid var(--border-2);
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--bg-soft) 80%, transparent);
+    cursor: pointer;
+}
+
+.toggle-check input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.toggle-check__track {
+    position: relative;
+    display: inline-flex;
+    width: 2.25rem;
+    height: 1.3rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-2) 75%, transparent);
+    transition: background .2s ease;
+}
+
+.toggle-check__track::after {
+    content: '';
+    position: absolute;
+    top: .19rem;
+    left: .14rem;
+    width: .92rem;
+    height: .92rem;
+    border-radius: 50%;
+    background: var(--bg-panel);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+    transition: transform .2s ease;
+}
+
+.toggle-check input:checked + .toggle-check__track {
+    background: color-mix(in srgb, var(--amber) 40%, transparent);
+}
+
+.toggle-check input:checked + .toggle-check__track::after {
+    transform: translateX(.95rem);
+    background: var(--amber);
+}
+
+.toggle-check__text {
+    position: relative;
+    z-index: 1;
+    color: var(--text);
+    font-size: .76rem;
+}
+
+.toggle-check:hover {
+    border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 5%, transparent);
+}
+
+.payment-summary__card,
+.drawer-card,
+.summary-note {
+    display: grid;
+    gap: .2rem;
+    padding: .85rem .95rem;
+}
+
+.payment-summary__card span,
+.summary-note p {
+    color: var(--text-dim);
+    font-size: .74rem;
+}
+
+.payment-summary__card strong {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+}
+
+.payment-summary__card--ok {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8fd3a8 42%, transparent);
+}
+
+.payment-summary__card--warn {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #f0be73 42%, transparent);
+}
+
+.payment-summary__card--over {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #e28c8c 42%, transparent);
+}
+
+.summary-note p {
+    margin: 0;
+    line-height: 1.45;
+}
+
+@media (max-width: 920px) {
+    .payment-shell,
+    .payment-block__head {
+        display: grid;
+    }
+
+    .payment-summary {
+        width: 100%;
+    }
+}
+
+@media (max-width: 720px) {
+    .payment-line__row,
+    .toggle-grid,
+    .section-head {
+        display: grid;
+    }
+
+    .line-remove,
+    .action-chip {
+        width: 100%;
+    }
+}

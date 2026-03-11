@@ -15,6 +15,9 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
+import { SaleService } from '../../core/services/sale.service';
+import { SaleResponse } from '../../core/models/sale.models';
+import { paymentMethodSummary } from '../../core/models/sale-payment.models';
 
 type CashSessionView = {
     session: CashSessionResponse;
@@ -164,6 +167,10 @@ type CashSessionView = {
               <strong>&#36;{{ currentSummary.difference | number: '1.2-2' }}</strong>
             </div>
           </div>
+          <div class="session-payment-methods" *ngIf="currentSession">
+            <span>Medios de pago</span>
+            <strong>{{ sessionPaymentMethodsSummary(currentSession) }}</strong>
+          </div>
         </div>
       </section>
 
@@ -224,6 +231,7 @@ type CashSessionView = {
                       <th>Tipo</th>
                       <th>Sentido</th>
                       <th>Monto</th>
+                      <th>Medio de pago</th>
                       <th>Descripcion</th>
                     </tr>
                   </thead>
@@ -233,6 +241,7 @@ type CashSessionView = {
                       <td>{{ movement.typeName }}</td>
                       <td>{{ movement.directionName }}</td>
                       <td>&#36;{{ movement.amount | number: '1.2-2' }}</td>
+                      <td>{{ movementPaymentMethod(movement) }}</td>
                       <td>{{ movement.description || '-' }}</td>
                     </tr>
                   </tbody>
@@ -275,6 +284,9 @@ type CashSessionView = {
     .session-card .btn--danger:hover:not(:disabled){background:color-mix(in srgb,var(--danger) 14%, transparent);border-color:color-mix(in srgb,var(--danger) 68%, var(--border-2))}
     .btn:disabled{cursor:not-allowed;opacity:.5;filter:saturate(.65)}
     .btn:disabled::after{content:'';position:absolute;left:10%;right:10%;top:50%;height:1px;background:currentColor;opacity:.65;transform:rotate(-8deg);pointer-events:none}
+    .session-payment-methods{margin-top:1rem;padding:.85rem 1rem;border:1px solid var(--border);border-radius:3px;background:color-mix(in srgb,var(--bg-soft) 76%, transparent);display:grid;gap:.28rem}
+    .session-payment-methods span{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
+    .session-payment-methods strong{color:var(--text);font-family:'DM Mono',monospace;font-size:.84rem}
     .drawer-strip{display:grid;grid-template-columns:minmax(220px,280px) 1fr;gap:1rem;align-items:start;margin-top:1rem;padding:1rem 1rem 0;border:1px solid color-mix(in srgb,var(--border) 78%, transparent);background:color-mix(in srgb,var(--bg-soft) 68%, transparent);border-radius:4px}
     .drawer-strip--attention{border-color:color-mix(in srgb,var(--amber) 34%, var(--border));box-shadow:0 0 0 2px color-mix(in srgb,var(--amber) 9%, transparent)}
     .drawer-strip__intro{display:grid;gap:.35rem;padding-bottom:1rem}
@@ -310,7 +322,7 @@ type CashSessionView = {
     .history-session__body{padding:0 1rem 1rem}
     .history-session__toolbar{display:flex;justify-content:space-between;gap:1rem;align-items:center;color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;margin-bottom:.85rem}
     .history-table{overflow:auto;border:1px solid var(--border);background:var(--bg-soft)}
-    .history-table table{width:100%;border-collapse:collapse;min-width:860px}
+    .history-table table{width:100%;border-collapse:collapse;min-width:980px}
     .history-table th,.history-table td{padding:.8rem .9rem;border-bottom:1px solid var(--border);text-align:left;color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;vertical-align:top}
     .history-table th{color:var(--text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;background:color-mix(in srgb,var(--bg-panel) 88%, transparent)}
     .empty{color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.78rem}
@@ -330,7 +342,8 @@ type CashSessionView = {
       .history-table td:nth-child(2)::before{content:'Tipo'}
       .history-table td:nth-child(3)::before{content:'Sentido'}
       .history-table td:nth-child(4)::before{content:'Monto'}
-      .history-table td:nth-child(5)::before{content:'Descripcion'}
+      .history-table td:nth-child(5)::before{content:'Medio de pago'}
+      .history-table td:nth-child(6)::before{content:'Descripcion'}
     }
   `]
 })
@@ -347,6 +360,7 @@ export class CashComponent implements OnInit {
     currentSession: CashSessionResponse | null = null;
     currentSummary: CashSessionSummaryResponse | null = null;
     historySessions: CashSessionView[] = [];
+    salePaymentMethodsBySaleId = new Map<string, string>();
     historyFrom = '';
     historyTo = '';
     showCreateDrawer = false;
@@ -358,6 +372,7 @@ export class CashComponent implements OnInit {
         private fb: FormBuilder,
         private branchService: BranchService,
         private cashService: CashService,
+        private saleService: SaleService,
         private toast: ToastService,
         private onboardingService: OnboardingService,
         private router: Router,
@@ -563,6 +578,7 @@ export class CashComponent implements OnInit {
             'Tipo',
             'Sentido',
             'Monto',
+            'Medio de pago',
             'Descripcion',
             'Esperado',
             'Cierre real',
@@ -578,6 +594,7 @@ export class CashComponent implements OnInit {
             movement.typeName,
             movement.directionName,
             movement.amount.toFixed(2),
+            this.movementPaymentMethod(movement),
             movement.description || '',
             session.expectedClosingAmount.toFixed(2),
             session.actualClosingAmount == null ? '' : session.actualClosingAmount.toFixed(2),
@@ -602,6 +619,7 @@ export class CashComponent implements OnInit {
             'Tipo',
             'Sentido',
             'Monto',
+            'Medio de pago',
             'Descripcion',
             'Esperado',
             'Cierre real',
@@ -617,6 +635,7 @@ export class CashComponent implements OnInit {
             movement.typeName,
             movement.directionName,
             movement.amount.toFixed(2),
+            this.movementPaymentMethod(movement),
             movement.description || '',
             item.session.expectedClosingAmount.toFixed(2),
             item.session.actualClosingAmount == null ? '' : item.session.actualClosingAmount.toFixed(2),
@@ -686,7 +705,8 @@ export class CashComponent implements OnInit {
             doc.text('Tipo', margin + 37, y + 4.8);
             doc.text('Sentido', margin + 67, y + 4.8);
             doc.text('Monto', margin + 93, y + 4.8);
-            doc.text('Descripcion', margin + 115, y + 4.8);
+            doc.text('Pago', margin + 114, y + 4.8);
+            doc.text('Descripcion', margin + 145, y + 4.8);
             y += 7;
         };
 
@@ -719,9 +739,12 @@ export class CashComponent implements OnInit {
 
             for (const movement of session.movements) {
                 const description = movement.description || '-';
-                const descriptionLines = doc.splitTextToSize(description, 78) as string[];
+                const paymentMethod = this.movementPaymentMethod(movement);
+                const paymentMethodLines = doc.splitTextToSize(paymentMethod, 26) as string[];
+                const clippedPaymentMethod = paymentMethodLines.slice(0, 2);
+                const descriptionLines = doc.splitTextToSize(description, 48) as string[];
                 const clippedDescription = descriptionLines.slice(0, 2);
-                const rowHeight = Math.max(6.8, clippedDescription.length * 3.4 + 1.6);
+                const rowHeight = Math.max(6.8, clippedDescription.length * 3.4 + 1.6, clippedPaymentMethod.length * 3.4 + 1.6);
 
                 if (y + rowHeight > maxY) {
                     doc.addPage();
@@ -740,7 +763,8 @@ export class CashComponent implements OnInit {
                 doc.text(movement.typeName, margin + 37, y + 4.4);
                 doc.text(movement.directionName, margin + 67, y + 4.4);
                 doc.text(this.formatCurrency(movement.amount), margin + 111, y + 4.4, { align: 'right' });
-                doc.text(clippedDescription, margin + 115, y + 4.4);
+                doc.text(clippedPaymentMethod, margin + 114, y + 4.4);
+                doc.text(clippedDescription, margin + 145, y + 4.4);
 
                 y += rowHeight;
             }
@@ -781,11 +805,13 @@ export class CashComponent implements OnInit {
         this.loadingSession = true;
         this.currentSession = null;
         this.currentSummary = null;
+        this.salePaymentMethodsBySaleId.clear();
 
         this.cashService.getCurrentSession(this.selectedDrawerId).subscribe({
             next: session => {
                 this.currentSession = session;
                 this.currentSummary = this.toSummary(session);
+                this.loadSalePaymentMethods([session]);
                 this.loadingSession = false;
             },
             error: () => {
@@ -802,6 +828,7 @@ export class CashComponent implements OnInit {
 
         this.loadingHistory = true;
         this.historySessions = [];
+        this.salePaymentMethodsBySaleId.clear();
 
         this.cashService.listHistory(this.selectedDrawerId, this.historyFrom || undefined, this.historyTo || undefined).subscribe({
             next: sessions => {
@@ -811,6 +838,7 @@ export class CashComponent implements OnInit {
                     salesIncome: this.sumMovementsByType(session.movements, 'SaleIncome'),
                     withdrawals: this.sumMovementsByType(session.movements, 'CashWithdrawal')
                 }));
+                this.loadSalePaymentMethods(sessions);
                 this.loadingHistory = false;
             },
             error: err => {
@@ -846,6 +874,24 @@ export class CashComponent implements OnInit {
             .reduce((total, movement) => total + movement.amount, 0);
     }
 
+    movementPaymentMethod(movement: CashSessionMovementResponse): string {
+        if (movement.referenceType?.toLowerCase() !== 'sale' || !movement.referenceId) {
+            return '-';
+        }
+
+        return this.salePaymentMethodsBySaleId.get(movement.referenceId) || 'Cargando...';
+    }
+
+    sessionPaymentMethodsSummary(session: CashSessionResponse): string {
+        const methods = [...new Set(
+            session.movements
+                .map(movement => this.movementPaymentMethod(movement))
+                .filter(method => method !== '-' && method !== 'Cargando...')
+        )];
+
+        return methods.length > 0 ? methods.join(' | ') : 'Sin ventas con medio identificado';
+    }
+
     private downloadExcel(fileName: string, headers: string[], body: string[][]): void {
         const rows = body.map(columns =>
             headers.reduce<Record<string, string>>((result, header, index) => {
@@ -871,6 +917,37 @@ export class CashComponent implements OnInit {
         }
 
         return new Date(value).toLocaleString();
+    }
+
+    private loadSalePaymentMethods(sessions: CashSessionResponse[]): void {
+        const saleIds = [...new Set(
+            sessions.flatMap(session => session.movements)
+                .filter(movement => movement.referenceType?.toLowerCase() === 'sale' && !!movement.referenceId)
+                .map(movement => String(movement.referenceId))
+        )];
+
+        if (saleIds.length === 0) {
+            return;
+        }
+
+        this.saleService.listSales({}).subscribe({
+            next: sales => {
+                const salesById = new Map<string, SaleResponse>(
+                    sales
+                        .filter(sale => saleIds.includes(sale.id))
+                        .map(sale => [sale.id, sale])
+                );
+
+                for (const saleId of saleIds) {
+                    const sale = salesById.get(saleId);
+                    if (!sale) {
+                        continue;
+                    }
+
+                    this.salePaymentMethodsBySaleId.set(saleId, paymentMethodSummary(sale.payments, sale.tradeIns));
+                }
+            }
+        });
     }
 
     isClosedSession(statusName?: string | null): boolean {

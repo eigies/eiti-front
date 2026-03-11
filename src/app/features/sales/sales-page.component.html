@@ -57,14 +57,19 @@
               </label>
             </div>
 
-            <label class="field" *ngIf="isCreatePaid">
-              <span class="field__label">Caja abierta</span>
-              <select class="control" formControlName="cashDrawerId">
-                <option value="">Seleccionar caja</option>
-                <option *ngFor="let drawer of createDrawers" [value]="drawer.id">{{ drawer.name }}</option>
-              </select>
-            </label>
           </form>
+
+          <app-sale-payment-inline
+            [total]="draftTotal"
+            [statusId]="lineForm.get('idSaleStatus')?.value ?? 1"
+            [products]="products"
+            [cashDrawers]="createDrawers"
+            [state]="createPaymentState"
+            [cashDrawerId]="lineForm.get('cashDrawerId')?.value ?? null"
+            headline="Cobro integrado en la venta"
+            description="Define pago principal, pagos combinados y canje sin salir de la configuracion de la venta."
+            (cashDrawerIdChange)="setCreateCashDrawerId($event)">
+          </app-sale-payment-inline>
         </section>
 
         <section class="quick-sale-card">
@@ -108,7 +113,7 @@
                 </td>
                 <td>{{ availableForCreate(item.product.id) }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ item.product.price | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'USD':'symbol':'1.2-2' }}</td>
                 <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
                 <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeDraftItem(item.product.id)">Quitar</button></td>
               </tr>
@@ -162,15 +167,20 @@
           <span class="toggle-check__text">{{ editMetaForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
         </label>
       </div>
-
-      <label class="field" *ngIf="isEditPaid">
-        <span class="field__label">Caja abierta</span>
-        <select class="control" formControlName="cashDrawerId">
-          <option value="">Seleccionar caja</option>
-          <option *ngFor="let drawer of editDrawers" [value]="drawer.id">{{ drawer.name }}</option>
-        </select>
-      </label>
     </form>
+
+    <app-sale-payment-inline
+      [total]="editTotal"
+      [statusId]="editMetaForm.get('idSaleStatus')?.value ?? 1"
+      [products]="products"
+      [cashDrawers]="editDrawers"
+      [state]="editPaymentState"
+      [cashDrawerId]="editMetaForm.get('cashDrawerId')?.value ?? null"
+      [compact]="true"
+      headline="Cobro y canje de esta venta"
+      description="Si la marcas como pagada, el total cancelado debe coincidir exacto."
+      (cashDrawerIdChange)="setEditCashDrawerId($event)">
+    </app-sale-payment-inline>
 
     <div class="editor" #editProductPicker>
       <div class="editor__head">
@@ -288,7 +298,7 @@
             <div>
               <p class="sale-card__eyebrow">{{ branchName(sale.branchId) }}</p>
               <h2>Venta #{{ sale.id }}</h2>
-              <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s)</p>
+              <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s) · {{ salePaymentMethodSummary(sale) }}</p>
             </div>
             <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>
           </div>
@@ -301,6 +311,7 @@
               <strong>Estado transporte:</strong> {{ transportStatusChipLabel(sale) }}
             </span>
             <span class="chip"><strong>Entrega:</strong> {{ sale.hasDelivery ? 'Con envio' : 'Retiro' }}</span>
+            <span class="chip"><strong>Pago:</strong> {{ salePaymentMethodSummary(sale) }}</span>
             <span class="chip" *ngIf="sale.customerFullName"><strong>Cliente:</strong> {{ sale.customerFullName }}</span>
             <span class="chip" *ngIf="sale.driverFullName"><strong>Conductor:</strong> {{ sale.driverFullName }}</span>
             <span class="chip" *ngIf="sale.vehiclePlate"><strong>Vehiculo:</strong> {{ sale.vehiclePlate }}</span>
@@ -338,6 +349,18 @@
             <button class="icon-action icon-action--pdf" type="button" aria-label="Exportar a PDF" title="Exportar a PDF" (click)="exportSalePdf(sale); $event.stopPropagation()">
               <span class="icon-action__image" aria-hidden="true">
                 <img src="assets/pdf-svgrepo-com.svg" alt="" />
+              </span>
+            </button>
+            <button
+              class="icon-action icon-action--whatsapp"
+              type="button"
+              *ngIf="canSendSaleWhatsApp(sale) && auth.hasPermission(permissionCodes.salesPay)"
+              [disabled]="sendingSaleWhatsAppId === sale.id"
+              [attr.aria-label]="sendingSaleWhatsAppId === sale.id ? 'Preparando WhatsApp' : 'Enviar WhatsApp'"
+              [attr.title]="sendingSaleWhatsAppId === sale.id ? 'Preparando WhatsApp' : 'Enviar WhatsApp'"
+              (click)="sendSaleWhatsApp(sale, $event)">
+              <span class="icon-action__image" aria-hidden="true">
+                <img src="assets/whatsapp-color-svgrepo-com.svg" alt="" />
               </span>
             </button>
             <button class="btn btn--ghost btn--sm btn--danger btn--cancel" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesDelete)" [disabled]="cancelingSaleId === sale.id" (click)="requestCancelSale(sale); $event.stopPropagation()">{{ cancelingSaleId === sale.id ? 'Cancelando...' : 'Cancelar' }}</button>

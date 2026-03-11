@@ -4,7 +4,10 @@ export interface CreateProductRequest {
     brand: string;
     name: string;
     description?: string | null;
-    price: number;
+    publicPrice?: number | null;
+    price?: number | null;
+    costPrice: number;
+    unitPrice?: number | null;
 }
 
 export interface ProductResponse {
@@ -15,6 +18,9 @@ export interface ProductResponse {
     name: string;
     description?: string | null;
     price: number;
+    publicPrice?: number | null;
+    costPrice?: number | null;
+    unitPrice?: number | null;
     totalOnHandQuantity: number;
     totalReservedQuantity: number;
     totalAvailableQuantity: number;
@@ -36,5 +42,12 @@ export interface UpdateProductRequest {
     brand: string;
     name: string;
     description?: string | null;
-    price: number;
+    publicPrice?: number | null;
+    price?: number | null;
+    costPrice: number;
+    unitPrice?: number | null;
+}
+
+export function productPublicPrice(product: Pick<ProductResponse, 'publicPrice' | 'price'>): number {
+    return Number(product.publicPrice ?? product.price ?? 0);
 }

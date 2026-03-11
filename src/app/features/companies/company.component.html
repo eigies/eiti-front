@@ -27,6 +27,26 @@
                 <span class="field__error" *ngIf="isInvalid('primaryDomain')">Requerido</span>
             </div>
 
+            <div class="company-whatsapp">
+                <div class="company-whatsapp__copy">
+                    <span class="field__label">WhatsApp ventas</span>
+                    <strong>Envio automatico al cobrar</strong>
+                    <p>Si el cliente tiene telefono cargado, se intentara enviar un comprobante basico al cobrar la venta.</p>
+                </div>
+
+                <label class="toggle-check">
+                    <input type="checkbox" formControlName="whatsAppEnabled" />
+                    <span class="toggle-check__track"></span>
+                    <span class="toggle-check__text">{{ form.get('whatsAppEnabled')?.value ? 'Activo' : 'Desactivado' }}</span>
+                </label>
+            </div>
+
+            <div class="field" [class.field--error]="form.get('whatsAppEnabled')?.value && !form.get('whatsAppPhoneNumber')?.value && form.get('whatsAppPhoneNumber')?.touched">
+                <label class="field__label">Telefono emisor de WhatsApp</label>
+                <input class="field__input" type="text" formControlName="whatsAppPhoneNumber" placeholder="+54 11 1234 5678" />
+                <span class="field__error" *ngIf="form.get('whatsAppEnabled')?.value && !form.get('whatsAppPhoneNumber')?.value && form.get('whatsAppPhoneNumber')?.touched">Obligatorio si el envio esta activo</span>
+            </div>
+
             <div class="meta" *ngIf="company">
                 <span class="meta__item">ID: {{ company.id }}</span>
                 <span class="meta__item">Alta: {{ company.createdAt | date: 'mediumDate' }}</span>

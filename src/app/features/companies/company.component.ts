@@ -26,7 +26,9 @@ export class CompanyComponent implements OnInit {
   ) {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
-      primaryDomain: ['', [Validators.required, Validators.maxLength(255)]]
+      primaryDomain: ['', [Validators.required, Validators.maxLength(255)]],
+      whatsAppEnabled: [false],
+      whatsAppPhoneNumber: ['']
     });
   }
 
@@ -45,11 +47,22 @@ export class CompanyComponent implements OnInit {
       return;
     }
 
+    if (this.form.get('whatsAppEnabled')?.value && !String(this.form.get('whatsAppPhoneNumber')?.value || '').trim()) {
+      this.form.get('whatsAppPhoneNumber')?.markAsTouched();
+      this.toast.error('Configura el numero emisor de WhatsApp para activar el envio automatico.');
+      return;
+    }
+
     this.saving = true;
-    this.companyService.updateCurrentCompany(this.form.getRawValue()).subscribe({
+    this.companyService.updateCurrentCompany({
+      name: String(this.form.get('name')?.value || ''),
+      primaryDomain: String(this.form.get('primaryDomain')?.value || ''),
+      isWhatsAppEnabled: Boolean(this.form.get('whatsAppEnabled')?.value),
+      whatsAppSenderPhone: this.nullIfEmpty(this.form.get('whatsAppPhoneNumber')?.value)
+    }).subscribe({
       next: (company) => {
         this.company = company;
-        this.form.patchValue(company);
+        this.form.patchValue(this.mapCompanyToForm(company));
         this.toast.success('Datos de compania actualizados');
         this.saving = false;
       },
@@ -66,7 +79,7 @@ export class CompanyComponent implements OnInit {
     this.companyService.getCurrentCompany().subscribe({
       next: (company) => {
         this.company = company;
-        this.form.patchValue(company);
+        this.form.patchValue(this.mapCompanyToForm(company));
         this.loading = false;
       },
       error: (err) => {
@@ -75,5 +88,18 @@ export class CompanyComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private nullIfEmpty(value: string | null | undefined): string | null {
+    return value && value.trim().length > 0 ? value.trim() : null;
+  }
+
+  private mapCompanyToForm(company: CompanyResponse): { name: string; primaryDomain: string; whatsAppEnabled: boolean; whatsAppPhoneNumber: string } {
+    return {
+      name: company.name,
+      primaryDomain: company.primaryDomain,
+      whatsAppEnabled: Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled),
+      whatsAppPhoneNumber: company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? ''
+    };
   }
 }

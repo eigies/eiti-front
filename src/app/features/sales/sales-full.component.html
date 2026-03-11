@@ -74,11 +74,20 @@
                     <span class="toggle-check__track"></span>
                     <span class="toggle-check__text">{{ requiresDelivery ? 'Con envio' : 'Retiro / sin envio' }}</span>
                 </label></div>
-                <label class="field" *ngIf="isPaid"><span class="field__label">Caja</span><select class="control" formControlName="cashDrawerId">
-                    <option value="">Caja</option>
-                    <option *ngFor="let drawer of cashDrawers" [value]="drawer.id">{{ drawer.name }}</option>
-                </select></label>
             </form>
+
+            <app-sale-payment-inline
+                [total]="total"
+                [statusId]="saleForm.get('idSaleStatus')?.value ?? 1"
+                [products]="products"
+                [cashDrawers]="cashDrawers"
+                [state]="paymentState"
+                [cashDrawerId]="saleForm.get('cashDrawerId')?.value ?? null"
+                headline="Cobro integrado en la venta"
+                description="Carga el pago principal, combina medios si hace falta y registra canjes sin salir del paso de venta."
+                (cashDrawerIdChange)="setCashDrawerId($event)">
+            </app-sale-payment-inline>
+
             <div class="row row--product">
                 <div class="toolbar__lead">
                     <span class="field__label">Productos</span>
@@ -131,7 +140,7 @@
                         }}</span></button>
                 <button type="button" class="card span" (click)="jumpToSummaryStep('sale')"><strong>{{ total |
                         currency:'USD':'symbol':'1.2-2' }}</strong><span>{{ selectedBranchName }}</span><span>{{
-                        selectedDrawerName }}</span></button>
+                        paymentMethodPreview }} · {{ paymentCoverage | currency:'USD':'symbol':'1.2-2' }} cobrados · {{ selectedDrawerName }}</span></button>
             </div>
         </div>
 

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CreateSaleRequest, SaleResponse } from '../models/sale.models';
+import { CreateSaleRequest, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -42,6 +42,10 @@ export class SaleService {
 
     updateSale(id: string, request: CreateSaleRequest): Observable<SaleResponse> {
         return this.http.put<SaleResponse>(`${this.base}/${id}`, request);
+    }
+
+    sendSaleWhatsApp(id: string): Observable<SendSaleWhatsAppResponse> {
+        return this.http.post<SendSaleWhatsAppResponse>(`${this.base}/${id}/send-whatsapp`, {});
     }
 
     deleteSale(id: string): Observable<void> {

@@ -8,7 +8,9 @@ import * as XLSX from 'xlsx';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { ProductService } from '../../core/services/product.service';
 import { SaleService } from '../../core/services/sale.service';
-import { ProductResponse } from '../../core/models/product.models';
+import { CompanyService } from '../../core/services/company.service';
+import { CustomerService } from '../../core/services/customer.service';
+import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
 import { SaleDetailResponse, SaleResponse } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -26,11 +28,23 @@ import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingBannerComponent } from '../../shared/components/onboarding-banner/onboarding-banner.component';
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
+import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
+import {
+    SalePaymentDraftState,
+    createEmptySalePaymentDraftState,
+    hasCashPayment,
+    mapSalePaymentDraftState,
+    normalizeSalePayments,
+    normalizeSaleTradeIns,
+    paymentMethodSummary,
+    SALE_PAYMENT_METHOD_CASH,
+    roundMoney
+} from '../../core/models/sale-payment.models';
 
 @Component({
     selector: 'app-sales-page',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent, OnboardingBannerComponent],
+    imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent, OnboardingBannerComponent, SalePaymentInlineComponent],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
 })
@@ -66,18 +80,23 @@ export class SalesPageComponent implements OnInit {
     deletingSaleId: string | null = null;
     cancelingSaleId: string | null = null;
     quickPayingSaleId: string | null = null;
+    sendingSaleWhatsAppId: string | null = null;
     createProductQuery = '';
     editProductQuery = '';
     showEditProductResults = false;
     createProductModalOpen = false;
     createSelectedProductIds = new Set<string>();
     createSelectionQuantityByProductId = new Map<string, number>();
+    createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
+    editPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     createExpanded = true;
     listExpanded = true;
     showOnboardingCompleteNotice = false;
     infoModal: { title: string; rows: Array<{ label: string; value: string }> } | null = null;
     cancelSaleModal: SaleResponse | null = null;
     expandedSaleId: string | null = null;
+    whatsAppEnabled = false;
+    whatsAppPhoneNumber: string | null = null;
     readonly salesPageSizeOptions = [10, 25, 50];
     readonly detailPageSize = 5;
     currentSalesPage = 1;
@@ -88,6 +107,8 @@ export class SalesPageComponent implements OnInit {
         private fb: FormBuilder,
         private productService: ProductService,
         private saleService: SaleService,
+        private companyService: CompanyService,
+        private customerService: CustomerService,
         private branchService: BranchService,
         private cashService: CashService,
         private stockService: StockService,
@@ -130,6 +151,7 @@ export class SalesPageComponent implements OnInit {
         this.loadSales();
         this.loadDrivers();
         this.loadVehicles();
+        this.loadWhatsAppConfig();
     }
 
     get selectedProduct(): ProductResponse | null {
@@ -150,6 +172,14 @@ export class SalesPageComponent implements OnInit {
 
     get isEditPaid(): boolean {
         return Number(this.editMetaForm.get('idSaleStatus')?.value ?? 1) === 2;
+    }
+
+    get requiresCreateCashDrawer(): boolean {
+        return this.isCreatePaid && hasCashPayment(this.createPaymentState);
+    }
+
+    get requiresEditCashDrawer(): boolean {
+        return this.isEditPaid && hasCashPayment(this.editPaymentState);
     }
 
     get activeVehicles(): VehicleResponse[] {
@@ -205,7 +235,18 @@ export class SalesPageComponent implements OnInit {
             const branchId = this.editMetaForm.get('branchId')?.value ?? '';
             this.editMetaForm.patchValue({ cashDrawerId: '' });
             this.loadDrawers(branchId, false);
+            return;
         }
+
+        this.editMetaForm.patchValue({ cashDrawerId: '' });
+    }
+
+    setCreateCashDrawerId(value: string | null): void {
+        this.lineForm.patchValue({ cashDrawerId: value ?? '' });
+    }
+
+    setEditCashDrawerId(value: string | null): void {
+        this.editMetaForm.patchValue({ cashDrawerId: value ?? '' });
     }
 
     availableForCreate(productId: string): number {
@@ -331,18 +372,18 @@ createSale(): void {
     return;
 }
 
-if (this.isCreatePaid && !this.lineForm.get('cashDrawerId')?.value) {
-    this.toast.error('Selecciona una caja abierta para crear una venta pagada.');
+if (!this.validatePaymentState(this.lineForm, this.draftItems, this.createPaymentState, 'crear')) {
     return;
 }
 
 this.saving = true;
-this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems)).subscribe({
+this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState)).subscribe({
     next: () => {
         this.toast.success('Venta creada');
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
         this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '' });
+        this.createPaymentState = createEmptySalePaymentDraftState();
         this.createProductQuery = '';
         this.createProductModalOpen = false;
         this.createSelectedProductIds.clear();
@@ -380,14 +421,14 @@ loadSales(): void {
     });
 }
 
-beginEdit(sale: SaleResponse): void {
+beginEdit(sale: SaleResponse, presetPaid = false): void {
     if(sale.idSaleStatus !== 1) {
     this.toast.error('Solo se pueden editar ventas en espera');
     return;
 }
 
 this.editingSale = sale;
-this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: '' });
+this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: '' });
 this.editItems = sale.details
     .map(detail => {
         const product = this.findProduct(detail.productId);
@@ -397,6 +438,7 @@ this.editItems = sale.details
 this.editOriginalQuantitiesByProductId = new Map(
     sale.details.map(detail => [detail.productId, detail.quantity])
 );
+this.editPaymentState = mapSalePaymentDraftState(sale.payments, sale.tradeIns);
 
 this.loadDrawers(sale.branchId, false);
 this.loadStockForBranch(sale.branchId, false);
@@ -416,6 +458,7 @@ this.editItems = [];
 this.editDrawers = [];
 this.editStockByProductId.clear();
 this.editOriginalQuantitiesByProductId.clear();
+this.editPaymentState = createEmptySalePaymentDraftState();
 this.editProductQuery = '';
 this.showEditProductResults = false;
     }
@@ -425,15 +468,15 @@ saveEdit(): void {
     return;
 }
 
-if (this.isEditPaid && !this.editMetaForm.get('cashDrawerId')?.value) {
-    this.toast.error('Selecciona una caja abierta para marcar la venta como pagada.');
+if (!this.validatePaymentState(this.editMetaForm, this.editItems, this.editPaymentState, 'editar')) {
     return;
 }
 
 this.savingEdit = true;
-this.saleService.updateSale(this.editingSale.id, this.buildRequest(this.editMetaForm, this.editItems, this.editingSale.customerId ?? null)).subscribe({
+this.saleService.updateSale(this.editingSale.id, this.buildRequest(this.editMetaForm, this.editItems, this.editPaymentState, this.editingSale.customerId ?? null)).subscribe({
     next: () => {
-        this.toast.success('Venta actualizada');
+        const shouldSuggestWhatsApp = Number(this.editMetaForm.get('idSaleStatus')?.value ?? 1) === 2;
+        this.toast.success(shouldSuggestWhatsApp ? 'Venta actualizada. El WhatsApp queda disponible para envio manual.' : 'Venta actualizada');
         const branchId = this.editMetaForm.get('branchId')?.value ?? '';
         this.savingEdit = false;
         this.loadStockForBranch(branchId, false);
@@ -487,6 +530,12 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                     idSaleStatus: 2,
                     hasDelivery: sale.hasDelivery,
                     cashDrawerId: drawer.id,
+                    payments: [{
+                        idPaymentMethod: SALE_PAYMENT_METHOD_CASH,
+                        amount: roundMoney(sale.totalAmount),
+                        notes: null
+                    }],
+                    tradeIns: [],
                     details: sale.details.map(detail => ({
                         productId: detail.productId,
                         quantity: detail.quantity
@@ -494,7 +543,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                 }).subscribe({
                     next: () => {
                         this.quickPayingSaleId = null;
-                        this.toast.success('Venta marcada como pagada');
+                        this.toast.success('Venta marcada como pagada. El WhatsApp queda listo para envio manual.');
                         this.loadSales();
                     },
                     error: err => {
@@ -515,6 +564,45 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
     }
 });
     }
+
+sendSaleWhatsApp(sale: SaleResponse, event?: Event): void {
+    event?.stopPropagation();
+
+    if (!this.canSendSaleWhatsApp(sale) || this.sendingSaleWhatsAppId) {
+        return;
+    }
+
+    const whatsappWindow = window.open('about:blank', '_blank');
+
+    this.sendingSaleWhatsAppId = sale.id;
+    this.saleService.sendSaleWhatsApp(sale.id).subscribe({
+        next: response => {
+            this.sendingSaleWhatsAppId = null;
+            if (!response.launchUrl) {
+                whatsappWindow?.close();
+                this.toast.error('No se pudo preparar el enlace de WhatsApp.');
+                return;
+            }
+
+            if (whatsappWindow) {
+                try {
+                    whatsappWindow.opener = null;
+                } catch {
+                    // Ignore browsers that prevent touching opener.
+                }
+                whatsappWindow.location.href = response.launchUrl;
+                return;
+            }
+
+            this.toast.error('El navegador bloqueo la nueva pestania de WhatsApp.');
+        },
+        error: err => {
+            this.sendingSaleWhatsAppId = null;
+            whatsappWindow?.close();
+            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo preparar el WhatsApp para esta venta.');
+        }
+    });
+}
 
 requestCancelSale(sale: SaleResponse): void {
     if (sale.idSaleStatus !== 1) {
@@ -545,6 +633,8 @@ confirmCancelSale(): void {
         idSaleStatus: 3,
         hasDelivery: sale.hasDelivery,
         cashDrawerId: null,
+        payments: [],
+        tradeIns: [],
         details: sale.details.map(detail => ({
             productId: detail.productId,
             quantity: detail.quantity
@@ -773,6 +863,7 @@ const rows = sale.details.map(detail => ({
     Fecha: new Date(sale.createdAt).toLocaleString(),
     Sucursal: this.branchName(sale.branchId),
     Cliente: sale.customerFullName || '-',
+    'Metodo de pago': this.salePaymentMethodSummary(sale),
     Producto: `${detail.productBrand} / ${detail.productName}`,
     Cantidad: detail.quantity,
     Unitario: detail.unitPrice.toFixed(2),
@@ -836,7 +927,7 @@ const drawDocumentHeader = (): void => {
 
 const drawMetaBlock = (): void => {
     const metaTop = y;
-    const metaHeight = 31;
+    const metaHeight = 38;
     const halfWidth = contentWidth / 2;
     const rowHeight = 6.5;
     const leftX = margin + 3;
@@ -845,12 +936,14 @@ const drawMetaBlock = (): void => {
     const rowsLeft = [
         ['Sucursal', this.branchName(sale.branchId)],
         ['Cliente', sale.customerFullName || '-'],
-        ['Documento', sale.customerDocument || sale.customerTaxId || '-']
+        ['Documento', sale.customerDocument || sale.customerTaxId || '-'],
+        ['Pago', this.salePaymentMethodSummary(sale)]
     ];
     const rowsRight = [
         ['Estado', this.saleStatusLabel(sale)],
         ['Entrega', sale.hasDelivery ? 'Con envio' : 'Retiro en local'],
-        ['Items', `${sale.details.length}`]
+        ['Items', `${sale.details.length}`],
+        ['Cobrado', formatCurrency(this.saleCoveredAmount(sale))]
     ];
 
     doc.setDrawColor(185, 185, 185);
@@ -1053,6 +1146,17 @@ transportStatusChipClass(sale: SaleResponse): string {
     }
 }
 
+salePaymentMethodSummary(sale: SaleResponse): string {
+    return paymentMethodSummary(sale.payments, sale.tradeIns);
+}
+
+saleCoveredAmount(sale: SaleResponse): number {
+    return roundMoney(
+        (sale.payments ?? []).reduce((sum, item) => sum + Number(item.amount || 0), 0)
+        + (sale.tradeIns ?? []).reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    );
+}
+
 trackByItem(_: number, item: DraftItem): string {
     return item.product.id;
 }
@@ -1110,6 +1214,15 @@ handleDocumentClick(event: MouseEvent): void {
         error: err => {
             this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron cargar los productos');
             this.loadingProducts = false;
+        }
+    });
+}
+
+    private loadWhatsAppConfig(): void {
+    this.companyService.getCurrentCompany().subscribe({
+        next: company => {
+            this.whatsAppEnabled = Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled);
+            this.whatsAppPhoneNumber = company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? null;
         }
     });
 }
@@ -1258,27 +1371,80 @@ if (form === this.editLineForm) {
 
     if (existing) {
         existing.quantity = nextQuantity;
-        existing.total = existing.quantity * existing.product.price;
+        existing.total = existing.quantity * productPublicPrice(existing.product);
     } else {
-        target.unshift({ product, quantity: Math.floor(quantity), total: product.price * Math.floor(quantity) });
+        target.unshift({ product, quantity: Math.floor(quantity), total: productPublicPrice(product) * Math.floor(quantity) });
     }
 
     return true;
 }
 
-    private buildRequest(form: FormGroup, items: DraftItem[], customerId: string | null = null) {
+    private buildRequest(form: FormGroup, items: DraftItem[], paymentState: SalePaymentDraftState, customerId: string | null = null) {
     const raw = form.getRawValue();
     return {
         branchId: raw.branchId,
         customerId,
         idSaleStatus: Number(raw.idSaleStatus ?? 1),
         hasDelivery: Boolean(raw.hasDelivery),
-        cashDrawerId: raw.cashDrawerId || null,
+        cashDrawerId: this.requiresCashDrawerFor(form, paymentState) ? raw.cashDrawerId || null : null,
+        payments: normalizeSalePayments(paymentState),
+        tradeIns: normalizeSaleTradeIns(paymentState),
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity
         }))
     };
+}
+
+    canSendSaleWhatsApp(sale: SaleResponse): boolean {
+    return this.whatsAppEnabled
+        && Boolean(this.whatsAppPhoneNumber)
+        && sale.idSaleStatus === 2
+        && Boolean(sale.customerId);
+}
+
+    private validatePaymentState(form: FormGroup, items: DraftItem[], paymentState: SalePaymentDraftState, mode: 'crear' | 'editar'): boolean {
+    const total = roundMoney(this.sum(items));
+    const payments = normalizeSalePayments(paymentState);
+    const tradeIns = normalizeSaleTradeIns(paymentState);
+    const coverage = roundMoney(
+        payments.reduce((sum, item) => sum + item.amount, 0)
+        + tradeIns.reduce((sum, item) => sum + item.amount, 0)
+    );
+    const isPaid = Number(form.get('idSaleStatus')?.value ?? 1) === 2;
+
+    if (paymentState.hasTradeIn) {
+        const hasIncompleteTradeIn = paymentState.tradeIns.some(item =>
+            (item.productId && (!Number.isFinite(Number(item.amount)) || Number(item.amount) <= 0 || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))
+            || (!item.productId && (Number(item.amount) > 0 || Number(item.quantity) > 1))
+        );
+
+        if (hasIncompleteTradeIn) {
+            this.toast.error('Completa producto, cantidad y monto en cada item de canje.');
+            return false;
+        }
+    }
+
+    if (isPaid && coverage !== total) {
+        this.toast.error(`La venta ${mode === 'crear' ? 'a crear' : 'editada'} debe quedar cancelada exacta con payments + tradeIns.`);
+        return false;
+    }
+
+    if (!isPaid && coverage > total) {
+        this.toast.error('Una venta en espera puede ser parcial, pero no superar el total.');
+        return false;
+    }
+
+    if (this.requiresCashDrawerFor(form, paymentState) && !form.get('cashDrawerId')?.value) {
+        this.toast.error('Selecciona una caja abierta si hay efectivo en una venta pagada.');
+        return false;
+    }
+
+    return true;
+}
+
+    private requiresCashDrawerFor(form: FormGroup, paymentState: SalePaymentDraftState): boolean {
+    return Number(form.get('idSaleStatus')?.value ?? 1) === 2 && hasCashPayment(paymentState);
 }
 
     private optionalNumber(value: unknown): number | null {

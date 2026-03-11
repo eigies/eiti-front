@@ -6,6 +6,9 @@ export interface BranchProductStockResponse {
     brand: string;
     name: string;
     price: number;
+    publicPrice?: number | null;
+    costPrice?: number | null;
+    unitPrice?: number | null;
     onHandQuantity: number;
     reservedQuantity: number;
     availableQuantity: number;

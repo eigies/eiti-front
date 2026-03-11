@@ -1,9 +1,13 @@
+import { SalePaymentRequest, SalePaymentResponse, SaleTradeInRequest, SaleTradeInResponse } from './sale-payment.models';
+
 export interface CreateSaleRequest {
     branchId: string;
     customerId?: string | null;
     idSaleStatus: number;
     hasDelivery: boolean;
     cashDrawerId?: string | null;
+    payments: SalePaymentRequest[];
+    tradeIns: SaleTradeInRequest[];
     details: CreateSaleDetailRequest[];
 }
 
@@ -33,6 +37,8 @@ export interface SaleResponse {
     paidAt?: string | null;
     updatedAt?: string | null;
     isModified: boolean;
+    payments?: SalePaymentResponse[];
+    tradeIns?: SaleTradeInResponse[];
     details: SaleDetailResponse[];
 }
 
@@ -43,4 +49,12 @@ export interface SaleDetailResponse {
     quantity: number;
     unitPrice: number;
     totalAmount: number;
+}
+
+export interface SendSaleWhatsAppResponse {
+    saleId: string;
+    toPhone: string;
+    message: string;
+    launchUrl: string;
+    requiresUserAction: boolean;
 }

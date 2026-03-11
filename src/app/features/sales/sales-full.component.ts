@@ -11,11 +11,12 @@ import { BranchService } from '../../core/services/branch.service';
 import { CashService } from '../../core/services/cash.service';
 import { StockService } from '../../core/services/stock.service';
 import { SaleService } from '../../core/services/sale.service';
+import { CompanyService } from '../../core/services/company.service';
 import { EmployeeService } from '../../core/services/employee.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
-import { ProductResponse } from '../../core/models/product.models';
+import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
 import { BranchResponse } from '../../core/models/branch.models';
 import { CashDrawerResponse } from '../../core/models/cash.models';
 import { DriverResponse } from '../../core/models/employee.models';
@@ -23,11 +24,22 @@ import { VehicleResponse } from '../../core/models/vehicle.models';
 import { BranchProductStockResponse } from '../../core/models/stock.models';
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
+import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
+import {
+  SalePaymentDraftState,
+  createEmptySalePaymentDraftState,
+  hasCashPayment,
+  normalizeSalePayments,
+  normalizeSaleTradeIns,
+  paymentMethodSummary,
+  roundMoney,
+  salePaymentCoverage
+} from '../../core/models/sale-payment.models';
 
 @Component({
   selector: 'app-sales-full',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent, SalePaymentInlineComponent],
   templateUrl: './sales-full.component.html',
   styleUrls: ['./sales-full.component.css']
 })
@@ -49,6 +61,8 @@ export class SalesFullComponent implements OnInit {
   productModalOpen = false;
   selectedProductIds = new Set<string>();
   selectionQuantityByProductId = new Map<string, number>();
+  paymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
+  whatsAppEnabled = false;
   readonly documentTypes = [{ value: 1, label: 'DNI' }, { value: 2, label: 'Pasaporte' }, { value: 3, label: 'LE' }, { value: 4, label: 'LC' }, { value: 5, label: 'Otro' }];
   readonly searchForm = this.fb.group({ query: [''] });
   readonly customerForm = this.fb.group({ firstName: ['', Validators.required], lastName: ['', Validators.required], email: ['', [Validators.required, Validators.email]], phone: ['', Validators.required], documentType: [1, Validators.required], documentNumber: ['', Validators.required], taxId: [''] });
@@ -57,7 +71,7 @@ export class SalesFullComponent implements OnInit {
   readonly itemForm = this.fb.group({ productId: ['', Validators.required], quantity: [1, [Validators.required, Validators.min(1)]] });
   readonly transportForm = this.fb.group({ driverEmployeeId: ['', Validators.required], vehicleId: ['', Validators.required], notes: [''] });
 
-  constructor(private readonly fb: FormBuilder, private readonly customerService: CustomerService, private readonly productService: ProductService, private readonly branchService: BranchService, private readonly cashService: CashService, private readonly stockService: StockService, private readonly saleService: SaleService, private readonly employeeService: EmployeeService, private readonly vehicleService: VehicleService, private readonly toast: ToastService, private readonly router: Router, public readonly auth: AuthService) { }
+  constructor(private readonly fb: FormBuilder, private readonly customerService: CustomerService, private readonly productService: ProductService, private readonly branchService: BranchService, private readonly cashService: CashService, private readonly stockService: StockService, private readonly saleService: SaleService, private readonly companyService: CompanyService, private readonly employeeService: EmployeeService, private readonly vehicleService: VehicleService, private readonly toast: ToastService, private readonly router: Router, public readonly auth: AuthService) { }
 
   ngOnInit(): void {
     this.productService.listProducts().subscribe({ next: products => this.products = [...products].sort((left, right) => this.productLabel(left).localeCompare(this.productLabel(right))) });
@@ -72,6 +86,11 @@ export class SalesFullComponent implements OnInit {
     });
     this.employeeService.listDrivers().subscribe({ next: drivers => this.drivers = drivers });
     this.vehicleService.listVehicles().subscribe({ next: vehicles => this.vehicles = vehicles });
+    this.companyService.getCurrentCompany().subscribe({
+      next: company => {
+        this.whatsAppEnabled = Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled);
+      }
+    });
   }
 
   get requiresDelivery(): boolean { return Boolean(this.saleForm.get('hasDelivery')?.value); }
@@ -81,6 +100,9 @@ export class SalesFullComponent implements OnInit {
   get isConfirmationStep(): boolean { return this.step === this.confirmationStepNumber; }
   get confirmationStepNumber(): number { return this.requiresDelivery ? 6 : 5; }
   get isPaid(): boolean { return Number(this.saleForm.get('idSaleStatus')?.value ?? 1) === 2; }
+  get paymentCoverage(): number { return salePaymentCoverage(this.paymentState); }
+  get paymentRemaining(): number { return roundMoney(this.total - this.paymentCoverage); }
+  get requiresCashDrawer(): boolean { return this.isPaid && hasCashPayment(this.paymentState); }
   get activeDrivers(): DriverResponse[] { return this.drivers.filter(driver => driver.isActive && !driver.isLicenseExpired); }
   get activeVehicles(): VehicleResponse[] { return this.vehicles.filter(vehicle => vehicle.isActive); }
   get total(): number { return this.draftItems.reduce((sum, item) => sum + item.total, 0); }
@@ -99,7 +121,8 @@ export class SalesFullComponent implements OnInit {
   get selectedDriverName(): string { return this.activeDrivers.find(driver => driver.employeeId === this.transportForm.get('driverEmployeeId')?.value)?.fullName || 'Sin conductor'; }
   get selectedVehicleName(): string { const vehicle = this.activeVehicles.find(item => item.id === this.transportForm.get('vehicleId')?.value); return vehicle ? `${vehicle.plate} / ${vehicle.model}` : 'Sin vehiculo'; }
   get selectedBranchName(): string { return this.branches.find(branch => branch.id === this.saleForm.get('branchId')?.value)?.name || 'Sin sucursal'; }
-  get selectedDrawerName(): string { return this.isPaid ? this.cashDrawers.find(drawer => drawer.id === this.saleForm.get('cashDrawerId')?.value)?.name || 'Caja pendiente' : 'Sin cobro en caja'; }
+  get selectedDrawerName(): string { return this.requiresCashDrawer ? this.cashDrawers.find(drawer => drawer.id === this.saleForm.get('cashDrawerId')?.value)?.name || 'Caja pendiente' : 'Sin cobro en caja'; }
+  get paymentMethodPreview(): string { return paymentMethodSummary(normalizeSalePayments(this.paymentState), normalizeSaleTradeIns(this.paymentState)); }
 
   setCustomerMode(mode: 'existing' | 'new'): void { this.customerMode = mode; if (mode === 'new') { this.selectedExistingCustomer = null; } }
   searchCustomers(): void {
@@ -222,6 +245,7 @@ export class SalesFullComponent implements OnInit {
   jumpToStep(targetStep: number): void { if (this.canJumpToStep(targetStep)) { this.step = targetStep; } }
   jumpToSummaryStep(section: 'customer' | 'address' | 'sale' | 'transport'): void { if (section === 'customer') { this.step = this.customerMode === 'existing' ? 1 : 2; return; } if (section === 'address') { this.step = this.customerMode === 'existing' ? 1 : 3; return; } if (section === 'transport' && this.requiresDelivery) { this.step = 5; return; } this.step = 4; }
   nextStep(): void { if (!this.validateCurrentStep()) { return; } this.step = Math.min(this.totalSteps, this.step + 1); }
+  setCashDrawerId(value: string | null): void { this.saleForm.patchValue({ cashDrawerId: value ?? '' }); }
 
   submit(): void {
     if (!this.validateCurrentStep()) { return; }
@@ -231,8 +255,14 @@ export class SalesFullComponent implements OnInit {
   }
 
   private createSale(customerId: string | null): void {
-    const raw = this.saleForm.getRawValue();
-    this.saleService.createSale({ branchId: String(raw.branchId || ''), customerId, idSaleStatus: Number(raw.idSaleStatus ?? 1), hasDelivery: Boolean(raw.hasDelivery), cashDrawerId: raw.cashDrawerId || null, details: this.draftItems.map(item => ({ productId: item.product.id, quantity: item.quantity })) }).subscribe({
+    const request = this.buildSaleRequest(customerId);
+
+    if (!request) {
+      this.saving = false;
+      return;
+    }
+
+    this.saleService.createSale(request).subscribe({
       next: sale => {
         if (!this.requiresDelivery) { this.finish(); return; }
         const transport = this.transportForm.getRawValue();
@@ -278,7 +308,12 @@ export class SalesFullComponent implements OnInit {
     });
   }
 
-  private finish(): void { this.saving = false; this.toast.success('Venta completa creada'); this.router.navigate(['/sales']); }
+  private finish(): void {
+    this.saving = false;
+    const shouldSuggestWhatsApp = this.isPaid && this.whatsAppEnabled && this.customerHasPhone();
+    this.toast.success(shouldSuggestWhatsApp ? 'Venta completa creada. El WhatsApp queda disponible para envio manual en Ventas.' : 'Venta completa creada');
+    this.router.navigate(['/sales']);
+  }
 
   private validateCurrentStep(): boolean {
     if (this.step === 1 && this.customerMode === 'existing' && !this.selectedExistingCustomer) { this.toast.error('Selecciona un cliente o cambia a crear nuevo.'); return false; }
@@ -294,12 +329,65 @@ export class SalesFullComponent implements OnInit {
         this.toast.error('Agrega al menos un item para continuar.');
         return false;
       }
-      if (this.isPaid && !this.saleForm.get('cashDrawerId')?.value) {
-        this.toast.error('Selecciona una caja con sesion abierta para ventas pagadas.');
+      if (!this.validatePaymentState()) { return false; }
+    }
+    if (this.isTransportStep && this.transportForm.invalid) { this.transportForm.markAllAsTouched(); this.toast.error('Selecciona conductor y vehiculo para el envio.'); return false; }
+    return true;
+  }
+
+  private buildSaleRequest(customerId: string | null) {
+    const raw = this.saleForm.getRawValue();
+    const payments = normalizeSalePayments(this.paymentState);
+    const tradeIns = normalizeSaleTradeIns(this.paymentState);
+
+    return {
+      branchId: String(raw.branchId || ''),
+      customerId,
+      idSaleStatus: Number(raw.idSaleStatus ?? 1),
+      hasDelivery: Boolean(raw.hasDelivery),
+      cashDrawerId: this.requiresCashDrawer ? raw.cashDrawerId || null : null,
+      payments,
+      tradeIns,
+      details: this.draftItems.map(item => ({ productId: item.product.id, quantity: item.quantity }))
+    };
+  }
+
+  private validatePaymentState(): boolean {
+    const payments = normalizeSalePayments(this.paymentState);
+    const tradeIns = normalizeSaleTradeIns(this.paymentState);
+    const coverage = roundMoney(
+      payments.reduce((sum, item) => sum + item.amount, 0)
+      + tradeIns.reduce((sum, item) => sum + item.amount, 0)
+    );
+    const total = roundMoney(this.total);
+
+    if (this.paymentState.hasTradeIn) {
+      const hasIncompleteTradeIn = this.paymentState.tradeIns.some(item =>
+        (item.productId && (!Number.isFinite(Number(item.amount)) || Number(item.amount) <= 0 || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))
+        || (!item.productId && (Number(item.amount) > 0 || Number(item.quantity) > 1))
+      );
+
+      if (hasIncompleteTradeIn) {
+        this.toast.error('Completa producto, cantidad y monto en cada canje cargado.');
         return false;
       }
     }
-    if (this.isTransportStep && this.transportForm.invalid) { this.transportForm.markAllAsTouched(); this.toast.error('Selecciona conductor y vehiculo para el envio.'); return false; }
+
+    if (this.isPaid && coverage !== total) {
+      this.toast.error('Una venta pagada debe quedar cancelada exactamente con payments + tradeIns.');
+      return false;
+    }
+
+    if (!this.isPaid && coverage > total) {
+      this.toast.error('Una venta en espera puede tener cobro parcial, pero nunca superar el total.');
+      return false;
+    }
+
+    if (this.requiresCashDrawer && !this.saleForm.get('cashDrawerId')?.value) {
+      this.toast.error('Selecciona una caja con sesion abierta si hay efectivo en una venta pagada.');
+      return false;
+    }
+
     return true;
   }
 
@@ -310,9 +398,9 @@ export class SalesFullComponent implements OnInit {
     if (nextQuantity > maxAllowed) { this.toast.error(`No hay stock suficiente para ${product.brand} / ${product.name}. Disponible: ${Math.max(maxAllowed, 0)}.`); return false; }
     if (existing) {
       existing.quantity = nextQuantity;
-      existing.total = existing.quantity * product.price;
+      existing.total = existing.quantity * productPublicPrice(product);
     } else {
-      this.draftItems.unshift({ product, quantity: Math.floor(quantity), total: product.price * Math.floor(quantity) });
+      this.draftItems.unshift({ product, quantity: Math.floor(quantity), total: productPublicPrice(product) * Math.floor(quantity) });
     }
     return true;
   }
@@ -359,6 +447,10 @@ export class SalesFullComponent implements OnInit {
     }
 
     return (err as any)?.error?.detail || (err as any)?.error?.message || fallback;
+  }
+
+  private customerHasPhone(): boolean {
+    return Boolean(String(this.customerForm.get('phone')?.value || this.selectedExistingCustomer?.phone || '').trim());
   }
 
   private nullIfEmpty(value: string | null | undefined): string | null { return value && value.trim().length > 0 ? value.trim() : null; }
