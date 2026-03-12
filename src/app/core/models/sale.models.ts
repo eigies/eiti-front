@@ -33,6 +33,10 @@ export interface SaleResponse {
     idSaleStatus: number;
     saleStatus: string;
     totalAmount: number;
+    monetaryPaidAmount?: number;
+    tradeInAmount?: number;
+    settledAmount?: number;
+    pendingAmount?: number;
     createdAt: string;
     paidAt?: string | null;
     updatedAt?: string | null;

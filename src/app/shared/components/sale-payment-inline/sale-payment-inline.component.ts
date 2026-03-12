@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CashDrawerResponse } from '../../../core/models/cash.models';
-import { ProductResponse } from '../../../core/models/product.models';
+import { ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../../core/models/product.models';
 import {
     SalePaymentDraftState,
     SALE_PAYMENT_METHODS,
@@ -118,11 +118,29 @@ export class SalePaymentInlineComponent {
 
     updateTradeInProduct(index: number, value: string): void {
         this.state.tradeIns[index].productId = value;
+        const product = this.products.find(item => item.id === value);
+        if (!product) {
+            return;
+        }
+
+        if (productAllowsManualSaleValue(product)) {
+            this.state.tradeIns[index].amount = 0;
+            return;
+        }
+
+        if (this.state.tradeIns[index].amount <= 0) {
+            this.state.tradeIns[index].amount = roundMoney(productPublicPrice(product) * this.state.tradeIns[index].quantity);
+        }
     }
 
     updateTradeInQuantity(index: number, value: string): void {
         const parsed = Math.floor(Number(value) || 0);
         this.state.tradeIns[index].quantity = parsed > 0 ? parsed : 1;
+
+        const product = this.products.find(item => item.id === this.state.tradeIns[index].productId);
+        if (product && !productAllowsManualSaleValue(product) && this.state.tradeIns[index].amount <= 0) {
+            this.state.tradeIns[index].amount = roundMoney(productPublicPrice(product) * this.state.tradeIns[index].quantity);
+        }
     }
 
     updateTradeInAmount(index: number, value: string): void {
@@ -144,6 +162,24 @@ export class SalePaymentInlineComponent {
 
         const product = this.products.find(item => item.id === productId);
         return product ? `${product.brand} / ${product.name}` : 'Producto no encontrado';
+    }
+
+    isManualValueTradeIn(productId: string): boolean {
+        const product = this.products.find(item => item.id === productId);
+        return !!product && productAllowsManualSaleValue(product);
+    }
+
+    tradeInAmountHint(productId: string, quantity: number): string {
+        const product = this.products.find(item => item.id === productId);
+        if (!product) {
+            return 'Selecciona un producto para cargar el valor reconocido.';
+        }
+
+        if (productAllowsManualSaleValue(product)) {
+            return 'Valor definido en venta: este producto se identifica para canje y el monto se ingresa manualmente en la operacion.';
+        }
+
+        return `Referencia maestro: ${roundMoney(productPublicPrice(product) * Math.max(1, quantity))}`;
     }
 
     trackByIndex(index: number): number {

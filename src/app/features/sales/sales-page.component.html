@@ -25,11 +25,12 @@
     </button>
 
     <div class="panel__body" *ngIf="createExpanded">
-      <div class="quick-sale-layout">
-        <section class="quick-sale-card">
+      <div class="quick-sale-flow">
+        <section class="quick-sale-card quick-sale-card--config">
           <div class="quick-sale-card__head">
+            <p class="quick-sale-card__eyebrow">Paso 1</p>
             <h2>Configuracion de la venta</h2>
-            <p>Define sucursal, estado, modalidad y caja antes de cargar productos.</p>
+            <p>Define sucursal, estado y modalidad antes de cargar productos.</p>
           </div>
           <form class="grid grid--create" [formGroup]="lineForm">
             <label class="field">
@@ -56,9 +57,64 @@
                 <span class="toggle-check__text">{{ lineForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
               </label>
             </div>
-
           </form>
+        </section>
 
+        <section class="quick-sale-card quick-sale-card--products">
+          <div class="quick-sale-card__head">
+            <p class="quick-sale-card__eyebrow">Paso 2</p>
+            <h2>Carga de productos</h2>
+            <p>Busca en el catalogo y arma el borrador de la venta sin salir de esta vista.</p>
+          </div>
+          <div class="toolbar toolbar--create toolbar--create-soft">
+            <div class="toolbar__lead">
+              <span class="toolbar__label">Productos de la venta</span>
+            </div>
+            <button class="btn btn--secondary btn--feature" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" (click)="openCreateProductModal()">Buscar y agregar productos</button>
+            <span class="picker-summary" *ngIf="createSelectedProductsCount > 0">{{ createSelectedProductsCount }} producto(s) seleccionado(s)</span>
+            <span class="picker-summary" *ngIf="loadingProducts">Cargando catalogo...</span>
+          </div>
+          <div class="quick-sale-draft">
+            <div class="quick-sale-draft__head">
+              <span class="quick-sale-draft__label">Borrador actual</span>
+              <span class="picker-summary" *ngIf="draftItems.length > 0">{{ draftItems.length }} item(s) en la venta</span>
+            </div>
+            <div class="table-wrap" *ngIf="draftItems.length > 0; else emptyDraft">
+              <table class="table table--draft">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Disponible</th>
+                    <th>Cantidad</th>
+                    <th>Unitario</th>
+                    <th>Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of draftItems; trackBy: trackByItem">
+                    <td>
+                      <strong>{{ item.product.brand }} / {{ item.product.name }}</strong>
+                      <span>{{ item.product.code }}</span>
+                    </td>
+                    <td>{{ availableForCreate(item.product.id) }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeDraftItem(item.product.id)">Quitar</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="quick-sale-stage">
+          <div class="quick-sale-stage__head">
+            <p class="quick-sale-card__eyebrow">Paso 3</p>
+            <h2>Cobro y medios de pago</h2>
+            <p>Define el metodo principal, combina pagos si hace falta y revisa el saldo desde un solo bloque.</p>
+          </div>
           <app-sale-payment-inline
             [total]="draftTotal"
             [statusId]="lineForm.get('idSaleStatus')?.value ?? 1"
@@ -67,68 +123,19 @@
             [state]="createPaymentState"
             [cashDrawerId]="lineForm.get('cashDrawerId')?.value ?? null"
             headline="Cobro integrado en la venta"
-            description="Define pago principal, pagos combinados y canje sin salir de la configuracion de la venta."
+            description="Carga pago principal, pagos combinados y canje desde la misma venta."
             (cashDrawerIdChange)="setCreateCashDrawerId($event)">
           </app-sale-payment-inline>
         </section>
-
-        <section class="quick-sale-card">
-          <div class="quick-sale-card__head">
-            <h2>Carga de productos</h2>
-            <p>Busca en el catalogo y agrega items al borrador de venta.</p>
-          </div>
-          <div class="toolbar toolbar--create toolbar--create-soft">
-            <div class="toolbar__lead">
-              <span class="toolbar__label">Productos de la venta</span>
-            </div>
-            <button class="btn btn--secondary" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" (click)="openCreateProductModal()">Buscar y agregar productos</button>
-            <span class="picker-summary" *ngIf="createSelectedProductsCount > 0">{{ createSelectedProductsCount }} producto(s) seleccionado(s)</span>
-            <span class="picker-summary" *ngIf="loadingProducts">Cargando catalogo...</span>
-          </div>
-        </section>
       </div>
 
-      <section class="quick-sale-card quick-sale-card--draft">
-        <div class="quick-sale-card__head">
-          <h2>Borrador de venta</h2>
-          <p>Revisa cantidades, disponibilidad y total por item antes de confirmar.</p>
-        </div>
-        <div class="table-wrap" *ngIf="draftItems.length > 0; else emptyDraft">
-          <table class="table table--draft">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Disponible</th>
-                <th>Cantidad</th>
-                <th>Unitario</th>
-                <th>Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of draftItems; trackBy: trackByItem">
-                <td>
-                  <strong>{{ item.product.brand }} / {{ item.product.name }}</strong>
-                  <span>{{ item.product.code }}</span>
-                </td>
-                <td>{{ availableForCreate(item.product.id) }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'USD':'symbol':'1.2-2' }}</td>
-                <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
-                <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeDraftItem(item.product.id)">Quitar</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
       <ng-template #emptyDraft>
-        <div class="empty">Todavia no agregaste productos a la venta.</div>
+        <div class="empty empty--soft">Todavia no agregaste productos a la venta.</div>
       </ng-template>
 
       <div class="summary-row summary-row--create">
         <div class="metric-card">
-          <span>Total actual</span>
+          <span>Paso 4 · Confirmacion</span>
           <strong>{{ draftTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
         </div>
         <button class="btn" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" [disabled]="saving || draftItems.length === 0" (click)="createSale()">{{ saving ? 'Guardando...' : 'Crear venta' }}</button>

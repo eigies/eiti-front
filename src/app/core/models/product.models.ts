@@ -8,6 +8,7 @@ export interface CreateProductRequest {
     price?: number | null;
     costPrice: number;
     unitPrice?: number | null;
+    allowsManualValueInSale: boolean;
 }
 
 export interface ProductResponse {
@@ -21,6 +22,7 @@ export interface ProductResponse {
     publicPrice?: number | null;
     costPrice?: number | null;
     unitPrice?: number | null;
+    allowsManualValueInSale: boolean;
     totalOnHandQuantity: number;
     totalReservedQuantity: number;
     totalAvailableQuantity: number;
@@ -46,8 +48,13 @@ export interface UpdateProductRequest {
     price?: number | null;
     costPrice: number;
     unitPrice?: number | null;
+    allowsManualValueInSale: boolean;
 }
 
 export function productPublicPrice(product: Pick<ProductResponse, 'publicPrice' | 'price'>): number {
     return Number(product.publicPrice ?? product.price ?? 0);
+}
+
+export function productAllowsManualSaleValue(product: Pick<ProductResponse, 'allowsManualValueInSale'>): boolean {
+    return product.allowsManualValueInSale;
 }

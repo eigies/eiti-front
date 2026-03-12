@@ -10,7 +10,7 @@
   <div class="payment-shell">
     <div class="payment-shell__main">
       <div class="toggle-grid">
-        <div class="field">
+        <div class="field field--toggle">
           <span class="field__label">Pago combinado</span>
           <label class="toggle-check">
           <input type="checkbox" [checked]="state.hasCombinedPayment" (change)="toggleCombinedPayment($any($event.target).checked)" />
@@ -19,7 +19,7 @@
           </label>
         </div>
 
-        <div class="field">
+        <div class="field field--toggle">
           <span class="field__label">Canje</span>
           <label class="toggle-check">
           <input type="checkbox" [checked]="state.hasTradeIn" (change)="toggleTradeIn($any($event.target).checked)" />
@@ -77,7 +77,7 @@
               <span class="field__label">Producto</span>
               <select class="control" [value]="tradeIn.productId" (change)="updateTradeInProduct(index, $any($event.target).value)">
                 <option value="">Seleccionar producto</option>
-                <option *ngFor="let product of products" [value]="product.id">{{ product.code }} | {{ product.brand }} / {{ product.name }}</option>
+                <option *ngFor="let product of products" [value]="product.id">{{ product.code }} | {{ product.brand }} / {{ product.name }}{{ isManualValueTradeIn(product.id) ? ' · valor en venta' : '' }}</option>
               </select>
             </label>
 
@@ -87,28 +87,37 @@
             </label>
 
             <label class="field">
-              <span class="field__label">Monto reconocido</span>
-              <input class="control" type="number" min="0" step="0.01" [value]="tradeIn.amount" (input)="updateTradeInAmount(index, $any($event.target).value)" />
+              <span class="field__label">{{ isManualValueTradeIn(tradeIn.productId) ? 'Valor tomado en venta' : 'Monto reconocido' }}</span>
+              <input class="control" type="number" min="0" step="0.01" [value]="tradeIn.amount" (input)="updateTradeInAmount(index, $any($event.target).value)" [placeholder]="isManualValueTradeIn(tradeIn.productId) ? 'Definir valor de canje' : ''" />
             </label>
 
             <button class="line-remove" type="button" (click)="removeTradeInLine(index)">Quitar</button>
           </div>
+          <p class="tradein-note" [class.tradein-note--manual]="isManualValueTradeIn(tradeIn.productId)">{{ tradeInAmountHint(tradeIn.productId, tradeIn.quantity) }}</p>
         </div>
       </div>
     </div>
 
     <aside class="payment-summary">
-      <div class="payment-summary__card">
-        <span>Total venta</span>
-        <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
-      </div>
-      <div class="payment-summary__card">
-        <span>Cancelado</span>
-        <strong>{{ coverage | currency:'USD':'symbol':'1.2-2' }}</strong>
-      </div>
-      <div class="payment-summary__card" [class.payment-summary__card--ok]="remaining === 0" [class.payment-summary__card--warn]="remaining > 0" [class.payment-summary__card--over]="remaining < 0">
-        <span>{{ remaining >= 0 ? 'Restante' : 'Excedido' }}</span>
-        <strong>{{ (remaining >= 0 ? remaining : -remaining) | currency:'USD':'symbol':'1.2-2' }}</strong>
+      <div class="payment-summary__group">
+        <div class="payment-summary__head">
+          <span class="payment-summary__eyebrow">Resumen</span>
+          <strong>Importes de la venta</strong>
+        </div>
+        <div class="payment-summary__totals">
+          <div class="payment-summary__item payment-summary__item--total">
+            <span>Total venta</span>
+            <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
+          </div>
+          <div class="payment-summary__item">
+            <span>Cancelado</span>
+            <strong>{{ coverage | currency:'USD':'symbol':'1.2-2' }}</strong>
+          </div>
+          <div class="payment-summary__item payment-summary__item--balance" [class.payment-summary__item--ok]="remaining === 0" [class.payment-summary__item--warn]="remaining > 0" [class.payment-summary__item--over]="remaining < 0">
+            <span>{{ remaining >= 0 ? 'Restante' : 'Excedido' }}</span>
+            <strong>{{ (remaining >= 0 ? remaining : -remaining) | currency:'USD':'symbol':'1.2-2' }}</strong>
+          </div>
+        </div>
       </div>
 
       <div class="drawer-card" *ngIf="requiresCashDrawer">

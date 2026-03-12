@@ -9,6 +9,7 @@ export interface BranchProductStockResponse {
     publicPrice?: number | null;
     costPrice?: number | null;
     unitPrice?: number | null;
+    allowsManualValueInSale: boolean;
     onHandQuantity: number;
     reservedQuantity: number;
     availableQuantity: number;

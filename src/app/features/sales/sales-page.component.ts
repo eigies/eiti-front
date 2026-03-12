@@ -524,18 +524,35 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                     return;
                 }
 
+                const existingPayments = (sale.payments ?? []).map(payment => ({
+                    idPaymentMethod: payment.idPaymentMethod,
+                    amount: roundMoney(payment.amount),
+                    notes: payment.notes ?? null
+                }));
+                const existingTradeIns = (sale.tradeIns ?? []).map(tradeIn => ({
+                    productId: tradeIn.productId,
+                    quantity: tradeIn.quantity,
+                    amount: roundMoney(tradeIn.amount)
+                }));
+                const pendingAmount = roundMoney(sale.pendingAmount ?? sale.totalAmount);
+
                 this.saleService.updateSale(sale.id, {
                     branchId: sale.branchId,
                     customerId: sale.customerId ?? null,
                     idSaleStatus: 2,
                     hasDelivery: sale.hasDelivery,
                     cashDrawerId: drawer.id,
-                    payments: [{
-                        idPaymentMethod: SALE_PAYMENT_METHOD_CASH,
-                        amount: roundMoney(sale.totalAmount),
-                        notes: null
-                    }],
-                    tradeIns: [],
+                    payments: pendingAmount > 0
+                        ? [
+                            ...existingPayments,
+                            {
+                                idPaymentMethod: SALE_PAYMENT_METHOD_CASH,
+                                amount: pendingAmount,
+                                notes: null
+                            }
+                        ]
+                        : existingPayments,
+                    tradeIns: existingTradeIns,
                     details: sale.details.map(detail => ({
                         productId: detail.productId,
                         quantity: detail.quantity
