@@ -10,6 +10,7 @@ import { ProductService } from '../../core/services/product.service';
 import { SaleService } from '../../core/services/sale.service';
 import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
+import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
 import { SaleDetailResponse, SaleResponse } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
@@ -85,6 +86,11 @@ export class SalesPageComponent implements OnInit {
     editProductQuery = '';
     showEditProductResults = false;
     createProductModalOpen = false;
+    createCustomerId: string | null = null;
+    createCustomerQuery = '';
+    createCustomerSuggestions: CustomerSearchItem[] = [];
+    showCreateCustomerResults = false;
+    private customerSearchTimer: ReturnType<typeof setTimeout> | null = null;
     createSelectedProductIds = new Set<string>();
     createSelectionQuantityByProductId = new Map<string, number>();
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
@@ -270,7 +276,36 @@ export class SalesPageComponent implements OnInit {
         this.addItem(this.editLineForm, this.editItems);
     }
 
-    handleCreateProductInput(query: string): void {
+    handleCreateCustomerInput(query: string): void {
+    this.createCustomerQuery = query;
+    this.createCustomerId = null;
+    this.showCreateCustomerResults = true;
+    if (this.customerSearchTimer) {
+        clearTimeout(this.customerSearchTimer);
+    }
+    this.customerSearchTimer = setTimeout(() => {
+        this.customerService.searchCustomers(query).subscribe({
+            next: results => this.createCustomerSuggestions = results,
+            error: () => this.createCustomerSuggestions = []
+        });
+    }, 300);
+}
+
+selectCreateCustomer(customer: CustomerSearchItem): void {
+    this.createCustomerId = customer.id;
+    this.createCustomerQuery = customer.fullName || customer.name || customer.email;
+    this.showCreateCustomerResults = false;
+    this.createCustomerSuggestions = [];
+}
+
+clearCreateCustomer(): void {
+    this.createCustomerId = null;
+    this.createCustomerQuery = '';
+    this.createCustomerSuggestions = [];
+    this.showCreateCustomerResults = false;
+}
+
+handleCreateProductInput(query: string): void {
         this.createProductQuery = query;
     }
 
@@ -377,7 +412,7 @@ if (!this.validatePaymentState(this.lineForm, this.draftItems, this.createPaymen
 }
 
 this.saving = true;
-this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState)).subscribe({
+this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId)).subscribe({
     next: () => {
         this.toast.success('Venta creada');
         const branchId = this.lineForm.get('branchId')?.value ?? '';
@@ -388,6 +423,10 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.createProductModalOpen = false;
         this.createSelectedProductIds.clear();
         this.createSelectionQuantityByProductId.clear();
+        this.createCustomerId = null;
+        this.createCustomerQuery = '';
+        this.createCustomerSuggestions = [];
+        this.showCreateCustomerResults = false;
         this.saving = false;
         this.currentSalesPage = 1;
         this.loadStockForBranch(branchId, true);
@@ -1219,6 +1258,10 @@ handleDocumentClick(event: MouseEvent): void {
     if(this.showEditProductResults && this.editProductPicker && target && !this.editProductPicker.nativeElement.contains(target)) {
     this.showEditProductResults = false;
 }
+
+    if (this.showCreateCustomerResults) {
+        this.showCreateCustomerResults = false;
+    }
     }
 
     private loadProducts(): void {

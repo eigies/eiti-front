@@ -112,9 +112,41 @@
         <section class="quick-sale-stage">
           <div class="quick-sale-stage__head">
             <p class="quick-sale-card__eyebrow">Paso 3</p>
-            <h2>Cobro y medios de pago</h2>
-            <p>Define el metodo principal, combina pagos si hace falta y revisa el saldo desde un solo bloque.</p>
+            <h2>Cliente y cobro</h2>
+            <p>Asocia un cliente existente (opcional) y define el metodo de pago.</p>
           </div>
+
+          <div class="customer-picker" style="position:relative;margin-bottom:1rem">
+            <label class="field">
+              <span class="field__label">Cliente <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+              <div style="display:flex;gap:.5rem;align-items:center">
+                <input
+                  class="control"
+                  type="text"
+                  [value]="createCustomerQuery"
+                  (input)="handleCreateCustomerInput($any($event.target).value)"
+                  (focus)="showCreateCustomerResults = createCustomerSuggestions.length > 0"
+                  placeholder="Buscar por nombre, email o documento..."
+                  autocomplete="off"
+                  style="flex:1" />
+                <button *ngIf="createCustomerId" class="btn btn--ghost btn--sm" type="button" (click)="clearCreateCustomer()" title="Quitar cliente">✕</button>
+              </div>
+            </label>
+            <div *ngIf="showCreateCustomerResults && createCustomerSuggestions.length > 0" class="product-picker__menu" style="position:absolute;top:100%;left:0;right:0;z-index:20">
+              <button
+                class="product-picker__option"
+                type="button"
+                *ngFor="let customer of createCustomerSuggestions"
+                (click)="selectCreateCustomer(customer)">
+                <strong>{{ customer.fullName || customer.name }}</strong>
+                <span>{{ customer.email }}<ng-container *ngIf="customer.documentNumber"> · {{ customer.documentNumber }}</ng-container></span>
+              </button>
+            </div>
+            <div *ngIf="createCustomerId" class="customer-selected-chip" style="margin-top:.4rem;padding:.4rem .75rem;border:1px solid #4ade8022;background:#4ade8008;font-size:.78rem;border-radius:2px;color:#4ade80">
+              Cliente asignado: <strong>{{ createCustomerQuery }}</strong>
+            </div>
+          </div>
+
           <app-sale-payment-inline
             [total]="draftTotal"
             [statusId]="lineForm.get('idSaleStatus')?.value ?? 1"
@@ -399,9 +431,9 @@
             </div>
 
             <div class="pagination" *ngIf="totalSaleDetailPages(sale) > 1">
-              <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, -1)">Anterior</button>
-              <span>Pagina {{ saleDetailPage(sale.id) }} de {{ totalSaleDetailPages(sale) }}</span>
-              <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, 1)">Siguiente</button>
+              <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, -1)" [disabled]="saleDetailPage(sale.id) <= 1">←</button>
+              <span>{{ saleDetailPage(sale.id) }} / {{ totalSaleDetailPages(sale) }}</span>
+              <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, 1)" [disabled]="saleDetailPage(sale.id) >= totalSaleDetailPages(sale)">→</button>
             </div>
           </div>
         </article>
@@ -412,9 +444,9 @@
       </ng-template>
 
       <div class="pagination pagination--footer" *ngIf="sales.length > salesPageSize">
-        <button class="btn btn--secondary btn--sm" type="button" (click)="goToSalesPage(currentSalesPage - 1)">Anterior</button>
-        <span>Pagina {{ currentSalesPage }} de {{ totalSalesPages }}</span>
-        <button class="btn btn--secondary btn--sm" type="button" (click)="goToSalesPage(currentSalesPage + 1)">Siguiente</button>
+        <button class="btn btn--ghost btn--sm" type="button" (click)="goToSalesPage(currentSalesPage - 1)" [disabled]="currentSalesPage <= 1">←</button>
+        <span>{{ currentSalesPage }} / {{ totalSalesPages }}</span>
+        <button class="btn btn--ghost btn--sm" type="button" (click)="goToSalesPage(currentSalesPage + 1)" [disabled]="currentSalesPage >= totalSalesPages">→</button>
       </div>
     </div>
   </section>

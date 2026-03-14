@@ -1,11 +1,20 @@
-﻿import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { WeatherService } from '../../core/services/weather.service';
+import { SaleService } from '../../core/services/sale.service';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
-import { AuthResponse } from '../../core/models/auth.models';
+import { SaleResponse } from '../../core/models/sale.models';
 import { PermissionCodes } from '../../core/models/permission.models';
+
+interface DayBar {
+  label: string;
+  dateKey: string;
+  total: number;
+  count: number;
+  heightPct: number;
+  isToday: boolean;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -14,116 +23,128 @@ import { PermissionCodes } from '../../core/models/permission.models';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnInit {
   readonly permissionCodes = PermissionCodes;
-  user: AuthResponse | null = null;
-  currentDate = new Date();
-  weatherTitle = 'Buscando ubicacion...';
-  weatherDescription = 'Permite acceso a tu ubicacion para ver el clima actual.';
-  weatherLoading = true;
-  private clockId?: ReturnType<typeof setInterval>;
-
-  tickers = Array.from({ length: 12 }, () =>
-    'EITI CLIENT MANAGEMENT | DAILY OVERVIEW | READY TO OPERATE |'
-  );
+  sales: SaleResponse[] = [];
+  loading = true;
+  selectedDayKey: string | null = null;
 
   constructor(
     public auth: AuthService,
-    private weather: WeatherService
-  ) { }
-
-  get currentDateLabel(): string {
-    return new Intl.DateTimeFormat('es-MX', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    }).format(this.currentDate);
-  }
-
-  get currentTimeLabel(): string {
-    return new Intl.DateTimeFormat('es-MX', {
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(this.currentDate);
-  }
-
-  get timezoneLabel(): string {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
-  }
-
-  get dayMoment(): string {
-    const hour = this.currentDate.getHours();
-
-    if (hour < 12) {
-      return 'Manana operativa';
-    }
-
-    if (hour < 19) {
-      return 'Ventana comercial activa';
-    }
-
-    return 'Cierre y seguimiento';
-  }
-
-  get focusHint(): string {
-    const hour = this.currentDate.getHours();
-
-    if (hour < 12) {
-      return 'Abrir ventas pendientes y actualizar pipeline';
-    }
-
-    if (hour < 19) {
-      return 'Priorizar cierres, cobros y seguimiento';
-    }
-
-    return 'Revisar resultados y dejar listo el proximo dia';
-  }
+    private saleService: SaleService
+  ) {}
 
   ngOnInit(): void {
-    this.user = this.auth.currentUser;
-    this.clockId = setInterval(() => {
-      this.currentDate = new Date();
-    }, 1000);
-    this.loadWeather();
+    const now = new Date();
+    const dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
+    this.saleService.listSales({ dateFrom }).subscribe({
+      next: sales => { this.sales = sales; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
   }
 
-  ngOnDestroy(): void {
-    if (this.clockId) {
-      clearInterval(this.clockId);
-    }
+  get username(): string {
+    return this.auth.currentUser?.username ?? '';
   }
 
-  private loadWeather(): void {
-    if (!('geolocation' in navigator)) {
-      this.weatherTitle = 'Clima no disponible';
-      this.weatherDescription = 'Tu navegador no soporta geolocalizacion.';
-      this.weatherLoading = false;
-      return;
+  get todayLabel(): string {
+    return new Intl.DateTimeFormat('es-AR', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(new Date());
+  }
+
+  get activeSales(): SaleResponse[] {
+    return this.sales.filter(s => s.idSaleStatus !== 3);
+  }
+
+  get paidSales(): SaleResponse[] {
+    return this.sales.filter(s => s.idSaleStatus === 2);
+  }
+
+  get pendingSales(): SaleResponse[] {
+    return this.sales.filter(s => s.idSaleStatus === 1);
+  }
+
+  get cancelledSales(): SaleResponse[] {
+    return this.sales.filter(s => s.idSaleStatus === 3);
+  }
+
+  get totalRevenue(): number {
+    return this.paidSales.reduce((sum, s) => sum + s.totalAmount, 0);
+  }
+
+  get pendingRevenue(): number {
+    return this.pendingSales.reduce((sum, s) => sum + s.totalAmount, 0);
+  }
+
+  get avgSaleValue(): number {
+    if (this.activeSales.length === 0) return 0;
+    return this.activeSales.reduce((sum, s) => sum + s.totalAmount, 0) / this.activeSales.length;
+  }
+
+  get paidPct(): number {
+    return this.sales.length === 0 ? 0 : Math.round(this.paidSales.length / this.sales.length * 100);
+  }
+
+  get pendingPct(): number {
+    return this.sales.length === 0 ? 0 : Math.round(this.pendingSales.length / this.sales.length * 100);
+  }
+
+  get cancelledPct(): number {
+    return this.sales.length === 0 ? 0 : Math.round(this.cancelledSales.length / this.sales.length * 100);
+  }
+
+  get recentSales(): SaleResponse[] {
+    return [...this.sales]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 6);
+  }
+
+  get displayedSales(): SaleResponse[] {
+    if (!this.selectedDayKey) return this.recentSales;
+    return [...this.sales]
+      .filter(s => new Date(s.createdAt).toLocaleDateString('en-CA') === this.selectedDayKey)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  get selectedDayLabel(): string {
+    if (!this.selectedDayKey) return '';
+    const d = new Date(this.selectedDayKey + 'T12:00:00');
+    return new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d);
+  }
+
+  selectDay(bar: DayBar): void {
+    this.selectedDayKey = this.selectedDayKey === bar.dateKey ? null : bar.dateKey;
+  }
+
+  get last7DaysBars(): DayBar[] {
+    const todayKey = new Date().toLocaleDateString('en-CA');
+    const bars: DayBar[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString('en-CA');
+      const raw = new Intl.DateTimeFormat('es-AR', { weekday: 'short' }).format(d);
+      const label = raw.charAt(0).toUpperCase() + raw.slice(1, 3);
+
+      const daySales = this.activeSales.filter(s => new Date(s.createdAt).toLocaleDateString('en-CA') === key);
+      const total = daySales.reduce((sum, s) => sum + s.totalAmount, 0);
+
+      bars.push({ label, dateKey: key, total, count: daySales.length, heightPct: 0, isToday: key === todayKey });
     }
 
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        this.weather.getCurrentWeather(coords.latitude, coords.longitude).subscribe({
-          next: (response) => {
-            const current = response.current;
-            this.weatherTitle = `${Math.round(current.temperature_2m)} C - ${this.weather.describe(current.weather_code)}`;
-            this.weatherDescription = `Sensacion ${Math.round(current.apparent_temperature)} C - ${current.is_day === 1 ? 'De dia' : 'De noche'}`;
-            this.weatherLoading = false;
-          },
-          error: () => {
-            this.weatherTitle = 'Clima no disponible';
-            this.weatherDescription = 'No se pudo consultar el servicio meteorologico.';
-            this.weatherLoading = false;
-          }
-        });
-      },
-      () => {
-        this.weatherTitle = 'Ubicacion no compartida';
-        this.weatherDescription = 'Activa la ubicacion para consultar el clima local.';
-        this.weatherLoading = false;
-      },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-    );
+    const max = Math.max(...bars.map(b => b.total), 1);
+    return bars.map(b => ({ ...b, heightPct: b.total > 0 ? Math.max(Math.round(b.total / max * 100), 5) : 0 }));
+  }
+
+  saleStatusLabel(status: number): string {
+    const map: Record<number, string> = { 1: 'En espera', 2: 'Pagada', 3: 'Cancelada' };
+    return map[status] ?? 'Desconocido';
+  }
+
+  saleStatusClass(status: number): string {
+    const map: Record<number, string> = { 1: 'st--pending', 2: 'st--paid', 3: 'st--cancelled' };
+    return map[status] ?? '';
   }
 }

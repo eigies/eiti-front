@@ -1,106 +1,170 @@
 <app-navbar></app-navbar>
 <div class="page">
-    <div class="hero">
-        <div class="hero__eyebrow">_ BIENVENIDO</div>
-        <h1 class="hero__title">
-            Hola, <span class="hero__username">{{ user?.username }}</span>
-        </h1>
-        <p class="hero__sub">Centro operativo diario para ventas, clientes y seguimiento comercial.</p>
+
+  <!-- HEADER -->
+  <header class="db-header">
+    <div>
+      <p class="eyebrow">_ PANEL COMERCIAL</p>
+      <h1 class="db-title">Hola, <span class="db-title__accent">{{ username }}</span></h1>
+    </div>
+    <div class="db-header__meta">
+      <span class="db-date">{{ todayLabel }}</span>
+      <span class="db-live"><span class="db-live__dot"></span>EN VIVO</span>
+    </div>
+  </header>
+
+  <!-- LOADING -->
+  <div class="db-loading" *ngIf="loading">
+    <span class="db-loading__dot"></span>
+    <span class="db-loading__dot"></span>
+    <span class="db-loading__dot"></span>
+    <span>Cargando datos del mes...</span>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <span class="kpi-label">Ventas del mes</span>
+        <strong class="kpi-value">{{ activeSales.length }}</strong>
+        <span class="kpi-sub">{{ pendingSales.length }} en espera · {{ paidSales.length }} pagadas</span>
+      </div>
+      <div class="kpi-card kpi-card--primary">
+        <span class="kpi-label">Ingresos cobrados</span>
+        <strong class="kpi-value">{{ totalRevenue | currency:'USD':'symbol':'1.0-0' }}</strong>
+        <span class="kpi-sub">{{ paidSales.length }} transacciones cerradas</span>
+      </div>
+      <div class="kpi-card kpi-card--warn">
+        <span class="kpi-label">Pendiente de cobro</span>
+        <strong class="kpi-value">{{ pendingRevenue | currency:'USD':'symbol':'1.0-0' }}</strong>
+        <span class="kpi-sub">{{ pendingSales.length }} venta(s) abiertas</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Ticket promedio</span>
+        <strong class="kpi-value">{{ avgSaleValue | currency:'USD':'symbol':'1.0-0' }}</strong>
+        <span class="kpi-sub">Sobre {{ activeSales.length }} ventas activas</span>
+      </div>
     </div>
 
-    <div class="cards-grid">
-        <a routerLink="/customers" class="card card--action">
-            <div class="card__icon">[]</div>
-            <div class="card__body">
-                <span class="card__label">CLIENTES</span>
-                <span class="card__title">Gestionar clientes</span>
-                <span class="card__desc">Crear y revisar registros comerciales.</span>
-            </div>
-            <span class="card__arrow">-></span>
-        </a>
+    <!-- CHARTS ZONE -->
+    <div class="charts-zone">
 
-        <a routerLink="/products" class="card card--action">
-            <div class="card__icon card__icon--amber">#</div>
-            <div class="card__body">
-                <span class="card__label">PRODUCTOS</span>
-                <span class="card__title">Gestionar productos</span>
-                <span class="card__desc">Mantener el catalogo listo para nuevas ventas.</span>
+      <!-- BAR CHART -->
+      <div class="data-panel">
+        <div class="data-panel__head">
+          <span class="data-panel__title">ACTIVIDAD — ÚLTIMOS 7 DÍAS</span>
+          <span class="data-panel__sub">Ventas activas por importe</span>
+        </div>
+        <div class="bar-chart" *ngIf="activeSales.length > 0; else emptyChart">
+          <button class="bar-col"
+            *ngFor="let bar of last7DaysBars; let i = index"
+            [style.--delay]="(i * 0.06) + 's'"
+            [style.--bh]="bar.heightPct + '%'"
+            [class.bar-col--selected]="selectedDayKey === bar.dateKey"
+            [class.bar-col--dimmed]="selectedDayKey && selectedDayKey !== bar.dateKey"
+            (click)="selectDay(bar)"
+            type="button">
+            <span class="bar-count" [class.bar-count--vis]="bar.count > 0">{{ bar.count > 0 ? bar.count : '&nbsp;' }}</span>
+            <div class="bar-shell">
+              <div class="bar-fill" [class.bar-fill--today]="bar.isToday" [class.bar-fill--selected]="selectedDayKey === bar.dateKey"></div>
             </div>
-            <span class="card__arrow">-></span>
-        </a>
+            <span class="bar-label" [class.bar-label--today]="bar.isToday" [class.bar-label--selected]="selectedDayKey === bar.dateKey">{{ bar.label }}</span>
+          </button>
+        </div>
+        <ng-template #emptyChart>
+          <div class="data-empty">Sin ventas activas este mes</div>
+        </ng-template>
+      </div>
 
-        <a routerLink="/company" class="card card--action">
-            <div class="card__icon">@</div>
-            <div class="card__body">
-                <span class="card__label">COMPANIA</span>
-                <span class="card__title">Editar compania</span>
-                <span class="card__desc">Actualizar identidad y dominio principal.</span>
-            </div>
-            <span class="card__arrow">-></span>
-        </a>
-
-        <a *ngIf="auth.hasPermission(permissionCodes.salesAccess)" routerLink="/sales" class="card card--action">
-            <div class="card__icon">$</div>
-            <div class="card__body">
-                <span class="card__label">VENTAS</span>
-                <span class="card__title">Gestionar ventas</span>
-                <span class="card__desc">Crear operaciones y retomar ventas en espera.</span>
-            </div>
-            <span class="card__arrow">-></span>
-        </a>
-
-        <a *ngIf="auth.hasPermission(permissionCodes.cashAccess)" routerLink="/cash" class="card card--action">
-            <div class="card__icon card__icon--amber">C$</div>
-            <div class="card__body">
-                <span class="card__label">CAJA</span>
-                <span class="card__title">Operar caja</span>
-                <span class="card__desc">Abrir, cerrar y revisar movimientos de caja.</span>
-            </div>
-            <span class="card__arrow">-></span>
-        </a>
-
-        <a *ngIf="auth.hasPermission(permissionCodes.usersManage)" routerLink="/users" class="card card--action">
-            <div class="card__icon">@U</div>
-            <div class="card__body">
-                <span class="card__label">USUARIOS</span>
-                <span class="card__title">Administrar accesos</span>
-                <span class="card__desc">Asignar roles y permisos internos.</span>
-            </div>
-            <span class="card__arrow">-></span>
-        </a>
-
-        <div class="card card--info">
-            <div class="card__icon card__icon--amber">CAL</div>
-            <div class="card__body">
-                <span class="card__label">HOY</span>
-                <span class="card__title">{{ currentDateLabel }}</span>
-                <span class="card__desc">{{ currentTimeLabel }} - {{ timezoneLabel }}</span>
-            </div>
+      <!-- STATUS DISTRIBUTION -->
+      <div class="data-panel">
+        <div class="data-panel__head">
+          <span class="data-panel__title">DISTRIBUCIÓN DE ESTADOS</span>
+          <span class="data-panel__sub">{{ sales.length }} ventas este mes</span>
         </div>
 
-        <div class="card card--info">
-            <div class="card__icon card__icon--dim">WX</div>
-            <div class="card__body">
-                <span class="card__label">CLIMA</span>
-                <span class="card__title">{{ weatherTitle }}</span>
-                <span class="card__desc">{{ weatherDescription }}</span>
-            </div>
-            <span class="status-dot" [class.status-dot--muted]="weatherLoading"></span>
+        <div class="dist-track" *ngIf="sales.length > 0">
+          <div class="dist-seg dist-seg--paid"      [style.flex]="paidSales.length || 0"></div>
+          <div class="dist-seg dist-seg--pending"   [style.flex]="pendingSales.length || 0"></div>
+          <div class="dist-seg dist-seg--cancelled" [style.flex]="cancelledSales.length || 0"></div>
         </div>
+
+        <div class="dist-items">
+          <div class="dist-item">
+            <span class="dist-dot dist-dot--paid"></span>
+            <div class="dist-item__body">
+              <span class="dist-item__label">Pagadas</span>
+              <div class="dist-bar"><div class="dist-bar__fill dist-bar__fill--paid" [style.width.%]="paidPct"></div></div>
+            </div>
+            <div class="dist-item__nums">
+              <strong>{{ paidSales.length }}</strong>
+              <span>{{ paidPct }}%</span>
+            </div>
+          </div>
+          <div class="dist-item">
+            <span class="dist-dot dist-dot--pending"></span>
+            <div class="dist-item__body">
+              <span class="dist-item__label">En espera</span>
+              <div class="dist-bar"><div class="dist-bar__fill dist-bar__fill--pending" [style.width.%]="pendingPct"></div></div>
+            </div>
+            <div class="dist-item__nums">
+              <strong>{{ pendingSales.length }}</strong>
+              <span>{{ pendingPct }}%</span>
+            </div>
+          </div>
+          <div class="dist-item">
+            <span class="dist-dot dist-dot--cancelled"></span>
+            <div class="dist-item__body">
+              <span class="dist-item__label">Canceladas</span>
+              <div class="dist-bar"><div class="dist-bar__fill dist-bar__fill--cancelled" [style.width.%]="cancelledPct"></div></div>
+            </div>
+            <div class="dist-item__nums">
+              <strong>{{ cancelledSales.length }}</strong>
+              <span>{{ cancelledPct }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="data-empty" *ngIf="sales.length === 0">Sin ventas registradas este mes</div>
+      </div>
     </div>
 
-    <div class="briefing">
-        <div class="briefing__item">
-            <span class="briefing__label">Momento del dia</span>
-            <strong>{{ dayMoment }}</strong>
+    <!-- RECENT / DAY SALES -->
+    <div class="data-panel data-panel--full" *ngIf="displayedSales.length > 0 || selectedDayKey">
+      <div class="data-panel__head">
+        <div class="data-panel__title-group">
+          <span class="data-panel__title">{{ selectedDayKey ? 'VENTAS DEL DÍA' : 'ÚLTIMAS VENTAS' }}</span>
+          <span class="data-panel__day-label" *ngIf="selectedDayKey">{{ selectedDayLabel }}</span>
         </div>
-        <div class="briefing__item">
-            <span class="briefing__label">Siguiente foco</span>
-            <strong>{{ focusHint }}</strong>
+        <div class="data-panel__head-actions">
+          <button class="clear-day-btn" *ngIf="selectedDayKey" type="button" (click)="selectedDayKey = null">✕ Limpiar filtro</button>
+          <a routerLink="/sales" class="data-panel__link" *ngIf="!selectedDayKey && auth.hasPermission(permissionCodes.salesAccess)">Ver todas →</a>
         </div>
+      </div>
+
+      <div class="data-empty" *ngIf="selectedDayKey && displayedSales.length === 0">
+        Sin ventas para este día
+      </div>
+
+      <div class="recent-table" *ngIf="displayedSales.length > 0">
+        <div class="recent-row recent-row--head">
+          <span>ID</span>
+          <span>Fecha</span>
+          <span>Cliente</span>
+          <span>Estado</span>
+          <span class="align-r">Importe</span>
+        </div>
+        <div class="recent-row" *ngFor="let sale of displayedSales">
+          <span class="recent-id">#{{ sale.id }}</span>
+          <span class="recent-date">{{ sale.createdAt | date:'dd/MM/yy HH:mm' }}</span>
+          <span class="recent-customer">{{ sale.customerFullName || '—' }}</span>
+          <span><span class="st-chip" [ngClass]="saleStatusClass(sale.idSaleStatus)">{{ saleStatusLabel(sale.idSaleStatus) }}</span></span>
+          <span class="align-r recent-amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+        </div>
+      </div>
     </div>
 
-    <div class="ticker">
-        <span class="ticker__text" *ngFor="let t of tickers">{{ t }}</span>
-    </div>
+  </ng-container>
+
 </div>

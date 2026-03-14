@@ -453,6 +453,17 @@
     font-size: .64rem;
 }
 
+.pagination .btn--sm,
+.pagination--footer .btn--sm {
+    padding: .65rem 1.1rem;
+    font-size: .78rem;
+}
+
+.pagination span,
+.pagination--footer span {
+    font-size: .82rem;
+}
+
 .btn--secondary {
     background: color-mix(in srgb, var(--bg) 42%, var(--amber) 58%);
     color: #161616;
