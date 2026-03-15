@@ -28,7 +28,8 @@ export class CompanyComponent implements OnInit {
       name: ['', [Validators.required, Validators.maxLength(100)]],
       primaryDomain: ['', [Validators.required, Validators.maxLength(255)]],
       whatsAppEnabled: [false],
-      whatsAppPhoneNumber: ['']
+      whatsAppPhoneNumber: [''],
+      defaultNoDeliverySurcharge: [null, [Validators.min(0)]]
     });
   }
 
@@ -54,11 +55,13 @@ export class CompanyComponent implements OnInit {
     }
 
     this.saving = true;
+    const rawSurcharge = this.form.get('defaultNoDeliverySurcharge')?.value;
     this.companyService.updateCurrentCompany({
       name: String(this.form.get('name')?.value || ''),
       primaryDomain: String(this.form.get('primaryDomain')?.value || ''),
       isWhatsAppEnabled: Boolean(this.form.get('whatsAppEnabled')?.value),
-      whatsAppSenderPhone: this.nullIfEmpty(this.form.get('whatsAppPhoneNumber')?.value)
+      whatsAppSenderPhone: this.nullIfEmpty(this.form.get('whatsAppPhoneNumber')?.value),
+      defaultNoDeliverySurcharge: rawSurcharge === null || rawSurcharge === '' ? null : Number(rawSurcharge)
     }).subscribe({
       next: (company) => {
         this.company = company;
@@ -94,12 +97,13 @@ export class CompanyComponent implements OnInit {
     return value && value.trim().length > 0 ? value.trim() : null;
   }
 
-  private mapCompanyToForm(company: CompanyResponse): { name: string; primaryDomain: string; whatsAppEnabled: boolean; whatsAppPhoneNumber: string } {
+  private mapCompanyToForm(company: CompanyResponse) {
     return {
       name: company.name,
       primaryDomain: company.primaryDomain,
       whatsAppEnabled: Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled),
-      whatsAppPhoneNumber: company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? ''
+      whatsAppPhoneNumber: company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? '',
+      defaultNoDeliverySurcharge: company.defaultNoDeliverySurcharge ?? null
     };
   }
 }

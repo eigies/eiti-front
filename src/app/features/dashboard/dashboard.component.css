@@ -125,6 +125,60 @@
   animation: fadeUp .4s .08s ease both;
 }
 
+.kpi-row--filtered {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+}
+
+.kpi-row--filtered .kpi-row__scope {
+  display: flex;
+}
+
+.kpi-row--filtered .kpi-card {
+  grid-column: auto;
+}
+
+.kpi-row--filtered {
+  grid-template-columns: repeat(4, 1fr);
+  row-gap: .4rem;
+}
+
+.kpi-row__scope {
+  display: none;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: .6rem;
+  padding: .45rem .75rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
+  animation: fadeUp .2s ease both;
+}
+
+.kpi-row__scope-label {
+  color: var(--amber);
+  font-family: 'DM Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.kpi-row__scope-clear {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: .72rem;
+  cursor: pointer;
+  padding: .15rem .3rem;
+  border-radius: 2px;
+  transition: color .15s;
+}
+
+.kpi-row__scope-clear:hover {
+  color: var(--danger);
+}
+
 .kpi-card {
   background: var(--bg-panel);
   border: 1px solid var(--border);

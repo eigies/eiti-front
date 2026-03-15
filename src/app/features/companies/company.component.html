@@ -1,61 +1,108 @@
 <app-navbar></app-navbar>
 <div class="page">
-    <header class="page__header">
-        <div class="page__eyebrow">_ COMPANIA</div>
-        <h1 class="page__title">Datos de tu compania</h1>
-        <p class="page__sub">Actualiza el nombre y el dominio principal sin salir del panel administrativo.</p>
+
+    <header class="page-hero">
+        <div class="page-hero__kicker">_ CONFIGURACION · COMPANIA</div>
+        <h1 class="page-hero__title">Ajustes</h1>
+        <p class="page-hero__sub">Identidad, canales y reglas globales de la operacion.</p>
     </header>
 
-    <section class="panel">
-        <div class="panel__head">
-            <span class="panel__icon">@</span>
-            <span class="panel__title">Perfil actual</span>
+    <div class="loading-state" *ngIf="loading">
+        <span class="loading-state__dot"></span>
+        <span class="loading-state__dot"></span>
+        <span class="loading-state__dot"></span>
+        Cargando configuracion...
+    </div>
+
+    <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" novalidate class="config-form">
+
+        <div class="config-grid">
+
+            <div class="config-card config-card--delay-1">
+                <div class="config-card__head">
+                    <span class="config-card__num">01</span>
+                    <div class="config-card__meta">
+                        <span class="config-card__eyebrow">Identidad</span>
+                        <h2 class="config-card__title">Perfil de compania</h2>
+                    </div>
+                </div>
+                <div class="config-card__body">
+                    <div class="field" [class.field--error]="isInvalid('name')">
+                        <label class="field__label">Nombre</label>
+                        <input class="field__input" type="text" formControlName="name" autocomplete="organization" />
+                        <span class="field__error" *ngIf="isInvalid('name')">Requerido</span>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('primaryDomain')">
+                        <label class="field__label">Dominio principal</label>
+                        <input class="field__input" type="text" formControlName="primaryDomain" />
+                        <span class="field__error" *ngIf="isInvalid('primaryDomain')">Requerido</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-card config-card--delay-2">
+                <div class="config-card__head">
+                    <span class="config-card__num">02</span>
+                    <div class="config-card__meta">
+                        <span class="config-card__eyebrow">Mensajeria</span>
+                        <h2 class="config-card__title">WhatsApp ventas</h2>
+                    </div>
+                </div>
+                <div class="config-card__body">
+                    <div class="toggle-row">
+                        <div class="toggle-row__copy">
+                            <span class="toggle-row__name">Envio automatico al cobrar</span>
+                            <p class="toggle-row__desc">Si el cliente tiene telefono cargado, se envia un comprobante al cobrar la venta.</p>
+                        </div>
+                        <label class="toggle-check">
+                            <input type="checkbox" formControlName="whatsAppEnabled" />
+                            <span class="toggle-check__track"></span>
+                            <span class="toggle-check__text">{{ form.get('whatsAppEnabled')?.value ? 'Activo' : 'Off' }}</span>
+                        </label>
+                    </div>
+                    <div class="field" [class.field--error]="form.get('whatsAppEnabled')?.value && !form.get('whatsAppPhoneNumber')?.value && form.get('whatsAppPhoneNumber')?.touched">
+                        <label class="field__label">Numero emisor</label>
+                        <input class="field__input" type="text" formControlName="whatsAppPhoneNumber" placeholder="+54 11 1234 5678" />
+                        <span class="field__error" *ngIf="form.get('whatsAppEnabled')?.value && !form.get('whatsAppPhoneNumber')?.value && form.get('whatsAppPhoneNumber')?.touched">Obligatorio si el envio esta activo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-card config-card--delay-3">
+                <div class="config-card__head">
+                    <span class="config-card__num">03</span>
+                    <div class="config-card__meta">
+                        <span class="config-card__eyebrow">Canje</span>
+                        <h2 class="config-card__title">Cargo por no entrega</h2>
+                    </div>
+                </div>
+                <div class="config-card__body">
+                    <p class="config-card__desc">Aplica a todos los productos sin cargo propio configurado. Deja en 0 o vacio para desactivar.</p>
+                    <div class="field">
+                        <label class="field__label">Cargo global por no entrega en canje</label>
+                        <div class="input-currency">
+                            <span class="input-currency__symbol">$</span>
+                            <input class="field__input input-currency__input" type="number" min="0" step="0.01" formControlName="defaultNoDeliverySurcharge" placeholder="0" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="loading-state" *ngIf="loading">Cargando datos de compania...</div>
-
-        <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" novalidate>
-            <div class="field" [class.field--error]="isInvalid('name')">
-                <label class="field__label">Nombre</label>
-                <input class="field__input" type="text" formControlName="name" />
-                <span class="field__error" *ngIf="isInvalid('name')">Requerido</span>
-            </div>
-
-            <div class="field" [class.field--error]="isInvalid('primaryDomain')">
-                <label class="field__label">Dominio principal</label>
-                <input class="field__input" type="text" formControlName="primaryDomain" />
-                <span class="field__error" *ngIf="isInvalid('primaryDomain')">Requerido</span>
-            </div>
-
-            <div class="company-whatsapp">
-                <div class="company-whatsapp__copy">
-                    <span class="field__label">WhatsApp ventas</span>
-                    <strong>Envio automatico al cobrar</strong>
-                    <p>Si el cliente tiene telefono cargado, se intentara enviar un comprobante basico al cobrar la venta.</p>
-                </div>
-
-                <label class="toggle-check">
-                    <input type="checkbox" formControlName="whatsAppEnabled" />
-                    <span class="toggle-check__track"></span>
-                    <span class="toggle-check__text">{{ form.get('whatsAppEnabled')?.value ? 'Activo' : 'Desactivado' }}</span>
-                </label>
-            </div>
-
-            <div class="field" [class.field--error]="form.get('whatsAppEnabled')?.value && !form.get('whatsAppPhoneNumber')?.value && form.get('whatsAppPhoneNumber')?.touched">
-                <label class="field__label">Telefono emisor de WhatsApp</label>
-                <input class="field__input" type="text" formControlName="whatsAppPhoneNumber" placeholder="+54 11 1234 5678" />
-                <span class="field__error" *ngIf="form.get('whatsAppEnabled')?.value && !form.get('whatsAppPhoneNumber')?.value && form.get('whatsAppPhoneNumber')?.touched">Obligatorio si el envio esta activo</span>
-            </div>
-
+        <footer class="config-footer">
             <div class="meta" *ngIf="company">
-                <span class="meta__item">ID: {{ company.id }}</span>
-                <span class="meta__item">Alta: {{ company.createdAt | date: 'mediumDate' }}</span>
+                <span class="meta__chip">ID · <strong>{{ company.id }}</strong></span>
+                <span class="meta__sep">·</span>
+                <span class="meta__chip">Alta · <strong>{{ company.createdAt | date: 'mediumDate' }}</strong></span>
             </div>
-
-            <button class="btn-primary" type="submit" [disabled]="saving">
-                <span *ngIf="!saving">Guardar cambios</span>
-                <span *ngIf="saving">Guardando...</span>
+            <button class="btn-save" type="submit" [disabled]="saving" [class.btn-save--loading]="saving">
+                <span class="btn-save__inner">
+                    <span class="btn-save__spinner" *ngIf="saving"></span>
+                    {{ saving ? 'Guardando...' : 'Guardar cambios' }}
+                </span>
             </button>
-        </form>
-    </section>
+        </footer>
+
+    </form>
 </div>

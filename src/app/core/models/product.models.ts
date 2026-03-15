@@ -9,6 +9,7 @@ export interface CreateProductRequest {
     costPrice: number;
     unitPrice?: number | null;
     allowsManualValueInSale: boolean;
+    noDeliverySurcharge?: number | null;
 }
 
 export interface ProductResponse {
@@ -23,6 +24,7 @@ export interface ProductResponse {
     costPrice?: number | null;
     unitPrice?: number | null;
     allowsManualValueInSale: boolean;
+    noDeliverySurcharge?: number | null;
     totalOnHandQuantity: number;
     totalReservedQuantity: number;
     totalAvailableQuantity: number;
@@ -49,6 +51,7 @@ export interface UpdateProductRequest {
     costPrice: number;
     unitPrice?: number | null;
     allowsManualValueInSale: boolean;
+    noDeliverySurcharge?: number | null;
 }
 
 export function productPublicPrice(product: Pick<ProductResponse, 'publicPrice' | 'price'>): number {

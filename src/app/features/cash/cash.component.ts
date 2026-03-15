@@ -238,11 +238,11 @@ type CashSessionView = {
                   <tbody>
                     <tr *ngFor="let movement of item.session.movements">
                       <td>{{ movement.occurredAt | date: 'short' }}</td>
-                      <td>{{ movement.typeName }}</td>
-                      <td>{{ movement.directionName }}</td>
+                      <td><span class="badge badge--type" [attr.data-type]="movement.typeName">{{ translateType(movement.typeName) }}</span></td>
+                      <td><span class="badge" [class.badge--in]="movement.directionName === 'In'" [class.badge--out]="movement.directionName === 'Out'">{{ translateDirection(movement.directionName) }}</span></td>
                       <td>&#36;{{ movement.amount | number: '1.2-2' }}</td>
                       <td>{{ movementPaymentMethod(movement) }}</td>
-                      <td>{{ movement.description || '-' }}</td>
+                      <td>{{ translateDescription(movement.description) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -326,6 +326,13 @@ type CashSessionView = {
     .history-table th,.history-table td{padding:.8rem .9rem;border-bottom:1px solid var(--border);text-align:left;color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;vertical-align:top}
     .history-table th{color:var(--text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;background:color-mix(in srgb,var(--bg-panel) 88%, transparent)}
     .empty{color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.78rem}
+    .badge{display:inline-block;padding:.18rem .55rem;border-radius:20px;font-family:'DM Mono',monospace;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+    .badge--in{background:color-mix(in srgb,var(--success) 16%, transparent);color:var(--success);border:1px solid color-mix(in srgb,var(--success) 35%, transparent)}
+    .badge--out{background:color-mix(in srgb,var(--danger) 16%, transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 35%, transparent)}
+    .badge--type{background:color-mix(in srgb,var(--amber) 12%, transparent);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 30%, transparent)}
+    .badge--type[data-type="CashWithdrawal"]{background:color-mix(in srgb,var(--danger) 12%, transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%, transparent)}
+    .badge--type[data-type="OpeningBalance"]{background:color-mix(in srgb,var(--success) 12%, transparent);color:var(--success);border:1px solid color-mix(in srgb,var(--success) 30%, transparent)}
+    .badge--type[data-type="ClosingBalance"]{background:color-mix(in srgb,var(--text-dim) 12%, transparent);color:var(--text-dim);border:1px solid color-mix(in srgb,var(--text-dim) 28%, transparent)}
     @media (max-width:920px){
       .inline-form,.inline-form--drawer,.session-metrics,.summary,.history-filters,.history-session__metrics,.drawer-strip{grid-template-columns:1fr}
       .history-session__toolbar,.history-session__headline,.history-header-actions{flex-direction:column;align-items:flex-start}
@@ -872,6 +879,39 @@ export class CashComponent implements OnInit {
         return movements
             .filter(movement => movement.typeName === typeName)
             .reduce((total, movement) => total + movement.amount, 0);
+    }
+
+    translateDescription(description: string | null | undefined): string {
+        if (!description) return '-';
+        const map: Record<string, string> = {
+            'Opening balance': 'Balance de apertura',
+            'Closing balance': 'Balance de cierre',
+            'Sale income': 'Ingreso por venta',
+            'Sale payment': 'Pago de venta',
+            'Cash withdrawal': 'Extracción de efectivo',
+            'Cash deposit': 'Depósito de efectivo',
+            'Manual adjustment': 'Ajuste manual',
+            'Initial opening': 'Apertura inicial',
+        };
+        return map[description] ?? description;
+    }
+
+    translateType(typeName: string): string {
+        const map: Record<string, string> = {
+            SaleIncome: 'Venta',
+            CashWithdrawal: 'Extracción',
+            OpeningBalance: 'Apertura',
+            ClosingBalance: 'Cierre',
+        };
+        return map[typeName] ?? typeName;
+    }
+
+    translateDirection(directionName: string): string {
+        const map: Record<string, string> = {
+            In: 'Entrada',
+            Out: 'Salida',
+        };
+        return map[directionName] ?? directionName;
     }
 
     movementPaymentMethod(movement: CashSessionMovementResponse): string {

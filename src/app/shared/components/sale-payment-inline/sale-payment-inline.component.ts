@@ -32,6 +32,7 @@ export class SalePaymentInlineComponent {
     @Input() headline = 'Cobro integrado';
     @Input() description = 'Configura pagos y canje dentro de la misma venta.';
     @Input() compact = false;
+    @Input() autoSurcharge = 0;
     @Output() cashDrawerIdChange = new EventEmitter<string | null>();
 
     readonly paymentMethods = SALE_PAYMENT_METHODS;
@@ -57,11 +58,27 @@ export class SalePaymentInlineComponent {
         return normalizeSaleTradeIns(this.state).length;
     }
 
+    get coverageLines(): Array<{ label: string; amount: number; type: 'payment' | 'tradein' }> {
+        const payments = normalizeSalePayments(this.state).map(p => ({
+            label: this.paymentMethodLabel(p.idPaymentMethod),
+            amount: p.amount,
+            type: 'payment' as const
+        }));
+        const tradeIns = normalizeSaleTradeIns(this.state).map(t => ({
+            label: this.tradeInProductName(t.productId),
+            amount: t.amount,
+            type: 'tradein' as const
+        }));
+        return [...payments, ...tradeIns];
+    }
+
     toggleCombinedPayment(checked: boolean): void {
         this.state.hasCombinedPayment = checked;
 
         if (!checked && this.state.payments.length > 1) {
             this.state.payments = [this.state.payments[0]];
+        } else if (checked && this.state.payments.length === 1) {
+            this.state.payments = [...this.state.payments, createEmptyPaymentLine()];
         }
     }
 
@@ -118,6 +135,7 @@ export class SalePaymentInlineComponent {
 
     updateTradeInProduct(index: number, value: string): void {
         this.state.tradeIns[index].productId = value;
+
         const product = this.products.find(item => item.id === value);
         if (!product) {
             return;

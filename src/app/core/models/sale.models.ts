@@ -9,11 +9,13 @@ export interface CreateSaleRequest {
     payments: SalePaymentRequest[];
     tradeIns: SaleTradeInRequest[];
     details: CreateSaleDetailRequest[];
+    noDeliverySurchargeTotal?: number | null;
 }
 
 export interface CreateSaleDetailRequest {
     productId: string;
     quantity: number;
+    unitPrice?: number;
 }
 
 export interface SaleResponse {
@@ -41,6 +43,7 @@ export interface SaleResponse {
     paidAt?: string | null;
     updatedAt?: string | null;
     isModified: boolean;
+    changeAmount?: number;
     payments?: SalePaymentResponse[];
     tradeIns?: SaleTradeInResponse[];
     details: SaleDetailResponse[];

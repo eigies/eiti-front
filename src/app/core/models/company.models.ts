@@ -6,6 +6,7 @@ export interface CompanyResponse {
     whatsAppSenderPhone?: string | null;
     whatsAppEnabled?: boolean | null;
     whatsAppPhoneNumber?: string | null;
+    defaultNoDeliverySurcharge?: number | null;
     createdAt: string;
 }
 
@@ -16,4 +17,5 @@ export interface UpdateCompanyRequest {
     whatsAppSenderPhone?: string | null;
     whatsAppEnabled?: boolean | null;
     whatsAppPhoneNumber?: string | null;
+    defaultNoDeliverySurcharge?: number | null;
 }

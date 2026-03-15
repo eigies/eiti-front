@@ -73,11 +73,7 @@ export function createEmptyPaymentLine(): SalePaymentDraftLine {
 }
 
 export function createEmptyTradeInLine(): SaleTradeInDraftLine {
-    return {
-        productId: '',
-        quantity: 1,
-        amount: 0
-    };
+    return { productId: '', quantity: 1, amount: 0 };
 }
 
 export function mapSalePaymentDraftState(
@@ -92,7 +88,7 @@ export function mapSalePaymentDraftState(
             notes: item.notes ?? ''
         }));
     const mappedTradeIns = (tradeIns ?? [])
-        .filter(item => item.productId && Number(item.quantity) > 0 && Number(item.amount) > 0)
+        .filter(item => item.productId && Number(item.quantity) > 0)
         .map(item => ({
             productId: item.productId,
             quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
@@ -124,7 +120,7 @@ export function normalizeSaleTradeIns(state: SalePaymentDraftState): SaleTradeIn
             quantity: Math.max(0, Math.floor(Number(item.quantity) || 0)),
             amount: roundMoney(item.amount)
         }))
-        .filter(item => item.productId.length > 0 && item.quantity > 0 && item.amount > 0);
+        .filter(item => item.productId.length > 0 && item.quantity > 0 && item.amount >= 0);
 }
 
 export function salePaymentCoverage(state: SalePaymentDraftState): number {

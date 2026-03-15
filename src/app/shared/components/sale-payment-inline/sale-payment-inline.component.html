@@ -10,23 +10,17 @@
   <div class="payment-shell">
     <div class="payment-shell__main">
       <div class="toggle-grid">
-        <div class="field field--toggle">
-          <span class="field__label">Pago combinado</span>
-          <label class="toggle-check">
+        <label class="toggle-row-inline">
           <input type="checkbox" [checked]="state.hasCombinedPayment" (change)="toggleCombinedPayment($any($event.target).checked)" />
-          <span class="toggle-check__track"></span>
-          <span class="toggle-check__text">{{ state.hasCombinedPayment ? 'Varios metodos de pago' : 'Pago simple' }}</span>
-          </label>
-        </div>
+          <span class="toggle-row-inline__label">Pago combinado</span>
+          <span class="toggle-row-inline__track"></span>
+        </label>
 
-        <div class="field field--toggle">
-          <span class="field__label">Canje</span>
-          <label class="toggle-check">
+        <label class="toggle-row-inline">
           <input type="checkbox" [checked]="state.hasTradeIn" (change)="toggleTradeIn($any($event.target).checked)" />
-          <span class="toggle-check__track"></span>
-          <span class="toggle-check__text">{{ state.hasTradeIn ? 'Recibe producto en parte de pago' : 'Sin canje' }}</span>
-          </label>
-        </div>
+          <span class="toggle-row-inline__label">Canje</span>
+          <span class="toggle-row-inline__track"></span>
+        </label>
       </div>
 
       <div class="payment-stack">
@@ -35,7 +29,7 @@
             <span class="section-head__eyebrow">Payments</span>
             <h4>Medios de pago</h4>
           </div>
-          <button class="action-chip" type="button" *ngIf="state.hasCombinedPayment" (click)="addPaymentLine()">Agregar metodo de pago</button>
+          <button class="action-chip action-chip--icon" type="button" *ngIf="state.hasCombinedPayment" (click)="addPaymentLine()" title="Agregar metodo de pago">+</button>
         </div>
 
         <div class="payment-line" *ngFor="let payment of state.payments; let index = index; trackBy: trackByIndex">
@@ -109,12 +103,31 @@
             <span>Total venta</span>
             <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
           </div>
-          <div class="payment-summary__item">
-            <span>Cancelado</span>
-            <strong>{{ coverage | currency:'USD':'symbol':'1.2-2' }}</strong>
+          <div class="payment-summary__item payment-summary__item--surcharge" *ngIf="autoSurcharge > 0">
+            <span class="surcharge-label">
+              Cargo por no entrega
+              <span class="surcharge-badge">sin canje</span>
+            </span>
+            <strong>{{ autoSurcharge | currency:'USD':'symbol':'1.2-2' }}</strong>
           </div>
-          <div class="payment-summary__item payment-summary__item--balance" [class.payment-summary__item--ok]="remaining === 0" [class.payment-summary__item--warn]="remaining > 0" [class.payment-summary__item--over]="remaining < 0">
-            <span>{{ remaining >= 0 ? 'Restante' : 'Excedido' }}</span>
+          <div class="payment-summary__item payment-summary__item--coverage">
+            <div class="coverage-header">
+              <span>Cancelado</span>
+              <strong>{{ coverage | currency:'USD':'symbol':'1.2-2' }}</strong>
+            </div>
+            <div class="coverage-breakdown" *ngIf="coverageLines.length > 0">
+              <div class="coverage-line" *ngFor="let line of coverageLines; trackBy: trackByIndex"
+                   [class.coverage-line--tradein]="line.type === 'tradein'">
+                <span class="coverage-line__tag" [class.coverage-line__tag--canje]="line.type === 'tradein'">
+                  {{ line.type === 'tradein' ? 'canje' : 'pago' }}
+                </span>
+                <span class="coverage-line__label">{{ line.label }}</span>
+                <span class="coverage-line__amount">{{ line.amount | currency:'USD':'symbol':'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="payment-summary__item payment-summary__item--balance" [class.payment-summary__item--ok]="remaining === 0" [class.payment-summary__item--warn]="remaining > 0" [class.payment-summary__item--change]="remaining < 0">
+            <span>{{ remaining > 0 ? 'Restante' : remaining < 0 ? 'Vuelto a entregar' : 'Exacto' }}</span>
             <strong>{{ (remaining >= 0 ? remaining : -remaining) | currency:'USD':'symbol':'1.2-2' }}</strong>
           </div>
         </div>
@@ -132,7 +145,7 @@
       </div>
 
       <div class="summary-note">
-        <p *ngIf="statusId === paidStatusId">Estado pagada: el cobro total debe coincidir exacto con la venta.</p>
+        <p *ngIf="statusId === paidStatusId">Estado pagada: el cobro debe cubrir el total. Si hay efectivo de mas, se indica como vuelto a entregar.</p>
         <p *ngIf="statusId !== paidStatusId">Estado en espera: puedes cargar cobros parciales sin exceder el total.</p>
       </div>
     </aside>

@@ -222,7 +222,7 @@ export class ProductsComponent implements OnInit {
     this.creating = true;
     this.productService.createProduct(this.toProductRequest(this.createForm)).subscribe({
       next: (product) => {
-        this.createForm.reset({ code: '', sku: '', brand: '', name: '', description: '', publicPrice: 0, price: 0, costPrice: 0, unitPrice: null, marginPercent: 0 });
+        this.createForm.reset({ code: '', sku: '', brand: '', name: '', description: '', publicPrice: 0, price: 0, costPrice: 0, unitPrice: null, marginPercent: 0, noDeliverySurcharge: null });
         this.createForm.patchValue({ allowsManualSaleValue: false }, { emitEvent: false });
         this.updatePriceValidators(this.createForm);
         this.createPriceMode = 'public';
@@ -618,7 +618,8 @@ export class ProductsComponent implements OnInit {
       costPrice: product.costPrice ?? 0,
       unitPrice: product.unitPrice ?? null,
       marginPercent: this.calculateMarginPercent(product.publicPrice ?? product.price, product.costPrice ?? 0),
-      allowsManualSaleValue: productAllowsManualSaleValue(product)
+      allowsManualSaleValue: productAllowsManualSaleValue(product),
+      noDeliverySurcharge: product.noDeliverySurcharge ?? null
     });
     this.updatePriceValidators(this.editForm);
   }
@@ -635,7 +636,8 @@ export class ProductsComponent implements OnInit {
       costPrice: product.costPrice ?? 0,
       unitPrice: product.unitPrice ?? null,
       marginPercent: this.calculateMarginPercent(product.publicPrice ?? product.price, product.costPrice ?? 0),
-      allowsManualSaleValue: productAllowsManualSaleValue(product)
+      allowsManualSaleValue: productAllowsManualSaleValue(product),
+      noDeliverySurcharge: product.noDeliverySurcharge ?? null
     };
   }
 
@@ -690,7 +692,8 @@ export class ProductsComponent implements OnInit {
       price: Number(request.price ?? 0),
       costPrice: Number(request.costPrice ?? 0),
       unitPrice: request.unitPrice == null ? null : Number(request.unitPrice),
-      allowsManualValueInSale: Boolean(request.allowsManualValueInSale)
+      allowsManualValueInSale: Boolean(request.allowsManualValueInSale),
+      noDeliverySurcharge: request.noDeliverySurcharge == null ? null : Number(request.noDeliverySurcharge)
     };
   }
 
@@ -707,7 +710,8 @@ export class ProductsComponent implements OnInit {
       && left.price === right.price
       && left.costPrice === right.costPrice
       && left.unitPrice === right.unitPrice
-      && left.allowsManualValueInSale === right.allowsManualValueInSale;
+      && left.allowsManualValueInSale === right.allowsManualValueInSale
+      && left.noDeliverySurcharge === right.noDeliverySurcharge;
   }
 
   private buildForm(): FormGroup {
@@ -722,7 +726,8 @@ export class ProductsComponent implements OnInit {
       costPrice: [0, [Validators.required, Validators.min(0)]],
       unitPrice: [null, [Validators.min(0)]],
       marginPercent: [0, [Validators.min(0)]],
-      allowsManualSaleValue: [false]
+      allowsManualSaleValue: [false],
+      noDeliverySurcharge: [null, [Validators.min(0)]]
     });
 
     this.updatePriceValidators(form);
@@ -773,7 +778,8 @@ export class ProductsComponent implements OnInit {
       price: publicPrice,
       costPrice: Number(raw.costPrice ?? 0),
       unitPrice: raw.unitPrice === null || raw.unitPrice === '' ? null : Number(raw.unitPrice),
-      allowsManualValueInSale: allowsManualSaleValue
+      allowsManualValueInSale: allowsManualSaleValue,
+      noDeliverySurcharge: raw.noDeliverySurcharge === null || raw.noDeliverySurcharge === '' ? null : Number(raw.noDeliverySurcharge)
     };
   }
 

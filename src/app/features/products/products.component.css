@@ -25,6 +25,7 @@
   margin-bottom: 2.5rem;
   padding-bottom: 2rem;
   border-bottom: 1px solid var(--border);
+  animation: hero-in .55s cubic-bezier(.22,1,.36,1) both;
 }
 
 .ph__tag {
@@ -89,7 +90,14 @@
   margin-bottom: 1.25rem;
   overflow: hidden;
   transition: border-color 0.2s ease;
+  opacity: 0;
+  animation: card-in .5s cubic-bezier(.22,1,.36,1) .15s both;
 }
+
+.card:nth-child(2) { animation-delay: .22s; }
+.card:nth-child(3) { animation-delay: .29s; }
+.card:nth-child(4) { animation-delay: .36s; }
+.card:nth-child(5) { animation-delay: .43s; }
 
 .card:hover { border-color: var(--border-2); }
 
@@ -593,16 +601,20 @@
 
 /* ── MODAL ── */
 .backdrop { position: fixed; inset: 0; background: var(--overlay); backdrop-filter: blur(4px); z-index: 30; }
-.modal { position: fixed; inset: 0; display: grid; place-items: center; z-index: 31; padding: 1rem; }
+.modal { position: fixed; inset: 0; display: grid; align-items: center; justify-items: center; z-index: 31; padding: calc(64px + 1.5rem) 1rem 1.5rem; overflow-y: auto; }
 
 .modal__box {
   width: min(100%, 580px);
-  max-height: 90vh;
-  overflow-y: auto;
   background: var(--bg-panel);
   border: 1px solid var(--border-2);
   border-radius: 3px;
-  box-shadow: 0 22px 64px rgba(0,0,0,.32), 0 0 0 1px color-mix(in srgb, var(--amber) 5%, transparent);
+  box-shadow: 0 22px 64px rgba(0,0,0,.38), 0 0 0 1px color-mix(in srgb, var(--amber) 5%, transparent);
+  animation: modal-in .2s cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modal__head {
@@ -751,4 +763,14 @@
   .bulk-bar__actions { width: 100%; }
   .bulk-bar__actions .btn { width: 100%; }
   .stock-nums { grid-template-columns: 1fr; }
+}
+
+@keyframes hero-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
 }

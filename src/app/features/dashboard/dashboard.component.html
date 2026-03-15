@@ -24,26 +24,30 @@
   <ng-container *ngIf="!loading">
 
     <!-- KPIs -->
-    <div class="kpi-row">
+    <div class="kpi-row" [class.kpi-row--filtered]="selectedDayKey">
+      <div class="kpi-row__scope" *ngIf="selectedDayKey">
+        <span class="kpi-row__scope-label">{{ selectedDayLabel }}</span>
+        <button class="kpi-row__scope-clear" type="button" (click)="selectedDayKey = null">✕</button>
+      </div>
       <div class="kpi-card">
-        <span class="kpi-label">Ventas del mes</span>
-        <strong class="kpi-value">{{ activeSales.length }}</strong>
-        <span class="kpi-sub">{{ pendingSales.length }} en espera · {{ paidSales.length }} pagadas</span>
+        <span class="kpi-label">{{ selectedDayKey ? 'Ventas del día' : 'Ventas del mes' }}</span>
+        <strong class="kpi-value">{{ scopeSales.length }}</strong>
+        <span class="kpi-sub">{{ scopePendingSales.length }} en espera · {{ scopePaidSales.length }} pagadas</span>
       </div>
       <div class="kpi-card kpi-card--primary">
         <span class="kpi-label">Ingresos cobrados</span>
         <strong class="kpi-value">{{ totalRevenue | currency:'USD':'symbol':'1.0-0' }}</strong>
-        <span class="kpi-sub">{{ paidSales.length }} transacciones cerradas</span>
+        <span class="kpi-sub">{{ scopePaidSales.length }} transacciones cerradas</span>
       </div>
       <div class="kpi-card kpi-card--warn">
         <span class="kpi-label">Pendiente de cobro</span>
         <strong class="kpi-value">{{ pendingRevenue | currency:'USD':'symbol':'1.0-0' }}</strong>
-        <span class="kpi-sub">{{ pendingSales.length }} venta(s) abiertas</span>
+        <span class="kpi-sub">{{ scopePendingSales.length }} venta(s) abiertas</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Ticket promedio</span>
         <strong class="kpi-value">{{ avgSaleValue | currency:'USD':'symbol':'1.0-0' }}</strong>
-        <span class="kpi-sub">Sobre {{ activeSales.length }} ventas activas</span>
+        <span class="kpi-sub">Sobre {{ scopeSales.length }} ventas activas</span>
       </div>
     </div>
 
@@ -54,7 +58,7 @@
       <div class="data-panel">
         <div class="data-panel__head">
           <span class="data-panel__title">ACTIVIDAD — ÚLTIMOS 7 DÍAS</span>
-          <span class="data-panel__sub">Ventas activas por importe</span>
+          <span class="data-panel__sub">Cantidad de ventas por día</span>
         </div>
         <div class="bar-chart" *ngIf="activeSales.length > 0; else emptyChart">
           <button class="bar-col"

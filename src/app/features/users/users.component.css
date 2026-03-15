@@ -11,7 +11,8 @@
     justify-content: space-between;
     gap: 1rem;
     align-items: flex-end;
-    margin-bottom: 1.4rem
+    margin-bottom: 1.4rem;
+    animation: hero-in .55s cubic-bezier(.22,1,.36,1) both;
 }
 
 .eyebrow,
@@ -68,7 +69,9 @@ h2 {
     background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
     padding: 1.15rem;
     border-radius: 4px;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, .08)
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .08);
+    opacity: 0;
+    animation: card-in .5s cubic-bezier(.22,1,.36,1) .15s both;
 }
 
 .panel--create {
@@ -370,4 +373,13 @@ h2 {
     .permission-list {
         justify-content: flex-start
     }
+}
+@keyframes hero-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
 }

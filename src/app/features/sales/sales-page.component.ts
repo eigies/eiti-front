@@ -95,6 +95,7 @@ export class SalesPageComponent implements OnInit {
     createSelectionQuantityByProductId = new Map<string, number>();
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     editPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
+    defaultNoDeliverySurcharge = 0;
     createExpanded = true;
     listExpanded = true;
     showOnboardingCompleteNotice = false;
@@ -165,11 +166,32 @@ export class SalesPageComponent implements OnInit {
     }
 
     get draftTotal(): number {
-        return this.sum(this.draftItems);
+        return roundMoney(this.sum(this.draftItems) + this.createAutoSurcharge);
     }
 
     get editTotal(): number {
-        return this.sum(this.editItems);
+        return roundMoney(this.sum(this.editItems) + this.editAutoSurcharge);
+    }
+
+    get createAutoSurcharge(): number {
+        if (this.createPaymentState.hasTradeIn) return 0;
+        return roundMoney(
+            this.draftItems.reduce((sum, item) => sum + item.quantity * this.getProductSurcharge(item.product), 0)
+        );
+    }
+
+    get editAutoSurcharge(): number {
+        if (this.editPaymentState.hasTradeIn) return 0;
+        return roundMoney(
+            this.editItems.reduce((sum, item) => sum + item.quantity * this.getProductSurcharge(item.product), 0)
+        );
+    }
+
+    private getProductSurcharge(product: ProductResponse): number {
+        if (product.noDeliverySurcharge != null && product.noDeliverySurcharge > 0) {
+            return product.noDeliverySurcharge;
+        }
+        return this.defaultNoDeliverySurcharge;
     }
 
     get isCreatePaid(): boolean {
@@ -407,14 +429,17 @@ createSale(): void {
     return;
 }
 
-if (!this.validatePaymentState(this.lineForm, this.draftItems, this.createPaymentState, 'crear')) {
+if (!this.validatePaymentState(this.lineForm, this.draftTotal, this.createPaymentState, 'crear')) {
     return;
 }
 
 this.saving = true;
-this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId)).subscribe({
-    next: () => {
+this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId, this.createAutoSurcharge)).subscribe({
+    next: (response) => {
         this.toast.success('Venta creada');
+        if ((response?.changeAmount ?? 0) > 0) {
+            this.toast.show(`Vuelto a entregar: $${response.changeAmount!.toFixed(2)}`, 'info');
+        }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
         this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '' });
@@ -507,15 +532,18 @@ saveEdit(): void {
     return;
 }
 
-if (!this.validatePaymentState(this.editMetaForm, this.editItems, this.editPaymentState, 'editar')) {
+if (!this.validatePaymentState(this.editMetaForm, this.editTotal, this.editPaymentState, 'editar')) {
     return;
 }
 
 this.savingEdit = true;
-this.saleService.updateSale(this.editingSale.id, this.buildRequest(this.editMetaForm, this.editItems, this.editPaymentState, this.editingSale.customerId ?? null)).subscribe({
-    next: () => {
+this.saleService.updateSale(this.editingSale.id, this.buildRequest(this.editMetaForm, this.editItems, this.editPaymentState, this.editingSale.customerId ?? null, this.editAutoSurcharge)).subscribe({
+    next: (response) => {
         const shouldSuggestWhatsApp = Number(this.editMetaForm.get('idSaleStatus')?.value ?? 1) === 2;
         this.toast.success(shouldSuggestWhatsApp ? 'Venta actualizada. El WhatsApp queda disponible para envio manual.' : 'Venta actualizada');
+        if ((response?.changeAmount ?? 0) > 0) {
+            this.toast.show(`Vuelto a entregar: $${response.changeAmount!.toFixed(2)}`, 'info');
+        }
         const branchId = this.editMetaForm.get('branchId')?.value ?? '';
         this.savingEdit = false;
         this.loadStockForBranch(branchId, false);
@@ -1283,6 +1311,7 @@ handleDocumentClick(event: MouseEvent): void {
         next: company => {
             this.whatsAppEnabled = Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled);
             this.whatsAppPhoneNumber = company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? null;
+            this.defaultNoDeliverySurcharge = company.defaultNoDeliverySurcharge ?? 0;
         }
     });
 }
@@ -1439,7 +1468,7 @@ if (form === this.editLineForm) {
     return true;
 }
 
-    private buildRequest(form: FormGroup, items: DraftItem[], paymentState: SalePaymentDraftState, customerId: string | null = null) {
+    private buildRequest(form: FormGroup, items: DraftItem[], paymentState: SalePaymentDraftState, customerId: string | null = null, surcharge = 0) {
     const raw = form.getRawValue();
     return {
         branchId: raw.branchId,
@@ -1449,9 +1478,11 @@ if (form === this.editLineForm) {
         cashDrawerId: this.requiresCashDrawerFor(form, paymentState) ? raw.cashDrawerId || null : null,
         payments: normalizeSalePayments(paymentState),
         tradeIns: normalizeSaleTradeIns(paymentState),
+        noDeliverySurchargeTotal: surcharge > 0 ? surcharge : null,
         details: items.map(item => ({
             productId: item.product.id,
-            quantity: item.quantity
+            quantity: item.quantity,
+            ...(item.unitPriceOverride !== undefined ? { unitPrice: item.unitPriceOverride } : {})
         }))
     };
 }
@@ -1463,8 +1494,7 @@ if (form === this.editLineForm) {
         && Boolean(sale.customerId);
 }
 
-    private validatePaymentState(form: FormGroup, items: DraftItem[], paymentState: SalePaymentDraftState, mode: 'crear' | 'editar'): boolean {
-    const total = roundMoney(this.sum(items));
+    private validatePaymentState(form: FormGroup, total: number, paymentState: SalePaymentDraftState, mode: 'crear' | 'editar'): boolean {
     const payments = normalizeSalePayments(paymentState);
     const tradeIns = normalizeSaleTradeIns(paymentState);
     const coverage = roundMoney(
@@ -1474,10 +1504,11 @@ if (form === this.editLineForm) {
     const isPaid = Number(form.get('idSaleStatus')?.value ?? 1) === 2;
 
     if (paymentState.hasTradeIn) {
-        const hasIncompleteTradeIn = paymentState.tradeIns.some(item =>
-            (item.productId && (!Number.isFinite(Number(item.amount)) || Number(item.amount) <= 0 || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))
-            || (!item.productId && (Number(item.amount) > 0 || Number(item.quantity) > 1))
-        );
+        const hasIncompleteTradeIn = paymentState.tradeIns
+            .some(item =>
+                (item.productId && (!Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))
+                || (!item.productId && (Number(item.amount) > 0 || Number(item.quantity) > 1))
+            );
 
         if (hasIncompleteTradeIn) {
             this.toast.error('Completa producto, cantidad y monto en cada item de canje.');
@@ -1485,8 +1516,8 @@ if (form === this.editLineForm) {
         }
     }
 
-    if (isPaid && coverage !== total) {
-        this.toast.error(`La venta ${mode === 'crear' ? 'a crear' : 'editada'} debe quedar cancelada exacta con payments + tradeIns.`);
+    if (isPaid && coverage < total) {
+        this.toast.error('El cobro no cubre el total de la venta.');
         return false;
     }
 
@@ -1552,5 +1583,6 @@ interface DraftItem {
     product: ProductResponse;
     quantity: number;
     total: number;
+    unitPriceOverride?: number;
 }
 

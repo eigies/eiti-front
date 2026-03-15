@@ -154,6 +154,7 @@
             [cashDrawers]="createDrawers"
             [state]="createPaymentState"
             [cashDrawerId]="lineForm.get('cashDrawerId')?.value ?? null"
+            [autoSurcharge]="createAutoSurcharge"
             headline="Cobro integrado en la venta"
             description="Carga pago principal, pagos combinados y canje desde la misma venta."
             (cashDrawerIdChange)="setCreateCashDrawerId($event)">
@@ -216,8 +217,9 @@
       [state]="editPaymentState"
       [cashDrawerId]="editMetaForm.get('cashDrawerId')?.value ?? null"
       [compact]="true"
+      [autoSurcharge]="editAutoSurcharge"
       headline="Cobro y canje de esta venta"
-      description="Si la marcas como pagada, el total cancelado debe coincidir exacto."
+      description="Si la marcas como pagada, el cobro debe cubrir el total."
       (cashDrawerIdChange)="setEditCashDrawerId($event)">
     </app-sale-payment-inline>
 

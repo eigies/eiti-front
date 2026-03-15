@@ -69,17 +69,36 @@ export class DashboardComponent implements OnInit {
     return this.sales.filter(s => s.idSaleStatus === 3);
   }
 
+  private salesForDay(dateKey: string): SaleResponse[] {
+    return this.sales.filter(s => new Date(s.createdAt).toLocaleDateString('en-CA') === dateKey);
+  }
+
+  get scopeSales(): SaleResponse[] {
+    const base = this.selectedDayKey ? this.salesForDay(this.selectedDayKey) : this.sales;
+    return base.filter(s => s.idSaleStatus !== 3);
+  }
+
+  get scopePaidSales(): SaleResponse[] {
+    const base = this.selectedDayKey ? this.salesForDay(this.selectedDayKey) : this.sales;
+    return base.filter(s => s.idSaleStatus === 2);
+  }
+
+  get scopePendingSales(): SaleResponse[] {
+    const base = this.selectedDayKey ? this.salesForDay(this.selectedDayKey) : this.sales;
+    return base.filter(s => s.idSaleStatus === 1);
+  }
+
   get totalRevenue(): number {
-    return this.paidSales.reduce((sum, s) => sum + s.totalAmount, 0);
+    return this.scopePaidSales.reduce((sum, s) => sum + s.totalAmount, 0);
   }
 
   get pendingRevenue(): number {
-    return this.pendingSales.reduce((sum, s) => sum + s.totalAmount, 0);
+    return this.scopePendingSales.reduce((sum, s) => sum + s.totalAmount, 0);
   }
 
   get avgSaleValue(): number {
-    if (this.activeSales.length === 0) return 0;
-    return this.activeSales.reduce((sum, s) => sum + s.totalAmount, 0) / this.activeSales.length;
+    if (this.scopeSales.length === 0) return 0;
+    return this.scopeSales.reduce((sum, s) => sum + s.totalAmount, 0) / this.scopeSales.length;
   }
 
   get paidPct(): number {
@@ -134,8 +153,8 @@ export class DashboardComponent implements OnInit {
       bars.push({ label, dateKey: key, total, count: daySales.length, heightPct: 0, isToday: key === todayKey });
     }
 
-    const max = Math.max(...bars.map(b => b.total), 1);
-    return bars.map(b => ({ ...b, heightPct: b.total > 0 ? Math.max(Math.round(b.total / max * 100), 5) : 0 }));
+    const max = Math.max(...bars.map(b => b.count), 1);
+    return bars.map(b => ({ ...b, heightPct: b.count > 0 ? Math.max(Math.round(b.count / max * 100), 5) : 0 }));
   }
 
   saleStatusLabel(status: number): string {

@@ -76,9 +76,75 @@
 }
 
 .toggle-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .75rem;
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.toggle-row-inline {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .52rem .8rem;
+    border: 1px solid var(--border-2);
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--bg-soft) 80%, transparent);
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.toggle-row-inline:hover {
+    border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 4%, transparent);
+}
+
+.toggle-row-inline input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.toggle-row-inline__label {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .73rem;
+    letter-spacing: .04em;
+    user-select: none;
+}
+
+.toggle-row-inline__track {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 2.2rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-2) 80%, transparent);
+    transition: background .2s ease;
+}
+
+.toggle-row-inline__track::after {
+    content: '';
+    position: absolute;
+    top: .17rem;
+    left: .13rem;
+    width: .9rem;
+    height: .9rem;
+    border-radius: 50%;
+    background: var(--bg-panel);
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    transition: transform .2s ease;
+}
+
+.toggle-row-inline input:checked ~ .toggle-row-inline__track {
+    background: color-mix(in srgb, var(--amber) 42%, transparent);
+}
+
+.toggle-row-inline input:checked ~ .toggle-row-inline__track::after {
+    transform: translateX(.93rem);
+    background: var(--amber);
 }
 
 .payment-line,
@@ -110,6 +176,18 @@
 
 .action-chip {
     padding: .45rem .8rem;
+}
+
+.action-chip--icon {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .line-remove {
@@ -294,10 +372,138 @@
     padding-left: .55rem;
 }
 
+.payment-summary__item--change {
+    box-shadow: inset 3px 0 0 color-mix(in srgb, #8fd3a8 55%, transparent);
+    padding-left: .55rem;
+}
+
+.payment-summary__item--change strong {
+    color: var(--success);
+}
+
 .summary-note p {
     margin: 0;
     line-height: 1.45;
     font-size: .71rem;
+}
+
+.payment-summary__item--coverage {
+    gap: 0;
+}
+
+.coverage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: .5rem;
+}
+
+.payment-summary__item--coverage > .coverage-header span {
+    color: var(--text-dim);
+    font-size: .74rem;
+}
+
+.payment-summary__item--coverage > .coverage-header strong {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+}
+
+.coverage-breakdown {
+    display: grid;
+    gap: 1px;
+    border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+    padding-top: .4rem;
+}
+
+.coverage-line {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: .45rem;
+    padding: .3rem 0;
+}
+
+.coverage-line__tag {
+    display: inline-flex;
+    align-items: center;
+    padding: .1rem .38rem;
+    border-radius: 2px;
+    border: 1px solid var(--border-2);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .56rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.coverage-line__tag--canje {
+    border-color: color-mix(in srgb, var(--amber) 35%, transparent);
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+    color: color-mix(in srgb, var(--amber) 85%, var(--text-dim));
+}
+
+.coverage-line__label {
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.coverage-line__amount {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.coverage-line--tradein .coverage-line__label {
+    color: color-mix(in srgb, var(--amber) 65%, var(--text-soft));
+    font-size: .64rem;
+}
+
+.payment-summary__item--surcharge {
+    background: color-mix(in srgb, var(--amber) 7%, transparent);
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--amber) 65%, transparent);
+    padding-left: .55rem;
+    border-radius: 0 2px 2px 0;
+}
+
+.payment-summary__item--surcharge strong {
+    color: color-mix(in srgb, var(--amber) 85%, var(--text));
+}
+
+.surcharge-label {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    flex-wrap: wrap;
+}
+
+.surcharge-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .18rem .55rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
+    background: color-mix(in srgb, var(--amber) 18%, transparent);
+    color: color-mix(in srgb, var(--amber) 90%, var(--text));
+    font-family: 'DM Mono', monospace;
+    font-size: .58rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    animation: surcharge-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes surcharge-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--amber) 0%, transparent); }
+    50% { opacity: .82; box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 18%, transparent); }
 }
 
 .tradein-note {
@@ -306,6 +512,10 @@
     font-family: 'DM Mono', monospace;
     font-size: .63rem;
     line-height: 1.45;
+}
+
+.tradein-note--modifier {
+    color: color-mix(in srgb, var(--amber) 55%, var(--text-dim));
 }
 
 .tradein-note--manual {

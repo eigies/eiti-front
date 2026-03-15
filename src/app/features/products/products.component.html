@@ -85,6 +85,13 @@
               <small *ngIf="!canViewCostPrice && !createForm.get('allowsManualSaleValue')?.value">Precio visible para venta y catalogo.</small>
             </div>
           </div>
+          <div class="pf__row pf__row--2" style="margin-top:.85rem">
+            <label class="f">
+              <span class="f__l">Cargo si no entrega en canje (opcional)</span>
+              <input class="f__i f__i--num" type="number" min="0" step="0.01" formControlName="noDeliverySurcharge" placeholder="Opcional" />
+              <small class="f__hint">Vacio = usa el valor global. Un monto = sobreescribe el cargo global para este producto.</small>
+            </label>
+          </div>
         </div>
 
         <div class="pf__footer">
@@ -320,6 +327,13 @@
             <strong class="price-kpi__val">{{ editForm.get('allowsManualSaleValue')?.value ? 'Valor en venta' : (publicPricePreview(editForm) | currency:'USD':'symbol':'1.2-2') }}</strong>
             <small *ngIf="canViewCostPrice">Costo {{ costPricePreview(editForm) | currency:'USD':'symbol':'1.2-2' }} · Margen {{ marginPreview(editForm) | number:'1.0-0' }}%</small>
             <small *ngIf="!canViewCostPrice && !editForm.get('allowsManualSaleValue')?.value">Compatibilidad legacy activa.</small>
+          </div>
+          <div *ngIf="modalMode === 'edit'" style="margin-top:.85rem">
+            <label class="f">
+              <span class="f__l">Cargo si no entrega en canje (opcional)</span>
+              <input class="f__i f__i--num" type="number" min="0" step="0.01" formControlName="noDeliverySurcharge" placeholder="Opcional" />
+              <small class="f__hint">Vacio = usa el valor global. Un monto = sobreescribe el cargo global para este producto.</small>
+            </label>
           </div>
           <div class="modal__actions">
             <button class="btn btn--ghost" type="button" (click)="closeModal()">Cancelar</button>
