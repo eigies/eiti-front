@@ -239,6 +239,8 @@ export class SalesFullComponent implements OnInit {
     }
     if (added > 0) { this.selectedProductIds.clear(); this.selectionQuantityByProductId.clear(); this.productModalOpen = false; }
   }
+  get canOverridePrice(): boolean { return this.auth.hasPermission(PermissionCodes.salesPriceOverride); }
+  setDraftItemPrice(item: DraftItem, price: number): void { item.unitPriceOverride = price; item.total = price * item.quantity; }
   removeItem(productId: string): void { this.draftItems = this.draftItems.filter(item => item.product.id !== productId); }
   previousStep(): void { this.step = Math.max(1, this.step - 1); }
   canJumpToStep(targetStep: number): boolean { return targetStep <= this.step && targetStep <= this.totalSteps; }
@@ -348,7 +350,7 @@ export class SalesFullComponent implements OnInit {
       cashDrawerId: this.requiresCashDrawer ? raw.cashDrawerId || null : null,
       payments,
       tradeIns,
-      details: this.draftItems.map(item => ({ productId: item.product.id, quantity: item.quantity }))
+      details: this.draftItems.map(item => ({ productId: item.product.id, quantity: item.quantity, ...(this.canOverridePrice && item.unitPriceOverride !== undefined ? { unitPrice: item.unitPriceOverride } : {}) }))
     };
   }
 
@@ -458,4 +460,4 @@ export class SalesFullComponent implements OnInit {
   private productLabel(product: ProductResponse): string { return `${product.code} · ${product.brand} / ${product.name}`; }
 }
 
-interface DraftItem { product: ProductResponse; quantity: number; total: number; }
+interface DraftItem { product: ProductResponse; quantity: number; total: number; unitPriceOverride?: number; }

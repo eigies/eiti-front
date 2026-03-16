@@ -32,6 +32,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                     return EMPTY;
                 }
 
+                if (error.status === 429) {
+                    toast.error('Demasiados intentos. Espera un momento antes de continuar.');
+                    return EMPTY;
+                }
+
                 throw error;
             })
         );

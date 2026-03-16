@@ -1468,8 +1468,18 @@ if (form === this.editLineForm) {
     return true;
 }
 
+    get canOverridePrice(): boolean {
+        return this.auth.hasPermission(PermissionCodes.salesPriceOverride);
+    }
+
+    setDraftItemPrice(item: DraftItem, price: number): void {
+        item.unitPriceOverride = price;
+        item.total = price * item.quantity;
+    }
+
     private buildRequest(form: FormGroup, items: DraftItem[], paymentState: SalePaymentDraftState, customerId: string | null = null, surcharge = 0) {
     const raw = form.getRawValue();
+    const canOverride = this.canOverridePrice;
     return {
         branchId: raw.branchId,
         customerId,
@@ -1482,7 +1492,7 @@ if (form === this.editLineForm) {
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
-            ...(item.unitPriceOverride !== undefined ? { unitPrice: item.unitPriceOverride } : {})
+            ...(canOverride && item.unitPriceOverride !== undefined ? { unitPrice: item.unitPriceOverride } : {})
         }))
     };
 }

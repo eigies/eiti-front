@@ -99,7 +99,12 @@
                     </td>
                     <td>{{ availableForCreate(item.product.id) }}</td>
                     <td>{{ item.quantity }}</td>
-                    <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td *ngIf="canOverridePrice; else staticPrice">
+                      <input class="control control--compact" type="number" min="0" step="0.01" [value]="item.unitPriceOverride ?? (item.product.publicPrice ?? item.product.price)" (change)="setDraftItemPrice(item, $any($event.target).value)" />
+                    </td>
+                    <ng-template #staticPrice>
+                      <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'USD':'symbol':'1.2-2' }}</td>
+                    </ng-template>
                     <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
                     <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeDraftItem(item.product.id)">Quitar</button></td>
                   </tr>
