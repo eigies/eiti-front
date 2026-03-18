@@ -813,6 +813,11 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, #e28c8c 58%, transparent);
 }
 
+.chip--channel {
+    background: color-mix(in srgb, #a78bfa 18%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 50%, transparent);
+}
+
 .sale-card__actions {
     flex-wrap: wrap;
     gap: .5rem;
@@ -1697,6 +1702,121 @@
     from { opacity: 0; transform: translateY(-10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Channel Select ─────────────────────────────────── */
+.ch-sel {
+    position: relative;
+}
+
+.ch-sel__bg {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+}
+
+.ch-sel__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    appearance: none;
+}
+
+.ch-sel__val {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.ch-sel__val > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ch-sel__placeholder {
+    color: var(--text-soft);
+}
+
+.ch-sel__ico {
+    width: 1.1rem;
+    height: 1.1rem;
+    display: block;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.ch-sel__ico--blank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-soft);
+    font-size: .9rem;
+    line-height: 1;
+}
+
+.ch-sel__caret {
+    width: .55rem;
+    height: .35rem;
+    flex-shrink: 0;
+    color: var(--text-dim);
+    transition: transform .15s ease;
+}
+
+.ch-sel--open .ch-sel__caret {
+    transform: rotate(180deg);
+}
+
+.ch-sel__menu {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-2);
+    border-radius: 3px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .22);
+    overflow: hidden;
+}
+
+.ch-sel__opt {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .58rem .9rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background .1s, color .1s;
+}
+
+.ch-sel__opt:last-child {
+    border-bottom: none;
+}
+
+.ch-sel__opt:hover {
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+    color: var(--amber);
+}
+
+.ch-sel__opt--on {
+    color: var(--amber);
+    background: color-mix(in srgb, var(--amber) 6%, transparent);
+}
+/* ───────────────────────────────────────────────────── */
 
 @keyframes card-in {
     from { opacity: 0; transform: translateY(14px); }

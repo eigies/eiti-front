@@ -34,6 +34,13 @@ export interface CashSessionResponse {
     difference: number;
     notes?: string | null;
     movements: CashSessionMovementResponse[];
+    paymentBreakdown: PaymentMethodBreakdownItem[];
+}
+
+export interface PaymentMethodBreakdownItem {
+    method: number;
+    methodName: string;
+    amount: number;
 }
 
 export interface CashSessionSummaryResponse {

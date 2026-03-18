@@ -12,7 +12,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { SaleDetailResponse, SaleResponse } from '../../core/models/sale.models';
+import { SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, saleSourceChannelLabel } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
@@ -109,6 +109,9 @@ export class SalesPageComponent implements OnInit {
     currentSalesPage = 1;
     salesPageSize = 10;
     private readonly detailPageBySaleId = new Map<string, number>();
+    readonly saleSourceChannels = SALE_SOURCE_CHANNELS;
+    showCreateChannelDrop = false;
+    showEditChannelDrop   = false;
 
     constructor(
         private fb: FormBuilder,
@@ -130,6 +133,7 @@ export class SalesPageComponent implements OnInit {
             idSaleStatus: [1, Validators.required],
             hasDelivery: [false],
             cashDrawerId: [''],
+            sourceChannel: [null],
             productId: ['', Validators.required],
             quantity: [1, [Validators.required, Validators.min(1)]]
         });
@@ -141,14 +145,15 @@ export class SalesPageComponent implements OnInit {
             branchId: ['', Validators.required],
             idSaleStatus: [1, Validators.required],
             hasDelivery: [false],
-            cashDrawerId: ['']
+            cashDrawerId: [''],
+            sourceChannel: [null]
         });
         this.transportForm = this.fb.group({
             driverEmployeeId: ['', Validators.required],
             vehicleId: ['', Validators.required],
             notes: ['']
         });
-        this.filterForm = this.fb.group({ dateFrom: [''], dateTo: [''], idSaleStatus: [''] });
+        this.filterForm = this.fb.group({ dateFrom: [''], dateTo: [''], idSaleStatus: [''], sourceChannel: [''] });
     }
 
     ngOnInit(): void {
@@ -442,7 +447,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
-        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '' });
+        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null });
         this.createPaymentState = createEmptySalePaymentDraftState();
         this.createProductQuery = '';
         this.createProductModalOpen = false;
@@ -467,6 +472,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
 loadSales(): void {
     this.loadingSales = true;
     const selectedStatus = this.optionalNumber(this.filterForm.get('idSaleStatus')?.value);
+    const selectedChannel = this.optionalNumber(this.filterForm.get('sourceChannel')?.value);
 
     this.saleService.listSales({
         dateFrom: this.filterForm.get('dateFrom')?.value || undefined,
@@ -474,7 +480,11 @@ loadSales(): void {
         idSaleStatus: selectedStatus
     }).subscribe({
         next: sales => {
-            this.sales = selectedStatus === 3 ? sales : sales.filter(sale => sale.idSaleStatus !== 3);
+            let filtered = selectedStatus === 3 ? sales : sales.filter(sale => sale.idSaleStatus !== 3);
+            if (selectedChannel) {
+                filtered = filtered.filter(sale => sale.sourceChannel === selectedChannel);
+            }
+            this.sales = filtered;
             this.ensureSalesPageInRange();
             this.loadingSales = false;
         },
@@ -492,7 +502,7 @@ beginEdit(sale: SaleResponse, presetPaid = false): void {
 }
 
 this.editingSale = sale;
-this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: '' });
+this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: '', sourceChannel: sale.sourceChannel ?? null });
 this.editItems = sale.details
     .map(detail => {
         const product = this.findProduct(detail.productId);
@@ -1255,7 +1265,7 @@ applySaleFilters(): void {
 }
 
 clearSaleFilters(): void {
-    this.filterForm.reset({ dateFrom: '', dateTo: '', idSaleStatus: '' });
+    this.filterForm.reset({ dateFrom: '', dateTo: '', idSaleStatus: '', sourceChannel: '' });
     this.currentSalesPage = 1;
     this.loadSales();
 }
@@ -1480,6 +1490,7 @@ if (form === this.editLineForm) {
     private buildRequest(form: FormGroup, items: DraftItem[], paymentState: SalePaymentDraftState, customerId: string | null = null, surcharge = 0) {
     const raw = form.getRawValue();
     const canOverride = this.canOverridePrice;
+    const rawChannel = raw.sourceChannel;
     return {
         branchId: raw.branchId,
         customerId,
@@ -1489,12 +1500,17 @@ if (form === this.editLineForm) {
         payments: normalizeSalePayments(paymentState),
         tradeIns: normalizeSaleTradeIns(paymentState),
         noDeliverySurchargeTotal: surcharge > 0 ? surcharge : null,
+        sourceChannel: (rawChannel !== null && rawChannel !== '' && rawChannel !== undefined) ? Number(rawChannel) as SaleSourceChannel : null,
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
             ...(canOverride && item.unitPriceOverride !== undefined ? { unitPrice: item.unitPriceOverride } : {})
         }))
     };
+}
+
+saleChannelLabel(sale: SaleResponse): string {
+    return saleSourceChannelLabel(sale.sourceChannel);
 }
 
     canSendSaleWhatsApp(sale: SaleResponse): boolean {

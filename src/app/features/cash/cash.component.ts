@@ -6,7 +6,7 @@ import { NavbarComponent } from '../../shared/components/navbar/navbar.component
 import { BranchService } from '../../core/services/branch.service';
 import { CashService } from '../../core/services/cash.service';
 import { BranchResponse } from '../../core/models/branch.models';
-import { CashDrawerResponse, CashSessionMovementResponse, CashSessionResponse, CashSessionSummaryResponse } from '../../core/models/cash.models';
+import { CashDrawerResponse, CashSessionMovementResponse, CashSessionResponse, CashSessionSummaryResponse, PaymentMethodBreakdownItem } from '../../core/models/cash.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingStatusResponse } from '../../core/models/onboarding.models';
@@ -17,7 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SaleService } from '../../core/services/sale.service';
 import { SaleResponse } from '../../core/models/sale.models';
-import { paymentMethodSummary } from '../../core/models/sale-payment.models';
+import { SALE_PAYMENT_METHODS, paymentMethodSummary } from '../../core/models/sale-payment.models';
 
 type CashSessionView = {
     session: CashSessionResponse;
@@ -145,6 +145,7 @@ type CashSessionView = {
             <input class="control" type="number" min="0.01" step="0.01" placeholder="Extraccion" formControlName="amount" />
             <input class="control" type="text" placeholder="Motivo" formControlName="description" />
             <button class="btn btn--ghost" type="submit">Registrar extraccion</button>
+            <button *ngIf="otherDrawers.length > 0" class="btn btn--transfer" type="button" (click)="openTransferModal()">&#8644; Transferir</button>
           </form>
 
           <form *ngIf="auth.hasPermission(permissionCodes.cashClose)" class="inline-form" [formGroup]="closeForm" (ngSubmit)="closeSession()">
@@ -166,10 +167,6 @@ type CashSessionView = {
               <span>Diferencia</span>
               <strong>&#36;{{ currentSummary.difference | number: '1.2-2' }}</strong>
             </div>
-          </div>
-          <div class="session-payment-methods" *ngIf="currentSession">
-            <span>Medios de pago</span>
-            <strong>{{ sessionPaymentMethodsSummary(currentSession) }}</strong>
           </div>
         </div>
       </section>
@@ -216,6 +213,14 @@ type CashSessionView = {
             </button>
 
             <div class="history-session__body" *ngIf="item.expanded">
+              <div class="session-breakdown" *ngIf="item.session.paymentBreakdown && item.session.paymentBreakdown.length > 0">
+                <span *ngFor="let bd of item.session.paymentBreakdown; let last = last">
+                  <span class="session-breakdown__label">{{ bd.methodName }}</span>
+                  <strong class="session-breakdown__amount">&#36;{{ bd.amount | number: '1.2-2' }}</strong>
+                  <span class="session-breakdown__sep" *ngIf="!last"> | </span>
+                </span>
+              </div>
+
               <div class="history-session__toolbar">
                 <span>Cierre real: {{ item.session.actualClosingAmount == null ? '-' : ('$' + (item.session.actualClosingAmount | number: '1.2-2')) }}</span>
                 <span>Diferencia: &#36;{{ item.session.difference | number: '1.2-2' }}</span>
@@ -252,6 +257,39 @@ type CashSessionView = {
         </div>
       </section>
     </div>
+
+    <!-- Transfer Modal -->
+    <div class="modal-backdrop" *ngIf="showTransferModal" (click)="closeTransferModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal__head">
+          <span class="modal__title">&#8644; Pase entre cajas</span>
+          <button class="modal__close" type="button" (click)="closeTransferModal()">&#x2715;</button>
+        </div>
+        <div class="modal__body">
+          <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+            <label class="field">
+              <span>Caja destino</span>
+              <select class="control" formControlName="targetCashDrawerId" [class.control--placeholder]="!transferForm.get('targetCashDrawerId')?.value">
+                <option value="" disabled hidden>Selecciona caja destino</option>
+                <option *ngFor="let drawer of otherDrawers" [value]="drawer.id">{{ drawer.name }}</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Monto</span>
+              <input class="control" type="number" min="0.01" step="0.01" placeholder="0.00" formControlName="amount" />
+            </label>
+            <label class="field">
+              <span>Descripcion</span>
+              <input class="control" type="text" placeholder="Motivo del pase" formControlName="description" />
+            </label>
+            <div class="modal__actions">
+              <button class="btn btn--ghost" type="button" (click)="closeTransferModal()">Cancelar</button>
+              <button class="btn btn--transfer btn--transfer-confirm" type="submit" [disabled]="transferForm.invalid">Confirmar transferencia</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   `,
     styles: [`
     .page{min-height:calc(100vh - 64px);background:linear-gradient(180deg,var(--bg) 0%,var(--bg-elevated) 100%);padding:3rem 2rem;max-width:1120px;margin:0 auto}
@@ -284,9 +322,12 @@ type CashSessionView = {
     .session-card .btn--danger:hover:not(:disabled){background:color-mix(in srgb,var(--danger) 14%, transparent);border-color:color-mix(in srgb,var(--danger) 68%, var(--border-2))}
     .btn:disabled{cursor:not-allowed;opacity:.5;filter:saturate(.65)}
     .btn:disabled::after{content:'';position:absolute;left:10%;right:10%;top:50%;height:1px;background:currentColor;opacity:.65;transform:rotate(-8deg);pointer-events:none}
-    .session-payment-methods{margin-top:1rem;padding:.85rem 1rem;border:1px solid var(--border);border-radius:3px;background:color-mix(in srgb,var(--bg-soft) 76%, transparent);display:grid;gap:.28rem}
-    .session-payment-methods span{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
-    .session-payment-methods strong{color:var(--text);font-family:'DM Mono',monospace;font-size:.84rem}
+    .payment-breakdown{margin-top:1rem;padding:.85rem 1rem;border:1px solid var(--border);border-radius:3px;background:color-mix(in srgb,var(--bg-soft) 76%, transparent)}
+    .payment-breakdown__header{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.65rem}
+    .payment-breakdown__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.5rem}
+    .payment-breakdown__item{display:flex;flex-direction:column;gap:.15rem;padding:.55rem .75rem;border:1px solid var(--border);border-radius:3px;background:color-mix(in srgb,var(--bg-panel) 90%, transparent)}
+    .payment-breakdown__label{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase}
+    .payment-breakdown__amount{color:var(--success);font-family:'DM Mono',monospace;font-size:.88rem;font-weight:600}
     .drawer-strip{display:grid;grid-template-columns:minmax(220px,280px) 1fr;gap:1rem;align-items:start;margin-top:1rem;padding:1rem 1rem 0;border:1px solid color-mix(in srgb,var(--border) 78%, transparent);background:color-mix(in srgb,var(--bg-soft) 68%, transparent);border-radius:4px}
     .drawer-strip--attention{border-color:color-mix(in srgb,var(--amber) 34%, var(--border));box-shadow:0 0 0 2px color-mix(in srgb,var(--amber) 9%, transparent)}
     .drawer-strip__intro{display:grid;gap:.35rem;padding-bottom:1rem}
@@ -319,6 +360,10 @@ type CashSessionView = {
     .history-session__headline span{color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;font-size:.68rem}
     .history-session__status--closed{color:var(--danger)!important}
     .history-session__metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.74rem}
+    .session-breakdown{padding:.45rem 0 .55rem;border-bottom:1px solid var(--border);margin-bottom:.75rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.72rem;display:flex;flex-wrap:wrap;align-items:center;gap:.15rem}
+    .session-breakdown__label{color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;font-size:.65rem}
+    .session-breakdown__amount{color:var(--success);font-weight:600;margin-left:.3rem}
+    .session-breakdown__sep{color:var(--border-2);margin:0 .2rem}
     .history-session__body{padding:0 1rem 1rem}
     .history-session__toolbar{display:flex;justify-content:space-between;gap:1rem;align-items:center;color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;margin-bottom:.85rem}
     .history-table{overflow:auto;border:1px solid var(--border);background:var(--bg-soft)}
@@ -333,6 +378,23 @@ type CashSessionView = {
     .badge--type[data-type="CashWithdrawal"]{background:color-mix(in srgb,var(--danger) 12%, transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%, transparent)}
     .badge--type[data-type="OpeningBalance"]{background:color-mix(in srgb,var(--success) 12%, transparent);color:var(--success);border:1px solid color-mix(in srgb,var(--success) 30%, transparent)}
     .badge--type[data-type="ClosingBalance"]{background:color-mix(in srgb,var(--text-dim) 12%, transparent);color:var(--text-dim);border:1px solid color-mix(in srgb,var(--text-dim) 28%, transparent)}
+    .badge--type[data-type="CashTransferOut"]{background:color-mix(in srgb,#6366f1 12%, transparent);color:#6366f1;border:1px solid color-mix(in srgb,#6366f1 30%, transparent)}
+    .badge--type[data-type="CashTransferIn"]{background:color-mix(in srgb,#06b6d4 12%, transparent);color:#06b6d4;border:1px solid color-mix(in srgb,#06b6d4 30%, transparent)}
+    .btn--transfer{background:color-mix(in srgb,#6366f1 8%, transparent);border:1px solid color-mix(in srgb,#6366f1 35%, var(--border-2));color:#6366f1;white-space:nowrap}
+    .btn--transfer:hover:not(:disabled){background:color-mix(in srgb,#6366f1 14%, transparent);border-color:color-mix(in srgb,#6366f1 55%, var(--border-2));transform:translateY(-1px)}
+    .btn--transfer-confirm{font-size:.72rem;letter-spacing:.12em}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+    .modal{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,.24)}
+    .modal__head{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.35rem;border-bottom:1px solid var(--border)}
+    .modal__title{color:var(--text);font-family:'DM Mono',monospace;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase}
+    .modal__close{background:transparent;border:none;color:var(--text-soft);cursor:pointer;font-size:1rem;padding:.2rem .4rem;line-height:1}
+    .modal__close:hover{color:var(--text)}
+    .modal__body{padding:1.35rem}
+    .modal__body form{display:grid;gap:1rem}
+    .modal__body .field{display:grid;gap:.4rem}
+    .modal__body .field span{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase}
+    .modal__body .control{margin:0}
+    .modal__actions{display:flex;justify-content:flex-end;gap:.75rem;margin-top:.5rem}
     @media (max-width:920px){
       .inline-form,.inline-form--drawer,.session-metrics,.summary,.history-filters,.history-session__metrics,.drawer-strip{grid-template-columns:1fr}
       .history-session__toolbar,.history-session__headline,.history-header-actions{flex-direction:column;align-items:flex-start}
@@ -360,6 +422,8 @@ export class CashComponent implements OnInit {
     openForm: FormGroup;
     withdrawForm: FormGroup;
     closeForm: FormGroup;
+    transferForm: FormGroup;
+    showTransferModal = false;
     branches: BranchResponse[] = [];
     drawers: CashDrawerResponse[] = [];
     selectedBranchId = '';
@@ -368,6 +432,7 @@ export class CashComponent implements OnInit {
     currentSummary: CashSessionSummaryResponse | null = null;
     historySessions: CashSessionView[] = [];
     salePaymentMethodsBySaleId = new Map<string, string>();
+    salesBySaleId = new Map<string, SaleResponse>();
     historyFrom = '';
     historyTo = '';
     showCreateDrawer = false;
@@ -389,6 +454,7 @@ export class CashComponent implements OnInit {
         this.openForm = this.fb.group({ openingAmount: [0, [Validators.required, Validators.min(0)]], notes: [''] });
         this.withdrawForm = this.fb.group({ amount: [0, [Validators.required, Validators.min(0.01)]], description: ['', Validators.required] });
         this.closeForm = this.fb.group({ actualClosingAmount: [0, [Validators.required, Validators.min(0)]], notes: [''] });
+        this.transferForm = this.fb.group({ targetCashDrawerId: ['', Validators.required], amount: [0, [Validators.required, Validators.min(0.01)]], description: ['', Validators.required] });
     }
 
     ngOnInit(): void {
@@ -531,6 +597,39 @@ export class CashComponent implements OnInit {
         });
     }
 
+    openTransferModal(): void {
+        this.transferForm.reset({ targetCashDrawerId: '', amount: 0, description: '' });
+        this.showTransferModal = true;
+    }
+
+    closeTransferModal(): void {
+        this.showTransferModal = false;
+        this.transferForm.reset({ targetCashDrawerId: '', amount: 0, description: '' });
+    }
+
+    submitTransfer(): void {
+        if (!this.currentSession || this.transferForm.invalid) {
+            this.transferForm.markAllAsTouched();
+            return;
+        }
+
+        const { targetCashDrawerId, amount, description } = this.transferForm.getRawValue();
+        this.cashService.transfer(this.selectedDrawerId, targetCashDrawerId, Number(amount), description).subscribe({
+            next: () => {
+                this.showTransferModal = false;
+                this.transferForm.reset({ targetCashDrawerId: '', amount: 0, description: '' });
+                this.loadCurrentSession();
+                this.loadHistory();
+                this.toast.success('Transferencia registrada');
+            },
+            error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo registrar la transferencia')
+        });
+    }
+
+    get otherDrawers(): CashDrawerResponse[] {
+        return this.drawers.filter(drawer => drawer.id !== this.selectedDrawerId);
+    }
+
     closeSession(): void {
         if (!this.currentSession || this.closeForm.invalid) {
             this.closeForm.markAllAsTouched();
@@ -608,7 +707,8 @@ export class CashComponent implements OnInit {
             session.difference.toFixed(2)
         ]);
 
-        this.downloadExcel(`cash-session-${session.openedAt.slice(0, 10)}.xlsx`, headers, body);
+        const breakdown = this.computePaymentBreakdown(session);
+        this.downloadExcel(`cash-session-${session.openedAt.slice(0, 10)}.xlsx`, headers, body, breakdown);
     }
 
     exportFilteredHistory(): void {
@@ -776,7 +876,37 @@ export class CashComponent implements OnInit {
                 y += rowHeight;
             }
 
-            y += 4;
+            const breakdown = this.computePaymentBreakdown(session);
+            if (breakdown.length > 0) {
+                if (y + 6 + breakdown.length * 5 > maxY) {
+                    doc.addPage();
+                    y = 16;
+                    drawDocumentHeader(true);
+                }
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.8);
+                doc.setTextColor(60, 60, 60);
+                doc.text('Desglose por medio de pago:', margin, y + 4);
+                y += 6;
+
+                for (const item of breakdown) {
+                    if (y + 5 > maxY) {
+                        doc.addPage();
+                        y = 16;
+                        drawDocumentHeader(true);
+                    }
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.6);
+                    doc.setTextColor(35, 35, 35);
+                    doc.text(`${item.methodName}:`, margin + 4, y + 4);
+                    doc.text(this.formatCurrency(item.amount), margin + 55, y + 4, { align: 'left' });
+                    y += 5;
+                }
+            }
+
+            y += 6;
         }
 
         const pageCount = doc.getNumberOfPages();
@@ -813,12 +943,18 @@ export class CashComponent implements OnInit {
         this.currentSession = null;
         this.currentSummary = null;
         this.salePaymentMethodsBySaleId.clear();
+        this.salesBySaleId.clear();
 
         this.cashService.getCurrentSession(this.selectedDrawerId).subscribe({
             next: session => {
                 this.currentSession = session;
                 this.currentSummary = this.toSummary(session);
                 this.loadSalePaymentMethods([session]);
+                this.cashService.getSummary(session.id).subscribe({
+                    next: summary => {
+                        this.currentSummary = summary;
+                    }
+                });
                 this.loadingSession = false;
             },
             error: () => {
@@ -836,6 +972,7 @@ export class CashComponent implements OnInit {
         this.loadingHistory = true;
         this.historySessions = [];
         this.salePaymentMethodsBySaleId.clear();
+        this.salesBySaleId.clear();
 
         this.cashService.listHistory(this.selectedDrawerId, this.historyFrom || undefined, this.historyTo || undefined).subscribe({
             next: sessions => {
@@ -902,6 +1039,9 @@ export class CashComponent implements OnInit {
             CashWithdrawal: 'Extracción',
             OpeningBalance: 'Apertura',
             ClosingBalance: 'Cierre',
+            CashTransferOut: 'Transferencia saliente',
+            CashTransferIn: 'Transferencia entrante',
+            OpeningFloat: 'Apertura',
         };
         return map[typeName] ?? typeName;
     }
@@ -932,7 +1072,7 @@ export class CashComponent implements OnInit {
         return methods.length > 0 ? methods.join(' | ') : 'Sin ventas con medio identificado';
     }
 
-    private downloadExcel(fileName: string, headers: string[], body: string[][]): void {
+    private downloadExcel(fileName: string, headers: string[], body: string[][], breakdown?: PaymentMethodBreakdownItem[]): void {
         const rows = body.map(columns =>
             headers.reduce<Record<string, string>>((result, header, index) => {
                 result[header] = columns[index] ?? '';
@@ -944,6 +1084,17 @@ export class CashComponent implements OnInit {
         const workbook = XLSX.utils.book_new();
 
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Caja');
+
+        if (breakdown && breakdown.length > 0) {
+            const breakdownHeaders = ['Medio de pago', 'Monto'];
+            const breakdownRows = breakdown.map(item => ({
+                'Medio de pago': item.methodName,
+                'Monto': item.amount.toFixed(2)
+            }));
+            const breakdownSheet = XLSX.utils.json_to_sheet(breakdownRows, { header: breakdownHeaders });
+            XLSX.utils.book_append_sheet(workbook, breakdownSheet, 'Medios de Pago');
+        }
+
         XLSX.writeFile(workbook, fileName, { compression: true });
     }
 
@@ -985,9 +1136,40 @@ export class CashComponent implements OnInit {
                     }
 
                     this.salePaymentMethodsBySaleId.set(saleId, paymentMethodSummary(sale.payments, sale.tradeIns));
+                    this.salesBySaleId.set(saleId, sale);
                 }
+
             }
         });
+    }
+
+    computePaymentBreakdown(session: CashSessionResponse): PaymentMethodBreakdownItem[] {
+        const totals = new Map<number, number>();
+
+        for (const movement of session.movements) {
+            if (movement.referenceType?.toLowerCase() !== 'sale' || !movement.referenceId) {
+                continue;
+            }
+
+            const sale = this.salesBySaleId.get(String(movement.referenceId));
+            if (!sale?.payments) {
+                continue;
+            }
+
+            for (const payment of sale.payments) {
+                const method = Number(payment.idPaymentMethod);
+                totals.set(method, (totals.get(method) ?? 0) + Number(payment.amount));
+            }
+        }
+
+        return Array.from(totals.entries())
+            .filter(([, amount]) => amount > 0)
+            .sort(([a], [b]) => a - b)
+            .map(([method, amount]) => ({
+                method,
+                methodName: SALE_PAYMENT_METHODS.find(m => m.id === method)?.label ?? 'Otros',
+                amount
+            }));
     }
 
     isClosedSession(statusName?: string | null): boolean {

@@ -125,6 +125,7 @@
           </div>
           <div class="bulk-bar__actions">
             <ng-container *ngIf="!bulkEditMode">
+              <button class="btn btn--ghost btn--sm" type="button" (click)="toggleCompactMode()" title="{{ compactMode ? 'Mostrar todas las columnas' : 'Modo compacto' }}">{{ compactMode ? 'Columnas ▼' : 'Compacto ▲' }}</button>
               <button class="btn btn--outline-amber btn--sm" type="button" (click)="enterBulkEditMode()">Editar varios</button>
             </ng-container>
             <ng-container *ngIf="bulkEditMode">
@@ -139,10 +140,15 @@
           <table class="tbl">
             <thead>
               <tr>
-                <th>Codigo</th><th>SKU</th><th>Tipo</th><th class="tbl-th--amber">Marca</th><th>Producto</th><th>Descripcion</th>
-                <th class="tbl-th--r">Precio pub.</th><th class="tbl-th--r" *ngIf="canViewCostPrice">Costo</th><th class="tbl-th--r">Unitario</th>
-                <th class="tbl-th--r">Stock</th><th class="tbl-th--r">Reservado</th><th class="tbl-th--r">Disponible</th>
-                <th>Actualizado</th><th>Acciones</th>
+                <th>Codigo</th><th>SKU</th><th>Tipo</th><th class="tbl-th--amber">Marca</th><th>Producto</th>
+                <th *ngIf="showHiddenColumns">Descripcion</th>
+                <th class="tbl-th--r">Precio pub.</th><th class="tbl-th--r" *ngIf="canViewCostPrice">Costo</th>
+                <th class="tbl-th--r" *ngIf="showHiddenColumns">Unitario</th>
+                <th class="tbl-th--r">Stock</th>
+                <th class="tbl-th--r" *ngIf="showHiddenColumns">Reservado</th>
+                <th class="tbl-th--r">Disponible</th>
+                <th *ngIf="showHiddenColumns">Actualizado</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -168,15 +174,15 @@
                     <span class="type-badge" [class.type-badge--special]="productAllowsManualSaleValue(product)">{{ productAllowsManualSaleValue(product) ? 'Valor en venta' : 'Comun' }}</span>
                   </ng-template>
                 </td>
-                <td class="td--amber td--mono td--sm" [class.cell-ch]="isBulkFieldChanged(product.id,'brand')" [class.cell-inv]="isBulkFieldInvalid(product.id,'brand')">
+                <td class="td--amber td--mono td--sm td--brand" [class.cell-ch]="isBulkFieldChanged(product.id,'brand')" [class.cell-inv]="isBulkFieldInvalid(product.id,'brand')">
                   <ng-container *ngIf="bulkEditMode; else readBrand"><input class="ti ti--amber" type="text" formControlName="brand" /></ng-container>
                   <ng-template #readBrand>{{ product.brand }}</ng-template>
                 </td>
-                <td [class.cell-ch]="isBulkFieldChanged(product.id,'name')" [class.cell-inv]="isBulkFieldInvalid(product.id,'name')">
+                <td class="td--name" [class.cell-ch]="isBulkFieldChanged(product.id,'name')" [class.cell-inv]="isBulkFieldInvalid(product.id,'name')">
                   <ng-container *ngIf="bulkEditMode; else readName"><input class="ti" type="text" formControlName="name" /></ng-container>
                   <ng-template #readName>{{ product.name }}</ng-template>
                 </td>
-                <td class="td--desc" [class.cell-ch]="isBulkFieldChanged(product.id,'description')" [class.cell-inv]="isBulkFieldInvalid(product.id,'description')">
+                <td *ngIf="showHiddenColumns" class="td--desc" [class.cell-ch]="isBulkFieldChanged(product.id,'description')" [class.cell-inv]="isBulkFieldInvalid(product.id,'description')">
                   <ng-container *ngIf="bulkEditMode; else readDesc"><textarea class="ti ti--area" formControlName="description"></textarea></ng-container>
                   <ng-template #readDesc>{{ product.description || '—' }}</ng-template>
                 </td>
@@ -191,18 +197,23 @@
                   <ng-container *ngIf="bulkEditMode; else readCost"><input class="ti ti--r" type="number" min="0" step="0.01" formControlName="costPrice" /><small class="cell-err" *ngIf="isBulkFieldInvalid(product.id,'costPrice')">Invalido</small></ng-container>
                   <ng-template #readCost>&#36;{{ (product.costPrice ?? 0) | number:'1.2-2' }}</ng-template>
                 </td>
-                <td class="td--mono td--r td--dim" [class.cell-ch]="isBulkFieldChanged(product.id,'unitPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'unitPrice')">
+                <td *ngIf="showHiddenColumns" class="td--mono td--r td--dim" [class.cell-ch]="isBulkFieldChanged(product.id,'unitPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'unitPrice')">
                   <ng-container *ngIf="bulkEditMode; else readUnit"><input class="ti ti--r" type="number" min="0" step="0.01" formControlName="unitPrice" placeholder="—" /><small class="cell-err" *ngIf="isBulkFieldInvalid(product.id,'unitPrice')">Invalido</small></ng-container>
                   <ng-template #readUnit>{{ product.unitPrice == null ? '—' : ('$' + (product.unitPrice | number:'1.2-2')) }}</ng-template>
                 </td>
                 <td class="td--mono td--r td--num">{{ product.totalOnHandQuantity }}</td>
-                <td class="td--mono td--r td--dim">{{ product.totalReservedQuantity }}</td>
+                <td *ngIf="showHiddenColumns" class="td--mono td--r td--dim">{{ product.totalReservedQuantity }}</td>
                 <td class="td--mono td--r" [class.td--avail]="product.totalAvailableQuantity > 0" [class.td--zero]="product.totalAvailableQuantity === 0">{{ product.totalAvailableQuantity }}</td>
-                <td class="td--mono td--dim td--sm">{{ (product.updatedAt || product.createdAt) | date:'dd/MM/yy' }}</td>
+                <td *ngIf="showHiddenColumns" class="td--mono td--dim td--sm">{{ (product.updatedAt || product.createdAt) | date:'dd/MM/yy' }}</td>
                 <td>
                   <div class="action-col">
+                    <button class="btn-icon btn-icon--eye" type="button" *ngIf="!bulkEditMode" (click)="openDetailModal(product)" title="Ver detalle">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
                     <button class="btn btn--stock btn--xs" type="button" (click)="openStock(product)">Stock</button>
-                    <button class="btn btn--outline-amber btn--xs" type="button" *ngIf="!bulkEditMode" (click)="openEditor(product)">Editar</button>
                     <button class="btn btn--danger btn--xs" type="button" *ngIf="!bulkEditMode" (click)="openDelete(product)">Eliminar</button>
                     <span class="row-st" *ngIf="bulkEditMode && isBulkProductModified(product.id)">Modificado</span>
                     <span class="row-st row-st--inv" *ngIf="bulkEditMode && !isBulkProductModified(product.id) && bulkForm(product.id).invalid">Revisar</span>
@@ -232,14 +243,49 @@
     <div class="modal__box" (click)="$event.stopPropagation()">
       <div class="modal__head">
         <div class="modal__head-left">
-          <span class="modal__icon">{{ modalMode === 'edit' ? '~' : modalMode === 'delete' ? '!' : '#' }}</span>
-          <span class="modal__title">{{ modalMode === 'edit' ? 'Editar producto' : modalMode === 'delete' ? 'Eliminar producto' : 'Stock por sucursal' }}</span>
+          <span class="modal__icon">{{ modalMode === 'edit' ? '~' : modalMode === 'delete' ? '!' : modalMode === 'detail' ? '&#128065;' : '#' }}</span>
+          <span class="modal__title">{{ modalMode === 'edit' ? 'Editar producto' : modalMode === 'delete' ? 'Eliminar producto' : modalMode === 'detail' ? 'Detalle de producto' : 'Stock por sucursal' }}</span>
         </div>
         <button class="modal__close" type="button" (click)="closeModal()">✕</button>
       </div>
 
       <div class="modal__content">
         <div class="modal__notice" *ngIf="modalMode === 'delete'">Confirma la eliminacion. Si el producto ya fue usado en una venta, la API bloqueara el borrado.</div>
+
+        <!-- DETAIL -->
+        <div *ngIf="modalMode === 'detail' && selectedProduct" class="detail-panel">
+          <div class="detail-section">
+            <div class="detail-section__label">Identidad</div>
+            <div class="detail-row"><span class="detail-row__key">Codigo</span><span class="detail-row__val">{{ selectedProduct.code }}</span></div>
+            <div class="detail-row"><span class="detail-row__key">SKU</span><span class="detail-row__val">{{ selectedProduct.sku }}</span></div>
+            <div class="detail-row"><span class="detail-row__key">Marca</span><span class="detail-row__val">{{ selectedProduct.brand }}</span></div>
+            <div class="detail-row"><span class="detail-row__key">Nombre</span><span class="detail-row__val">{{ selectedProduct.name }}</span></div>
+            <div class="detail-row" *ngIf="selectedProduct.description"><span class="detail-row__key">Descripcion</span><span class="detail-row__val detail-row__val--desc">{{ selectedProduct.description }}</span></div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section__label">Precios</div>
+            <div class="detail-row"><span class="detail-row__key">Precio publico</span><span class="detail-row__val detail-row__val--price">{{ productAllowsManualSaleValue(selectedProduct) ? 'Valor en venta' : ('$' + ((selectedProduct.publicPrice ?? selectedProduct.price) | number:'1.2-2')) }}</span></div>
+            <div class="detail-row" *ngIf="canViewCostPrice"><span class="detail-row__key">Precio costo</span><span class="detail-row__val">&#36;{{ (selectedProduct.costPrice ?? 0) | number:'1.2-2' }}</span></div>
+            <div class="detail-row" *ngIf="selectedProduct.unitPrice != null"><span class="detail-row__key">Precio unitario</span><span class="detail-row__val">&#36;{{ selectedProduct.unitPrice | number:'1.2-2' }}</span></div>
+            <div class="detail-row"><span class="detail-row__key">Permite precio manual</span><span class="detail-row__val">{{ productAllowsManualSaleValue(selectedProduct) ? 'Si' : 'No' }}</span></div>
+            <div class="detail-row" *ngIf="selectedProduct.noDeliverySurcharge != null"><span class="detail-row__key">Recargo sin envio</span><span class="detail-row__val">&#36;{{ selectedProduct.noDeliverySurcharge | number:'1.2-2' }}</span></div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section__label">Stock global</div>
+            <div class="detail-row"><span class="detail-row__key">Stock total</span><span class="detail-row__val">{{ selectedProduct.totalOnHandQuantity }}</span></div>
+            <div class="detail-row"><span class="detail-row__key">Reservado</span><span class="detail-row__val">{{ selectedProduct.totalReservedQuantity }}</span></div>
+            <div class="detail-row"><span class="detail-row__key">Disponible</span><span class="detail-row__val detail-row__val--avail">{{ selectedProduct.totalAvailableQuantity }}</span></div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section__label">Registro</div>
+            <div class="detail-row"><span class="detail-row__key">Creado</span><span class="detail-row__val">{{ selectedProduct.createdAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+            <div class="detail-row"><span class="detail-row__key">Actualizado</span><span class="detail-row__val">{{ (selectedProduct.updatedAt || selectedProduct.createdAt) | date:'dd/MM/yyyy HH:mm' }}</span></div>
+          </div>
+          <div class="modal__actions">
+            <button class="btn btn--ghost" type="button" (click)="closeModal()">Cerrar</button>
+            <button class="btn btn--outline-amber" type="button" (click)="openEditor(selectedProduct)">Editar</button>
+          </div>
+        </div>
 
         <!-- STOCK -->
         <div *ngIf="modalMode === 'stock'" class="stock-panel">
@@ -295,7 +341,7 @@
         </div>
 
         <!-- EDIT / DELETE -->
-        <form *ngIf="modalMode !== 'stock'" [formGroup]="editForm" (ngSubmit)="submitModal()" novalidate>
+        <form *ngIf="modalMode !== 'stock' && modalMode !== 'detail'" [formGroup]="editForm" (ngSubmit)="submitModal()" novalidate>
           <div class="pf__row pf__row--2">
             <label class="f"><span class="f__l">Codigo</span><input class="f__i" type="text" formControlName="code" [readonly]="modalMode === 'delete'" /></label>
             <label class="f"><span class="f__l">SKU</span><input class="f__i" type="text" formControlName="sku" [readonly]="modalMode === 'delete'" /></label>

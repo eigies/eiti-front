@@ -31,6 +31,10 @@ export class CashService {
         return this.http.post<CashSessionResponse>(`${this.sessionsBase}/${id}/withdrawals`, { amount, description });
     }
 
+    transfer(sourceCashDrawerId: string, targetCashDrawerId: string, amount: number, description: string): Observable<void> {
+        return this.http.post<void>(`${this.sessionsBase}/transfers`, { sourceCashDrawerId, targetCashDrawerId, amount, description });
+    }
+
     getCurrentSession(cashDrawerId: string): Observable<CashSessionResponse> {
         return this.http.get<CashSessionResponse>(`${this.sessionsBase}/current?cashDrawerId=${cashDrawerId}`);
     }

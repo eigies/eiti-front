@@ -16,7 +16,7 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { forkJoin } from 'rxjs';
 
-type ProductModalMode = 'edit' | 'delete' | 'stock';
+type ProductModalMode = 'detail' | 'edit' | 'delete' | 'stock';
 
 @Component({
   selector: 'app-products',
@@ -57,6 +57,7 @@ export class ProductsComponent implements OnInit {
   selectedStockBranchId = '';
   selectedBranchStock: BranchProductStockResponse | null = null;
   stockMovements: StockMovementResponse[] = [];
+  compactMode = true;
 
   constructor(
     private fb: FormBuilder,
@@ -98,6 +99,10 @@ export class ProductsComponent implements OnInit {
 
   get canViewCostPrice(): boolean {
     return this.auth.hasRole('owner') || this.auth.hasRole('admin');
+  }
+
+  get showHiddenColumns(): boolean {
+    return !this.compactMode || this.bulkEditMode;
   }
 
   isInvalid(form: FormGroup, field: string): boolean {
@@ -267,6 +272,18 @@ export class ProductsComponent implements OnInit {
     this.selectedStockBranchId = '';
   }
 
+  openDetailModal(product: ProductResponse): void {
+    if (!this.canLeaveBulkEdit()) {
+      return;
+    }
+    this.modalMode = 'detail';
+    this.selectedProduct = product;
+  }
+
+  toggleCompactMode(): void {
+    this.compactMode = !this.compactMode;
+  }
+
   closeModal(): void {
     if (this.updating || this.deleting || this.stockSaving) {
       return;
@@ -278,6 +295,9 @@ export class ProductsComponent implements OnInit {
   }
 
   submitModal(): void {
+    if (this.modalMode === 'detail') {
+      return;
+    }
     if (this.modalMode === 'delete') {
       this.remove();
       return;
