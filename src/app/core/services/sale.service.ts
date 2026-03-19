@@ -48,6 +48,10 @@ export class SaleService {
         return this.http.post<SendSaleWhatsAppResponse>(`${this.base}/${id}/send-whatsapp`, {});
     }
 
+    cancelSale(id: string): Observable<void> {
+        return this.http.post<void>(`${this.base}/${id}/cancel`, {});
+    }
+
     deleteSale(id: string): Observable<void> {
         return this.http.delete<void>(`${this.base}/${id}`);
     }

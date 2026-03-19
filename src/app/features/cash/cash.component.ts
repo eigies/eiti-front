@@ -24,6 +24,7 @@ type CashSessionView = {
     expanded: boolean;
     salesIncome: number;
     withdrawals: number;
+    expectedClosingAmount: number;
 };
 
 @Component({
@@ -137,7 +138,7 @@ type CashSessionView = {
             </div>
             <div class="metric-inline">
               <span class="metric-inline__label">Esperado</span>
-              <strong>&#36;{{ currentSession.expectedClosingAmount | number: '1.2-2' }}</strong>
+              <strong>&#36;{{ (currentSummary?.expectedClosingAmount ?? currentSession.expectedClosingAmount) | number: '1.2-2' }}</strong>
             </div>
           </div>
 
@@ -163,10 +164,22 @@ type CashSessionView = {
               <span>Extracciones</span>
               <strong>&#36;{{ currentSummary.withdrawals | number: '1.2-2' }}</strong>
             </div>
+            <div class="summary-item summary-item--cancellations" *ngIf="currentSummary.salesCancellations > 0">
+              <span>Cancelaciones</span>
+              <strong>&#36;{{ currentSummary.salesCancellations | number: '1.2-2' }}</strong>
+            </div>
             <div class="summary-item summary-item--balance">
               <span>Diferencia</span>
               <strong>&#36;{{ currentSummary.difference | number: '1.2-2' }}</strong>
             </div>
+          </div>
+
+          <div class="session-breakdown" *ngIf="computePaymentBreakdown(currentSession).length > 0">
+            <span *ngFor="let bd of computePaymentBreakdown(currentSession); let last = last">
+              <span class="session-breakdown__label">{{ bd.methodName }}</span>
+              <strong class="session-breakdown__amount">&#36;{{ bd.amount | number: '1.2-2' }}</strong>
+              <span class="session-breakdown__sep" *ngIf="!last"> | </span>
+            </span>
           </div>
         </div>
       </section>
@@ -208,13 +221,13 @@ type CashSessionView = {
                 <span>Inicial: &#36;{{ item.session.openingAmount | number: '1.2-2' }}</span>
                 <span>Ventas: &#36;{{ item.salesIncome | number: '1.2-2' }}</span>
                 <span>Extracciones: &#36;{{ item.withdrawals | number: '1.2-2' }}</span>
-                <span>Esperado: &#36;{{ item.session.expectedClosingAmount | number: '1.2-2' }}</span>
+                <span>Esperado: &#36;{{ item.expectedClosingAmount | number: '1.2-2' }}</span>
               </div>
             </button>
 
             <div class="history-session__body" *ngIf="item.expanded">
-              <div class="session-breakdown" *ngIf="item.session.paymentBreakdown && item.session.paymentBreakdown.length > 0">
-                <span *ngFor="let bd of item.session.paymentBreakdown; let last = last">
+              <div class="session-breakdown" *ngIf="computePaymentBreakdown(item.session).length > 0">
+                <span *ngFor="let bd of computePaymentBreakdown(item.session); let last = last">
                   <span class="session-breakdown__label">{{ bd.methodName }}</span>
                   <strong class="session-breakdown__amount">&#36;{{ bd.amount | number: '1.2-2' }}</strong>
                   <span class="session-breakdown__sep" *ngIf="!last"> | </span>
@@ -224,8 +237,8 @@ type CashSessionView = {
               <div class="history-session__toolbar">
                 <span>Cierre real: {{ item.session.actualClosingAmount == null ? '-' : ('$' + (item.session.actualClosingAmount | number: '1.2-2')) }}</span>
                 <span>Diferencia: &#36;{{ item.session.difference | number: '1.2-2' }}</span>
-                <button *ngIf="auth.hasPermission(permissionCodes.cashHistoryExport)" class="btn btn--ghost btn--export" type="button" (click)="exportSession(item.session)">Exportar sesion XLSX</button>
-                <button *ngIf="auth.hasPermission(permissionCodes.cashHistoryExport)" class="btn btn--ghost btn--pdf" type="button" (click)="exportSessionPdf(item.session)">Exportar sesion PDF</button>
+                <button *ngIf="auth.hasPermission(permissionCodes.cashHistoryExport)" class="btn btn--ghost btn--export" type="button" (click)="exportSession(item.session, item.expectedClosingAmount)">Exportar sesion XLSX</button>
+                <button *ngIf="auth.hasPermission(permissionCodes.cashHistoryExport)" class="btn btn--ghost btn--pdf" type="button" (click)="exportSessionPdf(item.session, item.expectedClosingAmount)">Exportar sesion PDF</button>
               </div>
 
               <div class="history-table">
@@ -241,13 +254,13 @@ type CashSessionView = {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let movement of item.session.movements">
-                      <td>{{ movement.occurredAt | date: 'short' }}</td>
-                      <td><span class="badge badge--type" [attr.data-type]="movement.typeName">{{ translateType(movement.typeName) }}</span></td>
-                      <td><span class="badge" [class.badge--in]="movement.directionName === 'In'" [class.badge--out]="movement.directionName === 'Out'">{{ translateDirection(movement.directionName) }}</span></td>
-                      <td>&#36;{{ movement.amount | number: '1.2-2' }}</td>
-                      <td>{{ movementPaymentMethod(movement) }}</td>
-                      <td>{{ translateDescription(movement.description) }}</td>
+                    <tr *ngFor="let row of getDisplayRows(item.session)">
+                      <td>{{ row.occurredAt | date: 'short' }}</td>
+                      <td><span class="badge badge--type" [attr.data-type]="row.typeName">{{ translateType(row.typeName) }}</span></td>
+                      <td><span class="badge" [class.badge--in]="row.directionName === 'In'" [class.badge--out]="row.directionName === 'Out'">{{ translateDirection(row.directionName) }}</span></td>
+                      <td>&#36;{{ row.amount | number: '1.2-2' }}</td>
+                      <td>{{ row.paymentMethodLabel }}</td>
+                      <td>{{ translateDescription(row.description) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -350,6 +363,7 @@ type CashSessionView = {
     .summary-item strong{font-weight:600}
     .summary-item--sales strong{color:var(--success)}
     .summary-item--withdrawals strong{color:var(--danger)}
+    .summary-item--cancellations strong{color:var(--danger)}
     .summary-item--balance strong{color:var(--text)}
     .history-header-actions{display:flex;gap:1rem;align-items:center}
     .history-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:end;margin-bottom:1rem}
@@ -380,6 +394,7 @@ type CashSessionView = {
     .badge--type[data-type="ClosingBalance"]{background:color-mix(in srgb,var(--text-dim) 12%, transparent);color:var(--text-dim);border:1px solid color-mix(in srgb,var(--text-dim) 28%, transparent)}
     .badge--type[data-type="CashTransferOut"]{background:color-mix(in srgb,#6366f1 12%, transparent);color:#6366f1;border:1px solid color-mix(in srgb,#6366f1 30%, transparent)}
     .badge--type[data-type="CashTransferIn"]{background:color-mix(in srgb,#06b6d4 12%, transparent);color:#06b6d4;border:1px solid color-mix(in srgb,#06b6d4 30%, transparent)}
+    .badge--type[data-type="SaleCancellation"]{background:color-mix(in srgb,var(--danger) 12%, transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%, transparent)}
     .btn--transfer{background:color-mix(in srgb,#6366f1 8%, transparent);border:1px solid color-mix(in srgb,#6366f1 35%, var(--border-2));color:#6366f1;white-space:nowrap}
     .btn--transfer:hover:not(:disabled){background:color-mix(in srgb,#6366f1 14%, transparent);border-color:color-mix(in srgb,#6366f1 55%, var(--border-2));transform:translateY(-1px)}
     .btn--transfer-confirm{font-size:.72rem;letter-spacing:.12em}
@@ -669,7 +684,7 @@ export class CashComponent implements OnInit {
         );
     }
 
-    exportSession(session: CashSessionResponse): void {
+    exportSession(session: CashSessionResponse, expectedOverride?: number): void {
         if (session.movements.length === 0) {
             this.toast.error('La sesion no tiene movimientos para exportar');
             return;
@@ -691,18 +706,18 @@ export class CashComponent implements OnInit {
             'Diferencia'
         ];
 
-        const body = session.movements.map(movement => [
+        const body = this.getDisplayRows(session).map(row => [
             session.id,
             session.statusName,
             this.formatDate(session.openedAt),
             this.formatDate(session.closedAt),
-            this.formatDate(movement.occurredAt),
-            movement.typeName,
-            movement.directionName,
-            movement.amount.toFixed(2),
-            this.movementPaymentMethod(movement),
-            movement.description || '',
-            session.expectedClosingAmount.toFixed(2),
+            this.formatDate(row.occurredAt),
+            row.typeName,
+            row.directionName,
+            row.amount.toFixed(2),
+            row.paymentMethodLabel,
+            row.description || '',
+            (expectedOverride ?? session.expectedClosingAmount).toFixed(2),
             session.actualClosingAmount == null ? '' : session.actualClosingAmount.toFixed(2),
             session.difference.toFixed(2)
         ]);
@@ -733,18 +748,18 @@ export class CashComponent implements OnInit {
             'Diferencia'
         ];
 
-        const body = this.historySessions.flatMap(item => item.session.movements.map(movement => [
+        const body = this.historySessions.flatMap(item => this.getDisplayRows(item.session).map(row => [
             item.session.id,
             item.session.statusName,
             this.formatDate(item.session.openedAt),
             this.formatDate(item.session.closedAt),
-            this.formatDate(movement.occurredAt),
-            movement.typeName,
-            movement.directionName,
-            movement.amount.toFixed(2),
-            this.movementPaymentMethod(movement),
-            movement.description || '',
-            item.session.expectedClosingAmount.toFixed(2),
+            this.formatDate(row.occurredAt),
+            row.typeName,
+            row.directionName,
+            row.amount.toFixed(2),
+            row.paymentMethodLabel,
+            row.description || '',
+            item.expectedClosingAmount.toFixed(2),
             item.session.actualClosingAmount == null ? '' : item.session.actualClosingAmount.toFixed(2),
             item.session.difference.toFixed(2)
         ]));
@@ -756,13 +771,15 @@ export class CashComponent implements OnInit {
         this.downloadExcel(`cash-history-${suffix}.xlsx`, headers, body);
     }
 
-    exportSessionPdf(session: CashSessionResponse): void {
+    exportSessionPdf(session: CashSessionResponse, expectedOverride?: number): void {
         if (session.movements.length === 0) {
             this.toast.error('La sesion no tiene movimientos para exportar');
             return;
         }
 
-        this.exportSessionsPdf(`cash-session-${session.openedAt.slice(0, 10)}.pdf`, 'Sesion de caja', [session]);
+        const expected = expectedOverride ?? this.currentSummary?.expectedClosingAmount ?? session.expectedClosingAmount;
+        const overrides = new Map<string, number>([[session.id, expected]]);
+        this.exportSessionsPdf(`cash-session-${session.openedAt.slice(0, 10)}.pdf`, 'Sesion de caja', [session], overrides);
     }
 
     exportFilteredHistoryPdf(): void {
@@ -775,10 +792,11 @@ export class CashComponent implements OnInit {
             ? `${this.historyFrom || 'inicio'}_${this.historyTo || 'hoy'}`
             : new Date().toISOString().slice(0, 10);
 
-        this.exportSessionsPdf(`cash-history-${suffix}.pdf`, 'Historial de caja', this.historySessions.map(item => item.session));
+        const overrides = new Map<string, number>(this.historySessions.map(item => [item.session.id, item.expectedClosingAmount]));
+        this.exportSessionsPdf(`cash-history-${suffix}.pdf`, 'Historial de caja', this.historySessions.map(item => item.session), overrides);
     }
 
-    private exportSessionsPdf(fileName: string, title: string, sessions: CashSessionResponse[]): void {
+    private exportSessionsPdf(fileName: string, title: string, sessions: CashSessionResponse[], expectedOverrides?: Map<string, number>): void {
         const doc = new jsPDF({ format: 'a4', unit: 'mm' });
         const margin = 14;
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -821,6 +839,7 @@ export class CashComponent implements OnInit {
 
         for (let index = 0; index < sessions.length; index += 1) {
             const session = sessions[index];
+            const expectedClosingAmount = expectedOverrides?.get(session.id) ?? session.expectedClosingAmount;
 
             if (y > maxY - 30) {
                 doc.addPage();
@@ -837,21 +856,19 @@ export class CashComponent implements OnInit {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8.2);
             doc.setTextColor(60, 60, 60);
-            const meta = `Apertura: ${this.formatDate(session.openedAt)} | Cierre: ${this.formatDate(session.closedAt) || '-'} | Esperado: ${this.formatCurrency(session.expectedClosingAmount)} | Real: ${session.actualClosingAmount == null ? '-' : this.formatCurrency(session.actualClosingAmount)} | Diferencia: ${this.formatCurrency(session.difference)}`;
+            const meta = `Apertura: ${this.formatDate(session.openedAt)} | Cierre: ${this.formatDate(session.closedAt) || '-'} | Esperado: ${this.formatCurrency(expectedClosingAmount)} | Real: ${session.actualClosingAmount == null ? '-' : this.formatCurrency(session.actualClosingAmount)} | Diferencia: ${this.formatCurrency(session.difference)}`;
             const metaLines = doc.splitTextToSize(meta, pageWidth - margin * 2) as string[];
             doc.text(metaLines, margin, y);
             y += metaLines.length * 4.2;
 
             drawMovementHeader();
 
-            for (const movement of session.movements) {
-                const description = movement.description || '-';
-                const paymentMethod = this.movementPaymentMethod(movement);
-                const paymentMethodLines = doc.splitTextToSize(paymentMethod, 26) as string[];
-                const clippedPaymentMethod = paymentMethodLines.slice(0, 2);
+            for (const row of this.getDisplayRows(session)) {
+                const description = row.description || '-';
+                const paymentMethodLines = doc.splitTextToSize(row.paymentMethodLabel, 30) as string[];
                 const descriptionLines = doc.splitTextToSize(description, 48) as string[];
                 const clippedDescription = descriptionLines.slice(0, 2);
-                const rowHeight = Math.max(6.8, clippedDescription.length * 3.4 + 1.6, clippedPaymentMethod.length * 3.4 + 1.6);
+                const rowHeight = Math.max(6.8, clippedDescription.length * 3.4 + 1.6, paymentMethodLines.length * 3.4 + 1.6);
 
                 if (y + rowHeight > maxY) {
                     doc.addPage();
@@ -866,11 +883,11 @@ export class CashComponent implements OnInit {
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7.9);
                 doc.setTextColor(35, 35, 35);
-                doc.text(this.formatDate(movement.occurredAt), margin + 2, y + 4.4);
-                doc.text(movement.typeName, margin + 37, y + 4.4);
-                doc.text(movement.directionName, margin + 67, y + 4.4);
-                doc.text(this.formatCurrency(movement.amount), margin + 111, y + 4.4, { align: 'right' });
-                doc.text(clippedPaymentMethod, margin + 114, y + 4.4);
+                doc.text(this.formatDate(row.occurredAt), margin + 2, y + 4.4);
+                doc.text(row.typeName, margin + 37, y + 4.4);
+                doc.text(row.directionName, margin + 67, y + 4.4);
+                doc.text(this.formatCurrency(row.amount), margin + 111, y + 4.4, { align: 'right' });
+                doc.text(paymentMethodLines, margin + 114, y + 4.4);
                 doc.text(clippedDescription, margin + 145, y + 4.4);
 
                 y += rowHeight;
@@ -976,12 +993,18 @@ export class CashComponent implements OnInit {
 
         this.cashService.listHistory(this.selectedDrawerId, this.historyFrom || undefined, this.historyTo || undefined).subscribe({
             next: sessions => {
-                this.historySessions = sessions.map(session => ({
-                    session,
-                    expanded: false,
-                    salesIncome: this.sumMovementsByType(session.movements, 'SaleIncome'),
-                    withdrawals: this.sumMovementsByType(session.movements, 'CashWithdrawal')
-                }));
+                this.historySessions = sessions.map(session => {
+                    const salesIncome = this.sumMovementsByType(session.movements, 'SaleIncome');
+                    const withdrawals = this.sumMovementsByType(session.movements, 'CashWithdrawal');
+                    const cancellations = this.sumMovementsByType(session.movements, 'SaleCancellation');
+                    return {
+                        session,
+                        expanded: false,
+                        salesIncome,
+                        withdrawals,
+                        expectedClosingAmount: session.openingAmount + salesIncome - withdrawals - cancellations
+                    };
+                });
                 this.loadSalePaymentMethods(sessions);
                 this.loadingHistory = false;
             },
@@ -1001,11 +1024,16 @@ export class CashComponent implements OnInit {
             .filter(movement => movement.typeName === 'CashWithdrawal')
             .reduce((total, movement) => total + movement.amount, 0);
 
+        const salesCancellations = session.movements
+            .filter(movement => movement.typeName === 'SaleCancellation')
+            .reduce((total, movement) => total + movement.amount, 0);
+
         return {
             id: session.id,
             openingAmount: session.openingAmount,
             salesIncome,
             withdrawals,
+            salesCancellations,
             expectedClosingAmount: session.expectedClosingAmount,
             actualClosingAmount: session.actualClosingAmount,
             difference: session.difference
@@ -1029,6 +1057,7 @@ export class CashComponent implements OnInit {
             'Cash deposit': 'Depósito de efectivo',
             'Manual adjustment': 'Ajuste manual',
             'Initial opening': 'Apertura inicial',
+            'Sale cancellation': 'Cancelación de venta',
         };
         return map[description] ?? description;
     }
@@ -1042,6 +1071,7 @@ export class CashComponent implements OnInit {
             CashTransferOut: 'Transferencia saliente',
             CashTransferIn: 'Transferencia entrante',
             OpeningFloat: 'Apertura',
+            SaleCancellation: 'Cancelación de venta',
         };
         return map[typeName] ?? typeName;
     }
@@ -1050,6 +1080,7 @@ export class CashComponent implements OnInit {
         const map: Record<string, string> = {
             In: 'Entrada',
             Out: 'Salida',
+            None: '-',
         };
         return map[directionName] ?? directionName;
     }
@@ -1060,6 +1091,31 @@ export class CashComponent implements OnInit {
         }
 
         return this.salePaymentMethodsBySaleId.get(movement.referenceId) || 'Cargando...';
+    }
+
+    getDisplayRows(session: CashSessionResponse): { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined }[] {
+        return session.movements.map(movement => {
+            const isSaleRelated = (movement.typeName === 'SaleIncome' || movement.typeName === 'SaleCancellation') && movement.referenceId;
+            if (isSaleRelated) {
+                const sale = this.salesBySaleId.get(String(movement.referenceId));
+                const activePayments = (sale?.payments ?? []).filter(p => Number(p.amount) > 0);
+                const activeTradeIns = (sale?.tradeIns ?? []).filter(t => Number(t.amount) > 0);
+                if (activePayments.length > 0 || activeTradeIns.length > 0) {
+                    const totalAmount = activePayments.reduce((sum, p) => sum + Number(p.amount), 0)
+                        + activeTradeIns.reduce((sum, t) => sum + Number(t.amount), 0);
+                    const parts: string[] = [
+                        ...activePayments.map(p => {
+                            const name = p.paymentMethodName?.trim() || SALE_PAYMENT_METHODS.find(m => m.id === Number(p.idPaymentMethod))?.label || 'Otros';
+                            return `${name}: $${Number(p.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
+                        }),
+                        ...activeTradeIns.map(t => `Canje: $${Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`)
+                    ];
+                    return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description };
+                }
+            }
+
+            return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description };
+        });
     }
 
     sessionPaymentMethodsSummary(session: CashSessionResponse): string {
@@ -1139,12 +1195,51 @@ export class CashComponent implements OnInit {
                     this.salesBySaleId.set(saleId, sale);
                 }
 
+                // Recompute history session totals using full payment amounts
+                this.historySessions = this.historySessions.map(item => {
+                    const salesIncome = this.computeTotalSalesIncome(item.session);
+                    const cancellations = this.sumMovementsByType(item.session.movements, 'SaleCancellation');
+                    return {
+                        ...item,
+                        salesIncome,
+                        expectedClosingAmount: item.session.openingAmount + salesIncome - item.withdrawals - cancellations
+                    };
+                });
+
+                // Recompute current summary salesIncome and expectedClosingAmount
+                if (this.currentSummary && this.currentSession) {
+                    const salesIncome = this.computeTotalSalesIncome(this.currentSession);
+                    this.currentSummary = {
+                        ...this.currentSummary,
+                        salesIncome,
+                        expectedClosingAmount: this.currentSummary.openingAmount + salesIncome - this.currentSummary.withdrawals - this.currentSummary.salesCancellations
+                    };
+                }
             }
         });
     }
 
+    private computeTotalSalesIncome(session: CashSessionResponse): number {
+        return session.movements
+            .filter(m => m.typeName === 'SaleIncome' && m.referenceId)
+            .reduce((sum, m) => {
+                const sale = this.salesBySaleId.get(String(m.referenceId));
+                if (sale) {
+                    const paymentsTotal = (sale.payments ?? [])
+                        .filter(p => Number(p.amount) > 0)
+                        .reduce((s, p) => s + Number(p.amount), 0);
+                    const tradeInsTotal = (sale.tradeIns ?? [])
+                        .filter(t => Number(t.amount) > 0)
+                        .reduce((s, t) => s + Number(t.amount), 0);
+                    return sum + paymentsTotal + tradeInsTotal;
+                }
+                return sum + m.amount;
+            }, 0);
+    }
+
     computePaymentBreakdown(session: CashSessionResponse): PaymentMethodBreakdownItem[] {
         const totals = new Map<number, number>();
+        let tradeInTotal = 0;
 
         for (const movement of session.movements) {
             if (movement.referenceType?.toLowerCase() !== 'sale' || !movement.referenceId) {
@@ -1152,17 +1247,21 @@ export class CashComponent implements OnInit {
             }
 
             const sale = this.salesBySaleId.get(String(movement.referenceId));
-            if (!sale?.payments) {
+            if (!sale) {
                 continue;
             }
 
-            for (const payment of sale.payments) {
+            for (const payment of (sale.payments ?? [])) {
                 const method = Number(payment.idPaymentMethod);
                 totals.set(method, (totals.get(method) ?? 0) + Number(payment.amount));
             }
+
+            for (const tradeIn of (sale.tradeIns ?? [])) {
+                tradeInTotal += Number(tradeIn.amount);
+            }
         }
 
-        return Array.from(totals.entries())
+        const result = Array.from(totals.entries())
             .filter(([, amount]) => amount > 0)
             .sort(([a], [b]) => a - b)
             .map(([method, amount]) => ({
@@ -1170,6 +1269,12 @@ export class CashComponent implements OnInit {
                 methodName: SALE_PAYMENT_METHODS.find(m => m.id === method)?.label ?? 'Otros',
                 amount
             }));
+
+        if (tradeInTotal > 0) {
+            result.push({ method: -1, methodName: 'Canje', amount: tradeInTotal });
+        }
+
+        return result;
     }
 
     isClosedSession(statusName?: string | null): boolean {

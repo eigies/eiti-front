@@ -48,6 +48,7 @@ export interface CashSessionSummaryResponse {
     openingAmount: number;
     salesIncome: number;
     withdrawals: number;
+    salesCancellations: number;
     expectedClosingAmount: number;
     actualClosingAmount?: number | null;
     difference: number;

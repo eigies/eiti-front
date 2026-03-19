@@ -39,6 +39,7 @@ import {
     normalizeSaleTradeIns,
     paymentMethodSummary,
     SALE_PAYMENT_METHOD_CASH,
+    SALE_PAYMENT_METHODS,
     roundMoney
 } from '../../core/models/sale-payment.models';
 
@@ -480,7 +481,7 @@ loadSales(): void {
         idSaleStatus: selectedStatus
     }).subscribe({
         next: sales => {
-            let filtered = selectedStatus === 3 ? sales : sales.filter(sale => sale.idSaleStatus !== 3);
+            let filtered = sales;
             if (selectedChannel) {
                 filtered = filtered.filter(sale => sale.sourceChannel === selectedChannel);
             }
@@ -506,7 +507,12 @@ this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid
 this.editItems = sale.details
     .map(detail => {
         const product = this.findProduct(detail.productId);
-        return product ? { product, quantity: detail.quantity, total: detail.totalAmount } : null;
+        return product ? {
+            product,
+            quantity: detail.quantity,
+            total: detail.totalAmount,
+            unitPriceOverride: this.canOverridePrice ? detail.unitPrice : undefined
+        } as DraftItem : null;
     })
     .filter((item): item is DraftItem => item !== null);
 this.editOriginalQuantitiesByProductId = new Map(
@@ -721,19 +727,7 @@ confirmCancelSale(): void {
 
     const sale = this.cancelSaleModal;
     this.cancelingSaleId = sale.id;
-    this.saleService.updateSale(sale.id, {
-        branchId: sale.branchId,
-        customerId: sale.customerId ?? null,
-        idSaleStatus: 3,
-        hasDelivery: sale.hasDelivery,
-        cashDrawerId: null,
-        payments: [],
-        tradeIns: [],
-        details: sale.details.map(detail => ({
-            productId: detail.productId,
-            quantity: detail.quantity
-        }))
-    }).subscribe({
+    this.saleService.cancelSale(sale.id).subscribe({
         next: () => {
             this.cancelingSaleId = null;
             this.cancelSaleModal = null;
@@ -1244,6 +1238,20 @@ salePaymentMethodSummary(sale: SaleResponse): string {
     return paymentMethodSummary(sale.payments, sale.tradeIns);
 }
 
+salePaymentDetailSummary(sale: SaleResponse): string {
+    const parts: string[] = [];
+    for (const p of (sale.payments ?? []).filter(p => Number(p.amount) > 0)) {
+        const name = p.paymentMethodName?.trim() || SALE_PAYMENT_METHODS.find(m => m.id === Number(p.idPaymentMethod))?.label || 'Otros';
+        const formatted = '$' + Number(p.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+        parts.push(`${name}: ${formatted}`);
+    }
+    for (const t of (sale.tradeIns ?? []).filter(t => Number(t.amount) > 0)) {
+        const formatted = '$' + Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+        parts.push(`Canje: ${formatted}`);
+    }
+    return parts.length > 0 ? parts.join(' | ') : 'Sin pagos';
+}
+
 saleCoveredAmount(sale: SaleResponse): number {
     return roundMoney(
         (sale.payments ?? []).reduce((sum, item) => sum + Number(item.amount || 0), 0)
@@ -1483,6 +1491,11 @@ if (form === this.editLineForm) {
     }
 
     setDraftItemPrice(item: DraftItem, price: number): void {
+        item.unitPriceOverride = price;
+        item.total = price * item.quantity;
+    }
+
+    setEditItemPrice(item: DraftItem, price: number): void {
         item.unitPriceOverride = price;
         item.total = price * item.quantity;
     }
