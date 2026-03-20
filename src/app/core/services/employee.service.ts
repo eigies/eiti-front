@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CreateEmployeeRequest, DriverResponse, EmployeeResponse, UpsertDriverProfileRequest } from '../models/employee.models';
+import { CreateEmployeeRequest, DriverResponse, EmployeeResponse, UpdateEmployeeRequest, UpsertDriverProfileRequest } from '../models/employee.models';
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
@@ -21,6 +21,14 @@ export class EmployeeService {
 
     createEmployee(request: CreateEmployeeRequest): Observable<EmployeeResponse> {
         return this.http.post<EmployeeResponse>(this.employeesBase, request);
+    }
+
+    getEmployee(id: string): Observable<EmployeeResponse> {
+        return this.http.get<EmployeeResponse>(`${this.employeesBase}/${id}`);
+    }
+
+    updateEmployee(id: string, request: UpdateEmployeeRequest): Observable<EmployeeResponse> {
+        return this.http.put<EmployeeResponse>(`${this.employeesBase}/${id}`, request);
     }
 
     listDrivers(): Observable<DriverResponse[]> {

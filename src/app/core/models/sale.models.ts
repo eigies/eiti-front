@@ -42,6 +42,7 @@ export interface SaleResponse {
     customerFullName?: string | null;
     customerDocument?: string | null;
     customerTaxId?: string | null;
+    customerAddress?: string | null;
     cashSessionId?: string | null;
     hasDelivery: boolean;
     transportAssignmentId?: string | null;

@@ -39,6 +39,16 @@ export interface DriverResponse {
     updatedAt?: string | null;
 }
 
+export interface UpdateEmployeeRequest {
+    branchId?: string | null;
+    firstName: string;
+    lastName: string;
+    documentNumber?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    employeeRole: number;
+}
+
 export interface UpsertDriverProfileRequest {
     employeeId: string;
     licenseNumber: string;

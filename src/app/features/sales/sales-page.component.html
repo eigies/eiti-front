@@ -149,14 +149,14 @@
           </div>
         </section>
 
-        <section class="quick-sale-stage">
+        <section class="quick-sale-card quick-sale-stage">
           <div class="quick-sale-stage__head">
             <p class="quick-sale-card__eyebrow">Paso 3</p>
             <h2>Cliente y cobro</h2>
             <p>Asocia un cliente existente (opcional) y define el metodo de pago.</p>
           </div>
 
-          <div class="customer-picker" style="position:relative;margin-bottom:1rem">
+          <div class="customer-picker" [class.empty]="createCustomerId" [class.empty--soft]="createCustomerId" style="position:relative;margin-bottom:1rem">
             <label class="field">
               <span class="field__label">Cliente <span style="font-weight:400;opacity:.6">(opcional)</span></span>
               <div style="display:flex;gap:.5rem;align-items:center">
@@ -222,67 +222,70 @@
       <button class="btn btn--secondary btn--sm" type="button" (click)="cancelEdit()">Cerrar</button>
     </div>
 
-    <form class="grid" [formGroup]="editMetaForm">
-      <label class="field">
-        <span class="field__label">Sucursal</span>
-        <select class="control" formControlName="branchId" (change)="handleEditStatusChange()">
-          <option value="">Seleccionar sucursal</option>
-          <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span class="field__label">Estado de venta</span>
-        <select class="control" formControlName="idSaleStatus" (change)="handleEditStatusChange()">
-          <option [ngValue]="1">En espera</option>
-          <option [ngValue]="2">Pagada</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span class="field__label">Canal de origen <span style="font-weight:400;opacity:.6">(opcional)</span></span>
-        <div class="ch-sel" [class.ch-sel--open]="showEditChannelDrop">
-          <div class="ch-sel__bg" *ngIf="showEditChannelDrop" (click)="showEditChannelDrop=false"></div>
-          <button type="button" class="control ch-sel__trigger" (click)="showEditChannelDrop=!showEditChannelDrop">
-            <span class="ch-sel__val">
-              <ng-container *ngIf="editMetaForm.get('sourceChannel')?.value == null; else editChSel">
-                <span class="ch-sel__placeholder">Sin especificar</span>
-              </ng-container>
-              <ng-template #editChSel>
-                <ng-container *ngFor="let ch of saleSourceChannels">
-                  <ng-container *ngIf="editMetaForm.get('sourceChannel')?.value === ch.value">
-                    <img class="ch-sel__ico" [src]="'assets/channels/' + ch.assetPath" [alt]="ch.label" />
-                    <span>{{ ch.label }}</span>
-                  </ng-container>
-                </ng-container>
-              </ng-template>
-            </span>
-            <svg class="ch-sel__caret" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <div class="ch-sel__menu" *ngIf="showEditChannelDrop">
-            <button type="button" class="ch-sel__opt" [class.ch-sel__opt--on]="editMetaForm.get('sourceChannel')?.value == null"
-              (click)="editMetaForm.get('sourceChannel')?.setValue(null); showEditChannelDrop=false">
-              <span class="ch-sel__ico ch-sel__ico--blank">—</span><span>Sin especificar</span>
-            </button>
-            <button type="button" class="ch-sel__opt" *ngFor="let ch of saleSourceChannels"
-              [class.ch-sel__opt--on]="editMetaForm.get('sourceChannel')?.value === ch.value"
-              (click)="editMetaForm.get('sourceChannel')?.setValue(ch.value); showEditChannelDrop=false">
-              <img class="ch-sel__ico" [src]="'assets/channels/' + ch.assetPath" [alt]="ch.label" />
-              <span>{{ ch.label }}</span>
-            </button>
-          </div>
-        </div>
-      </label>
-
-      <div class="field">
-        <span class="field__label">Modalidad de entrega</span>
-        <label class="toggle-check">
-          <input type="checkbox" formControlName="hasDelivery" />
-          <span class="toggle-check__track"></span>
-          <span class="toggle-check__text">{{ editMetaForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
+    <div class="edit-meta-section">
+      <span class="edit-meta-section__label">Datos de la venta</span>
+      <form class="grid grid--2col" [formGroup]="editMetaForm">
+        <label class="field">
+          <span class="field__label">Sucursal</span>
+          <select class="control" formControlName="branchId" (change)="handleEditStatusChange()">
+            <option value="">Seleccionar sucursal</option>
+            <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
+          </select>
         </label>
-      </div>
-    </form>
+
+        <label class="field">
+          <span class="field__label">Estado de venta</span>
+          <select class="control" formControlName="idSaleStatus" (change)="handleEditStatusChange()">
+            <option [ngValue]="1">En espera</option>
+            <option [ngValue]="2">Pagada</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Canal de origen <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+          <div class="ch-sel" [class.ch-sel--open]="showEditChannelDrop">
+            <div class="ch-sel__bg" *ngIf="showEditChannelDrop" (click)="showEditChannelDrop=false"></div>
+            <button type="button" class="control ch-sel__trigger" (click)="showEditChannelDrop=!showEditChannelDrop">
+              <span class="ch-sel__val">
+                <ng-container *ngIf="editMetaForm.get('sourceChannel')?.value == null; else editChSel">
+                  <span class="ch-sel__placeholder">Sin especificar</span>
+                </ng-container>
+                <ng-template #editChSel>
+                  <ng-container *ngFor="let ch of saleSourceChannels">
+                    <ng-container *ngIf="editMetaForm.get('sourceChannel')?.value === ch.value">
+                      <img class="ch-sel__ico" [src]="'assets/channels/' + ch.assetPath" [alt]="ch.label" />
+                      <span>{{ ch.label }}</span>
+                    </ng-container>
+                  </ng-container>
+                </ng-template>
+              </span>
+              <svg class="ch-sel__caret" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="ch-sel__menu" *ngIf="showEditChannelDrop">
+              <button type="button" class="ch-sel__opt" [class.ch-sel__opt--on]="editMetaForm.get('sourceChannel')?.value == null"
+                (click)="editMetaForm.get('sourceChannel')?.setValue(null); showEditChannelDrop=false">
+                <span class="ch-sel__ico ch-sel__ico--blank">—</span><span>Sin especificar</span>
+              </button>
+              <button type="button" class="ch-sel__opt" *ngFor="let ch of saleSourceChannels"
+                [class.ch-sel__opt--on]="editMetaForm.get('sourceChannel')?.value === ch.value"
+                (click)="editMetaForm.get('sourceChannel')?.setValue(ch.value); showEditChannelDrop=false">
+                <img class="ch-sel__ico" [src]="'assets/channels/' + ch.assetPath" [alt]="ch.label" />
+                <span>{{ ch.label }}</span>
+              </button>
+            </div>
+          </div>
+        </label>
+
+        <div class="field">
+          <span class="field__label">Modalidad de entrega</span>
+          <label class="toggle-check">
+            <input type="checkbox" formControlName="hasDelivery" />
+            <span class="toggle-check__track"></span>
+            <span class="toggle-check__text">{{ editMetaForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
+          </label>
+        </div>
+      </form>
+    </div>
 
     <app-sale-payment-inline
       [total]="editTotal"
@@ -420,7 +423,8 @@
           <div class="sale-card__top">
             <div>
               <p class="sale-card__eyebrow">{{ branchName(sale.branchId) }}</p>
-              <h2>Venta #{{ sale.id }}</h2>
+              <h2>{{ sale.customerFullName || 'Venta #' + sale.id }}</h2>
+              <p class="sale-card__address" *ngIf="sale.customerAddress">{{ sale.customerAddress }}</p>
               <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s) · {{ salePaymentMethodSummary(sale) }}</p>
             </div>
             <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>

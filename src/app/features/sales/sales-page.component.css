@@ -99,6 +99,16 @@
     font-size: .82rem;
 }
 
+.sale-card__address {
+    margin: .2rem 0 0;
+    font-size: .78rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 36ch;
+}
+
 .picker-summary {
     font-size: .68rem;
 }
@@ -276,6 +286,28 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
+}
+
+.grid--2col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.5rem;
+    row-gap: 1.25rem;
+}
+
+.edit-meta-section {
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.edit-meta-section__label {
+    display: block;
+    margin-bottom: .9rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .69rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
 }
 
 .filters {

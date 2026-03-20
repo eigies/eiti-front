@@ -19,6 +19,7 @@ export class TransportComponent implements OnInit {
   driverForm: FormGroup;
   vehicleForm: FormGroup;
   logForm: FormGroup;
+  editDriverForm: FormGroup;
   drivers: DriverResponse[] = [];
   vehicles: VehicleResponse[] = [];
   logs: FleetLogResponse[] = [];
@@ -27,6 +28,10 @@ export class TransportComponent implements OnInit {
   vehiclesExpanded = true;
   activityExpanded = true;
 
+  editingDriver: DriverResponse | null = null;
+  isEditModalClosing = false;
+  isSavingEdit = false;
+
   constructor(
     private fb: FormBuilder,
     private employeeService: EmployeeService,
@@ -34,6 +39,14 @@ export class TransportComponent implements OnInit {
     private toast: ToastService
   ) {
     this.driverForm = this.fb.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      documentNumber: [''],
+      phone: [''],
+      licenseNumber: ['', Validators.required],
+      licenseExpiresAt: ['']
+    });
+    this.editDriverForm = this.fb.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       documentNumber: [''],
@@ -102,6 +115,80 @@ export class TransportComponent implements OnInit {
         });
       },
       error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el conductor')
+    });
+  }
+
+  openEditModal(driver: DriverResponse): void {
+    this.employeeService.getEmployee(driver.employeeId).subscribe({
+      next: employee => {
+        this.editingDriver = driver;
+        this.isEditModalClosing = false;
+        this.editDriverForm.reset({
+          firstName: employee.firstName,
+          lastName: employee.lastName,
+          documentNumber: employee.documentNumber || '',
+          phone: employee.phone || '',
+          licenseNumber: driver.licenseNumber,
+          licenseExpiresAt: driver.licenseExpiresAt ? driver.licenseExpiresAt.slice(0, 10) : ''
+        });
+      },
+      error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cargar el conductor')
+    });
+  }
+
+  closeEditModal(): void {
+    if (this.isSavingEdit) return;
+    this.isEditModalClosing = true;
+    setTimeout(() => {
+      this.editingDriver = null;
+      this.isEditModalClosing = false;
+    }, 220);
+  }
+
+  saveDriverEdit(): void {
+    if (!this.editingDriver || this.editDriverForm.invalid) {
+      this.editDriverForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSavingEdit = true;
+    const raw = this.editDriverForm.getRawValue();
+    const driver = this.editingDriver;
+
+    this.employeeService.updateEmployee(driver.employeeId, {
+      firstName: raw.firstName,
+      lastName: raw.lastName,
+      documentNumber: raw.documentNumber || null,
+      phone: raw.phone || null,
+      email: null,
+      employeeRole: 2
+    }).subscribe({
+      next: () => {
+        this.employeeService.upsertDriverProfile({
+          employeeId: driver.employeeId,
+          licenseNumber: raw.licenseNumber,
+          licenseExpiresAt: raw.licenseExpiresAt || null
+        }).subscribe({
+          next: () => {
+            this.isSavingEdit = false;
+            this.isEditModalClosing = true;
+            setTimeout(() => {
+              this.editingDriver = null;
+              this.isEditModalClosing = false;
+            }, 220);
+            this.toast.success('Conductor actualizado');
+            this.loadDrivers();
+          },
+          error: err => {
+            this.isSavingEdit = false;
+            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo actualizar el perfil del conductor');
+          }
+        });
+      },
+      error: err => {
+        this.isSavingEdit = false;
+        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo actualizar el conductor');
+      }
     });
   }
 

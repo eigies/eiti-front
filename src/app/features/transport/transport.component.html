@@ -199,6 +199,9 @@
                                 <span>Estado</span>
                                 <strong>{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</strong>
                             </div>
+                            <div class="data-card__actions">
+                                <button type="button" class="btn btn--secondary" (click)="openEditModal(driver)">Editar</button>
+                            </div>
                         </article>
                     </div>
                     <table *ngIf="drivers.length > 0" class="table table--desktop">
@@ -208,6 +211,7 @@
                                 <th>Licencia</th>
                                 <th>Vence</th>
                                 <th>Estado</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -216,6 +220,14 @@
                                 <td>{{ driver.licenseNumber }}</td>
                                 <td>{{ driver.licenseExpiresAt ? (driver.licenseExpiresAt | date: 'shortDate') : '-' }}</td>
                                 <td>{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</td>
+                                <td class="table__actions">
+                                    <button type="button" class="btn btn--icon" title="Editar conductor" (click)="openEditModal(driver)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        </svg>
+                                    </button>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -223,4 +235,58 @@
             </section>
         </div>
     </div>
+</div>
+
+<div class="edit-modal-backdrop"
+     *ngIf="editingDriver"
+     [class.edit-modal-backdrop--closing]="isEditModalClosing"
+     (click)="closeEditModal()">
+    <section class="edit-modal"
+             [class.edit-modal--closing]="isEditModalClosing"
+             (click)="$event.stopPropagation()">
+        <div class="edit-modal__header">
+            <span>Editar conductor</span>
+            <button type="button" class="edit-modal__close" (click)="closeEditModal()" title="Cerrar">&#x2715;</button>
+        </div>
+        <form [formGroup]="editDriverForm" (ngSubmit)="saveDriverEdit()">
+            <div class="edit-modal__body">
+                <div class="edit-modal__row">
+                    <div class="edit-modal__field">
+                        <label class="field__label">Nombre</label>
+                        <input class="control" type="text" formControlName="firstName" placeholder="Nombre" />
+                    </div>
+                    <div class="edit-modal__field">
+                        <label class="field__label">Apellido</label>
+                        <input class="control" type="text" formControlName="lastName" placeholder="Apellido" />
+                    </div>
+                </div>
+                <div class="edit-modal__row">
+                    <div class="edit-modal__field">
+                        <label class="field__label">Documento</label>
+                        <input class="control" type="text" formControlName="documentNumber" placeholder="Numero de documento" />
+                    </div>
+                    <div class="edit-modal__field">
+                        <label class="field__label">Telefono</label>
+                        <input class="control" type="text" formControlName="phone" placeholder="Telefono" />
+                    </div>
+                </div>
+                <div class="edit-modal__row">
+                    <div class="edit-modal__field">
+                        <label class="field__label">Licencia</label>
+                        <input class="control" type="text" formControlName="licenseNumber" placeholder="Numero de licencia" />
+                    </div>
+                    <div class="edit-modal__field">
+                        <label class="field__label">Fecha de vencimiento</label>
+                        <input class="control" type="date" formControlName="licenseExpiresAt" />
+                    </div>
+                </div>
+            </div>
+            <div class="edit-modal__actions">
+                <button type="button" class="btn btn--secondary" (click)="closeEditModal()" [disabled]="isSavingEdit">Cancelar</button>
+                <button type="submit" class="btn btn--primary" [disabled]="isSavingEdit">
+                    {{ isSavingEdit ? 'Guardando...' : 'Guardar cambios' }}
+                </button>
+            </div>
+        </form>
+    </section>
 </div>

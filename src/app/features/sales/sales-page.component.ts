@@ -503,6 +503,7 @@ beginEdit(sale: SaleResponse, presetPaid = false): void {
 }
 
 this.editingSale = sale;
+this.createExpanded = false;
 this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: '', sourceChannel: sale.sourceChannel ?? null });
 this.editItems = sale.details
     .map(detail => {
@@ -534,6 +535,7 @@ cancelEdit(): void {
 }
 
 this.editingSale = null;
+this.createExpanded = true;
 this.editItems = [];
 this.editDrawers = [];
 this.editStockByProductId.clear();
