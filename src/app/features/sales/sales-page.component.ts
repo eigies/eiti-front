@@ -633,6 +633,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                     hasDelivery: sale.hasDelivery,
                     cashDrawerId: drawer.id,
                     noDeliverySurchargeTotal: sale.noDeliverySurchargeTotal ?? null,
+                    deliveryAddress: sale.deliveryAddress ?? null,
                     payments: pendingAmount > 0
                         ? [
                             ...existingPayments,
