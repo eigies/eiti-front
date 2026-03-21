@@ -92,6 +92,9 @@ export class SalesPageComponent implements OnInit {
     createCustomerSuggestions: CustomerSearchItem[] = [];
     showCreateCustomerResults = false;
     private customerSearchTimer: ReturnType<typeof setTimeout> | null = null;
+    deliveryAddressSuggestions: string[] = [];
+    showDeliveryAddressSuggestions = false;
+    private addressSearchTimer: ReturnType<typeof setTimeout> | null = null;
     createSelectedProductIds = new Set<string>();
     createSelectionQuantityByProductId = new Map<string, number>();
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
@@ -336,6 +339,28 @@ clearCreateCustomer(): void {
     this.createCustomerQuery = '';
     this.createCustomerSuggestions = [];
     this.showCreateCustomerResults = false;
+}
+
+handleDeliveryAddressInput(form: FormGroup, value: string): void {
+    form.get('deliveryAddress')?.setValue(value, { emitEvent: false });
+    this.showDeliveryAddressSuggestions = value.length > 0;
+    if (this.addressSearchTimer) clearTimeout(this.addressSearchTimer);
+    if (!value.trim()) {
+        this.deliveryAddressSuggestions = [];
+        return;
+    }
+    this.addressSearchTimer = setTimeout(() => {
+        this.saleService.searchDeliveryAddresses(value).subscribe({
+            next: results => this.deliveryAddressSuggestions = results,
+            error: () => this.deliveryAddressSuggestions = []
+        });
+    }, 300);
+}
+
+selectDeliveryAddress(form: FormGroup, address: string): void {
+    form.get('deliveryAddress')?.setValue(address);
+    this.deliveryAddressSuggestions = [];
+    this.showDeliveryAddressSuggestions = false;
 }
 
 handleCreateProductInput(query: string): void {

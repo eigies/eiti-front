@@ -187,11 +187,25 @@
             </div>
           </div>
 
-          <label class="field" style="margin-bottom:1rem" [formGroup]="lineForm">
-            <span class="field__label">Dirección de entrega <span style="font-weight:400;opacity:.6">(opcional)</span></span>
-            <input class="control" type="text" formControlName="deliveryAddress"
-              placeholder="Ej: Av. San Martín 1234, piso 2..." autocomplete="off" />
-          </label>
+          <div style="position:relative;margin-bottom:1rem">
+            <label class="field">
+              <span class="field__label">Dirección de entrega <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+              <input class="control" type="text"
+                [value]="lineForm.get('deliveryAddress')?.value || ''"
+                (input)="handleDeliveryAddressInput(lineForm, $any($event.target).value)"
+                (focus)="showDeliveryAddressSuggestions = deliveryAddressSuggestions.length > 0"
+                (blur)="showDeliveryAddressSuggestions = false"
+                placeholder="Ej: Av. San Martín 1234, piso 2..." autocomplete="off" />
+            </label>
+            <div *ngIf="showDeliveryAddressSuggestions && deliveryAddressSuggestions.length > 0"
+              class="product-picker__menu" style="position:absolute;top:100%;left:0;right:0;z-index:20">
+              <button class="product-picker__option" type="button"
+                *ngFor="let addr of deliveryAddressSuggestions"
+                (mousedown)="selectDeliveryAddress(lineForm, addr)">
+                <strong>{{ addr }}</strong>
+              </button>
+            </div>
+          </div>
 
           <app-sale-payment-inline
             [total]="draftTotal"
@@ -291,11 +305,25 @@
           </label>
         </div>
 
-        <label class="field" style="grid-column: 1 / -1">
-          <span class="field__label">Dirección de entrega <span style="font-weight:400;opacity:.6">(opcional)</span></span>
-          <input class="control" type="text" formControlName="deliveryAddress"
-            placeholder="Ej: Av. San Martín 1234, piso 2..." autocomplete="off" />
-        </label>
+        <div style="position:relative;grid-column: 1 / -1">
+          <label class="field">
+            <span class="field__label">Dirección de entrega <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+            <input class="control" type="text"
+              [value]="editMetaForm.get('deliveryAddress')?.value || ''"
+              (input)="handleDeliveryAddressInput(editMetaForm, $any($event.target).value)"
+              (focus)="showDeliveryAddressSuggestions = deliveryAddressSuggestions.length > 0"
+              (blur)="showDeliveryAddressSuggestions = false"
+              placeholder="Ej: Av. San Martín 1234, piso 2..." autocomplete="off" />
+          </label>
+          <div *ngIf="showDeliveryAddressSuggestions && deliveryAddressSuggestions.length > 0"
+            class="product-picker__menu" style="position:absolute;top:100%;left:0;right:0;z-index:20">
+            <button class="product-picker__option" type="button"
+              *ngFor="let addr of deliveryAddressSuggestions"
+              (mousedown)="selectDeliveryAddress(editMetaForm, addr)">
+              <strong>{{ addr }}</strong>
+            </button>
+          </div>
+        </div>
       </form>
     </div>
 

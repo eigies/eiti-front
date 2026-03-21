@@ -75,4 +75,8 @@ export class SaleService {
     deleteTransport(id: string): Observable<void> {
         return this.http.delete<void>(`${this.base}/${id}/transport`);
     }
+
+    searchDeliveryAddresses(query: string): Observable<string[]> {
+        return this.http.get<string[]>(`${this.base}/delivery-addresses?query=${encodeURIComponent(query)}`);
+    }
 }
