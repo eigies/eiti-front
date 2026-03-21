@@ -991,6 +991,11 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, #67c15e 38%, transparent);
 }
 
+.icon-action--channel {
+    background: color-mix(in srgb, #a78bfa 18%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 50%, transparent);
+}
+
 .icon-action--excel {
     box-shadow: inset 0 0 0 1px color-mix(in srgb, #1d6f42 30%, transparent);
 }
@@ -1096,6 +1101,73 @@
 
 .modal-panel__card--info {
     width: min(100%, 520px);
+}
+
+.modal-panel__card--channel {
+    width: min(100%, 480px);
+}
+
+.channel-popup__hint {
+    margin: 0 0 1.25rem;
+    font-size: .82rem;
+    color: var(--text-soft);
+}
+
+.channel-popup__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .6rem;
+    margin-bottom: 1.5rem;
+}
+
+.channel-popup__opt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .45rem;
+    padding: .85rem .5rem;
+    border: 1px solid var(--border-2);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .78rem;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, color .15s ease, transform .12s ease;
+}
+
+.channel-popup__opt:hover:not(:disabled) {
+    border-color: color-mix(in srgb, #a78bfa 60%, transparent);
+    background: color-mix(in srgb, #a78bfa 8%, transparent);
+    transform: translateY(-1px);
+}
+
+.channel-popup__opt--on {
+    border-color: color-mix(in srgb, #a78bfa 80%, transparent) !important;
+    background: color-mix(in srgb, #a78bfa 14%, transparent) !important;
+    color: #a78bfa !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 40%, transparent);
+}
+
+.channel-popup__opt:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.channel-popup__ico {
+    width: 2rem;
+    height: 2rem;
+    object-fit: contain;
+}
+
+.channel-popup__ico--blank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.1rem;
+    color: var(--text-dim);
 }
 
 .modal-panel__head {
@@ -1471,7 +1543,8 @@
     .modal-panel__card,
     .modal-panel__card--transport,
     .modal-panel__card--wide,
-    .modal-panel__card--confirm {
+    .modal-panel__card--confirm,
+    .modal-panel__card--channel {
         border-radius: 3px;
     }
 
@@ -1556,7 +1629,8 @@
     .modal-panel__card--transport,
     .modal-panel__card--wide,
     .modal-panel__card--confirm,
-    .modal-panel__card--info {
+    .modal-panel__card--info,
+    .modal-panel__card--channel {
         width: 100%;
         max-width: none;
         min-height: 100dvh;

@@ -12,7 +12,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, saleSourceChannelLabel } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, saleSourceChannelLabel } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
@@ -113,6 +113,9 @@ export class SalesPageComponent implements OnInit {
     readonly saleSourceChannels = SALE_SOURCE_CHANNELS;
     showCreateChannelDrop = false;
     showEditChannelDrop   = false;
+    channelPopupSale: SaleResponse | null = null;
+    channelPopupValue: SaleSourceChannel | null = null;
+    savingChannel = false;
 
     constructor(
         private fb: FormBuilder,
@@ -627,6 +630,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                     idSaleStatus: 2,
                     hasDelivery: sale.hasDelivery,
                     cashDrawerId: drawer.id,
+                    noDeliverySurchargeTotal: sale.noDeliverySurchargeTotal ?? null,
                     payments: pendingAmount > 0
                         ? [
                             ...existingPayments,
@@ -640,7 +644,8 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                     tradeIns: existingTradeIns,
                     details: sale.details.map(detail => ({
                         productId: detail.productId,
-                        quantity: detail.quantity
+                        quantity: detail.quantity,
+                        unitPrice: detail.quantity > 0 ? detail.totalAmount / detail.quantity : detail.unitPrice
                     }))
                 }).subscribe({
                     next: () => {
@@ -1493,13 +1498,15 @@ if (form === this.editLineForm) {
     }
 
     setDraftItemPrice(item: DraftItem, price: number): void {
-        item.unitPriceOverride = price;
-        item.total = price * item.quantity;
+        const numeric = parseFloat(price as any);
+        item.unitPriceOverride = isNaN(numeric) ? 0 : numeric;
+        item.total = item.unitPriceOverride * item.quantity;
     }
 
     setEditItemPrice(item: DraftItem, price: number): void {
-        item.unitPriceOverride = price;
-        item.total = price * item.quantity;
+        const numeric = parseFloat(price as any);
+        item.unitPriceOverride = isNaN(numeric) ? 0 : numeric;
+        item.total = item.unitPriceOverride * item.quantity;
     }
 
     private buildRequest(form: FormGroup, items: DraftItem[], paymentState: SalePaymentDraftState, customerId: string | null = null, surcharge = 0) {
@@ -1526,6 +1533,53 @@ if (form === this.editLineForm) {
 
 saleChannelLabel(sale: SaleResponse): string {
     return saleSourceChannelLabel(sale.sourceChannel);
+}
+
+openChannelPopup(sale: SaleResponse): void {
+    this.channelPopupSale = sale;
+    this.channelPopupValue = sale.sourceChannel ?? null;
+}
+
+closeChannelPopup(): void {
+    if (this.savingChannel) return;
+    this.channelPopupSale = null;
+    this.channelPopupValue = null;
+}
+
+selectChannelInPopup(value: SaleSourceChannel | null): void {
+    this.channelPopupValue = value;
+}
+
+saveChannelPopup(): void {
+    const sale = this.channelPopupSale;
+    if (!sale || this.savingChannel) return;
+    const newChannel = this.channelPopupValue;
+    this.savingChannel = true;
+    const request: CreateSaleRequest = {
+        branchId: sale.branchId,
+        customerId: sale.customerId ?? null,
+        idSaleStatus: sale.idSaleStatus,
+        hasDelivery: sale.hasDelivery,
+        cashDrawerId: null,
+        payments: (sale.payments ?? []).map(p => ({ idPaymentMethod: p.idPaymentMethod, amount: p.amount, notes: p.notes })),
+        tradeIns: (sale.tradeIns ?? []).map(t => ({ productId: t.productId, quantity: t.quantity, amount: t.amount })),
+        details: sale.details.map(d => ({ productId: d.productId, quantity: d.quantity, unitPrice: d.unitPrice })),
+        noDeliverySurchargeTotal: null,
+        sourceChannel: newChannel
+    };
+    this.saleService.updateSale(sale.id, request).subscribe({
+        next: () => {
+            this.sales = this.sales.map(s => s.id === sale.id ? { ...s, sourceChannel: newChannel } : s);
+            this.toast.success('Canal de origen actualizado.');
+            this.savingChannel = false;
+            this.channelPopupSale = null;
+            this.channelPopupValue = null;
+        },
+        error: () => {
+            this.toast.error('No se pudo actualizar el canal.');
+            this.savingChannel = false;
+        }
+    });
 }
 
     canSendSaleWhatsApp(sale: SaleResponse): boolean {

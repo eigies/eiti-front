@@ -149,11 +149,7 @@ type CashSessionView = {
             <button *ngIf="otherDrawers.length > 0" class="btn btn--transfer" type="button" (click)="openTransferModal()">&#8644; Transferir</button>
           </form>
 
-          <form *ngIf="auth.hasPermission(permissionCodes.cashClose)" class="inline-form" [formGroup]="closeForm" (ngSubmit)="closeSession()">
-            <input class="control" type="number" min="0" step="0.01" placeholder="Conteo final" formControlName="actualClosingAmount" />
-            <input class="control" type="text" placeholder="Notas" formControlName="notes" />
-            <button class="btn btn--danger" type="submit">Cerrar caja</button>
-          </form>
+          <button *ngIf="auth.hasPermission(permissionCodes.cashClose)" class="btn btn--danger" type="button" (click)="openCloseConfirmModal()">Cerrar caja</button>
 
           <div class="summary" *ngIf="currentSummary">
             <div class="summary-item summary-item--sales">
@@ -269,6 +265,42 @@ type CashSessionView = {
           </article>
         </div>
       </section>
+    </div>
+
+    <!-- Close Confirm Modal -->
+    <div class="modal-backdrop" *ngIf="showCloseConfirmModal" (click)="closeCloseConfirmModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal__head">
+          <span class="modal__title">Confirmar cierre de caja</span>
+          <button class="modal__close" type="button" (click)="closeCloseConfirmModal()">&#x2715;</button>
+        </div>
+        <div class="modal__body">
+          <form [formGroup]="closeForm" (ngSubmit)="closeSession()">
+            <div class="close-confirm-row">
+              <span class="close-confirm-row__label">Esperado en caja</span>
+              <strong class="close-confirm-row__value">&#36;{{ (currentSummary?.expectedClosingAmount ?? 0) | number: '1.2-2' }}</strong>
+            </div>
+            <label class="field">
+              <span>Recuento de efectivo</span>
+              <input class="control" type="number" min="0" step="0.01" placeholder="Ingrese el conteo real" formControlName="actualClosingAmount" autofocus />
+            </label>
+            <div class="close-confirm-row" *ngIf="closeForm.get('actualClosingAmount')?.value !== null && closeForm.get('actualClosingAmount')?.value !== ''">
+              <span class="close-confirm-row__label">Diferencia</span>
+              <strong class="close-confirm-row__value" [class.close-confirm-row__value--neg]="closeDifference < 0" [class.close-confirm-row__value--pos]="closeDifference > 0">
+                {{ closeDifference >= 0 ? '+' : '' }}&#36;{{ closeDifference | number: '1.2-2' }}
+              </strong>
+            </div>
+            <label class="field">
+              <span>Notas <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+              <input class="control" type="text" placeholder="Notas opcionales" formControlName="notes" />
+            </label>
+            <div class="modal__actions">
+              <button class="btn btn--ghost" type="button" (click)="closeCloseConfirmModal()">Cancelar</button>
+              <button class="btn btn--danger" type="submit" [disabled]="closeForm.invalid">Confirmar cierre</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
     <!-- Transfer Modal -->
@@ -410,6 +442,11 @@ type CashSessionView = {
     .modal__body .field span{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase}
     .modal__body .control{margin:0}
     .modal__actions{display:flex;justify-content:flex-end;gap:.75rem;margin-top:.5rem}
+    .close-confirm-row{display:flex;justify-content:space-between;align-items:center;padding:.6rem .85rem;background:color-mix(in srgb,var(--bg) 60%,transparent);border:1px solid var(--border);border-radius:3px}
+    .close-confirm-row__label{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase}
+    .close-confirm-row__value{color:var(--text);font-size:1rem}
+    .close-confirm-row__value--neg{color:var(--red,#e05252)}
+    .close-confirm-row__value--pos{color:var(--green,#52b788)}
     @media (max-width:920px){
       .inline-form,.inline-form--drawer,.session-metrics,.summary,.history-filters,.history-session__metrics,.drawer-strip{grid-template-columns:1fr}
       .history-session__toolbar,.history-session__headline,.history-header-actions{flex-direction:column;align-items:flex-start}
@@ -439,6 +476,7 @@ export class CashComponent implements OnInit {
     closeForm: FormGroup;
     transferForm: FormGroup;
     showTransferModal = false;
+    showCloseConfirmModal = false;
     branches: BranchResponse[] = [];
     drawers: CashDrawerResponse[] = [];
     selectedBranchId = '';
@@ -612,6 +650,22 @@ export class CashComponent implements OnInit {
         });
     }
 
+    get closeDifference(): number {
+        const actual = parseFloat(this.closeForm.get('actualClosingAmount')?.value ?? 0);
+        const expected = this.currentSummary?.expectedClosingAmount ?? 0;
+        return isNaN(actual) ? 0 : actual - expected;
+    }
+
+    openCloseConfirmModal(): void {
+        this.closeForm.reset({ actualClosingAmount: null, notes: '' });
+        this.showCloseConfirmModal = true;
+    }
+
+    closeCloseConfirmModal(): void {
+        this.showCloseConfirmModal = false;
+        this.closeForm.reset({ actualClosingAmount: null, notes: '' });
+    }
+
     openTransferModal(): void {
         this.transferForm.reset({ targetCashDrawerId: '', amount: 0, description: '' });
         this.showTransferModal = true;
@@ -652,13 +706,15 @@ export class CashComponent implements OnInit {
         }
 
         const { actualClosingAmount, notes } = this.closeForm.getRawValue();
-        this.cashService.closeSession(this.currentSession.id, Number(actualClosingAmount), notes).subscribe({
+        const closingAmount = Number(actualClosingAmount);
+        this.cashService.closeSession(this.currentSession.id, closingAmount, notes).subscribe({
             next: () => {
+                this.showCloseConfirmModal = false;
                 this.currentSession = null;
                 this.currentSummary = null;
-                this.openForm.reset({ openingAmount: 0, notes: '' });
+                this.openForm.reset({ openingAmount: closingAmount, notes: '' });
                 this.withdrawForm.reset({ amount: 0, description: '' });
-                this.closeForm.reset({ actualClosingAmount: 0, notes: '' });
+                this.closeForm.reset({ actualClosingAmount: null, notes: '' });
                 this.loadHistory();
                 this.toast.success('Caja cerrada');
             },
@@ -976,6 +1032,15 @@ export class CashComponent implements OnInit {
             },
             error: () => {
                 this.loadingSession = false;
+                if (this.selectedDrawerId) {
+                    this.cashService.getLastClosedSession(this.selectedDrawerId).subscribe({
+                        next: ({ suggestedOpeningAmount }) => {
+                            if (suggestedOpeningAmount > 0) {
+                                this.openForm.patchValue({ openingAmount: suggestedOpeningAmount });
+                            }
+                        }
+                    });
+                }
             }
         });
     }
@@ -1002,7 +1067,7 @@ export class CashComponent implements OnInit {
                         expanded: false,
                         salesIncome,
                         withdrawals,
-                        expectedClosingAmount: session.openingAmount + salesIncome - withdrawals - cancellations
+                        expectedClosingAmount: session.expectedClosingAmount
                     };
                 });
                 this.loadSalePaymentMethods(sessions);
@@ -1195,46 +1260,8 @@ export class CashComponent implements OnInit {
                     this.salesBySaleId.set(saleId, sale);
                 }
 
-                // Recompute history session totals using full payment amounts
-                this.historySessions = this.historySessions.map(item => {
-                    const salesIncome = this.computeTotalSalesIncome(item.session);
-                    const cancellations = this.sumMovementsByType(item.session.movements, 'SaleCancellation');
-                    return {
-                        ...item,
-                        salesIncome,
-                        expectedClosingAmount: item.session.openingAmount + salesIncome - item.withdrawals - cancellations
-                    };
-                });
-
-                // Recompute current summary salesIncome and expectedClosingAmount
-                if (this.currentSummary && this.currentSession) {
-                    const salesIncome = this.computeTotalSalesIncome(this.currentSession);
-                    this.currentSummary = {
-                        ...this.currentSummary,
-                        salesIncome,
-                        expectedClosingAmount: this.currentSummary.openingAmount + salesIncome - this.currentSummary.withdrawals - this.currentSummary.salesCancellations
-                    };
-                }
             }
         });
-    }
-
-    private computeTotalSalesIncome(session: CashSessionResponse): number {
-        return session.movements
-            .filter(m => m.typeName === 'SaleIncome' && m.referenceId)
-            .reduce((sum, m) => {
-                const sale = this.salesBySaleId.get(String(m.referenceId));
-                if (sale) {
-                    const paymentsTotal = (sale.payments ?? [])
-                        .filter(p => Number(p.amount) > 0)
-                        .reduce((s, p) => s + Number(p.amount), 0);
-                    const tradeInsTotal = (sale.tradeIns ?? [])
-                        .filter(t => Number(t.amount) > 0)
-                        .reduce((s, t) => s + Number(t.amount), 0);
-                    return sum + paymentsTotal + tradeInsTotal;
-                }
-                return sum + m.amount;
-            }, 0);
     }
 
     computePaymentBreakdown(session: CashSessionResponse): PaymentMethodBreakdownItem[] {

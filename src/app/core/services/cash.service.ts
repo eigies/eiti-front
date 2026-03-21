@@ -56,4 +56,8 @@ export class CashService {
     getSummary(id: string): Observable<CashSessionSummaryResponse> {
         return this.http.get<CashSessionSummaryResponse>(`${this.sessionsBase}/${id}/summary`);
     }
+
+    getLastClosedSession(cashDrawerId: string): Observable<{ suggestedOpeningAmount: number }> {
+        return this.http.get<{ suggestedOpeningAmount: number }>(`${this.sessionsBase}/last-closed?cashDrawerId=${cashDrawerId}`);
+    }
 }

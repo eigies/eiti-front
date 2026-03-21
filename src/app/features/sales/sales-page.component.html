@@ -469,6 +469,9 @@
                 <img src="assets/carga.png" alt="" />
               </span>
             </button>
+            <button class="icon-action icon-action--channel" type="button" aria-label="Asignar canal de origen" title="Canal de origen" (click)="openChannelPopup(sale); $event.stopPropagation()">
+              <span class="icon-action__emoji" aria-hidden="true">📡</span>
+            </button>
             <button class="icon-action icon-action--excel" type="button" aria-label="Exportar a Excel" title="Exportar a Excel" (click)="exportSaleExcel(sale); $event.stopPropagation()">
               <span class="icon-action__image" aria-hidden="true">
                 <img src="assets/excel-svgrepo-com.svg" alt="" />
@@ -711,6 +714,47 @@
 
     <div class="modal-panel__actions modal-panel__actions--info">
       <button class="btn btn--ghost" type="button" (click)="closeInfoModal()">Cerrar</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" *ngIf="channelPopupSale" (click)="closeChannelPopup()"></div>
+<section class="modal-panel" *ngIf="channelPopupSale">
+  <div class="modal-panel__card modal-panel__card--channel" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>Canal de origen</strong>
+      <button class="modal-panel__close" type="button" [disabled]="savingChannel" (click)="closeChannelPopup()">x</button>
+    </div>
+
+    <p class="channel-popup__hint">Seleccioná por qué canal llegó el cliente para esta venta.</p>
+
+    <div class="channel-popup__grid">
+      <button
+        *ngFor="let ch of saleSourceChannels"
+        type="button"
+        class="channel-popup__opt"
+        [class.channel-popup__opt--on]="channelPopupValue === ch.value"
+        [disabled]="savingChannel"
+        (click)="selectChannelInPopup(ch.value)">
+        <img class="channel-popup__ico" [src]="'assets/channels/' + ch.assetPath" [alt]="ch.label" />
+        <span>{{ ch.label }}</span>
+      </button>
+      <button
+        type="button"
+        class="channel-popup__opt channel-popup__opt--none"
+        [class.channel-popup__opt--on]="channelPopupValue === null"
+        [disabled]="savingChannel"
+        (click)="selectChannelInPopup(null)">
+        <span class="channel-popup__ico channel-popup__ico--blank">—</span>
+        <span>Sin canal</span>
+      </button>
+    </div>
+
+    <div class="modal-panel__actions">
+      <button class="btn btn--ghost" type="button" [disabled]="savingChannel" (click)="closeChannelPopup()">Cancelar</button>
+      <button class="btn" type="button" [disabled]="savingChannel" (click)="saveChannelPopup()">
+        {{ savingChannel ? 'Guardando...' : 'Guardar canal' }}
+      </button>
     </div>
   </div>
 </section>
