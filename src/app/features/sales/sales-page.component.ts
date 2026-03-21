@@ -138,6 +138,7 @@ export class SalesPageComponent implements OnInit {
             hasDelivery: [false],
             cashDrawerId: [''],
             sourceChannel: [null],
+            deliveryAddress: [''],
             productId: ['', Validators.required],
             quantity: [1, [Validators.required, Validators.min(1)]]
         });
@@ -150,7 +151,8 @@ export class SalesPageComponent implements OnInit {
             idSaleStatus: [1, Validators.required],
             hasDelivery: [false],
             cashDrawerId: [''],
-            sourceChannel: [null]
+            sourceChannel: [null],
+            deliveryAddress: ['']
         });
         this.transportForm = this.fb.group({
             driverEmployeeId: ['', Validators.required],
@@ -451,7 +453,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
-        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null });
+        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '' });
         this.createPaymentState = createEmptySalePaymentDraftState();
         this.createProductQuery = '';
         this.createProductModalOpen = false;
@@ -507,7 +509,7 @@ beginEdit(sale: SaleResponse, presetPaid = false): void {
 
 this.editingSale = sale;
 this.createExpanded = false;
-this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: '', sourceChannel: sale.sourceChannel ?? null });
+this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: '', sourceChannel: sale.sourceChannel ?? null, deliveryAddress: sale.deliveryAddress ?? '' });
 this.editItems = sale.details
     .map(detail => {
         const product = this.findProduct(detail.productId);
@@ -1523,6 +1525,7 @@ if (form === this.editLineForm) {
         tradeIns: normalizeSaleTradeIns(paymentState),
         noDeliverySurchargeTotal: surcharge > 0 ? surcharge : null,
         sourceChannel: (rawChannel !== null && rawChannel !== '' && rawChannel !== undefined) ? Number(rawChannel) as SaleSourceChannel : null,
+        deliveryAddress: raw.deliveryAddress || null,
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,

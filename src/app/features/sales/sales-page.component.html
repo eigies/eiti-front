@@ -187,6 +187,12 @@
             </div>
           </div>
 
+          <label class="field" style="margin-bottom:1rem" [formGroup]="lineForm">
+            <span class="field__label">Dirección de entrega <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+            <input class="control" type="text" formControlName="deliveryAddress"
+              placeholder="Ej: Av. San Martín 1234, piso 2..." autocomplete="off" />
+          </label>
+
           <app-sale-payment-inline
             [total]="draftTotal"
             [statusId]="lineForm.get('idSaleStatus')?.value ?? 1"
@@ -284,6 +290,12 @@
             <span class="toggle-check__text">{{ editMetaForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
           </label>
         </div>
+
+        <label class="field" style="grid-column: 1 / -1">
+          <span class="field__label">Dirección de entrega <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+          <input class="control" type="text" formControlName="deliveryAddress"
+            placeholder="Ej: Av. San Martín 1234, piso 2..." autocomplete="off" />
+        </label>
       </form>
     </div>
 
@@ -422,9 +434,9 @@
         <article class="sale-card" *ngFor="let sale of pagedSales; trackBy: trackBySale" (click)="toggleSaleDetails(sale.id)">
           <div class="sale-card__top">
             <div>
-              <p class="sale-card__eyebrow">{{ branchName(sale.branchId) }}</p>
-              <h2>{{ sale.customerFullName || 'Venta #' + sale.id }}</h2>
-              <p class="sale-card__address" *ngIf="sale.customerAddress">{{ sale.customerAddress }}</p>
+              <p class="sale-card__eyebrow">{{ sale.code ? (sale.code + ' · ') : '' }}{{ branchName(sale.branchId) }}</p>
+              <h2>{{ sale.customerFullName || sale.code || 'Venta' }}</h2>
+              <p class="sale-card__address" *ngIf="sale.deliveryAddress || sale.customerAddress">{{ sale.deliveryAddress || sale.customerAddress }}</p>
               <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s) · {{ salePaymentMethodSummary(sale) }}</p>
             </div>
             <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>

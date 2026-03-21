@@ -30,6 +30,7 @@ export interface CreateSaleRequest {
     details: CreateSaleDetailRequest[];
     noDeliverySurchargeTotal?: number | null;
     sourceChannel?: SaleSourceChannel | null;
+    deliveryAddress?: string | null;
 }
 
 export interface CreateSaleDetailRequest {
@@ -40,12 +41,14 @@ export interface CreateSaleDetailRequest {
 
 export interface SaleResponse {
     id: string;
+    code?: string | null;
     branchId: string;
     customerId?: string | null;
     customerFullName?: string | null;
     customerDocument?: string | null;
     customerTaxId?: string | null;
     customerAddress?: string | null;
+    deliveryAddress?: string | null;
     cashSessionId?: string | null;
     hasDelivery: boolean;
     transportAssignmentId?: string | null;
