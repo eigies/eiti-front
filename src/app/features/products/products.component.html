@@ -140,19 +140,24 @@
           <table class="tbl">
             <thead>
               <tr>
-                <th>Codigo</th><th>SKU</th><th>Tipo</th><th class="tbl-th--amber">Marca</th><th>Producto</th>
-                <th *ngIf="showHiddenColumns">Descripcion</th>
-                <th class="tbl-th--r">Precio pub.</th><th class="tbl-th--r" *ngIf="canViewCostPrice">Costo</th>
-                <th class="tbl-th--r" *ngIf="showHiddenColumns">Unitario</th>
-                <th class="tbl-th--r">Stock</th>
-                <th class="tbl-th--r" *ngIf="showHiddenColumns">Reservado</th>
-                <th class="tbl-th--r">Disponible</th>
-                <th *ngIf="showHiddenColumns">Actualizado</th>
+                <th class="tbl-th--sort" (click)="setSort('code')">Codigo <span class="sort-ind" [class.sort-ind--on]="sortColumn==='code'">{{ sortColumn==='code' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--sort" (click)="setSort('sku')">SKU <span class="sort-ind" [class.sort-ind--on]="sortColumn==='sku'">{{ sortColumn==='sku' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th>Tipo</th>
+                <th class="tbl-th--amber tbl-th--sort" (click)="setSort('brand')">Marca <span class="sort-ind" [class.sort-ind--on]="sortColumn==='brand'">{{ sortColumn==='brand' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--sort" (click)="setSort('name')">Producto <span class="sort-ind" [class.sort-ind--on]="sortColumn==='name'">{{ sortColumn==='name' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th *ngIf="showHiddenColumns" class="tbl-th--sort" (click)="setSort('description')">Descripcion <span class="sort-ind" [class.sort-ind--on]="sortColumn==='description'">{{ sortColumn==='description' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--r tbl-th--sort" (click)="setSort('publicPrice')">Precio pub. <span class="sort-ind" [class.sort-ind--on]="sortColumn==='publicPrice'">{{ sortColumn==='publicPrice' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--r tbl-th--sort" *ngIf="canViewCostPrice" (click)="setSort('costPrice')">Costo <span class="sort-ind" [class.sort-ind--on]="sortColumn==='costPrice'">{{ sortColumn==='costPrice' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--r tbl-th--sort" *ngIf="showHiddenColumns" (click)="setSort('unitPrice')">Unitario <span class="sort-ind" [class.sort-ind--on]="sortColumn==='unitPrice'">{{ sortColumn==='unitPrice' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--r tbl-th--sort" (click)="setSort('totalOnHandQuantity')">Stock <span class="sort-ind" [class.sort-ind--on]="sortColumn==='totalOnHandQuantity'">{{ sortColumn==='totalOnHandQuantity' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--r tbl-th--sort" *ngIf="showHiddenColumns" (click)="setSort('totalReservedQuantity')">Reservado <span class="sort-ind" [class.sort-ind--on]="sortColumn==='totalReservedQuantity'">{{ sortColumn==='totalReservedQuantity' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--r tbl-th--sort" (click)="setSort('totalAvailableQuantity')">Disponible <span class="sort-ind" [class.sort-ind--on]="sortColumn==='totalAvailableQuantity'">{{ sortColumn==='totalAvailableQuantity' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th *ngIf="showHiddenColumns" class="tbl-th--sort" (click)="setSort('updatedAt')">Actualizado <span class="sort-ind" [class.sort-ind--on]="sortColumn==='updatedAt'">{{ sortColumn==='updatedAt' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let product of products; trackBy: trackByProduct"
+              <tr *ngFor="let product of sortedProducts; trackBy: trackByProduct"
                   [formGroup]="bulkForm(product.id)"
                   [class.tr--bulk]="bulkEditMode"
                   [class.tr--changed]="isBulkProductModified(product.id)"

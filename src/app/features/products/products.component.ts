@@ -58,6 +58,8 @@ export class ProductsComponent implements OnInit {
   selectedBranchStock: BranchProductStockResponse | null = null;
   stockMovements: StockMovementResponse[] = [];
   compactMode = true;
+  sortColumn: string | null = null;
+  sortDir: 'asc' | 'desc' = 'desc';
 
   constructor(
     private fb: FormBuilder,
@@ -589,6 +591,31 @@ export class ProductsComponent implements OnInit {
     const step = this.currentOnboardingStep;
     if (step) {
       this.onboardingService.acceptStep(step);
+    }
+  }
+
+  get sortedProducts(): ProductResponse[] {
+    if (!this.sortColumn) return this.products;
+    const col = this.sortColumn;
+    const dir = this.sortDir === 'desc' ? -1 : 1;
+    return [...this.products].sort((a, b) => {
+      let av: any = col === 'publicPrice' ? productPublicPrice(a) : (a as any)[col];
+      let bv: any = col === 'publicPrice' ? productPublicPrice(b) : (b as any)[col];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === 'string') av = av.toLowerCase();
+      if (typeof bv === 'string') bv = bv.toLowerCase();
+      return (av < bv ? -1 : av > bv ? 1 : 0) * dir;
+    });
+  }
+
+  setSort(col: string): void {
+    if (this.sortColumn === col) {
+      this.sortDir = this.sortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+      this.sortColumn = col;
+      this.sortDir = 'desc';
     }
   }
 

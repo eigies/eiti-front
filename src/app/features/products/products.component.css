@@ -471,6 +471,24 @@
 .tbl-th--r { text-align: right; width: 1%; white-space: nowrap; }
 .tbl-th--amber { color: color-mix(in srgb, var(--amber) 60%, var(--text-subtle)); }
 
+.tbl-th--sort {
+  cursor: pointer;
+  user-select: none;
+  transition: color .15s ease;
+}
+.tbl-th--sort:hover { color: var(--text); }
+
+.sort-ind {
+  opacity: .28;
+  font-size: .55rem;
+  margin-left: .25rem;
+  transition: opacity .15s ease;
+}
+.sort-ind--on {
+  opacity: 1;
+  color: var(--amber);
+}
+
 .tbl td {
   padding: 0.6rem 0.85rem;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
