@@ -17,6 +17,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   readonly permissionCodes = PermissionCodes;
   companyName = 'Sin compania';
   sidebarOpen = false;
+  salesMenuOpen = false;
 
   constructor(
     public auth: AuthService,
@@ -26,9 +27,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.salesMenuOpen = this.router.url.startsWith('/sales');
+
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.closeSidebar();
+        if (event.url.startsWith('/sales')) {
+          this.salesMenuOpen = true;
+        }
       }
     });
 
@@ -60,6 +66,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
   closeSidebar(): void {
     this.sidebarOpen = false;
     document.body.classList.remove('sidebar-open');
+  }
+
+  toggleSalesMenu(): void {
+    this.salesMenuOpen = !this.salesMenuOpen;
+  }
+
+  get isSalesRouteActive(): boolean {
+    return this.router.url.startsWith('/sales');
   }
 
   @HostListener('document:keydown.escape')

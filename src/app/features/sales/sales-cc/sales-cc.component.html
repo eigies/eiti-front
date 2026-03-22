@@ -1,0 +1,144 @@
+<div class="page">
+  <section class="panel">
+    <div class="head">
+      <div>
+        <p class="eyebrow">Cuenta Corriente</p>
+        <h1>Nueva venta a cuenta corriente</h1>
+      </div>
+      <a class="btn btn--ghost" routerLink="/sales">Volver a ventas</a>
+    </div>
+
+    <div class="grid">
+      <label class="field">
+        <span class="field__label">Sucursal</span>
+        <select class="control" [(ngModel)]="selectedBranchId" (change)="onBranchChange()">
+          <option value="">Seleccionar sucursal</option>
+          <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="block">
+      <h2>Cliente</h2>
+      <div *ngIf="!selectedCustomer">
+        <div class="row row--search">
+          <input class="control grow" type="text" [(ngModel)]="customerQuery"
+                 placeholder="Nombre, email o documento" (keydown.enter)="searchCustomers()" />
+          <button class="btn btn--secondary" type="button" (click)="searchCustomers()">Buscar</button>
+        </div>
+        <div class="hint" *ngIf="searchResults.length === 0">Busca un cliente existente para asignarlo a la venta.</div>
+        <div class="stack">
+          <button *ngFor="let customer of searchResults" type="button" class="card"
+                  (click)="selectCustomer(customer)">
+            <strong>{{ customer.fullName || customer.name }}</strong>
+            <span>{{ customer.email }}</span>
+            <span *ngIf="customer.documentNumber">{{ customer.documentType }} {{ customer.documentNumber }}</span>
+          </button>
+        </div>
+      </div>
+      <div *ngIf="selectedCustomer" class="selected-customer">
+        <div class="card card--selected">
+          <strong>{{ selectedCustomer.fullName || selectedCustomer.name }}</strong>
+          <span>{{ selectedCustomer.email }}</span>
+          <span *ngIf="selectedCustomer.documentNumber">{{ selectedCustomer.documentType }} {{ selectedCustomer.documentNumber }}</span>
+        </div>
+        <button class="btn btn--ghost btn--sm" type="button" (click)="clearCustomer()">Cambiar cliente</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="row row--product">
+        <div>
+          <span class="field__label">Productos</span>
+          <span class="picker-summary">Selecciona la sucursal y agrega productos del stock disponible.</span>
+        </div>
+        <button class="btn btn--secondary" type="button" (click)="openProductModal()">Buscar y agregar productos</button>
+        <span class="picker-summary" *ngIf="draftItems.length > 0">{{ draftItems.length }} producto(s) seleccionado(s)</span>
+      </div>
+      <table *ngIf="draftItems.length > 0" class="table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio unit.</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of draftItems">
+            <td>{{ item.stock.brand }} / {{ item.stock.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ (item.stock.publicPrice ?? item.stock.price) | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeItem(item.stock.productId)">Quitar</button></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3"><strong>Total</strong></td>
+            <td><strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="footer">
+      <button class="btn" type="button" [disabled]="!canSubmit" (click)="submit()">
+        {{ saving ? 'Guardando...' : 'Crear venta CC' }}
+      </button>
+    </div>
+  </section>
+
+  <!-- Product modal -->
+  <div class="modal-backdrop" *ngIf="productModalOpen" (click)="closeProductModal()"></div>
+  <section class="modal-panel" *ngIf="productModalOpen">
+    <div class="modal-panel__card modal-panel__card--wide" (click)="$event.stopPropagation()">
+      <div class="modal-panel__head">
+        <strong>Selector de productos</strong>
+        <button class="modal-panel__close" type="button" (click)="closeProductModal()">x</button>
+      </div>
+      <div class="modal-panel__toolbar">
+        <input class="control" type="text" [value]="productQuery"
+               (input)="handleProductInput($any($event.target).value)"
+               placeholder="Buscar por codigo, SKU, marca o producto" autocomplete="off" />
+      </div>
+      <div class="modal-products-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Sel.</th>
+              <th>Producto</th>
+              <th>Disponible</th>
+              <th>Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let stock of productSuggestions">
+              <td><input type="checkbox"
+                         [disabled]="availableForProduct(stock.productId) <= 0 && !isProductSelected(stock.productId)"
+                         [checked]="isProductSelected(stock.productId)"
+                         (change)="toggleProductSelection(stock, $any($event.target).checked)" /></td>
+              <td>{{ stock.code }} | {{ stock.brand }} - {{ stock.name }}</td>
+              <td>{{ availableForProduct(stock.productId) }}</td>
+              <td><input class="control control--compact" type="number" min="1"
+                         [max]="availableForProduct(stock.productId)"
+                         [value]="selectionQuantity(stock.productId)"
+                         [disabled]="!isProductSelected(stock.productId)"
+                         (input)="setSelectionQuantity(stock.productId, $any($event.target).value)" /></td>
+            </tr>
+            <tr *ngIf="productSuggestions.length === 0">
+              <td colspan="4">No hay coincidencias.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-panel__actions">
+        <button class="btn btn--ghost" type="button" (click)="closeProductModal()">Cancelar</button>
+        <button class="btn" type="button" [disabled]="selectedProductsCount === 0"
+                (click)="addSelectedItems()">Agregar seleccionados ({{ selectedProductsCount }})</button>
+      </div>
+    </div>
+  </section>
+</div>

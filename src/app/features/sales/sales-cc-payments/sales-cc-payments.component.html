@@ -1,0 +1,131 @@
+<div class="page" *ngIf="!loading && sale">
+  <section class="panel">
+    <div class="head">
+      <div>
+        <p class="eyebrow">Cuenta Corriente</p>
+        <h1>Pagos · {{ sale.code || 'Venta' }}</h1>
+        <p class="head__meta">{{ sale.customerFullName }} · {{ sale.createdAt | date:'shortDate' }}</p>
+      </div>
+      <a class="btn btn--ghost" routerLink="/sales">Volver a ventas</a>
+    </div>
+
+    <!-- Balance summary -->
+    <div class="metrics">
+      <div class="metric-card">
+        <span class="metric-card__value">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+        <span class="metric-card__label">Total</span>
+      </div>
+      <div class="metric-card metric-card--accent">
+        <span class="metric-card__value">{{ sale.ccPaidTotal | currency:'USD':'symbol':'1.2-2' }}</span>
+        <span class="metric-card__label">Cobrado</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-card__value">{{ sale.ccPendingAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+        <span class="metric-card__label">Pendiente</span>
+      </div>
+      <div class="metric-card metric-card--status">
+        <span class="badge" [ngClass]="statusClass">{{ statusLabel }}</span>
+      </div>
+    </div>
+
+    <!-- Product detail (read-only) -->
+    <div class="block">
+      <h2>Productos</h2>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio unit.</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of sale.details">
+            <td>{{ d.productBrand }} / {{ d.productName }}</td>
+            <td>{{ d.quantity }}</td>
+            <td>{{ d.unitPrice | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>{{ d.totalAmount | currency:'USD':'symbol':'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Add payment form -->
+    <div class="block" *ngIf="remaining > 0">
+      <h2>Registrar pago</h2>
+      <form class="grid" [formGroup]="paymentForm" (ngSubmit)="submitPayment()">
+        <label class="field">
+          <span class="field__label">Metodo</span>
+          <select class="control" formControlName="idPaymentMethod">
+            <option *ngFor="let m of paymentMethods" [value]="m.id">{{ m.label }}</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Monto</span>
+          <input class="control" type="number" formControlName="amount" [attr.max]="remaining" min="0.01" step="0.01"
+                 [placeholder]="'Max: ' + (remaining | currency:'USD':'symbol':'1.2-2')" />
+        </label>
+        <label class="field">
+          <span class="field__label">Fecha</span>
+          <input class="control" type="date" formControlName="date" />
+        </label>
+        <label class="field span">
+          <span class="field__label">Notas</span>
+          <input class="control" type="text" formControlName="notes" placeholder="Notas opcionales" />
+        </label>
+        <div class="field">
+          <button class="btn" type="submit" [disabled]="paymentForm.invalid || addingPayment">
+            {{ addingPayment ? 'Registrando...' : 'Registrar pago' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Payments list -->
+    <div class="block">
+      <h2>Historial de pagos</h2>
+      <table class="table" *ngIf="payments.length > 0; else noPayments">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Metodo</th>
+            <th>Monto</th>
+            <th>Notas</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of payments" [class.row--cancelled]="p.status === 2">
+            <td>{{ p.date | date:'shortDate' }}</td>
+            <td>{{ paymentMethodLabel(p.idPaymentMethod) }}</td>
+            <td>{{ p.amount | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>{{ p.notes || '-' }}</td>
+            <td>
+              <span class="badge" [ngClass]="p.status === 1 ? 'badge--paid' : 'badge--cancelled'">
+                {{ p.status === 1 ? 'Activo' : 'Anulado' }}
+              </span>
+            </td>
+            <td>
+              <button *ngIf="p.status === 1" class="btn btn--ghost btn--sm btn--danger" type="button"
+                      [disabled]="cancellingPaymentId === p.id"
+                      (click)="requestCancel(p.id)">
+                {{ cancellingPaymentId === p.id ? 'Anulando...' : 'Anular' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noPayments>
+        <p class="hint">Todavia no hay pagos registrados.</p>
+      </ng-template>
+    </div>
+  </section>
+</div>
+
+<div class="page" *ngIf="loading">
+  <section class="panel">
+    <p class="hint">Cargando...</p>
+  </section>
+</div>

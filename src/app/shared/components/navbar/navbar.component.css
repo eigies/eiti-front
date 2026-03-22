@@ -322,6 +322,74 @@
   opacity: 1;
 }
 
+/* ── Sidebar submenu ── */
+.sidebar__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar__link--parent {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.sidebar__chevron {
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-left: auto;
+  opacity: 0.5;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.sidebar__chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.sidebar__submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar__submenu.is-open {
+  max-height: 180px;
+}
+
+.sidebar__submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.75rem 0.45rem 2.5rem;
+  border-radius: 5px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+  position: relative;
+}
+
+.sidebar__submenu-item:hover {
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+  color: var(--text);
+}
+
+.sidebar__submenu-item.is-active {
+  background: color-mix(in srgb, var(--amber) 11%, transparent);
+  color: var(--amber);
+}
+
+.sidebar__submenu-item .sidebar__icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
 /* ── Sidebar footer ── */
 .sidebar__footer {
   flex-shrink: 0;

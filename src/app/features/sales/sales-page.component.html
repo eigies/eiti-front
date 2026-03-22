@@ -479,6 +479,7 @@
             <span class="chip"><strong>Entrega:</strong> {{ sale.hasDelivery ? 'Con envio' : 'Retiro' }}</span>
             <span class="chip"><strong>Pago:</strong> {{ salePaymentDetailSummary(sale) }}</span>
             <span class="chip" *ngIf="sale.customerFullName"><strong>Cliente:</strong> {{ sale.customerFullName }}</span>
+            <span class="chip chip--cc" *ngIf="sale.isCuentaCorriente"><strong>Cuenta Corriente</strong></span>
             <span class="chip chip--channel" *ngIf="sale.sourceChannel"><strong>Canal:</strong> {{ saleChannelLabel(sale) }}</span>
             <span class="chip" *ngIf="sale.driverFullName"><strong>Conductor:</strong> {{ sale.driverFullName }}</span>
             <span class="chip" *ngIf="sale.vehiclePlate"><strong>Vehiculo:</strong> {{ sale.vehiclePlate }}</span>
@@ -533,6 +534,7 @@
                 <img src="assets/whatsapp-color-svgrepo-com.svg" alt="" />
               </span>
             </button>
+            <a *ngIf="sale.isCuentaCorriente" [routerLink]="['/sales-cc', sale.id, 'payments']" class="btn btn--ghost btn--sm" (click)="$event.stopPropagation()">Pagos CC</a>
             <button class="btn btn--ghost btn--sm btn--danger btn--cancel" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesDelete)" [disabled]="cancelingSaleId === sale.id" (click)="requestCancelSale(sale); $event.stopPropagation()">{{ cancelingSaleId === sale.id ? 'Cancelando...' : 'Cancelar' }}</button>
             <button class="btn btn--secondary btn--sm btn--edit" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesUpdate)" (click)="beginEdit(sale); $event.stopPropagation()">Editar</button>
             <button class="btn btn--secondary btn--sm btn--pay" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesPay)" [disabled]="quickPayingSaleId === sale.id" (click)="markAsPaid(sale); $event.stopPropagation()">{{ quickPayingSaleId === sale.id ? 'Cobrando...' : 'Cobrar' }}</button>

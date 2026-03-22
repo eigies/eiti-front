@@ -1,0 +1,300 @@
+.page {
+    min-height: calc(100vh - 64px);
+    background: radial-gradient(circle at top right, var(--page-radial), transparent 32%), linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    padding: 3rem 2rem;
+    max-width: 1180px;
+    margin: 0 auto
+}
+
+.panel {
+    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, .08)
+}
+
+.head,
+.row,
+.footer {
+    display: flex;
+    gap: .75rem;
+    align-items: center
+}
+
+.head {
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border)
+}
+
+.eyebrow {
+    margin: 0 0 .35rem;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase
+}
+
+h1,
+h2 {
+    margin: 0;
+    color: var(--text);
+    font-family: 'DM Mono', monospace
+}
+
+.head__meta {
+    font-size: .82rem;
+    color: var(--text-dim);
+    margin-top: .25rem
+}
+
+.grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+}
+
+.field {
+    display: grid;
+    gap: .45rem
+}
+
+.field__label {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .69rem;
+    letter-spacing: .12em;
+    text-transform: uppercase
+}
+
+.span {
+    grid-column: span 2
+}
+
+.block {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem
+}
+
+.hint {
+    padding: 1rem;
+    border: 1px dashed var(--border);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .78rem
+}
+
+.control {
+    width: 100%;
+    box-sizing: border-box;
+    padding: .8rem;
+    border-radius: 2px;
+    border: 1px solid var(--border-2);
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease
+}
+
+.control:hover {
+    border-color: color-mix(in srgb, var(--amber) 26%, var(--border-2))
+}
+
+.control:focus {
+    border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent)
+}
+
+.btn {
+    font-family: 'DM Mono', monospace;
+    padding: .8rem;
+    border-radius: 2px;
+    border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+    background: var(--amber);
+    color: #1a1308;
+    text-transform: uppercase;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    cursor: pointer;
+    transition: transform .15s ease, border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease, filter .2s ease;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--amber) 28%, transparent)
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: saturate(1.08);
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--amber) 34%, transparent)
+}
+
+.btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    pointer-events: none
+}
+
+.btn--ghost {
+    background: transparent;
+    border: 1px solid var(--border-2);
+    color: var(--text-dim);
+    box-shadow: none
+}
+
+.btn--ghost:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    color: var(--text);
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--amber) 20%, transparent)
+}
+
+.btn--sm {
+    padding: .5rem .8rem;
+    font-size: .68rem
+}
+
+.btn--danger {
+    border-color: color-mix(in srgb, var(--red, #e05555) 45%, transparent);
+    color: var(--red, #e05555)
+}
+
+.btn--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--red, #e05555) 10%, transparent);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--red, #e05555) 20%, transparent)
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse
+}
+
+.table th {
+    padding: .6rem .8rem .8rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-subtle);
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    text-align: left
+}
+
+.table td {
+    padding: .7rem .8rem .7rem 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    color: var(--text)
+}
+
+.table tr:hover td {
+    background: color-mix(in srgb, var(--amber) 4%, transparent)
+}
+
+.table tfoot td {
+    border-top: 1px solid var(--border-2);
+    border-bottom: none;
+    padding-top: .85rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .82rem
+}
+
+/* Metrics grid */
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .75rem;
+    margin-top: 1.5rem;
+    margin-bottom: .5rem
+}
+
+.metric-card {
+    background: color-mix(in srgb, var(--bg-panel) 72%, var(--bg) 28%);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem
+}
+
+.metric-card--accent {
+    border-color: color-mix(in srgb, var(--amber) 52%, var(--border));
+    background: color-mix(in srgb, var(--amber) 8%, transparent)
+}
+
+.metric-card--status {
+    align-items: center;
+    justify-content: center
+}
+
+.metric-card__value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text)
+}
+
+.metric-card__label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-dim)
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: .2rem .6rem;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em
+}
+
+.badge--paid {
+    background: color-mix(in srgb, var(--green) 15%, transparent);
+    color: var(--green)
+}
+
+.badge--pending {
+    background: color-mix(in srgb, var(--amber) 15%, transparent);
+    color: var(--amber)
+}
+
+.badge--cancelled {
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red)
+}
+
+.row--cancelled {
+    opacity: .5
+}
+
+.row--cancelled td:nth-child(3) {
+    text-decoration: line-through
+}
+
+@media (max-width: 920px) {
+    .grid {
+        grid-template-columns: 1fr
+    }
+
+    .span {
+        grid-column: auto
+    }
+
+    .head,
+    .footer {
+        flex-direction: column;
+        align-items: stretch
+    }
+
+    .btn {
+        width: 100%
+    }
+}

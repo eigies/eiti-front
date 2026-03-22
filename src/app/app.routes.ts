@@ -60,6 +60,20 @@ export const routes: Routes = [
             import('./features/sales/sales-full.component').then(m => m.SalesFullComponent)
     },
     {
+        path: 'sales-cc',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.salesAccess },
+        loadComponent: () =>
+            import('./features/sales/sales-cc/sales-cc.component').then(m => m.SalesCcComponent)
+    },
+    {
+        path: 'sales-cc/:id/payments',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.salesAccess },
+        loadComponent: () =>
+            import('./features/sales/sales-cc-payments/sales-cc-payments.component').then(m => m.SalesCcPaymentsComponent)
+    },
+    {
         path: 'cash',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.cashAccess },

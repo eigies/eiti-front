@@ -67,6 +67,7 @@ export interface SaleResponse {
     paidAt?: string | null;
     updatedAt?: string | null;
     isModified: boolean;
+    isCuentaCorriente: boolean;
     changeAmount?: number;
     noDeliverySurchargeTotal?: number | null;
     sourceChannel?: SaleSourceChannel | null;
@@ -90,4 +91,58 @@ export interface SendSaleWhatsAppResponse {
     message: string;
     launchUrl: string;
     requiresUserAction: boolean;
+}
+
+export interface CreateCcSaleRequest {
+    branchId: string;
+    customerId: string;
+    details: CreateSaleDetailRequest[];
+}
+
+export interface CcPaymentResponse {
+    id: string;
+    saleId: string;
+    idPaymentMethod: number;
+    paymentMethodName: string;
+    amount: number;
+    date: string;
+    notes?: string | null;
+    status: number;
+    statusName: string;
+    createdAt: string;
+    cancelledAt?: string | null;
+}
+
+export interface AddCcPaymentRequest {
+    idPaymentMethod: number;
+    amount: number;
+    date: string;
+    notes?: string | null;
+}
+
+export interface SaleByIdResponse {
+    id: string;
+    code?: string | null;
+    branchId: string;
+    customerId?: string | null;
+    customerFullName?: string | null;
+    customerDocument?: string | null;
+    customerTaxId?: string | null;
+    hasDelivery: boolean;
+    idSaleStatus: number;
+    saleStatus: string;
+    isCuentaCorriente: boolean;
+    totalAmount: number;
+    monetaryPaidAmount: number;
+    tradeInAmount: number;
+    settledAmount: number;
+    pendingAmount: number;
+    ccPaidTotal: number;
+    ccPendingAmount: number;
+    createdAt: string;
+    paidAt?: string | null;
+    updatedAt?: string | null;
+    details: SaleDetailResponse[];
+    payments: { idPaymentMethod: number; paymentMethod: string; amount: number; reference?: string | null }[];
+    ccPayments: CcPaymentResponse[];
 }
