@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { BranchService } from '../../core/services/branch.service';
 import { CashService } from '../../core/services/cash.service';
 import { BranchResponse } from '../../core/models/branch.models';
@@ -30,9 +29,8 @@ type CashSessionView = {
 @Component({
     selector: 'app-cash',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, NavbarComponent, OnboardingBannerComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, OnboardingBannerComponent],
     template: `
-    <app-navbar></app-navbar>
     <div class="page" [class.page--guided-lock]="isOnboardingFocusLocked">
       <header class="hero">
         <div class="eyebrow">_ CAJA</div>

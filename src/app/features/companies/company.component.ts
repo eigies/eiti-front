@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { CompanyService } from '../../core/services/company.service';
 import { CompanyResponse } from '../../core/models/company.models';
 import { ToastService } from '../../shared/services/toast.service';
@@ -9,7 +8,7 @@ import { ToastService } from '../../shared/services/toast.service';
 @Component({
   selector: 'app-company',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './company.component.html',
   styleUrls: ['./company.component.css']
 })

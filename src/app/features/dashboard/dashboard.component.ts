@@ -3,7 +3,6 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { SaleService } from '../../core/services/sale.service';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { SaleResponse } from '../../core/models/sale.models';
 import { PermissionCodes } from '../../core/models/permission.models';
 
@@ -19,7 +18,7 @@ interface DayBar {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, NavbarComponent],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })

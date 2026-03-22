@@ -3,13 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CustomerService } from '../../../core/services/customer.service';
 import { CustomerResponse } from '../../../core/models/customer.models';
-import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-customer-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, NavbarComponent],
+  imports: [CommonModule, RouterModule],
   templateUrl: './customer-detail.component.html',
   styleUrls: ['./customer-detail.component.css']
 })

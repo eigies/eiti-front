@@ -2,7 +2,6 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { ProductService } from '../../core/services/product.service';
 import { ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../core/models/product.models';
 import { ToastService } from '../../shared/services/toast.service';
@@ -21,7 +20,7 @@ type ProductModalMode = 'detail' | 'edit' | 'delete' | 'stock';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NavbarComponent, OnboardingBannerComponent],
+  imports: [CommonModule, ReactiveFormsModule, OnboardingBannerComponent],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })

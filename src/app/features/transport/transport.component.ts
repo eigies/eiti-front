@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { EmployeeService } from '../../core/services/employee.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { DriverResponse } from '../../core/models/employee.models';
@@ -11,7 +10,7 @@ import { ToastService } from '../../shared/services/toast.service';
 @Component({
   selector: 'app-transport',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './transport.component.html',
   styleUrls: ['./transport.component.css']
 })

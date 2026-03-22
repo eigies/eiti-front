@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -13,10 +13,10 @@ import { CompanyService } from '../../../core/services/company.service';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   readonly permissionCodes = PermissionCodes;
   companyName = 'Sin compania';
-  mobileMenuOpen = false;
+  sidebarOpen = false;
 
   constructor(
     public auth: AuthService,
@@ -28,7 +28,7 @@ export class NavbarComponent implements OnInit {
   ngOnInit(): void {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
-        this.mobileMenuOpen = false;
+        this.closeSidebar();
       }
     });
 
@@ -42,22 +42,28 @@ export class NavbarComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    document.body.classList.remove('sidebar-open');
+  }
+
   logout(): void {
-    this.mobileMenuOpen = false;
+    this.closeSidebar();
     this.auth.logout();
     this.router.navigate(['/login']);
   }
 
-  toggleMobileMenu(): void {
-    this.mobileMenuOpen = !this.mobileMenuOpen;
+  toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
+    document.body.classList.toggle('sidebar-open', this.sidebarOpen);
   }
 
-  closeMobileMenu(): void {
-    this.mobileMenuOpen = false;
+  closeSidebar(): void {
+    this.sidebarOpen = false;
+    document.body.classList.remove('sidebar-open');
   }
 
   @HostListener('document:keydown.escape')
   handleEscape(): void {
-    this.mobileMenuOpen = false;
+    this.closeSidebar();
   }
 }

@@ -5,7 +5,6 @@ import { RouterModule } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { ProductService } from '../../core/services/product.service';
 import { SaleService } from '../../core/services/sale.service';
 import { CompanyService } from '../../core/services/company.service';
@@ -46,7 +45,7 @@ import {
 @Component({
     selector: 'app-sales-page',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent, OnboardingBannerComponent, SalePaymentInlineComponent],
+    imports: [CommonModule, ReactiveFormsModule, RouterModule, OnboardingBannerComponent, SalePaymentInlineComponent],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
 })
@@ -1240,6 +1239,12 @@ transportStatusChipLabel(sale: SaleResponse): string {
     }
 
     if (!sale.transportAssignmentId) {
+        // Transport was removed via QUITAR (Cancelled) but assignment ID was cleared from the sale.
+        // Show Cancelado so the chip reflects the actual transport history instead of "Pendiente"
+        // (which would imply no transport was ever assigned).
+        if (sale.transportStatus === 4) {
+            return 'Cancelado';
+        }
         return 'Pendiente';
     }
 
@@ -1252,6 +1257,9 @@ transportStatusChipClass(sale: SaleResponse): string {
     }
 
     if (!sale.transportAssignmentId) {
+        if (sale.transportStatus === 4) {
+            return 'chip--transport-cancelled';
+        }
         return 'chip--transport-pending';
     }
 

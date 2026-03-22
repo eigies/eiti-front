@@ -4,7 +4,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { CustomerService } from '../../core/services/customer.service';
 import { ProductService } from '../../core/services/product.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -39,7 +38,7 @@ import {
 @Component({
   selector: 'app-sales-full',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent, SalePaymentInlineComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, SalePaymentInlineComponent],
   templateUrl: './sales-full.component.html',
   styleUrls: ['./sales-full.component.css']
 })

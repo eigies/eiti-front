@@ -88,3 +88,18 @@ input, button, textarea, select {
   background: rgba(245, 158, 11, 0.25);
   color: var(--text);
 }
+
+/* ── App layout shell ── */
+.app-content {
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.sidebar-open .app-content {
+  margin-left: 260px;
+}
+
+@media (max-width: 640px) {
+  body.sidebar-open .app-content {
+    margin-left: 0;
+  }
+}

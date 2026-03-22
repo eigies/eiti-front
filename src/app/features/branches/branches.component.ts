@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { BranchResponse } from '../../core/models/branch.models';
 import { BranchService } from '../../core/services/branch.service';
 import { ToastService } from '../../shared/services/toast.service';
@@ -18,7 +17,7 @@ type BranchView = {
 @Component({
   selector: 'app-branches',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NavbarComponent, OnboardingBannerComponent],
+  imports: [CommonModule, ReactiveFormsModule, OnboardingBannerComponent],
   templateUrl: './branches.component.html',
   styleUrls: ['./branches.component.css']
 })

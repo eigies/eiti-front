@@ -1,52 +1,155 @@
+<!-- ── Top bar ── -->
 <nav class="navbar">
-    <div class="navbar__brand">
-        <span class="navbar__logo">EITI</span>
-        <span class="navbar__separator">_</span>
-        <span class="navbar__sub">GESTION CLIENTES</span>
-    </div>
-
+  <div class="navbar__left">
     <button
-        class="navbar__menu-toggle"
-        type="button"
-        [attr.aria-expanded]="mobileMenuOpen"
-        aria-label="Abrir menu de navegacion"
-        (click)="toggleMobileMenu()">
-        <span></span>
-        <span></span>
-        <span></span>
+      class="navbar__hamburger"
+      type="button"
+      [class.is-open]="sidebarOpen"
+      [attr.aria-expanded]="sidebarOpen"
+      aria-label="Alternar menú de navegación"
+      (click)="toggleSidebar()">
+      <span class="bar bar-1"></span>
+      <span class="bar bar-2"></span>
+      <span class="bar bar-3"></span>
     </button>
-
-    <div class="navbar__backdrop" *ngIf="mobileMenuOpen" (click)="closeMobileMenu()"></div>
-
-    <div class="navbar__links" [class.navbar__links--open]="mobileMenuOpen">
-        <a routerLink="/dashboard" routerLinkActive="active">Inicio</a>
-        <a routerLink="/customers" routerLinkActive="active">Clientes</a>
-        <a routerLink="/products" routerLinkActive="active">Productos</a>
-        <a routerLink="/company" routerLinkActive="active">Compania</a>
-        <a routerLink="/branches" routerLinkActive="active">Sucursal</a>
-        <a *ngIf="auth.hasPermission(permissionCodes.salesAccess)" routerLink="/sales" routerLinkActive="active">Ventas</a>
-        <a *ngIf="auth.hasPermission(permissionCodes.cashAccess)" routerLink="/cash" routerLinkActive="active">Caja</a>
-        <a *ngIf="auth.hasPermission(permissionCodes.usersManage)" routerLink="/users" routerLinkActive="active">Usuarios</a>
-        <a routerLink="/transport" routerLinkActive="active">Transporte</a>
-
-        <div class="navbar__user" *ngIf="auth.currentUser as user">
-            <a class="navbar__profile" routerLink="/profile" routerLinkActive="active">Perfil</a>
-            <div class="navbar__identity">
-                <span class="navbar__username">{{ user.username }}</span>
-                <span class="navbar__company">{{ companyName }}</span>
-            </div>
-            <span
-                class="navbar__theme"
-                role="button"
-                tabindex="0"
-                [attr.aria-label]="theme.isDarkTheme ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
-                [attr.title]="theme.isDarkTheme ? 'Modo claro' : 'Modo oscuro'"
-                (click)="theme.toggleTheme()"
-                (keydown.enter)="theme.toggleTheme()"
-                (keydown.space)="theme.toggleTheme(); $event.preventDefault()">
-                {{ theme.isDarkTheme ? '☀' : '☾' }}
-            </span>
-            <button class="navbar__logout" (click)="logout()">Salir</button>
-        </div>
+    <div class="navbar__brand">
+      <span class="navbar__logo">EITI</span>
+      <span class="navbar__separator">_</span>
+      <span class="navbar__sub">GESTION CLIENTES</span>
     </div>
+  </div>
+
+  <div class="navbar__right" *ngIf="auth.currentUser as user">
+    <div class="navbar__identity">
+      <span class="navbar__username">{{ user.username }}</span>
+      <span class="navbar__company">{{ companyName }}</span>
+    </div>
+    <span
+      class="navbar__theme"
+      role="button"
+      tabindex="0"
+      [attr.aria-label]="theme.isDarkTheme ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+      [attr.title]="theme.isDarkTheme ? 'Modo claro' : 'Modo oscuro'"
+      (click)="theme.toggleTheme()"
+      (keydown.enter)="theme.toggleTheme()"
+      (keydown.space)="theme.toggleTheme(); $event.preventDefault()">
+      {{ theme.isDarkTheme ? '☀' : '☾' }}
+    </span>
+    <button class="navbar__logout" (click)="logout()">Salir</button>
+  </div>
 </nav>
+
+<!-- ── Backdrop ── -->
+<div
+  class="sidebar-backdrop"
+  [class.is-visible]="sidebarOpen"
+  (click)="closeSidebar()">
+</div>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" [class.is-open]="sidebarOpen" aria-label="Menú lateral">
+
+  <div class="sidebar__header" *ngIf="auth.currentUser as user">
+    <div class="sidebar__avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+    <div class="sidebar__user-info">
+      <span class="sidebar__username">{{ user.username }}</span>
+      <span class="sidebar__company">{{ companyName }}</span>
+    </div>
+  </div>
+
+  <nav class="sidebar__nav">
+
+    <a class="sidebar__link" routerLink="/dashboard" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>Inicio</span>
+    </a>
+
+    <a class="sidebar__link" routerLink="/customers" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>Clientes</span>
+    </a>
+
+    <a class="sidebar__link" routerLink="/products" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+      <span>Productos</span>
+    </a>
+
+    <a class="sidebar__link" routerLink="/company" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+        <rect x="9" y="14" width="6" height="7"/>
+        <path d="M9 9h.01M15 9h.01"/>
+      </svg>
+      <span>Compañia</span>
+    </a>
+
+    <a class="sidebar__link" routerLink="/branches" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      <span>Sucursal</span>
+    </a>
+
+    <a *ngIf="auth.hasPermission(permissionCodes.salesAccess)"
+       class="sidebar__link" routerLink="/sales" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+      </svg>
+      <span>Ventas</span>
+    </a>
+
+    <a *ngIf="auth.hasPermission(permissionCodes.cashAccess)"
+       class="sidebar__link" routerLink="/cash" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <line x1="2" y1="10" x2="22" y2="10"/>
+      </svg>
+      <span>Caja</span>
+    </a>
+
+    <a *ngIf="auth.hasPermission(permissionCodes.usersManage)"
+       class="sidebar__link" routerLink="/users" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+        <path d="M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+      <span>Usuarios</span>
+    </a>
+
+    <a class="sidebar__link" routerLink="/transport" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="1" y="3" width="15" height="13" rx="1"/>
+        <path d="M16 8h4l3 5v3h-7V8z"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/>
+        <circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+      <span>Transporte</span>
+    </a>
+
+  </nav>
+
+  <div class="sidebar__footer">
+    <a class="sidebar__link sidebar__link--footer" routerLink="/profile" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      <span>Perfil</span>
+    </a>
+  </div>
+
+</aside>

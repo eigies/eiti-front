@@ -1,7 +1,6 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { RoleDefinition, UserResponse } from '../../core/models/user.models';
 import { RoleService } from '../../core/services/role.service';
 import { UserService } from '../../core/services/user.service';
@@ -10,7 +9,7 @@ import { ToastService } from '../../shared/services/toast.service';
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
 })

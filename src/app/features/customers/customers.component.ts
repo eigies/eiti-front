@@ -6,13 +6,12 @@ import { RouterModule } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerResponse } from '../../core/models/customer.models';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.css']
 })

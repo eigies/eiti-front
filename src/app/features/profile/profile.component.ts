@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { UserRoleAuditResponse, UserResponse } from '../../core/models/user.models';
@@ -10,7 +9,7 @@ import { ToastService } from '../../shared/services/toast.service';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, NavbarComponent],
+  imports: [CommonModule],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })
