@@ -257,8 +257,8 @@ h2 {
 }
 
 .badge--paid {
-    background: color-mix(in srgb, var(--green) 15%, transparent);
-    color: var(--green)
+    background: color-mix(in srgb, #22c55e 15%, transparent);
+    color: #22c55e
 }
 
 .badge--pending {
@@ -267,8 +267,8 @@ h2 {
 }
 
 .badge--cancelled {
-    background: color-mix(in srgb, var(--red) 12%, transparent);
-    color: var(--red)
+    background: color-mix(in srgb, #ef4444 12%, transparent);
+    color: #ef4444
 }
 
 .row--cancelled {
