@@ -15,7 +15,7 @@ import { jsPDF } from 'jspdf';
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SaleService } from '../../core/services/sale.service';
-import { SaleResponse } from '../../core/models/sale.models';
+import { SaleByIdResponse, SaleResponse } from '../../core/models/sale.models';
 import { SALE_PAYMENT_METHODS, paymentMethodSummary } from '../../core/models/sale-payment.models';
 
 type CashSessionView = {
@@ -425,6 +425,8 @@ type CashSessionView = {
     .badge--type[data-type="CashTransferOut"]{background:color-mix(in srgb,#6366f1 12%, transparent);color:#6366f1;border:1px solid color-mix(in srgb,#6366f1 30%, transparent)}
     .badge--type[data-type="CashTransferIn"]{background:color-mix(in srgb,#06b6d4 12%, transparent);color:#06b6d4;border:1px solid color-mix(in srgb,#06b6d4 30%, transparent)}
     .badge--type[data-type="SaleCancellation"]{background:color-mix(in srgb,var(--danger) 12%, transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%, transparent)}
+    .badge--type[data-type="CuentaCorrienteIncome"]{background:color-mix(in srgb,#14b8a6 12%, transparent);color:#14b8a6;border:1px solid color-mix(in srgb,#14b8a6 30%, transparent)}
+    .badge--type[data-type="CuentaCorrienteCancellation"]{background:color-mix(in srgb,#f97316 12%, transparent);color:#f97316;border:1px solid color-mix(in srgb,#f97316 30%, transparent)}
     .btn--transfer{background:color-mix(in srgb,#6366f1 8%, transparent);border:1px solid color-mix(in srgb,#6366f1 35%, var(--border-2));color:#6366f1;white-space:nowrap}
     .btn--transfer:hover:not(:disabled){background:color-mix(in srgb,#6366f1 14%, transparent);border-color:color-mix(in srgb,#6366f1 55%, var(--border-2));transform:translateY(-1px)}
     .btn--transfer-confirm{font-size:.72rem;letter-spacing:.12em}
@@ -484,6 +486,7 @@ export class CashComponent implements OnInit {
     historySessions: CashSessionView[] = [];
     salePaymentMethodsBySaleId = new Map<string, string>();
     salesBySaleId = new Map<string, SaleResponse>();
+    ccSalesBySaleId = new Map<string, SaleByIdResponse>();
     historyFrom = '';
     historyTo = '';
     showCreateDrawer = false;
@@ -1015,6 +1018,7 @@ export class CashComponent implements OnInit {
         this.currentSummary = null;
         this.salePaymentMethodsBySaleId.clear();
         this.salesBySaleId.clear();
+        this.ccSalesBySaleId.clear();
 
         this.cashService.getCurrentSession(this.selectedDrawerId).subscribe({
             next: session => {
@@ -1053,6 +1057,7 @@ export class CashComponent implements OnInit {
         this.historySessions = [];
         this.salePaymentMethodsBySaleId.clear();
         this.salesBySaleId.clear();
+        this.ccSalesBySaleId.clear();
 
         this.cashService.listHistory(this.selectedDrawerId, this.historyFrom || undefined, this.historyTo || undefined).subscribe({
             next: sessions => {
@@ -1121,6 +1126,10 @@ export class CashComponent implements OnInit {
             'Manual adjustment': 'Ajuste manual',
             'Initial opening': 'Apertura inicial',
             'Sale cancellation': 'Cancelación de venta',
+            'CC payment': 'Pago cuenta corriente',
+            'CC payment cancelled': 'Pago CC anulado',
+            'Pago cuenta corriente': 'Pago cuenta corriente',
+            'Pago CC anulado': 'Pago CC anulado',
         };
         return map[description] ?? description;
     }
@@ -1135,6 +1144,8 @@ export class CashComponent implements OnInit {
             CashTransferIn: 'Transferencia entrante',
             OpeningFloat: 'Apertura',
             SaleCancellation: 'Cancelación de venta',
+            CuentaCorrienteIncome: 'Cuenta Corriente',
+            CuentaCorrienteCancellation: 'Anulación CC',
         };
         return map[typeName] ?? typeName;
     }
@@ -1149,7 +1160,10 @@ export class CashComponent implements OnInit {
     }
 
     movementPaymentMethod(movement: CashSessionMovementResponse): string {
-        if (movement.referenceType?.toLowerCase() !== 'sale' || !movement.referenceId) {
+        const refType = movement.referenceType;
+        const isRegularSale = refType?.toLowerCase() === 'sale';
+        const isCcSale = refType === 'CuentaCorriente';
+        if ((!isRegularSale && !isCcSale) || !movement.referenceId) {
             return '-';
         }
 
@@ -1230,36 +1244,62 @@ export class CashComponent implements OnInit {
     }
 
     private loadSalePaymentMethods(sessions: CashSessionResponse[]): void {
+        const allMovements = sessions.flatMap(session => session.movements);
+
         const saleIds = [...new Set(
-            sessions.flatMap(session => session.movements)
+            allMovements
                 .filter(movement => movement.referenceType?.toLowerCase() === 'sale' && !!movement.referenceId)
                 .map(movement => String(movement.referenceId))
         )];
 
-        if (saleIds.length === 0) {
-            return;
+        const ccSaleIds = [...new Set(
+            allMovements
+                .filter(movement => movement.referenceType === 'CuentaCorriente' && !!movement.referenceId)
+                .map(movement => String(movement.referenceId))
+        )];
+
+        if (saleIds.length > 0) {
+            this.saleService.listSales({}).subscribe({
+                next: sales => {
+                    const salesById = new Map<string, SaleResponse>(
+                        sales
+                            .filter(sale => saleIds.includes(sale.id))
+                            .map(sale => [sale.id, sale])
+                    );
+
+                    for (const saleId of saleIds) {
+                        const sale = salesById.get(saleId);
+                        if (!sale) {
+                            continue;
+                        }
+
+                        this.salePaymentMethodsBySaleId.set(saleId, paymentMethodSummary(sale.payments, sale.tradeIns));
+                        this.salesBySaleId.set(saleId, sale);
+                    }
+                }
+            });
         }
 
-        this.saleService.listSales({}).subscribe({
-            next: sales => {
-                const salesById = new Map<string, SaleResponse>(
-                    sales
-                        .filter(sale => saleIds.includes(sale.id))
-                        .map(sale => [sale.id, sale])
-                );
-
-                for (const saleId of saleIds) {
-                    const sale = salesById.get(saleId);
-                    if (!sale) {
-                        continue;
+        for (const saleId of ccSaleIds) {
+            this.saleService.getSaleById(saleId).subscribe({
+                next: (sale: SaleByIdResponse) => {
+                    this.ccSalesBySaleId.set(saleId, sale);
+                    const activeCcPayments = (sale.ccPayments ?? []).filter(p => p.status === 1);
+                    if (activeCcPayments.length === 0) {
+                        return;
                     }
-
-                    this.salePaymentMethodsBySaleId.set(saleId, paymentMethodSummary(sale.payments, sale.tradeIns));
-                    this.salesBySaleId.set(saleId, sale);
+                    const methodMap = new Map<number, number>();
+                    for (const p of activeCcPayments) {
+                        methodMap.set(p.idPaymentMethod, (methodMap.get(p.idPaymentMethod) ?? 0) + p.amount);
+                    }
+                    const parts = Array.from(methodMap.entries()).map(([id, amount]) => {
+                        const name = SALE_PAYMENT_METHODS.find(m => m.id === id)?.label ?? 'Otro';
+                        return `${name}: $${amount.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
+                    });
+                    this.salePaymentMethodsBySaleId.set(saleId, parts.join(' | '));
                 }
-
-            }
-        });
+            });
+        }
     }
 
     computePaymentBreakdown(session: CashSessionResponse): PaymentMethodBreakdownItem[] {
@@ -1267,22 +1307,24 @@ export class CashComponent implements OnInit {
         let tradeInTotal = 0;
 
         for (const movement of session.movements) {
-            if (movement.referenceType?.toLowerCase() !== 'sale' || !movement.referenceId) {
-                continue;
-            }
-
-            const sale = this.salesBySaleId.get(String(movement.referenceId));
-            if (!sale) {
-                continue;
-            }
-
-            for (const payment of (sale.payments ?? [])) {
-                const method = Number(payment.idPaymentMethod);
-                totals.set(method, (totals.get(method) ?? 0) + Number(payment.amount));
-            }
-
-            for (const tradeIn of (sale.tradeIns ?? [])) {
-                tradeInTotal += Number(tradeIn.amount);
+            if (movement.referenceType?.toLowerCase() === 'sale' && movement.referenceId) {
+                const sale = this.salesBySaleId.get(String(movement.referenceId));
+                if (!sale) continue;
+                for (const payment of (sale.payments ?? [])) {
+                    const method = Number(payment.idPaymentMethod);
+                    totals.set(method, (totals.get(method) ?? 0) + Number(payment.amount));
+                }
+                for (const tradeIn of (sale.tradeIns ?? [])) {
+                    tradeInTotal += Number(tradeIn.amount);
+                }
+            } else if (movement.referenceType === 'CuentaCorriente' && movement.referenceId) {
+                const ccSale = this.ccSalesBySaleId.get(String(movement.referenceId));
+                if (!ccSale) continue;
+                const activeCcPayments = (ccSale.ccPayments ?? []).filter(p => p.status === 1);
+                for (const p of activeCcPayments) {
+                    const method = Number(p.idPaymentMethod);
+                    totals.set(method, (totals.get(method) ?? 0) + Number(p.amount));
+                }
             }
         }
 

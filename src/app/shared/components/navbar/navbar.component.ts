@@ -18,6 +18,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   companyName = 'Sin compania';
   sidebarOpen = false;
   salesMenuOpen = false;
+  clientsMenuOpen = false;
 
   constructor(
     public auth: AuthService,
@@ -28,12 +29,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.salesMenuOpen = this.router.url.startsWith('/sales');
+    this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.closeSidebar();
         if (event.url.startsWith('/sales')) {
           this.salesMenuOpen = true;
+        }
+        if (event.url.startsWith('/customers') || event.url.startsWith('/clients')) {
+          this.clientsMenuOpen = true;
         }
       }
     });
@@ -60,6 +65,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleSidebar(): void {
     this.sidebarOpen = !this.sidebarOpen;
+    if (this.sidebarOpen) {
+      this.salesMenuOpen = this.router.url.startsWith('/sales');
+      this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
+    }
     document.body.classList.toggle('sidebar-open', this.sidebarOpen);
   }
 
@@ -72,8 +81,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.salesMenuOpen = !this.salesMenuOpen;
   }
 
+  toggleClientsMenu(): void {
+    this.clientsMenuOpen = !this.clientsMenuOpen;
+  }
+
   get isSalesRouteActive(): boolean {
     return this.router.url.startsWith('/sales');
+  }
+
+  get isClientsRouteActive(): boolean {
+    return this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
   }
 
   @HostListener('document:keydown.escape')

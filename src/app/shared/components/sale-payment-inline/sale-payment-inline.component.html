@@ -16,7 +16,7 @@
           <span class="toggle-row-inline__track"></span>
         </label>
 
-        <label class="toggle-row-inline">
+        <label class="toggle-row-inline" *ngIf="showTradeIn">
           <input type="checkbox" [checked]="state.hasTradeIn" (change)="toggleTradeIn($any($event.target).checked)" />
           <span class="toggle-row-inline__label">Canje</span>
           <span class="toggle-row-inline__track"></span>
@@ -56,7 +56,7 @@
         </div>
       </div>
 
-      <div class="payment-stack" *ngIf="state.hasTradeIn">
+      <div class="payment-stack" *ngIf="showTradeIn && state.hasTradeIn">
         <div class="section-head">
           <div>
             <span class="section-head__eyebrow">Trade-ins</span>

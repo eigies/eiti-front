@@ -33,6 +33,7 @@ export class SalePaymentInlineComponent {
     @Input() description = 'Configura pagos y canje dentro de la misma venta.';
     @Input() compact = false;
     @Input() autoSurcharge = 0;
+    @Input() showTradeIn = true;
     @Output() cashDrawerIdChange = new EventEmitter<string | null>();
 
     readonly paymentMethods = SALE_PAYMENT_METHODS;

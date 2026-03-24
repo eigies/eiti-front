@@ -16,6 +16,7 @@ import { CreateSaleDetailRequest } from '../../../core/models/sale.models';
 interface DraftItem {
   stock: BranchProductStockResponse;
   quantity: number;
+  discountPercent: number;
   total: number;
 }
 
@@ -36,6 +37,9 @@ export class SalesCcComponent implements OnInit {
 
   draftItems: DraftItem[] = [];
   saving = false;
+
+  generalDiscountPercent = 0;
+  manualOverridePrice: number | null = null;
 
   productModalOpen = false;
   productQuery = '';
@@ -66,8 +70,27 @@ export class SalesCcComponent implements OnInit {
     });
   }
 
-  get total(): number {
+  get subtotalAfterItemDiscounts(): number {
     return this.draftItems.reduce((sum, item) => sum + item.total, 0);
+  }
+
+  get totalAfterGeneralDiscount(): number {
+    const sub = this.subtotalAfterItemDiscounts;
+    if (this.generalDiscountPercent > 0) {
+      return Math.round(sub * (1 - this.generalDiscountPercent / 100) * 100) / 100;
+    }
+    return sub;
+  }
+
+  get total(): number {
+    if (this.manualOverridePrice !== null && this.manualOverridePrice >= 0) {
+      return this.manualOverridePrice;
+    }
+    return this.totalAfterGeneralDiscount;
+  }
+
+  get isManualOverride(): boolean {
+    return this.manualOverridePrice !== null && this.manualOverridePrice >= 0;
   }
 
   get selectedProductsCount(): number {
@@ -219,6 +242,34 @@ export class SalesCcComponent implements OnInit {
     this.draftItems = this.draftItems.filter(item => item.stock.productId !== productId);
   }
 
+  setItemDiscount(productId: string, rawValue: string): void {
+    const item = this.draftItems.find(i => i.stock.productId === productId);
+    if (!item) return;
+    const parsed = Number(rawValue);
+    item.discountPercent = Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : 0;
+    const unitPrice = item.stock.publicPrice ?? item.stock.price ?? 0;
+    item.total = Math.round(item.quantity * unitPrice * (1 - item.discountPercent / 100) * 100) / 100;
+  }
+
+  setGeneralDiscount(rawValue: string): void {
+    const parsed = Number(rawValue);
+    this.generalDiscountPercent = Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : 0;
+  }
+
+  setManualOverride(rawValue: string): void {
+    const trimmed = rawValue.trim();
+    if (trimmed === '') {
+      this.manualOverridePrice = null;
+      return;
+    }
+    const parsed = Number(trimmed);
+    this.manualOverridePrice = Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : null;
+  }
+
+  clearManualOverride(): void {
+    this.manualOverridePrice = null;
+  }
+
   submit(): void {
     if (!this.canSubmit) { return; }
     if (!this.selectedCustomer) {
@@ -237,13 +288,16 @@ export class SalesCcComponent implements OnInit {
     this.saving = true;
     const details: CreateSaleDetailRequest[] = this.draftItems.map(item => ({
       productId: item.stock.productId,
-      quantity: item.quantity
+      quantity: item.quantity,
+      discountPercent: item.discountPercent || undefined
     }));
 
     this.saleService.createCcSale({
       branchId: this.selectedBranchId,
       customerId: this.selectedCustomer.id,
-      details
+      details,
+      generalDiscountPercent: this.generalDiscountPercent || undefined,
+      manualOverridePrice: this.manualOverridePrice ?? undefined
     }).subscribe({
       next: () => {
         this.saving = false;
@@ -283,6 +337,7 @@ export class SalesCcComponent implements OnInit {
       this.draftItems.unshift({
         stock,
         quantity: Math.floor(quantity),
+        discountPercent: 0,
         total: unitPrice * Math.floor(quantity)
       });
     }

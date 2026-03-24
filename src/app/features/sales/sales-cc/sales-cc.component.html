@@ -61,6 +61,7 @@
             <th>Producto</th>
             <th>Cantidad</th>
             <th>Precio unit.</th>
+            <th>Descuento %</th>
             <th>Subtotal</th>
             <th></th>
           </tr>
@@ -70,18 +71,54 @@
             <td>{{ item.stock.brand }} / {{ item.stock.name }}</td>
             <td>{{ item.quantity }}</td>
             <td>{{ (item.stock.publicPrice ?? item.stock.price) | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>
+              <input class="control control--compact control--discount" type="number" min="0" max="100" step="1"
+                     [value]="item.discountPercent"
+                     (input)="setItemDiscount(item.stock.productId, $any($event.target).value)"
+                     placeholder="0" />
+            </td>
             <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
             <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeItem(item.stock.productId)">Quitar</button></td>
           </tr>
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="3"><strong>Total</strong></td>
+            <td colspan="4" class="text-right"><strong>Subtotal</strong></td>
+            <td><strong>{{ subtotalAfterItemDiscounts | currency:'USD':'symbol':'1.2-2' }}</strong></td>
+            <td></td>
+          </tr>
+          <tr *ngIf="generalDiscountPercent > 0">
+            <td colspan="4" class="text-right">Descuento general ({{ generalDiscountPercent }}%)</td>
+            <td>-{{ (subtotalAfterItemDiscounts - totalAfterGeneralDiscount) | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td colspan="4" class="text-right"><strong>Total</strong></td>
             <td><strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong></td>
             <td></td>
           </tr>
         </tfoot>
       </table>
+      <div class="discounts-row" *ngIf="draftItems.length > 0">
+        <label class="field field--discount">
+          <span class="field__label">Descuento general %</span>
+          <input class="control control--compact" type="number" min="0" max="100" step="1"
+                 [value]="generalDiscountPercent"
+                 (input)="setGeneralDiscount($any($event.target).value)"
+                 placeholder="0" />
+        </label>
+        <label class="field field--discount">
+          <span class="field__label">Precio final manual</span>
+          <input class="control control--compact" type="number" min="0" step="0.01"
+                 [value]="manualOverridePrice"
+                 (input)="setManualOverride($any($event.target).value)"
+                 placeholder="Dejar vacio para usar descuentos" />
+        </label>
+      </div>
+      <div class="warning-banner" *ngIf="isManualOverride">
+        <strong>Precio modificado manualmente.</strong> Los descuentos anteriores han sido reemplazados.
+        <button class="btn btn--ghost btn--sm" type="button" (click)="clearManualOverride()">Restaurar</button>
+      </div>
     </div>
 
     <div class="footer">

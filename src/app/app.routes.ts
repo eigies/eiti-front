@@ -100,6 +100,13 @@ export const routes: Routes = [
             import('./features/transport/transport.component').then(m => m.TransportComponent)
     },
     {
+        path: 'clients/cc',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.salesAccess },
+        loadComponent: () =>
+            import('./features/clients/clients-cc/clients-cc.component').then(m => m.ClientsCcComponent)
+    },
+    {
         path: 'customers/:id',
         canActivate: [authGuard],
         loadComponent: () =>

@@ -37,6 +37,7 @@ export interface CreateSaleDetailRequest {
     productId: string;
     quantity: number;
     unitPrice?: number;
+    discountPercent?: number;
 }
 
 export interface SaleResponse {
@@ -71,6 +72,11 @@ export interface SaleResponse {
     changeAmount?: number;
     noDeliverySurchargeTotal?: number | null;
     sourceChannel?: SaleSourceChannel | null;
+    generalDiscountPercent?: number;
+    originalTotal?: number;
+    manualOverridePrice?: number | null;
+    overriddenByUserId?: string | null;
+    overriddenAt?: string | null;
     payments?: SalePaymentResponse[];
     tradeIns?: SaleTradeInResponse[];
     details: SaleDetailResponse[];
@@ -83,6 +89,7 @@ export interface SaleDetailResponse {
     quantity: number;
     unitPrice: number;
     totalAmount: number;
+    discountPercent: number;
 }
 
 export interface SendSaleWhatsAppResponse {
@@ -97,6 +104,8 @@ export interface CreateCcSaleRequest {
     branchId: string;
     customerId: string;
     details: CreateSaleDetailRequest[];
+    generalDiscountPercent?: number;
+    manualOverridePrice?: number | null;
 }
 
 export interface CcPaymentResponse {
@@ -111,6 +120,7 @@ export interface CcPaymentResponse {
     statusName: string;
     createdAt: string;
     cancelledAt?: string | null;
+    groupId?: string | null;
 }
 
 export interface AddCcPaymentRequest {
@@ -118,6 +128,26 @@ export interface AddCcPaymentRequest {
     amount: number;
     date: string;
     notes?: string | null;
+}
+
+export interface CcSaleListItem {
+    id: string;
+    code: string | null;
+    customerFullName: string | null;
+    createdAt: string;
+    totalAmount: number;
+    ccPaidTotal: number;
+    ccPendingAmount: number;
+    idSaleStatus: number;
+    saleStatus: string;
+    isCuentaCorriente: boolean;
+}
+
+export interface AddCcPaymentGroupRequest {
+    methods: { idPaymentMethod: number; amount: number }[];
+    date: string;
+    notes?: string | null;
+    cashDrawerId: string;
 }
 
 export interface SaleByIdResponse {
@@ -139,6 +169,11 @@ export interface SaleByIdResponse {
     pendingAmount: number;
     ccPaidTotal: number;
     ccPendingAmount: number;
+    generalDiscountPercent?: number;
+    originalTotal?: number;
+    manualOverridePrice?: number | null;
+    overriddenByUserId?: string | null;
+    overriddenAt?: string | null;
     createdAt: string;
     paidAt?: string | null;
     updatedAt?: string | null;

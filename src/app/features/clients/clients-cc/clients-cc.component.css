@@ -1,0 +1,541 @@
+.page {
+    min-height: calc(100vh - 64px);
+    background: radial-gradient(circle at top right, var(--page-radial), transparent 32%), linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    padding: 3rem 2rem;
+    max-width: 1180px;
+    margin: 0 auto
+}
+
+.panel {
+    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, .08)
+}
+
+.head {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border)
+}
+
+.eyebrow {
+    margin: 0 0 .35rem;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase
+}
+
+h1, h2, h3 {
+    margin: 0;
+    color: var(--text);
+    font-family: 'DM Mono', monospace
+}
+
+.block {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.75rem
+}
+
+/* Search */
+.search-content {
+    display: grid;
+    gap: 1.25rem
+}
+
+.search-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap
+}
+
+.search-row .control {
+    flex: 1 1 260px
+}
+
+.hint {
+    padding: 1rem 1.15rem;
+    border: 1px dashed var(--border);
+    border-radius: 2px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .78rem
+}
+
+/* Result cards */
+.results-stack {
+    display: grid;
+    gap: .65rem;
+    margin-top: 1rem
+}
+
+.result-card {
+    display: grid;
+    gap: .35rem;
+    text-align: left;
+    cursor: pointer;
+    padding: .9rem 1rem;
+    border: 1px solid var(--border-2);
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--bg-panel) 72%, var(--bg) 28%);
+    font-family: 'DM Mono', monospace;
+    transition: border-color .2s ease, background .2s ease, transform .15s ease, box-shadow .2s ease;
+    width: 100%
+}
+
+.result-card__name {
+    font-size: .88rem;
+    color: var(--text)
+}
+
+.result-card__meta {
+    font-size: .74rem;
+    color: var(--text-dim)
+}
+
+.result-card:hover {
+    border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 7%, transparent);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .14)
+}
+
+.result-card--selected {
+    border-color: color-mix(in srgb, var(--amber) 52%, var(--border));
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 24%, transparent);
+    cursor: default
+}
+
+.result-card--selected:hover {
+    transform: none
+}
+
+.selected-customer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap
+}
+
+/* Buttons and controls */
+.control {
+    font-family: 'DM Mono', monospace;
+    border: 1px solid var(--border-2);
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+    box-sizing: border-box;
+    padding: .8rem;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease
+}
+
+.control:hover {
+    border-color: color-mix(in srgb, var(--amber) 26%, var(--border-2))
+}
+
+.control:focus {
+    border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent)
+}
+
+.field {
+    display: grid;
+    gap: .45rem
+}
+
+.field__label {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .69rem;
+    letter-spacing: .12em;
+    text-transform: uppercase
+}
+
+.field--drawer {
+    max-width: 320px;
+    margin-bottom: .75rem
+}
+
+.btn {
+    font-family: 'DM Mono', monospace;
+    padding: .8rem;
+    border-radius: 2px;
+    border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+    background: var(--amber);
+    color: #1a1308;
+    text-transform: uppercase;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    cursor: pointer;
+    transition: transform .15s ease, border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease, filter .2s ease;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--amber) 28%, transparent)
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: saturate(1.08);
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--amber) 34%, transparent)
+}
+
+.btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    pointer-events: none
+}
+
+.btn--ghost {
+    background: transparent;
+    border: 1px solid var(--border-2);
+    color: var(--text-dim);
+    box-shadow: none
+}
+
+.btn--ghost:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    color: var(--text);
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--amber) 20%, transparent)
+}
+
+.btn--secondary {
+    background: color-mix(in srgb, var(--amber) 20%, transparent);
+    color: var(--text);
+    border: 1px solid color-mix(in srgb, var(--amber) 44%, var(--border-2));
+    box-shadow: none
+}
+
+.btn--secondary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--amber) 30%, transparent);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--amber) 20%, transparent)
+}
+
+.btn--sm {
+    padding: .5rem .8rem;
+    font-size: .68rem
+}
+
+.btn--danger {
+    border-color: color-mix(in srgb, var(--red, #e05555) 45%, transparent);
+    color: var(--red, #e05555)
+}
+
+.btn--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--red, #e05555) 10%, transparent)
+}
+
+/* Table */
+.table {
+    width: 100%;
+    border-collapse: collapse
+}
+
+.table th {
+    padding: .6rem .8rem .8rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-subtle);
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    text-align: left
+}
+
+.table td {
+    padding: .75rem .8rem .75rem 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem
+}
+
+.table tr:hover td {
+    background: color-mix(in srgb, var(--amber) 4%, transparent)
+}
+
+.row--clickable {
+    cursor: pointer
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: .25rem .6rem;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600
+}
+
+.badge--pending {
+    background: color-mix(in srgb, var(--text-dim) 14%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-dim) 32%, transparent);
+    color: var(--text-dim)
+}
+
+.badge--partial {
+    background: color-mix(in srgb, #f0be73 24%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #f0be73 62%, transparent);
+    color: #c4922a
+}
+
+.badge--paid {
+    background: color-mix(in srgb, #8fd3a8 24%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8fd3a8 62%, transparent);
+    color: #3a8a5a
+}
+
+.badge--cancelled {
+    background: color-mix(in srgb, #e28c8c 24%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #e28c8c 62%, transparent);
+    color: #b04040
+}
+
+.badge--combined {
+    background: color-mix(in srgb, var(--amber) 15%, transparent);
+    color: var(--text-dim);
+    font-size: .62rem
+}
+
+/* Modal */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .5);
+    z-index: 1000;
+    animation: fadeIn .15s ease
+}
+
+.modal-panel {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    /* top padding accounts for fixed navbar (~64px) + breathing room */
+    padding: calc(64px + 2rem) 1rem 4rem;
+    z-index: 1001;
+    overflow-y: auto
+}
+
+.modal-card {
+    width: min(100%, 680px);
+    background: color-mix(in srgb, var(--bg-panel) 98%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    box-shadow: 0 24px 56px rgba(0, 0, 0, .28);
+    animation: slideUp .2s ease;
+    /* card grows with content; panel container handles scroll */
+    flex-shrink: 0
+}
+
+.modal-cta {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end
+}
+
+.modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.25rem
+}
+
+.modal-close {
+    background: transparent;
+    border: 1px solid var(--border-2);
+    border-radius: 2px;
+    color: var(--text-dim);
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    font-size: .78rem;
+    flex-shrink: 0;
+    transition: border-color .2s ease, color .2s ease
+}
+
+.modal-close:hover {
+    border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    color: var(--text)
+}
+
+.modal-block {
+    margin-top: 1.5rem
+}
+
+.modal-block h3 {
+    margin-bottom: 1rem;
+    font-size: .82rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim)
+}
+
+/* Metrics */
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: .65rem;
+    margin-bottom: 1.25rem
+}
+
+.metric-card {
+    background: color-mix(in srgb, var(--bg-panel) 72%, var(--bg) 28%);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .85rem;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem
+}
+
+.metric-card--accent {
+    border-color: color-mix(in srgb, var(--amber) 52%, var(--border));
+    background: color-mix(in srgb, var(--amber) 8%, transparent)
+}
+
+.metric-card--status {
+    align-items: center;
+    justify-content: center
+}
+
+.metric-card__value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text)
+}
+
+.metric-card__label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-dim)
+}
+
+/* Payment groups */
+.payment-group {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .85rem 1rem;
+    margin-bottom: .65rem;
+    background: color-mix(in srgb, var(--bg-panel) 72%, var(--bg) 28%)
+}
+
+.payment-group--cancelled {
+    opacity: .55
+}
+
+.payment-group__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap
+}
+
+.payment-group__meta {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap
+}
+
+.payment-group__date {
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    color: var(--text)
+}
+
+.payment-group__actions {
+    display: flex;
+    align-items: center;
+    gap: .65rem
+}
+
+.payment-group__total {
+    font-family: 'DM Mono', monospace;
+    font-size: .96rem;
+    color: var(--text)
+}
+
+.payment-group__lines {
+    margin-top: .45rem;
+    display: grid;
+    gap: .2rem
+}
+
+.payment-group__line {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: .74rem;
+    color: var(--text-dim)
+}
+
+.payment-group__notes {
+    margin: .4rem 0 0;
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    color: var(--text-dim);
+    font-style: italic
+}
+
+
+@keyframes fadeIn {
+    from { opacity: 0 }
+    to { opacity: 1 }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(12px); opacity: 0 }
+    to { transform: translateY(0); opacity: 1 }
+}
+
+@media (max-width: 920px) {
+    .head {
+        flex-direction: column;
+        align-items: stretch
+    }
+
+    .search-row {
+        display: grid
+    }
+
+    .btn {
+        width: 100%
+    }
+
+    .table {
+        font-size: .72rem
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr
+    }
+
+    .modal-card {
+        padding: 1rem
+    }
+
+    .metrics {
+        grid-template-columns: repeat(2, 1fr)
+    }
+}

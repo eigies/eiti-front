@@ -1,0 +1,165 @@
+<div class="page">
+  <section class="panel">
+    <div class="head">
+      <div>
+        <p class="eyebrow">Clientes</p>
+        <h1>Cuenta Corriente</h1>
+      </div>
+    </div>
+
+    <!-- Customer search -->
+    <div class="block">
+      <h2>Buscar cliente</h2>
+      <div *ngIf="!selectedCustomer">
+        <div class="search-content">
+          <div class="search-row">
+            <input class="control" type="text" [(ngModel)]="customerQuery"
+                   placeholder="Nombre, email o documento"
+                   (keydown.enter)="searchCustomers()" />
+            <button class="btn btn--secondary" type="button" (click)="searchCustomers()">Buscar</button>
+          </div>
+          <div class="hint" *ngIf="searchResults.length === 0">
+            Busca un cliente para ver sus ventas a cuenta corriente.
+          </div>
+          <div class="results-stack" *ngIf="searchResults.length > 0">
+            <button *ngFor="let customer of searchResults" type="button" class="result-card"
+                    (click)="selectCustomer(customer)">
+              <strong class="result-card__name">{{ customer.fullName || customer.name }}</strong>
+              <span class="result-card__meta">{{ customer.email }}</span>
+              <span class="result-card__meta" *ngIf="customer.documentNumber">
+                {{ customer.documentTypeName }} {{ customer.documentNumber }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="selectedCustomer" class="selected-customer">
+        <div class="result-card result-card--selected">
+          <strong class="result-card__name">{{ selectedCustomer.fullName || selectedCustomer.name }}</strong>
+          <span class="result-card__meta">{{ selectedCustomer.email }}</span>
+          <span class="result-card__meta" *ngIf="selectedCustomer.documentNumber">
+            {{ selectedCustomer.documentTypeName }} {{ selectedCustomer.documentNumber }}
+          </span>
+        </div>
+        <button class="btn btn--ghost btn--sm" type="button" (click)="clearCustomer()">Cambiar cliente</button>
+      </div>
+    </div>
+
+    <!-- CC sales table -->
+    <div class="block" *ngIf="selectedCustomer">
+      <h2>Ventas CC · {{ selectedCustomer.fullName || selectedCustomer.name }}</h2>
+
+      <div class="hint" *ngIf="loading">Cargando ventas...</div>
+      <div class="hint" *ngIf="!loading && ccSales.length === 0">
+        Este cliente no tiene ventas a cuenta corriente.
+      </div>
+
+      <table *ngIf="!loading && ccSales.length > 0" class="table">
+        <thead>
+          <tr>
+            <th>Codigo</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Cobrado</th>
+            <th>Pendiente</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sale of ccSales" class="row--clickable" (click)="openModal(sale)">
+            <td>{{ sale.code || '-' }}</td>
+            <td>{{ sale.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td>{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>{{ sale.ccPaidTotal | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>{{ sale.ccPendingAmount | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td><span [ngClass]="statusClass(sale)">{{ statusLabel(sale) }}</span></td>
+            <td>
+              <button class="btn btn--secondary btn--sm" type="button"
+                      (click)="$event.stopPropagation(); openModal(sale)">
+                Pagos
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Payments modal (read-only summary + CTA to payment screen) -->
+<div class="modal-backdrop" *ngIf="modalOpen" (click)="closeModal()"></div>
+<div class="modal-panel" *ngIf="modalOpen">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <!-- Modal header -->
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow">Cuenta Corriente</p>
+        <h2 *ngIf="modalSale">{{ modalSale.code || 'Venta' }} · {{ modalSale.customerFullName }}</h2>
+        <h2 *ngIf="!modalSale && modalLoading">Cargando...</h2>
+      </div>
+      <button class="modal-close" type="button" (click)="closeModal()">✕</button>
+    </div>
+
+    <div *ngIf="modalLoading" class="hint">Cargando...</div>
+
+    <ng-container *ngIf="!modalLoading && modalSale">
+      <!-- Balance metrics -->
+      <div class="metrics">
+        <div class="metric-card">
+          <span class="metric-card__value">{{ modalSale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+          <span class="metric-card__label">Total</span>
+        </div>
+        <div class="metric-card metric-card--accent">
+          <span class="metric-card__value">{{ modalSale.ccPaidTotal | currency:'USD':'symbol':'1.2-2' }}</span>
+          <span class="metric-card__label">Cobrado</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-card__value">{{ modalSale.ccPendingAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+          <span class="metric-card__label">Pendiente</span>
+        </div>
+        <div class="metric-card metric-card--status">
+          <span class="badge" [ngClass]="modalStatusClass">{{ modalStatusLabel }}</span>
+        </div>
+      </div>
+
+      <!-- CTA to payment screen — shown only when there is a pending balance -->
+      <div class="modal-cta" *ngIf="modalRemaining > 0">
+        <button class="btn" type="button" (click)="navigateToPayments(modalSale.id)">
+          Ir a gestión de pagos
+        </button>
+      </div>
+
+      <!-- Payment history -->
+      <div class="modal-block">
+        <h3>Historial de pagos</h3>
+        <div *ngIf="modalGroupedPayments.length > 0; else noPayments">
+          <div *ngFor="let group of modalGroupedPayments"
+               class="payment-group"
+               [class.payment-group--cancelled]="group.status === 2">
+            <div class="payment-group__header">
+              <div class="payment-group__meta">
+                <span class="payment-group__date">{{ group.date | date:'dd/MM/yyyy' }}</span>
+                <span class="badge" [ngClass]="group.status === 1 ? 'badge--paid' : 'badge--cancelled'">
+                  {{ group.status === 1 ? 'Activo' : 'Anulado' }}
+                </span>
+                <span *ngIf="group.payments.length > 1" class="badge badge--combined">Combinado</span>
+              </div>
+              <strong class="payment-group__total">{{ group.totalAmount | currency:'USD':'symbol':'1.2-2' }}</strong>
+            </div>
+            <div class="payment-group__lines">
+              <div *ngFor="let p of group.payments" class="payment-group__line">
+                <span>{{ paymentMethodLabel(p.idPaymentMethod) }}</span>
+                <span>{{ p.amount | currency:'USD':'symbol':'1.2-2' }}</span>
+              </div>
+            </div>
+            <p *ngIf="group.notes" class="payment-group__notes">{{ group.notes }}</p>
+          </div>
+        </div>
+        <ng-template #noPayments>
+          <p class="hint">Todavia no hay pagos registrados.</p>
+        </ng-template>
+      </div>
+    </ng-container>
+  </div>
+</div>
