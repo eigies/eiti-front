@@ -10,7 +10,7 @@
     background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 1.5rem;
+    padding: 2rem;
     box-shadow: 0 16px 36px rgba(0, 0, 0, .08)
 }
 
@@ -44,10 +44,16 @@ h2 {
     font-family: 'DM Mono', monospace
 }
 
-.grid,
 .stack {
     display: grid;
     gap: 1rem
+}
+
+.grid {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr))
 }
 
 .field {
@@ -67,8 +73,14 @@ h2 {
     text-transform: uppercase
 }
 
-.grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr))
+.search-content {
+    display: grid;
+    gap: 1.25rem
+}
+
+.product-label {
+    display: grid;
+    gap: .25rem
 }
 
 .row--search {
@@ -193,8 +205,10 @@ h2 {
 
 .block {
     display: grid;
-    gap: 1rem;
-    margin-top: 1.5rem
+    gap: 1.25rem;
+    margin-top: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent)
 }
 
 .hint {
@@ -388,8 +402,8 @@ h2 {
 .footer {
     justify-content: flex-end;
     gap: 1rem;
-    margin-top: 1.5rem;
-    padding-top: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
     border-top: 1px solid var(--border)
 }
 

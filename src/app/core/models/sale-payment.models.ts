@@ -1,7 +1,22 @@
+export interface ChequeFormData {
+    numero: string;
+    bankId: number;
+    titular: string;
+    cuitDni: string;
+    monto: number;
+    fechaEmision: string;
+    fechaVencimiento: string;
+    notas?: string | null;
+}
+
 export interface SalePaymentRequest {
     idPaymentMethod: number;
     amount: number;
     notes?: string | null;
+    cardBankId?: number | null;
+    cardCuotas?: number | null;
+    cardSurchargeAmt?: number | null;
+    cheque?: ChequeFormData | null;
 }
 
 export interface SaleTradeInRequest {
@@ -22,6 +37,11 @@ export interface SalePaymentDraftLine {
     idPaymentMethod: number;
     amount: number;
     notes: string;
+    cardBankId?: number | null;
+    cardCuotas?: number | null;
+    cardSurchargePct?: number | null;
+    cardSurchargeAmt?: number | null;
+    chequeData?: ChequeFormData | null;
 }
 
 export interface SaleTradeInDraftLine {
@@ -108,7 +128,11 @@ export function normalizeSalePayments(state: SalePaymentDraftState): SalePayment
         .map(item => ({
             idPaymentMethod: Number(item.idPaymentMethod || 0),
             amount: roundMoney(item.amount),
-            notes: normalizeNotes(item.notes)
+            notes: normalizeNotes(item.notes),
+            cardBankId: item.cardBankId ?? null,
+            cardCuotas: item.cardCuotas ?? null,
+            cardSurchargeAmt: item.cardSurchargeAmt ?? null,
+            cheque: item.chequeData ?? null
         }))
         .filter(item => item.idPaymentMethod > 0 && item.amount > 0);
 }

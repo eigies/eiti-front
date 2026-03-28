@@ -188,6 +188,30 @@
       <span>Usuarios</span>
     </a>
 
+    <a *ngIf="auth.hasPermission(permissionCodes.banksManage)"
+       class="sidebar__link" routerLink="/banks" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 22h18"/>
+        <path d="M6 18v-7"/>
+        <path d="M10 18v-7"/>
+        <path d="M14 18v-7"/>
+        <path d="M18 18v-7"/>
+        <path d="M4 18h16"/>
+        <path d="M3 11h18"/>
+        <path d="M3 11L12 2l9 9"/>
+      </svg>
+      <span>Bancos</span>
+    </a>
+
+    <a *ngIf="auth.hasPermission(permissionCodes.chequesManage)"
+       class="sidebar__link" routerLink="/cheques" routerLinkActive="is-active">
+      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <line x1="2" y1="10" x2="22" y2="10"/>
+      </svg>
+      <span>Cheques</span>
+    </a>
+
     <a class="sidebar__link" routerLink="/transport" routerLinkActive="is-active">
       <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <rect x="1" y="3" width="15" height="13" rx="1"/>

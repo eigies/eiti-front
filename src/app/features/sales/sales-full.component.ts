@@ -24,6 +24,8 @@ import { BranchProductStockResponse } from '../../core/models/stock.models';
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
+import { BankService } from '../../core/services/bank.service';
+import { BankResponse } from '../../core/models/bank.models';
 import {
   SalePaymentDraftState,
   createEmptySalePaymentDraftState,
@@ -55,6 +57,7 @@ export class SalesFullComponent implements OnInit {
   stockByProductId = new Map<string, BranchProductStockResponse>();
   drivers: DriverResponse[] = [];
   vehicles: VehicleResponse[] = [];
+  banks: BankResponse[] = [];
   draftItems: DraftItem[] = [];
   productQuery = '';
   productModalOpen = false;
@@ -70,7 +73,7 @@ export class SalesFullComponent implements OnInit {
   readonly itemForm = this.fb.group({ productId: ['', Validators.required], quantity: [1, [Validators.required, Validators.min(1)]] });
   readonly transportForm = this.fb.group({ driverEmployeeId: ['', Validators.required], vehicleId: ['', Validators.required], notes: [''] });
 
-  constructor(private readonly fb: FormBuilder, private readonly customerService: CustomerService, private readonly productService: ProductService, private readonly branchService: BranchService, private readonly cashService: CashService, private readonly stockService: StockService, private readonly saleService: SaleService, private readonly companyService: CompanyService, private readonly employeeService: EmployeeService, private readonly vehicleService: VehicleService, private readonly toast: ToastService, private readonly router: Router, public readonly auth: AuthService) { }
+  constructor(private readonly fb: FormBuilder, private readonly customerService: CustomerService, private readonly productService: ProductService, private readonly branchService: BranchService, private readonly cashService: CashService, private readonly stockService: StockService, private readonly saleService: SaleService, private readonly companyService: CompanyService, private readonly employeeService: EmployeeService, private readonly vehicleService: VehicleService, private readonly toast: ToastService, private readonly router: Router, private readonly bankService: BankService, public readonly auth: AuthService) { }
 
   ngOnInit(): void {
     this.productService.listProducts().subscribe({ next: products => this.products = [...products].sort((left, right) => this.productLabel(left).localeCompare(this.productLabel(right))) });
@@ -90,6 +93,7 @@ export class SalesFullComponent implements OnInit {
         this.whatsAppEnabled = Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled);
       }
     });
+    this.bankService.listBanks(true).subscribe({ next: banks => this.banks = banks, error: () => {} });
   }
 
   get requiresDelivery(): boolean { return Boolean(this.saleForm.get('hasDelivery')?.value); }
@@ -100,7 +104,8 @@ export class SalesFullComponent implements OnInit {
   get confirmationStepNumber(): number { return this.requiresDelivery ? 6 : 5; }
   get isPaid(): boolean { return Number(this.saleForm.get('idSaleStatus')?.value ?? 1) === 2; }
   get paymentCoverage(): number { return salePaymentCoverage(this.paymentState); }
-  get paymentRemaining(): number { return roundMoney(this.total - this.paymentCoverage); }
+  get totalCardSurcharge(): number { return roundMoney(this.paymentState.payments.reduce((sum, p) => sum + (p.cardSurchargeAmt ?? 0), 0)); }
+  get paymentRemaining(): number { return roundMoney(this.total + this.totalCardSurcharge - this.paymentCoverage); }
   get requiresCashDrawer(): boolean { return this.isPaid && hasCashPayment(this.paymentState); }
   get activeDrivers(): DriverResponse[] { return this.drivers.filter(driver => driver.isActive && !driver.isLicenseExpired); }
   get activeVehicles(): VehicleResponse[] { return this.vehicles.filter(vehicle => vehicle.isActive); }
@@ -360,7 +365,7 @@ export class SalesFullComponent implements OnInit {
       payments.reduce((sum, item) => sum + item.amount, 0)
       + tradeIns.reduce((sum, item) => sum + item.amount, 0)
     );
-    const total = roundMoney(this.total);
+    const effectiveTotal = roundMoney(this.total + this.totalCardSurcharge);
 
     if (this.paymentState.hasTradeIn) {
       const hasIncompleteTradeIn = this.paymentState.tradeIns.some(item =>
@@ -374,12 +379,12 @@ export class SalesFullComponent implements OnInit {
       }
     }
 
-    if (this.isPaid && coverage !== total) {
+    if (this.isPaid && coverage !== effectiveTotal) {
       this.toast.error('Una venta pagada debe quedar cancelada exactamente con payments + tradeIns.');
       return false;
     }
 
-    if (!this.isPaid && coverage > total) {
+    if (!this.isPaid && coverage > effectiveTotal) {
       this.toast.error('Una venta en espera puede tener cobro parcial, pero nunca superar el total.');
       return false;
     }

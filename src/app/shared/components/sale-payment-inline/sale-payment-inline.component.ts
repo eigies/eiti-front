@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { CashDrawerResponse } from '../../../core/models/cash.models';
 import { ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../../core/models/product.models';
 import {
+    SalePaymentDraftLine,
     SalePaymentDraftState,
     SALE_PAYMENT_METHODS,
     SALE_STATUS_PAID,
@@ -11,14 +13,14 @@ import {
     hasCashPayment,
     normalizeSalePayments,
     normalizeSaleTradeIns,
-    roundMoney,
-    salePaymentCoverage
+    roundMoney
 } from '../../../core/models/sale-payment.models';
+import { BankInstallmentPlanResponse, BankResponse } from '../../../core/models/bank.models';
 
 @Component({
     selector: 'app-sale-payment-inline',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule],
     templateUrl: './sale-payment-inline.component.html',
     styleUrls: ['./sale-payment-inline.component.css']
 })
@@ -34,17 +36,38 @@ export class SalePaymentInlineComponent {
     @Input() compact = false;
     @Input() autoSurcharge = 0;
     @Input() showTradeIn = true;
+    @Input() banks: BankResponse[] = [];
     @Output() cashDrawerIdChange = new EventEmitter<string | null>();
 
     readonly paymentMethods = SALE_PAYMENT_METHODS;
     readonly paidStatusId = SALE_STATUS_PAID;
+    readonly CARD_METHOD_ID = 3;
+    readonly CHECK_METHOD_ID = 4;
 
     get coverage(): number {
-        return salePaymentCoverage(this.state);
+        const payments = this.state.payments
+            .filter(p => p.idPaymentMethod > 0 && p.amount > 0)
+            .reduce((sum, p) => sum + p.amount, 0);
+        const tradeIns = normalizeSaleTradeIns(this.state)
+            .reduce((sum, t) => sum + t.amount, 0);
+        return roundMoney(payments + tradeIns);
+    }
+
+    get totalCardSurcharge(): number {
+        return roundMoney(
+            this.state.payments.reduce((sum, p) => {
+                const pct = this.getSurchargePct(p.cardBankId, p.cardCuotas);
+                return sum + (pct != null ? this.getSurchargeAmt(p.amount, pct) : 0);
+            }, 0)
+        );
+    }
+
+    get effectiveTotal(): number {
+        return roundMoney(this.total + this.totalCardSurcharge);
     }
 
     get remaining(): number {
-        return roundMoney(this.total - this.coverage);
+        return roundMoney(this.effectiveTotal - this.coverage);
     }
 
     get requiresCashDrawer(): boolean {
@@ -60,11 +83,13 @@ export class SalePaymentInlineComponent {
     }
 
     get coverageLines(): Array<{ label: string; amount: number; type: 'payment' | 'tradein' }> {
-        const payments = normalizeSalePayments(this.state).map(p => ({
-            label: this.paymentMethodLabel(p.idPaymentMethod),
-            amount: p.amount,
-            type: 'payment' as const
-        }));
+        const payments = this.state.payments
+            .filter(p => p.idPaymentMethod > 0 && p.amount > 0)
+            .map(p => ({
+                label: this.paymentMethodLabel(p.idPaymentMethod),
+                amount: p.amount,
+                type: 'payment' as const
+            }));
         const tradeIns = normalizeSaleTradeIns(this.state).map(t => ({
             label: this.tradeInProductName(t.productId),
             amount: t.amount,
@@ -126,8 +151,13 @@ export class SalePaymentInlineComponent {
         this.state.payments[index].idPaymentMethod = next;
     }
 
-    updatePaymentAmount(index: number, value: string): void {
+    updatePaymentAmount(index: number, value: string | number): void {
         this.state.payments[index].amount = roundMoney(value);
+        if (this.state.payments[index].chequeData) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.state.payments[index].chequeData!.monto = this.state.payments[index].amount;
+        }
+        this.recalculateSurcharge(index);
     }
 
     updatePaymentNotes(index: number, value: string): void {
@@ -199,6 +229,107 @@ export class SalePaymentInlineComponent {
         }
 
         return `Referencia maestro: ${roundMoney(productPublicPrice(product) * Math.max(1, quantity))}`;
+    }
+
+    roundMoney(value: number | string | null | undefined): number {
+        return roundMoney(value);
+    }
+
+    get activeBanksWithPlans(): BankResponse[] {
+        return this.banks.filter(b => b.active && b.plans.some(p => p.active));
+    }
+
+    activePlansForBank(bankId: number | null | undefined): BankInstallmentPlanResponse[] {
+        if (!bankId) return [];
+        const bank = this.banks.find(b => b.id === bankId);
+        return (bank?.plans ?? []).filter(p => p.active);
+    }
+
+    getSurchargePct(bankId: number | null | undefined, cuotas: number | null | undefined): number | null {
+        if (!bankId || !cuotas) return null;
+        const bank = this.banks.find(b => Number(b.id) === Number(bankId));
+        const plan = bank?.plans.find(p => Number(p.cuotas) === Number(cuotas) && p.active);
+        return plan?.surchargePct ?? null;
+    }
+
+    getSurchargeAmt(amount: number, surchargePct: number | null): number {
+        if (surchargePct == null || surchargePct === 0) return 0;
+        // amount already includes surcharge; back-compute the surcharge portion
+        return roundMoney(amount * surchargePct / (100 + surchargePct));
+    }
+
+    getCardSurcharge(payment: SalePaymentDraftLine): { pct: number; amt: number; total: number } | null {
+        const pct = this.getSurchargePct(payment.cardBankId, payment.cardCuotas);
+        if (pct == null) return null;
+        const amt = this.getSurchargeAmt(payment.amount, pct);
+        // payment.amount is already the total to charge (includes surcharge)
+        return { pct, amt, total: payment.amount };
+    }
+
+    updateCardBank(index: number, value: number | null): void {
+        const p = this.state.payments[index];
+        this.state.payments = this.state.payments.map((item, i) =>
+            i === index ? { ...p, cardBankId: value ?? null, cardCuotas: null, cardSurchargePct: null, cardSurchargeAmt: null } : item
+        );
+        this.recalculateSurcharge(index);
+    }
+
+    updateCardCuotas(index: number, value: number | null): void {
+        const p = this.state.payments[index];
+        let amount = p.amount;
+
+        if (amount === 0 && value != null) {
+            const pct = this.getSurchargePct(p.cardBankId, value);
+            if (pct != null && pct > 0) {
+                const rem = this.remaining;
+                if (rem > 0) {
+                    amount = roundMoney(rem * (1 + pct / 100));
+                }
+            }
+        }
+
+        this.state.payments = this.state.payments.map((item, i) =>
+            i === index ? { ...p, cardCuotas: value ?? null, amount } : item
+        );
+        this.recalculateSurcharge(index);
+    }
+
+    private recalculateSurcharge(index: number): void {
+        const payment = this.state.payments[index];
+        const surchargePct = this.getSurchargePct(payment.cardBankId, payment.cardCuotas);
+        const cardSurchargeAmt = surchargePct != null
+            ? this.getSurchargeAmt(payment.amount, surchargePct)
+            : null;
+        this.state.payments = this.state.payments.map((item, i) =>
+            i === index ? { ...item, cardSurchargePct: surchargePct, cardSurchargeAmt } : item
+        );
+    }
+
+    toggleChequeForm(index: number): void {
+        if (this.state.payments[index].chequeData) {
+            this.state.payments[index].chequeData = null;
+        } else {
+            this.state.payments[index].chequeData = {
+                numero: '',
+                bankId: 0,
+                titular: '',
+                cuitDni: '',
+                monto: this.state.payments[index].amount,
+                fechaEmision: this.todayIso(),
+                fechaVencimiento: this.todayIso(),
+                notas: ''
+            };
+        }
+    }
+
+    isChequeFormComplete(index: number): boolean {
+        const d = this.state.payments[index].chequeData;
+        if (!d) return false;
+        return !!(d.numero?.trim() && d.bankId > 0 && d.titular?.trim() && d.cuitDni?.trim() && d.monto > 0 && d.fechaEmision && d.fechaVencimiento);
+    }
+
+    private todayIso(): string {
+        return new Date().toISOString().slice(0, 10);
     }
 
     trackByIndex(index: number): number {

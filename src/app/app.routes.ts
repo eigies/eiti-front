@@ -88,6 +88,20 @@ export const routes: Routes = [
             import('./features/users/users.component').then(m => m.UsersComponent)
     },
     {
+        path: 'banks',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.banksManage },
+        loadComponent: () =>
+            import('./features/banks/banks.component').then(m => m.BanksComponent)
+    },
+    {
+        path: 'cheques',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.chequesManage },
+        loadComponent: () =>
+            import('./features/cheques/cheques.component').then(m => m.ChequesComponent)
+    },
+    {
         path: 'profile',
         canActivate: [authGuard],
         loadComponent: () =>

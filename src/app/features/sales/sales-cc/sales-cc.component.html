@@ -20,7 +20,7 @@
 
     <div class="block">
       <h2>Cliente</h2>
-      <div *ngIf="!selectedCustomer">
+      <div *ngIf="!selectedCustomer" class="search-content">
         <div class="row row--search">
           <input class="control grow" type="text" [(ngModel)]="customerQuery"
                  placeholder="Nombre, email o documento" (keydown.enter)="searchCustomers()" />
@@ -48,7 +48,7 @@
 
     <div class="block">
       <div class="row row--product">
-        <div>
+        <div class="product-label">
           <span class="field__label">Productos</span>
           <span class="picker-summary">Selecciona la sucursal y agrega productos del stock disponible.</span>
         </div>

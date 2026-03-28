@@ -248,7 +248,9 @@ type CashSessionView = {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let row of getDisplayRows(item.session)">
+                    <tr *ngFor="let row of getDisplayRows(item.session)"
+                      [class.history-table__row--clickable]="row.typeName === 'CuentaCorrienteIncome' && row.referenceId"
+                      (click)="row.typeName === 'CuentaCorrienteIncome' && row.referenceId ? openCcPopup(row.referenceId) : null">
                       <td>{{ row.occurredAt | date: 'short' }}</td>
                       <td><span class="badge badge--type" [attr.data-type]="row.typeName">{{ translateType(row.typeName) }}</span></td>
                       <td><span class="badge" [class.badge--in]="row.directionName === 'In'" [class.badge--out]="row.directionName === 'Out'">{{ translateDirection(row.directionName) }}</span></td>
@@ -331,6 +333,51 @@ type CashSessionView = {
             </div>
           </form>
         </div>
+      </div>
+    </div>
+
+    <!-- CC Sale Popup -->
+    <div class="modal-backdrop" *ngIf="ccPopupSaleId" (click)="closeCcPopup()">
+      <div class="modal modal--cc-popup" (click)="$event.stopPropagation()">
+        <div class="modal__head">
+          <span class="modal__title">Detalle cuenta corriente</span>
+          <button class="modal__close" type="button" (click)="closeCcPopup()">&#x2715;</button>
+        </div>
+        <div class="modal__body" *ngIf="ccPopupLoading"><p style="color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.78rem">Cargando...</p></div>
+        <ng-container *ngIf="!ccPopupLoading && ccPopupSale as sale">
+          <div class="cc-popup-header">
+            <div class="cc-popup-header__row">
+              <span class="cc-popup-header__code">{{ sale.code || 'S/N' }}</span>
+              <span class="badge"
+                [class.badge--in]="sale.idSaleStatus === 2"
+                [class.badge--out]="sale.idSaleStatus === 3"
+                [class.badge--type]="sale.idSaleStatus !== 2 && sale.idSaleStatus !== 3">
+                {{ sale.idSaleStatus === 3 ? 'Cancelada' : sale.idSaleStatus === 2 ? 'Pagada' : (sale.ccPaidTotal > 0 && sale.ccPaidTotal < sale.totalAmount) ? 'Pago parcial' : 'En espera' }}
+              </span>
+            </div>
+            <div class="cc-popup-header__meta">
+              <span>{{ sale.customerFullName || 'Sin cliente' }}</span>
+              <span>{{ sale.createdAt | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+          <div class="cc-popup-totals">
+            <div class="cc-popup-totals__row"><span>Total venta</span><span>&#36;{{ sale.totalAmount | number:'1.2-2' }}</span></div>
+            <div class="cc-popup-totals__row"><span>Cobrado</span><span>&#36;{{ sale.ccPaidTotal | number:'1.2-2' }}</span></div>
+            <div class="cc-popup-totals__row cc-popup-totals__row--pending"><span>Pendiente</span><span>&#36;{{ sale.ccPendingAmount | number:'1.2-2' }}</span></div>
+          </div>
+          <div class="cc-popup-payments">
+            <div class="cc-popup-payments__title">Historial de pagos</div>
+            <div *ngIf="ccPopupPayments.length === 0" class="cc-popup-payments__empty">Sin pagos registrados</div>
+            <div *ngFor="let p of ccPopupPayments" class="cc-popup-payment" [class.cc-popup-payment--cancelled]="p.status === 2">
+              <div class="cc-popup-payment__row">
+                <span class="cc-popup-payment__date">{{ p.date | date:'dd/MM/yyyy' }}</span>
+                <span class="cc-popup-payment__method">{{ paymentMethodLabel(p.idPaymentMethod) }}</span>
+                <span class="cc-popup-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</span>
+                <span class="badge" [class.badge--in]="p.status === 1" [class.badge--out]="p.status !== 1">{{ p.status === 1 ? 'Activo' : 'Anulado' }}</span>
+              </div>
+            </div>
+          </div>
+        </ng-container>
       </div>
     </div>
   `,
@@ -427,6 +474,25 @@ type CashSessionView = {
     .badge--type[data-type="SaleCancellation"]{background:color-mix(in srgb,var(--danger) 12%, transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%, transparent)}
     .badge--type[data-type="CuentaCorrienteIncome"]{background:color-mix(in srgb,#14b8a6 12%, transparent);color:#14b8a6;border:1px solid color-mix(in srgb,#14b8a6 30%, transparent)}
     .badge--type[data-type="CuentaCorrienteCancellation"]{background:color-mix(in srgb,#f97316 12%, transparent);color:#f97316;border:1px solid color-mix(in srgb,#f97316 30%, transparent)}
+    .history-table__row--clickable{cursor:pointer}.history-table__row--clickable:hover{background:color-mix(in srgb,#14b8a6 8%, transparent)}
+    .modal--cc-popup{max-width:520px}
+    .cc-popup-header{padding:.75rem 1.35rem;border-bottom:1px solid var(--border)}
+    .cc-popup-header__row{display:flex;align-items:center;gap:.75rem;margin-bottom:.25rem}
+    .cc-popup-header__code{font-family:'DM Mono',monospace;font-weight:600;font-size:.88rem;color:var(--text)}
+    .cc-popup-header__meta{display:flex;gap:1rem;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text-dim)}
+    .cc-popup-totals{padding:.5rem 1.35rem;border-bottom:1px solid var(--border)}
+    .cc-popup-totals__row{display:flex;justify-content:space-between;padding:.2rem 0;font-family:'DM Mono',monospace;font-size:.82rem;color:var(--text)}
+    .cc-popup-totals__row span:first-child{color:var(--text-dim)}
+    .cc-popup-totals__row--pending{font-weight:600}
+    .cc-popup-payments{padding:.5rem 1.35rem 1rem}
+    .cc-popup-payments__title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.5rem}
+    .cc-popup-payments__empty{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text-soft)}
+    .cc-popup-payment{padding:.35rem 0;border-bottom:1px solid color-mix(in srgb,var(--border) 55%, transparent)}
+    .cc-popup-payment--cancelled{opacity:.5;text-decoration:line-through}
+    .cc-popup-payment__row{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .cc-popup-payment__date{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim)}
+    .cc-popup-payment__method{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text)}
+    .cc-popup-payment__amount{font-family:'DM Mono',monospace;font-weight:600;font-size:.82rem;margin-left:auto;color:var(--text)}
     .btn--transfer{background:color-mix(in srgb,#6366f1 8%, transparent);border:1px solid color-mix(in srgb,#6366f1 35%, var(--border-2));color:#6366f1;white-space:nowrap}
     .btn--transfer:hover:not(:disabled){background:color-mix(in srgb,#6366f1 14%, transparent);border-color:color-mix(in srgb,#6366f1 55%, var(--border-2));transform:translateY(-1px)}
     .btn--transfer-confirm{font-size:.72rem;letter-spacing:.12em}
@@ -487,6 +553,9 @@ export class CashComponent implements OnInit {
     salePaymentMethodsBySaleId = new Map<string, string>();
     salesBySaleId = new Map<string, SaleResponse>();
     ccSalesBySaleId = new Map<string, SaleByIdResponse>();
+    ccPopupSaleId: string | null = null;
+    ccPopupPayments: import('../../core/models/sale.models').CcPaymentResponse[] = [];
+    ccPopupLoading = false;
     historyFrom = '';
     historyTo = '';
     showCreateDrawer = false;
@@ -1170,8 +1239,9 @@ export class CashComponent implements OnInit {
         return this.salePaymentMethodsBySaleId.get(movement.referenceId) || 'Cargando...';
     }
 
-    getDisplayRows(session: CashSessionResponse): { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined }[] {
+    getDisplayRows(session: CashSessionResponse): { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null }[] {
         return session.movements.map(movement => {
+            const refId = movement.referenceId ? String(movement.referenceId) : null;
             const isSaleRelated = (movement.typeName === 'SaleIncome' || movement.typeName === 'SaleCancellation') && movement.referenceId;
             if (isSaleRelated) {
                 const sale = this.salesBySaleId.get(String(movement.referenceId));
@@ -1187,11 +1257,11 @@ export class CashComponent implements OnInit {
                         }),
                         ...activeTradeIns.map(t => `Canje: $${Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`)
                     ];
-                    return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description };
+                    return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId };
                 }
             }
 
-            return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description };
+            return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId };
         });
     }
 
@@ -1359,6 +1429,26 @@ export class CashComponent implements OnInit {
 
     acceptInitialCashOpenStep(): void {
         this.onboardingService.acceptStep('InitialCashOpen');
+    }
+
+    openCcPopup(saleId: string): void {
+        this.ccPopupSaleId = saleId;
+        this.ccPopupPayments = [];
+        this.ccPopupLoading = true;
+        this.saleService.listCcPayments(saleId).subscribe({
+            next: payments => { this.ccPopupPayments = payments; this.ccPopupLoading = false; },
+            error: () => { this.ccPopupLoading = false; this.toast.error('No se pudo cargar el historial de pagos'); }
+        });
+    }
+
+    closeCcPopup(): void { this.ccPopupSaleId = null; this.ccPopupPayments = []; }
+
+    get ccPopupSale(): SaleByIdResponse | null {
+        return this.ccPopupSaleId ? (this.ccSalesBySaleId.get(this.ccPopupSaleId) ?? null) : null;
+    }
+
+    paymentMethodLabel(idPaymentMethod: number): string {
+        return SALE_PAYMENT_METHODS.find(m => m.id === idPaymentMethod)?.label ?? 'Otro';
     }
 
     private refreshOnboarding(force = false): void {

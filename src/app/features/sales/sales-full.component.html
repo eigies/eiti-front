@@ -82,6 +82,7 @@
                 [cashDrawers]="cashDrawers"
                 [state]="paymentState"
                 [cashDrawerId]="saleForm.get('cashDrawerId')?.value ?? null"
+                [banks]="banks"
                 headline="Cobro integrado en la venta"
                 description="Carga el pago principal, combina medios si hace falta y registra canjes sin salir del paso de venta."
                 (cashDrawerIdChange)="setCashDrawerId($event)">

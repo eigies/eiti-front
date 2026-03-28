@@ -478,6 +478,29 @@
     color: color-mix(in srgb, var(--amber) 85%, var(--text));
 }
 
+.payment-summary__item--card-surcharge {
+    background: color-mix(in srgb, #6eb5ff 8%, transparent);
+    box-shadow: inset 3px 0 0 color-mix(in srgb, #6eb5ff 55%, transparent);
+    padding-left: .55rem;
+    border-radius: 0 2px 2px 0;
+}
+
+.payment-summary__item--card-surcharge strong {
+    color: color-mix(in srgb, #6eb5ff 90%, var(--text));
+}
+
+.payment-summary__item--effective-total {
+    border-top: 1px solid var(--border);
+    padding-top: .45rem;
+    margin-top: .1rem;
+    font-weight: 600;
+}
+
+.payment-summary__item--effective-total strong {
+    color: var(--text);
+    font-size: .95rem;
+}
+
 .surcharge-label {
     display: flex;
     align-items: center;
@@ -551,4 +574,76 @@
     .action-chip {
         width: 100%;
     }
+}
+
+/* Card fields */
+.payment-card-fields {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.4rem 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: color-mix(in srgb, var(--bg-panel) 90%, transparent);
+    border-radius: 6px;
+    border: 1px solid var(--border-2);
+    margin-top: 0.5rem;
+}
+
+.payment-card-fields .field {
+    flex: 1 1 160px;
+    min-width: 120px;
+}
+
+.card-surcharge {
+    flex: 0 0 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1.25rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.83rem;
+    background: rgba(59, 130, 246, 0.07);
+}
+
+.card-surcharge__row {
+    display: contents;
+}
+
+.card-surcharge__value {
+    color: var(--text-dim);
+}
+
+.card-surcharge__total {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Cheque section */
+.cheque-section {
+    margin-top: 0.5rem;
+}
+
+.cheque-section__toggle {
+    font-size: 0.8rem;
+}
+
+.cheque-form {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: color-mix(in srgb, var(--bg-panel) 90%, transparent);
+    border-radius: 6px;
+    border: 1px solid var(--border-2);
+}
+
+.cheque-form__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.cheque-form__grid .field--full {
+    grid-column: 1 / -1;
 }

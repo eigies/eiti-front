@@ -4,9 +4,11 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SaleService } from '../../../core/services/sale.service';
 import { CashService } from '../../../core/services/cash.service';
+import { BankService } from '../../../core/services/bank.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { SaleByIdResponse, CcPaymentResponse, AddCcPaymentGroupRequest } from '../../../core/models/sale.models';
 import { CashDrawerResponse } from '../../../core/models/cash.models';
+import { BankResponse } from '../../../core/models/bank.models';
 import {
   SALE_PAYMENT_METHODS,
   SalePaymentMethodOption,
@@ -44,6 +46,7 @@ export class SalesCcPaymentsComponent implements OnInit {
 
   cashDrawers: CashDrawerResponse[] = [];
   selectedCashDrawerId = '';
+  banks: BankResponse[] = [];
 
   paymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
   paymentForm!: FormGroup;
@@ -51,6 +54,7 @@ export class SalesCcPaymentsComponent implements OnInit {
   constructor(
     private readonly saleService: SaleService,
     private readonly cashService: CashService,
+    private readonly bankService: BankService,
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -62,6 +66,10 @@ export class SalesCcPaymentsComponent implements OnInit {
     this.paymentForm = this.fb.group({
       date: [this.todayIso(), [Validators.required]],
       notes: ['']
+    });
+    this.bankService.listBanks(true).subscribe({
+      next: banks => this.banks = banks,
+      error: () => {} // non-blocking — payment still works without bank data
     });
     this.reload();
   }
@@ -184,7 +192,19 @@ export class SalesCcPaymentsComponent implements OnInit {
     const request: AddCcPaymentGroupRequest = {
       methods: validLines.map(l => ({
         idPaymentMethod: l.idPaymentMethod,
-        amount: l.amount
+        amount: l.amount,
+        cardBankId: l.cardBankId ?? undefined,
+        cardCuotas: l.cardCuotas ?? undefined,
+        cheque: l.cheque ? {
+          numero: l.cheque.numero,
+          bankId: l.cheque.bankId,
+          titular: l.cheque.titular,
+          cuitDni: l.cheque.cuitDni,
+          monto: l.cheque.monto,
+          fechaEmision: l.cheque.fechaEmision,
+          fechaVencimiento: l.cheque.fechaVencimiento,
+          notas: l.cheque.notas ?? null
+        } : undefined
       })),
       date: val.date,
       notes: val.notes || null,

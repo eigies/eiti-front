@@ -103,3 +103,70 @@ body.sidebar-open .app-content {
     margin-left: 0;
   }
 }
+
+/* ── Toggle row inline (global — used by banks, etc.) ── */
+.toggle-row-inline {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .52rem .8rem;
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--bg-soft) 80%, transparent);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.toggle-row-inline:hover {
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 4%, transparent);
+}
+
+.toggle-row-inline input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.toggle-row-inline__label {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .73rem;
+  letter-spacing: .04em;
+  user-select: none;
+}
+
+.toggle-row-inline__track {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border-2) 80%, transparent);
+  transition: background .2s ease;
+}
+
+.toggle-row-inline__track::after {
+  content: '';
+  position: absolute;
+  top: .17rem;
+  left: .13rem;
+  width: .9rem;
+  height: .9rem;
+  border-radius: 50%;
+  background: var(--bg-panel);
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  transition: transform .2s ease;
+}
+
+.toggle-row-inline input:checked ~ .toggle-row-inline__track {
+  background: color-mix(in srgb, var(--amber) 42%, transparent);
+}
+
+.toggle-row-inline input:checked ~ .toggle-row-inline__track::after {
+  transform: translateX(.93rem);
+  background: var(--amber);
+}

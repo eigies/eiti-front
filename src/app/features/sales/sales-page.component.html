@@ -214,6 +214,7 @@
             [state]="createPaymentState"
             [cashDrawerId]="lineForm.get('cashDrawerId')?.value ?? null"
             [autoSurcharge]="createAutoSurcharge"
+            [banks]="banks"
             headline="Cobro integrado en la venta"
             description="Carga pago principal, pagos combinados y canje desde la misma venta."
             (cashDrawerIdChange)="setCreateCashDrawerId($event)">
@@ -228,7 +229,7 @@
       <div class="summary-row summary-row--create">
         <div class="metric-card">
           <span>Paso 4 · Confirmacion</span>
-          <strong>{{ draftTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+          <strong>{{ draftEffectiveTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
         </div>
         <button class="btn" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" [disabled]="saving || draftItems.length === 0" (click)="createSale()">{{ saving ? 'Guardando...' : 'Crear venta' }}</button>
       </div>
@@ -335,6 +336,7 @@
       [cashDrawerId]="editMetaForm.get('cashDrawerId')?.value ?? null"
       [compact]="true"
       [autoSurcharge]="editAutoSurcharge"
+      [banks]="banks"
       headline="Cobro y canje de esta venta"
       description="Si la marcas como pagada, el cobro debe cubrir el total."
       (cashDrawerIdChange)="setEditCashDrawerId($event)">

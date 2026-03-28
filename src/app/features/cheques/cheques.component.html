@@ -1,0 +1,148 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">_ CHEQUES</div>
+    <h1>Gestion de cheques</h1>
+    <p>Seguimiento y estados de cheques recibidos como pago.</p>
+  </header>
+
+  <!-- Filters -->
+  <section class="panel">
+    <div class="panel__header"><span>Filtros</span></div>
+    <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="filter-form">
+      <label class="field">
+        <span>Estado</span>
+        <select class="control" formControlName="estado">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let s of allStatuses" [ngValue]="s">{{ statusLabel(s) }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Banco</span>
+        <select class="control" formControlName="bankId">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let b of banks" [ngValue]="b.id">{{ b.name }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Venc. desde</span>
+        <input class="control" type="date" formControlName="fechaVencFrom" />
+      </label>
+      <label class="field">
+        <span>Venc. hasta</span>
+        <input class="control" type="date" formControlName="fechaVencTo" />
+      </label>
+      <div class="filter-form__actions">
+        <button class="btn btn--primary" type="submit">Filtrar</button>
+        <button class="btn btn--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Cheques table -->
+  <section class="panel">
+    <div class="panel__header">
+      <span>Cheques</span>
+      <span>{{ cheques.length }}</span>
+    </div>
+    <div class="empty" *ngIf="loading">Cargando...</div>
+    <div class="empty" *ngIf="!loading && cheques.length === 0">No se encontraron cheques.</div>
+    <div class="table-wrap" *ngIf="!loading && cheques.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nro.</th>
+            <th>Banco</th>
+            <th>Titular</th>
+            <th class="text-right">Monto</th>
+            <th>Vencimiento</th>
+            <th>Estado</th>
+            <th>Venta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="data-row" *ngFor="let c of cheques; trackBy: trackById" (click)="openDetail(c)">
+            <td>{{ c.numero }}</td>
+            <td>{{ c.bankName }}</td>
+            <td>{{ c.titular }}</td>
+            <td class="text-right">${{ c.monto | number:'1.2-2' }}</td>
+            <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+            <td><span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span></td>
+            <td>
+              <span *ngIf="c.saleCode">{{ c.saleCode }}</span>
+              <span class="sale-type-badge" *ngIf="c.saleType">{{ c.saleType }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Detail modal -->
+  <div class="modal-backdrop" *ngIf="detailModalOpen" (click)="closeDetail()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__head">
+        <span class="modal__title">Detalle del cheque</span>
+        <button class="modal__close" type="button" (click)="closeDetail()">&#x2715;</button>
+      </div>
+      <div class="modal__body" *ngIf="detailLoading"><p class="loading-text">Cargando...</p></div>
+      <ng-container *ngIf="!detailLoading && detailCheque as c">
+        <div class="cheque-detail">
+          <div class="cheque-detail__header">
+            <span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span>
+            <span class="cheque-detail__num">Cheque #{{ c.numero }}</span>
+          </div>
+          <div class="cheque-detail__grid">
+            <div class="detail-field">
+              <span class="detail-field__label">Banco</span>
+              <span>{{ c.bankName }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field__label">Titular</span>
+              <span>{{ c.titular }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field__label">CUIT / DNI</span>
+              <span>{{ c.cuitDni }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field__label">Monto</span>
+              <span>${{ c.monto | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field__label">Emision</span>
+              <span>{{ c.fechaEmision | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="detail-field">
+              <span class="detail-field__label">Vencimiento</span>
+              <span>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="detail-field" *ngIf="c.saleCode">
+              <span class="detail-field__label">Venta</span>
+              <span>{{ c.saleCode }} ({{ c.saleType }})</span>
+            </div>
+            <div class="detail-field detail-field--full" *ngIf="c.notas">
+              <span class="detail-field__label">Notas</span>
+              <span>{{ c.notas }}</span>
+            </div>
+          </div>
+
+          <!-- State transitions -->
+          <div class="state-actions" *ngIf="getNextStates(c.estado).length > 0">
+            <span class="state-actions__label">Cambiar estado:</span>
+            <button *ngFor="let next of getNextStates(c.estado)"
+              class="btn btn--sm"
+              [class]="'btn btn--sm ' + getTransitionBtnClass(next)"
+              type="button"
+              [disabled]="updatingStatus"
+              (click)="changeStatus(next)">
+              {{ statusLabel(next) }}
+            </button>
+          </div>
+          <div class="state-terminal" *ngIf="getNextStates(c.estado).length === 0">
+            Estado terminal — no hay transiciones disponibles.
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

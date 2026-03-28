@@ -74,7 +74,11 @@
             <td>{{ sale.ccPaidTotal | currency:'USD':'symbol':'1.2-2' }}</td>
             <td>{{ sale.ccPendingAmount | currency:'USD':'symbol':'1.2-2' }}</td>
             <td><span [ngClass]="statusClass(sale)">{{ statusLabel(sale) }}</span></td>
-            <td>
+            <td class="actions-cell">
+              <button class="btn btn--info btn--sm" type="button"
+                      (click)="$event.stopPropagation(); openDetalle(sale)">
+                Detalle
+              </button>
               <button class="btn btn--secondary btn--sm" type="button"
                       (click)="$event.stopPropagation(); openModal(sale)">
                 Pagos
@@ -85,6 +89,86 @@
       </table>
     </div>
   </section>
+</div>
+
+<!-- ── DETALLE Modal ─────────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="detalleModalOpen" (click)="closeDetalle()"></div>
+<div class="modal-panel" *ngIf="detalleModalOpen">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow">Detalle de venta</p>
+        <h2 *ngIf="detalleModalSale">{{ detalleModalSale.code || 'S/N' }} · {{ detalleModalSale.customerFullName }}</h2>
+        <h2 *ngIf="!detalleModalSale && modalLoading">Cargando...</h2>
+      </div>
+      <button class="modal-close" type="button" (click)="closeDetalle()">✕</button>
+    </div>
+
+    <div *ngIf="modalLoading" class="hint">Cargando...</div>
+
+    <ng-container *ngIf="!modalLoading && detalleModalSale as sale">
+      <!-- Sale header info -->
+      <div class="detalle-header">
+        <div class="detalle-header__row">
+          <span class="detalle-header__code">{{ sale.code || 'S/N' }}</span>
+          <span class="badge" [ngClass]="detalleStatusClass">{{ detalleStatusLabel }}</span>
+        </div>
+        <div class="detalle-header__meta">
+          <span>{{ sale.customerFullName || 'Sin cliente' }}</span>
+          <span>{{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+
+      <!-- Products table -->
+      <div class="detalle-section">
+        <div class="detalle-section__title">Productos</div>
+        <table class="detalle-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-right">Cant.</th>
+              <th class="text-right">Unitario</th>
+              <th class="text-right" *ngIf="detalleHasDiscount">Desc.</th>
+              <th class="text-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of sale.details">
+              <td>{{ d.productBrand }} / {{ d.productName }}</td>
+              <td class="text-right">{{ d.quantity }}</td>
+              <td class="text-right">${{ d.unitPrice | number:'1.2-2' }}</td>
+              <td class="text-right" *ngIf="detalleHasDiscount">
+                <span *ngIf="d.discountPercent > 0">{{ d.discountPercent }}%</span>
+              </td>
+              <td class="text-right">${{ d.totalAmount | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totals -->
+      <div class="detalle-totals">
+        <div class="detalle-totals__row" *ngIf="sale.generalDiscountPercent && sale.generalDiscountPercent > 0">
+          <span>Subtotal</span>
+          <span>${{ sale.originalTotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--discount" *ngIf="sale.generalDiscountPercent && sale.generalDiscountPercent > 0">
+          <span>Descuento general ({{ sale.generalDiscountPercent }}%)</span>
+          <span>-${{ ((sale.originalTotal ?? sale.totalAmount) - sale.totalAmount) | number:'1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--override" *ngIf="sale.manualOverridePrice != null">
+          <span>Precio ajustado manualmente</span>
+          <span></span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--total">
+          <span>Total</span>
+          <span>${{ sale.totalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
 </div>
 
 <!-- Payments modal (read-only summary + CTA to payment screen) -->

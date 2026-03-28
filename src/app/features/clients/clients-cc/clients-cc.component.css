@@ -219,6 +219,18 @@ h1, h2, h3 {
     box-shadow: 0 8px 16px color-mix(in srgb, var(--amber) 20%, transparent)
 }
 
+.btn--info {
+    background: color-mix(in srgb, #6aa9d4 18%, transparent);
+    color: var(--text);
+    border: 1px solid color-mix(in srgb, #6aa9d4 42%, var(--border-2));
+    box-shadow: none
+}
+
+.btn--info:hover:not(:disabled) {
+    background: color-mix(in srgb, #6aa9d4 28%, transparent);
+    box-shadow: 0 8px 16px color-mix(in srgb, #6aa9d4 18%, transparent)
+}
+
 .btn--sm {
     padding: .5rem .8rem;
     font-size: .68rem
@@ -498,6 +510,115 @@ h1, h2, h3 {
     font-style: italic
 }
 
+
+/* Actions cell in table */
+.actions-cell {
+    display: flex;
+    gap: .4rem;
+    align-items: center
+}
+
+/* Detalle modal specific styles */
+.detalle-header {
+    padding: 0 0 .75rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem
+}
+
+.detalle-header__row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: .25rem
+}
+
+.detalle-header__code {
+    font-family: 'DM Mono', monospace;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--text)
+}
+
+.detalle-header__meta {
+    display: flex;
+    gap: 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .82rem;
+    color: var(--text-dim)
+}
+
+.detalle-section {
+    margin-bottom: 1rem
+}
+
+.detalle-section__title {
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-dim);
+    margin-bottom: .5rem
+}
+
+.detalle-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem
+}
+
+.detalle-table th,
+.detalle-table td {
+    padding: .4rem .5rem;
+    border-bottom: 1px solid var(--border)
+}
+
+.detalle-table th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-dim);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em
+}
+
+.detalle-table td {
+    color: var(--text)
+}
+
+.text-right {
+    text-align: right
+}
+
+.detalle-totals {
+    padding-top: .5rem
+}
+
+.detalle-totals__row {
+    display: flex;
+    justify-content: space-between;
+    padding: .25rem 0;
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    color: var(--text)
+}
+
+.detalle-totals__row--discount {
+    color: var(--success)
+}
+
+.detalle-totals__row--override {
+    color: var(--amber);
+    font-size: .76rem
+}
+
+.detalle-totals__row--total {
+    font-weight: 700;
+    font-size: .95rem;
+    border-top: 1px solid var(--border);
+    margin-top: .25rem;
+    padding-top: .5rem
+}
 
 @keyframes fadeIn {
     from { opacity: 0 }

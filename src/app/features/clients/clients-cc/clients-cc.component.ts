@@ -47,6 +47,10 @@ export class ClientsCcComponent {
   modalCancellingGroupId: string | null = null;
   modalCancellingPaymentId: string | null = null;
 
+  // Detalle modal (read-only sale detail)
+  detalleModalOpen = false;
+  detalleModalSaleId: string | null = null;
+
   constructor(
     private readonly customerService: CustomerService,
     private readonly saleService: SaleService,
@@ -209,5 +213,69 @@ export class ClientsCcComponent {
   isCancellingModalGroup(group: PaymentGroup): boolean {
     if (group.groupId) return this.modalCancellingGroupId === group.groupId;
     return this.modalCancellingPaymentId === group.payments[0]?.id;
+  }
+
+  // ── Detalle modal ─────────────────────────────────────────
+
+  openDetalle(sale: CcSaleListItem): void {
+    this.detalleModalSaleId = sale.id;
+    this.detalleModalOpen = true;
+
+    // Load sale detail if not already loaded (or if modalSale belongs to a different sale)
+    if (!this.modalSale || this.modalSale.id !== sale.id) {
+      this.modalLoading = true;
+      this.saleService.getSaleById(sale.id).subscribe({
+        next: saleDetail => {
+          this.modalSale = saleDetail;
+          this.modalLoading = false;
+        },
+        error: () => {
+          this.toast.error('No se pudo cargar el detalle');
+          this.modalLoading = false;
+          this.detalleModalOpen = false;
+        }
+      });
+    }
+  }
+
+  closeDetalle(): void {
+    this.detalleModalOpen = false;
+    this.detalleModalSaleId = null;
+  }
+
+  get detalleModalSale(): SaleByIdResponse | null {
+    if (this.detalleModalSaleId && this.modalSale?.id === this.detalleModalSaleId) {
+      return this.modalSale;
+    }
+    return null;
+  }
+
+  get detalleSubtotal(): number {
+    if (!this.detalleModalSale?.details) return 0;
+    return this.detalleModalSale.details.reduce((sum, d) => sum + d.totalAmount, 0);
+  }
+
+  get detalleHasDiscount(): boolean {
+    return (this.detalleModalSale?.details ?? []).some(d => d.discountPercent > 0);
+  }
+
+  get detalleStatusLabel(): string {
+    const sale = this.detalleModalSale;
+    if (!sale) return '';
+    if (sale.idSaleStatus === 3) return 'Cancelada';
+    if (sale.idSaleStatus === 2) return 'Pagada';
+    const paid = sale.ccPaidTotal ?? 0;
+    if (paid > 0 && paid < sale.totalAmount) return 'Pago parcial';
+    return 'En espera';
+  }
+
+  get detalleStatusClass(): string {
+    const sale = this.detalleModalSale;
+    if (!sale) return '';
+    if (sale.idSaleStatus === 3) return 'badge--cancelled';
+    if (sale.idSaleStatus === 2) return 'badge--paid';
+    const paid = sale.ccPaidTotal ?? 0;
+    if (paid > 0 && paid < sale.totalAmount) return 'badge--partial';
+    return 'badge--pending';
   }
 }

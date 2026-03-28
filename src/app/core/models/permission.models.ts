@@ -11,7 +11,9 @@ export const PermissionCodes = {
     cashDrawerManage: 'cash.drawer.manage',
     cashHistoryExport: 'cash.history.export',
     usersManage: 'users.manage',
-    salesPriceOverride: 'sales.override_price'
+    salesPriceOverride: 'sales.override_price',
+    banksManage: 'banks.manage',
+    chequesManage: 'cheques.manage'
 } as const;
 
 export type PermissionCode = typeof PermissionCodes[keyof typeof PermissionCodes];

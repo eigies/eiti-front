@@ -29,6 +29,8 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
+import { BankService } from '../../core/services/bank.service';
+import { BankResponse } from '../../core/models/bank.models';
 import {
     SalePaymentDraftState,
     createEmptySalePaymentDraftState,
@@ -68,6 +70,7 @@ export class SalesPageComponent implements OnInit {
     editOriginalQuantitiesByProductId = new Map<string, number>();
     drivers: DriverResponse[] = [];
     vehicles: VehicleResponse[] = [];
+    banks: BankResponse[] = [];
     draftItems: DraftItem[] = [];
     sales: SaleResponse[] = [];
     editItems: DraftItem[] = [];
@@ -132,6 +135,7 @@ export class SalesPageComponent implements OnInit {
         private vehicleService: VehicleService,
         private toast: ToastService,
         private onboardingService: OnboardingService,
+        private bankService: BankService,
         public auth: AuthService
     ) {
         this.lineForm = this.fb.group({
@@ -172,6 +176,7 @@ export class SalesPageComponent implements OnInit {
         this.loadDrivers();
         this.loadVehicles();
         this.loadWhatsAppConfig();
+        this.bankService.listBanks(true).subscribe({ next: banks => this.banks = banks, error: () => {} });
     }
 
     get selectedProduct(): ProductResponse | null {
@@ -180,6 +185,11 @@ export class SalesPageComponent implements OnInit {
 
     get draftTotal(): number {
         return roundMoney(this.sum(this.draftItems) + this.createAutoSurcharge);
+    }
+
+    get draftEffectiveTotal(): number {
+        const cardSurcharge = roundMoney(this.createPaymentState.payments.reduce((sum, p) => sum + (p.cardSurchargeAmt ?? 0), 0));
+        return roundMoney(this.draftTotal + cardSurcharge);
     }
 
     get editTotal(): number {
@@ -641,7 +651,9 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                 const existingPayments = (sale.payments ?? []).map(payment => ({
                     idPaymentMethod: payment.idPaymentMethod,
                     amount: roundMoney(payment.amount),
-                    notes: payment.notes ?? null
+                    notes: payment.notes ?? null,
+                    cardBankId: payment.cardBankId ?? null,
+                    cardCuotas: payment.cardCuotas ?? null
                 }));
                 const existingTradeIns = (sale.tradeIns ?? []).map(tradeIn => ({
                     productId: tradeIn.productId,
@@ -1633,6 +1645,8 @@ saveChannelPopup(): void {
         payments.reduce((sum, item) => sum + item.amount, 0)
         + tradeIns.reduce((sum, item) => sum + item.amount, 0)
     );
+    const cardSurcharge = roundMoney(paymentState.payments.reduce((sum, p) => sum + (p.cardSurchargeAmt ?? 0), 0));
+    const effectiveTotal = roundMoney(total + cardSurcharge);
     const isPaid = Number(form.get('idSaleStatus')?.value ?? 1) === 2;
 
     if (paymentState.hasTradeIn) {
@@ -1648,12 +1662,12 @@ saveChannelPopup(): void {
         }
     }
 
-    if (isPaid && coverage < total) {
+    if (isPaid && coverage < effectiveTotal) {
         this.toast.error('El cobro no cubre el total de la venta.');
         return false;
     }
 
-    if (!isPaid && coverage > total) {
+    if (!isPaid && coverage > effectiveTotal) {
         this.toast.error('Una venta en espera puede ser parcial, pero no superar el total.');
         return false;
     }

@@ -143,8 +143,25 @@ export interface CcSaleListItem {
     isCuentaCorriente: boolean;
 }
 
+export interface CcPaymentMethodLineRequest {
+    idPaymentMethod: number;
+    amount: number;
+    cardBankId?: number | null;
+    cardCuotas?: number | null;
+    cheque?: {
+        numero: string;
+        bankId: number;
+        titular: string;
+        cuitDni: string;
+        monto: number;
+        fechaEmision: string;
+        fechaVencimiento: string;
+        notas?: string | null;
+    } | null;
+}
+
 export interface AddCcPaymentGroupRequest {
-    methods: { idPaymentMethod: number; amount: number }[];
+    methods: CcPaymentMethodLineRequest[];
     date: string;
     notes?: string | null;
     cashDrawerId: string;
