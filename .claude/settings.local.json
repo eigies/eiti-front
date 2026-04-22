@@ -1,0 +1,17 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash /c/EiTeFront/eiti-front/.claude/statusline-command.sh"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bash /c/EiTeFront/eiti-front/.claude/statusline-command.sh)",
+      "Bash(cd:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}
