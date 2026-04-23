@@ -31,6 +31,11 @@ export class TransportComponent implements OnInit {
   isEditModalClosing = false;
   isSavingEdit = false;
 
+  editingVehicle: VehicleResponse | null = null;
+  isVehicleEditModalClosing = false;
+  isSavingVehicleEdit = false;
+  editVehicleForm: FormGroup;
+
   constructor(
     private fb: FormBuilder,
     private employeeService: EmployeeService,
@@ -68,6 +73,14 @@ export class TransportComponent implements OnInit {
       fuelLiters: [null],
       fuelCost: [null],
       description: ['', Validators.required]
+    });
+    this.editVehicleForm = this.fb.group({
+      plate: ['', Validators.required],
+      model: ['', Validators.required],
+      brand: [''],
+      year: [null],
+      fuelType: [1, Validators.required],
+      assignedDriverEmployeeId: ['']
     });
   }
 
@@ -187,6 +200,66 @@ export class TransportComponent implements OnInit {
       error: err => {
         this.isSavingEdit = false;
         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo actualizar el conductor');
+      }
+    });
+  }
+
+  openVehicleEditModal(vehicle: VehicleResponse): void {
+    this.editingVehicle = vehicle;
+    this.isVehicleEditModalClosing = false;
+    this.editVehicleForm.reset({
+      plate: vehicle.plate,
+      model: vehicle.model,
+      brand: vehicle.brand || '',
+      year: vehicle.year ?? null,
+      fuelType: vehicle.fuelType,
+      assignedDriverEmployeeId: vehicle.assignedDriverEmployeeId || ''
+    });
+  }
+
+  closeVehicleEditModal(): void {
+    if (this.isSavingVehicleEdit) return;
+    this.isVehicleEditModalClosing = true;
+    setTimeout(() => {
+      this.editingVehicle = null;
+      this.isVehicleEditModalClosing = false;
+    }, 220);
+  }
+
+  saveVehicleEdit(): void {
+    if (!this.editingVehicle || this.editVehicleForm.invalid) {
+      this.editVehicleForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSavingVehicleEdit = true;
+    const raw = this.editVehicleForm.getRawValue();
+    const vehicle = this.editingVehicle;
+
+    this.vehicleService.updateVehicle(vehicle.id, {
+      branchId: vehicle.branchId || null,
+      plate: raw.plate,
+      model: raw.model,
+      brand: raw.brand || null,
+      year: raw.year ? Number(raw.year) : null,
+      fuelType: Number(raw.fuelType),
+      currentOdometer: vehicle.currentOdometer ?? null,
+      notes: vehicle.notes || null,
+      assignedDriverEmployeeId: raw.assignedDriverEmployeeId || null
+    }).subscribe({
+      next: () => {
+        this.isSavingVehicleEdit = false;
+        this.isVehicleEditModalClosing = true;
+        setTimeout(() => {
+          this.editingVehicle = null;
+          this.isVehicleEditModalClosing = false;
+        }, 220);
+        this.toast.success('Vehiculo actualizado');
+        this.loadVehicles();
+      },
+      error: err => {
+        this.isSavingVehicleEdit = false;
+        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo actualizar el vehiculo');
       }
     });
   }

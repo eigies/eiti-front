@@ -30,6 +30,18 @@ export interface CreateVehicleRequest {
     notes?: string | null;
 }
 
+export interface UpdateVehicleRequest {
+    branchId?: string | null;
+    assignedDriverEmployeeId?: string | null;
+    plate: string;
+    model: string;
+    brand?: string | null;
+    year?: number | null;
+    fuelType: number;
+    currentOdometer?: number | null;
+    notes?: string | null;
+}
+
 export interface FleetLogResponse {
     id: string;
     vehicleId: string;

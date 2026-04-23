@@ -277,6 +277,12 @@
     font-size: .72rem;
 }
 
+.vehicle-card__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: .2rem;
+}
+
 .activity-head {
     display: flex;
     justify-content: space-between;

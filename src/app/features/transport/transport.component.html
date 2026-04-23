@@ -61,7 +61,7 @@
                     <div *ngIf="vehicles.length === 0" class="empty">Todavia no hay vehiculos.</div>
 
                     <div class="vehicle-gallery" *ngIf="vehicles.length > 0">
-                        <button type="button" class="vehicle-card" *ngFor="let vehicle of vehicles"
+                        <div class="vehicle-card" *ngFor="let vehicle of vehicles"
                             [class.vehicle-card--active]="vehicle.id === selectedVehicleId" (click)="selectVehicle(vehicle.id)">
                             <div class="vehicle-card__top">
                                 <strong>{{ vehicle.plate }}</strong>
@@ -72,7 +72,16 @@
                                 <span>{{ vehicle.fuelTypeName }}</span>
                                 <span>{{ vehicle.assignedDriverFullName || 'Sin conductor asignado' }}</span>
                             </div>
-                        </button>
+                            <div class="vehicle-card__actions">
+                                <button type="button" class="btn btn--icon" title="Editar vehiculo"
+                                    (click)="$event.stopPropagation(); openVehicleEditModal(vehicle)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -234,6 +243,69 @@
             </section>
         </div>
     </div>
+</div>
+
+<div class="edit-modal-backdrop"
+     *ngIf="editingVehicle"
+     [class.edit-modal-backdrop--closing]="isVehicleEditModalClosing"
+     (click)="closeVehicleEditModal()">
+    <section class="edit-modal"
+             [class.edit-modal--closing]="isVehicleEditModalClosing"
+             (click)="$event.stopPropagation()">
+        <div class="edit-modal__header">
+            <span>Editar vehiculo</span>
+            <button type="button" class="edit-modal__close" (click)="closeVehicleEditModal()" title="Cerrar">&#x2715;</button>
+        </div>
+        <form [formGroup]="editVehicleForm" (ngSubmit)="saveVehicleEdit()">
+            <div class="edit-modal__body">
+                <div class="edit-modal__row">
+                    <div class="edit-modal__field">
+                        <label class="field__label">Patente</label>
+                        <input class="control" type="text" formControlName="plate" placeholder="Patente" />
+                    </div>
+                    <div class="edit-modal__field">
+                        <label class="field__label">Modelo</label>
+                        <input class="control" type="text" formControlName="model" placeholder="Modelo" />
+                    </div>
+                </div>
+                <div class="edit-modal__row">
+                    <div class="edit-modal__field">
+                        <label class="field__label">Marca</label>
+                        <input class="control" type="text" formControlName="brand" placeholder="Marca" />
+                    </div>
+                    <div class="edit-modal__field">
+                        <label class="field__label">Año</label>
+                        <input class="control" type="number" formControlName="year" min="1900" placeholder="Año" />
+                    </div>
+                </div>
+                <div class="edit-modal__row">
+                    <div class="edit-modal__field">
+                        <label class="field__label">Combustible</label>
+                        <select class="control" formControlName="fuelType">
+                            <option [ngValue]="1">Nafta</option>
+                            <option [ngValue]="2">Diesel</option>
+                            <option [ngValue]="3">GNC</option>
+                            <option [ngValue]="4">Electrico</option>
+                            <option [ngValue]="5">Hibrido</option>
+                        </select>
+                    </div>
+                    <div class="edit-modal__field">
+                        <label class="field__label">Conductor asignado</label>
+                        <select class="control" formControlName="assignedDriverEmployeeId">
+                            <option value="">Sin conductor</option>
+                            <option *ngFor="let driver of activeDrivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="edit-modal__actions">
+                <button type="button" class="btn btn--secondary" (click)="closeVehicleEditModal()" [disabled]="isSavingVehicleEdit">Cancelar</button>
+                <button type="submit" class="btn btn--primary" [disabled]="isSavingVehicleEdit">
+                    {{ isSavingVehicleEdit ? 'Guardando...' : 'Guardar cambios' }}
+                </button>
+            </div>
+        </form>
+    </section>
 </div>
 
 <div class="edit-modal-backdrop"

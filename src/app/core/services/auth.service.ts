@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../models/auth.models';
+import { AuthResponse, ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest } from '../models/auth.models';
 import { OnboardingService } from './onboarding.service';
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +29,14 @@ export class AuthService {
         return this.http
             .post<AuthResponse>(`${environment.apiUrl}/auth/login`, request)
             .pipe(tap(res => this.persist(res)));
+    }
+
+    requestPasswordReset(request: ForgotPasswordRequest): Observable<void> {
+        return this.http.post<void>(`${environment.apiUrl}/auth/forgot-password`, request);
+    }
+
+    resetPassword(request: ResetPasswordRequest): Observable<void> {
+        return this.http.post<void>(`${environment.apiUrl}/auth/reset-password`, request);
     }
 
     logout(): void {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CreateFleetLogRequest, CreateVehicleRequest, FleetLogResponse, VehicleResponse } from '../models/vehicle.models';
+import { CreateFleetLogRequest, CreateVehicleRequest, FleetLogResponse, UpdateVehicleRequest, VehicleResponse } from '../models/vehicle.models';
 
 @Injectable({ providedIn: 'root' })
 export class VehicleService {
@@ -16,6 +16,10 @@ export class VehicleService {
 
     createVehicle(request: CreateVehicleRequest): Observable<VehicleResponse> {
         return this.http.post<VehicleResponse>(this.base, request);
+    }
+
+    updateVehicle(id: string, request: UpdateVehicleRequest): Observable<VehicleResponse> {
+        return this.http.put<VehicleResponse>(`${this.base}/${id}`, request);
     }
 
     createLog(vehicleId: string, request: CreateFleetLogRequest): Observable<FleetLogResponse> {
