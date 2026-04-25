@@ -50,9 +50,17 @@
 
 .hero {
     justify-content: space-between;
-    padding: 1.5rem;
+    padding: 1.2rem 1.35rem;
     margin-bottom: 1rem;
     animation: hero-in .55s cubic-bezier(.22,1,.36,1) both;
+    border-color: color-mix(in srgb, var(--border) 84%, transparent);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, .06);
+}
+
+.hero__body {
+    display: grid;
+    gap: .2rem;
+    max-width: 42rem;
 }
 
 .eyebrow,
@@ -124,6 +132,12 @@
     padding-top: .9rem;
 }
 
+.panel--quick-sale {
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--amber) 4%, transparent), transparent 7rem),
+      color-mix(in srgb, var(--bg-panel) 96%, transparent);
+}
+
 .panel__header {
     justify-content: space-between;
     padding-bottom: .9rem;
@@ -176,6 +190,7 @@
 .quick-sale-flow {
     display: grid;
     gap: 1.35rem;
+    position: relative;
 }
 
 .quick-sale-card {
@@ -184,6 +199,34 @@
     background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-2) 16%, transparent);
     padding: 1.1rem 1.15rem;
+}
+
+.quick-sale-card--step {
+    position: relative;
+    padding-left: 1.3rem;
+}
+
+.quick-sale-card--step::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1rem;
+    bottom: 1rem;
+    width: 3px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-2) 72%, transparent);
+}
+
+.quick-sale-card--config::before {
+    background: color-mix(in srgb, var(--amber) 54%, transparent);
+}
+
+.quick-sale-card--products::before {
+    background: color-mix(in srgb, #d7c16b 46%, transparent);
+}
+
+.quick-sale-stage::before {
+    background: color-mix(in srgb, #8fd3a8 42%, transparent);
 }
 
 .quick-sale-card__head {
@@ -214,7 +257,10 @@
 
 .toolbar--create-soft {
     align-items: center;
-    padding: .15rem 0 .35rem;
+    padding: .65rem .8rem;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 3px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 82%, transparent), transparent);
 }
 
 .quick-sale-card__eyebrow,
@@ -232,10 +278,25 @@
     gap: .85rem;
 }
 
+.toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.toolbar__status {
+    display: flex;
+    gap: .45rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 .quick-sale-draft {
     display: grid;
     gap: .65rem;
-    padding-top: .4rem;
+    padding: .85rem 0 0;
     border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
 }
 
@@ -245,6 +306,7 @@
     gap: .75rem;
     align-items: center;
     flex-wrap: wrap;
+    padding: 0 .1rem;
 }
 
 .quick-sale-stage {
@@ -275,10 +337,10 @@
 }
 
 .summary-row--create {
-    padding: .95rem 1rem;
-    border: 1px solid var(--border);
+    padding: 1rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 24%, var(--border));
     border-radius: 3px;
-    background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--amber) 6%, transparent), transparent 58%), color-mix(in srgb, var(--bg-panel) 92%, transparent);
     margin-top: 1.35rem;
 }
 
@@ -336,6 +398,11 @@
     text-transform: uppercase;
 }
 
+.field__optional {
+    font-weight: 400;
+    opacity: .6;
+}
+
 .editor__form,
 .toolbar,
 .list-meta {
@@ -355,7 +422,41 @@
 }
 
 .btn--feature {
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 18%, transparent), 0 10px 24px rgba(0, 0, 0, .08);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 18%, transparent);
+}
+
+.stacked-picker {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.stacked-picker__menu,
+.customer-picker__menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+}
+
+.customer-picker__control-row {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+}
+
+.customer-picker__control-row .control {
+    flex: 1;
+}
+
+.customer-selected-chip {
+    margin-top: .4rem;
+    padding: .45rem .75rem;
+    border: 1px solid color-mix(in srgb, #4ade80 20%, var(--border));
+    background: color-mix(in srgb, #4ade80 6%, transparent);
+    font-size: .78rem;
+    border-radius: 8px;
+    color: #4ade80;
 }
 
 .filters__actions {
@@ -403,7 +504,7 @@
     width: 100%;
     box-sizing: border-box;
     padding: .8rem;
-    border-radius: 2px;
+    border-radius: 8px;
     color: var(--text);
     outline: none;
     transition: border-color .2s ease, box-shadow .2s ease;
@@ -436,7 +537,7 @@
 
 .btn {
     border: none;
-    border-radius: 2px;
+    border-radius: 8px;
     padding: .8rem 1rem;
     background: linear-gradient(135deg, color-mix(in srgb, var(--amber) 90%, white 10%) 0%, color-mix(in srgb, var(--amber) 78%, black 22%) 100%);
     color: var(--bg);
@@ -445,12 +546,13 @@
     font-size: .72rem;
     cursor: pointer;
     transition: transform .15s ease, box-shadow .2s ease, filter .2s ease, background .2s ease;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 28%, transparent), 0 10px 24px color-mix(in srgb, var(--amber) 22%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 20%, transparent);
 }
 
 .btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    filter: saturate(1.08);
+    filter: saturate(1.03);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 30%, transparent);
 }
 
 .btn:disabled {
@@ -462,6 +564,7 @@
     background: transparent;
     color: var(--text-dim);
     box-shadow: none;
+    border-radius: 8px;
 }
 
 .btn--ghost:hover:not(:disabled) {
@@ -469,18 +572,30 @@
     color: var(--text);
 }
 
+.btn--inline-remove {
+    border-color: color-mix(in srgb, var(--amber) 20%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 5%, transparent);
+    color: var(--text);
+    min-width: 7.25rem;
+}
+
+.btn--inline-remove:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
+    border-color: color-mix(in srgb, var(--amber) 34%, var(--border-2));
+}
+
 .btn--guided-cta {
-    color: color-mix(in srgb, var(--amber) 82%, #fff 18%);
-    border-color: color-mix(in srgb, var(--amber) 52%, transparent);
-    background: color-mix(in srgb, var(--amber) 12%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 28%, transparent), 0 12px 26px color-mix(in srgb, var(--amber) 18%, transparent);
+    color: color-mix(in srgb, var(--amber) 70%, var(--text) 30%);
+    border-color: color-mix(in srgb, var(--amber) 34%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 18%, transparent);
 }
 
 .btn--guided-cta:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--amber) 18%, transparent);
-    color: color-mix(in srgb, var(--amber) 90%, #fff 10%);
-    border-color: color-mix(in srgb, var(--amber) 68%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 48%, transparent), 0 16px 28px color-mix(in srgb, var(--amber) 24%, transparent);
+    background: color-mix(in srgb, var(--amber) 12%, transparent);
+    color: color-mix(in srgb, var(--amber) 78%, var(--text) 22%);
+    border-color: color-mix(in srgb, var(--amber) 46%, var(--border-2));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 26%, transparent);
 }
 
 .btn--sm {
@@ -500,13 +615,14 @@
 }
 
 .btn--secondary {
-    background: color-mix(in srgb, var(--bg) 42%, var(--amber) 58%);
-    color: #161616;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 48%, transparent), 0 10px 20px color-mix(in srgb, var(--amber) 18%, transparent);
+    background: color-mix(in srgb, var(--amber) 24%, var(--bg) 76%);
+    color: color-mix(in srgb, var(--amber) 62%, var(--text) 38%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 22%, transparent);
 }
 
 .btn--secondary:hover:not(:disabled) {
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 62%, transparent), 0 0 18px color-mix(in srgb, var(--amber) 24%, transparent);
+    background: color-mix(in srgb, var(--amber) 30%, var(--bg) 70%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 30%, transparent);
 }
 
 .btn--danger {
@@ -514,57 +630,58 @@
 }
 
 .btn--danger-solid {
-    background: color-mix(in srgb, #d36262 80%, var(--bg) 20%);
-    color: #1a1a1a;
-    box-shadow: 0 0 0 1px color-mix(in srgb, #d36262 48%, transparent), 0 10px 20px color-mix(in srgb, #d36262 18%, transparent);
+    background: color-mix(in srgb, #d36262 24%, var(--bg) 76%);
+    color: color-mix(in srgb, #d36262 62%, var(--text) 38%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #d36262 22%, transparent);
 }
 
 .btn--danger-solid:hover:not(:disabled) {
-    box-shadow: 0 0 0 1px color-mix(in srgb, #d36262 62%, transparent), 0 0 18px color-mix(in srgb, #d36262 24%, transparent);
+    background: color-mix(in srgb, #d36262 30%, var(--bg) 70%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #d36262 30%, transparent);
 }
 
 .btn--status-assigned {
-    background: color-mix(in srgb, #f0be73 18%, transparent);
-    color: #d79b37;
-    border: 1px solid color-mix(in srgb, #f0be73 48%, transparent);
+    background: color-mix(in srgb, #f0be73 12%, transparent);
+    color: color-mix(in srgb, #d79b37 74%, var(--text) 26%);
+    border: 1px solid color-mix(in srgb, #f0be73 34%, var(--border-2));
 }
 
 .btn--status-assigned:hover:not(:disabled) {
-    background: color-mix(in srgb, #f0be73 28%, transparent);
-    color: #e7b35a;
+    background: color-mix(in srgb, #f0be73 18%, transparent);
+    color: color-mix(in srgb, #d79b37 84%, var(--text) 16%);
 }
 
 .btn--status-transit {
-    background: color-mix(in srgb, #8dc7d8 18%, transparent);
-    color: #79bbcf;
-    border: 1px solid color-mix(in srgb, #8dc7d8 48%, transparent);
+    background: color-mix(in srgb, #8dc7d8 12%, transparent);
+    color: color-mix(in srgb, #79bbcf 74%, var(--text) 26%);
+    border: 1px solid color-mix(in srgb, #8dc7d8 34%, var(--border-2));
 }
 
 .btn--status-transit:hover:not(:disabled) {
-    background: color-mix(in srgb, #8dc7d8 28%, transparent);
-    color: #9ad6e4;
+    background: color-mix(in srgb, #8dc7d8 18%, transparent);
+    color: color-mix(in srgb, #79bbcf 84%, var(--text) 16%);
 }
 
 .btn--status-delivered {
-    background: color-mix(in srgb, #8fd3a8 18%, transparent);
-    color: #7bc88f;
-    border: 1px solid color-mix(in srgb, #8fd3a8 48%, transparent);
+    background: color-mix(in srgb, #8fd3a8 12%, transparent);
+    color: color-mix(in srgb, #7bc88f 74%, var(--text) 26%);
+    border: 1px solid color-mix(in srgb, #8fd3a8 34%, var(--border-2));
 }
 
 .btn--status-delivered:hover:not(:disabled) {
-    background: color-mix(in srgb, #8fd3a8 28%, transparent);
-    color: #99d9ae;
+    background: color-mix(in srgb, #8fd3a8 18%, transparent);
+    color: color-mix(in srgb, #7bc88f 84%, var(--text) 16%);
 }
 
 .transport-actions .btn--danger {
-    background: color-mix(in srgb, #e28c8c 18%, transparent);
-    color: #e08b8b;
-    border: 1px solid color-mix(in srgb, #e28c8c 48%, transparent);
+    background: color-mix(in srgb, #e28c8c 12%, transparent);
+    color: color-mix(in srgb, #e08b8b 72%, var(--text) 28%);
+    border: 1px solid color-mix(in srgb, #e28c8c 34%, var(--border-2));
 }
 
 .transport-actions .btn--danger:hover:not(:disabled) {
-    background: color-mix(in srgb, #e28c8c 28%, transparent);
-    color: #efaaaa;
+    background: color-mix(in srgb, #e28c8c 18%, transparent);
+    color: color-mix(in srgb, #e08b8b 84%, var(--text) 16%);
 }
 
 .toggle-check {
@@ -708,7 +825,7 @@
     display: grid;
     gap: .15rem;
     padding: .55rem .65rem;
-    border-radius: 2px;
+    border-radius: 8px;
     text-align: left;
     cursor: pointer;
 }
@@ -727,7 +844,7 @@
 .product-picker__empty,
 .empty {
     padding: .95rem 1rem;
-    border-radius: 3px;
+    border-radius: 8px;
     font-size: .78rem;
 }
 
@@ -748,7 +865,7 @@
 }
 
 .sale-card {
-    padding: 1rem;
+    padding: 1rem 1rem 1.05rem;
     cursor: pointer;
     transition: transform .15s ease, border-color .2s ease, box-shadow .2s ease;
 }
@@ -762,7 +879,8 @@
 .sale-card__top {
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: .8rem;
+    margin-bottom: .85rem;
+    gap: 1rem;
 }
 
 .sale-card h2 {
@@ -770,11 +888,40 @@
     letter-spacing: .02em;
 }
 
+.sale-card__content {
+    min-width: 0;
+}
+
+.sale-card__amount-block {
+    display: grid;
+    gap: .22rem;
+    min-width: 8.5rem;
+    justify-items: end;
+    text-align: right;
+}
+
+.sale-card__amount-label {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
 .sale-card__chips,
 .transport-state {
+    display: grid;
+    gap: .45rem;
+}
+
+.sale-card__chip-row {
     display: flex;
     gap: .5rem;
     flex-wrap: wrap;
+}
+
+.sale-card__chip-row--secondary {
+    opacity: .86;
 }
 
 .chip {
@@ -782,10 +929,10 @@
     align-items: center;
     gap: .35rem;
     min-height: 30px;
-    padding: .25rem .6rem;
+    padding: .24rem .56rem;
     border-radius: 999px;
     color: var(--text-soft);
-    font-size: .7rem;
+    font-size: .68rem;
 }
 
 .chip strong {
@@ -846,18 +993,19 @@
 }
 
 .chip--channel {
-    background: color-mix(in srgb, #a78bfa 18%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 50%, transparent);
+    background: color-mix(in srgb, #a78bfa 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 36%, transparent);
 }
 
 .chip--cc {
-    background: color-mix(in srgb, var(--amber) 18%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 50%, transparent);
+    background: color-mix(in srgb, var(--amber) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 36%, transparent);
 }
 
 .sale-card__actions {
-    flex-wrap: wrap;
-    gap: .5rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .85rem;
     padding-top: .85rem;
     margin-top: .85rem;
     border-top: 1px solid var(--border);
@@ -868,12 +1016,29 @@
     justify-content: center;
 }
 
+.sale-card__action-tools,
+.sale-card__action-main {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.sale-card__action-tools {
+    flex: 1 1 28rem;
+}
+
+.sale-card__action-main {
+    justify-content: flex-end;
+    margin-left: auto;
+}
+
 .sale-card__actions .btn--cancel {
     margin-left: auto;
     background: color-mix(in srgb, #d36262 78%, var(--bg) 22%);
     color: #1a1a1a;
     border: 1px solid color-mix(in srgb, #d36262 52%, transparent);
-    box-shadow: 0 0 0 1px color-mix(in srgb, #d36262 35%, transparent), 0 10px 18px color-mix(in srgb, #d36262 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #d36262 24%, transparent);
 }
 
 .sale-card__actions .btn--cancel:hover:not(:disabled) {
@@ -887,11 +1052,11 @@
 }
 
 .sale-card__actions .btn--edit {
-    margin-left: auto;
+    margin-left: 0;
 }
 
 .sale-card__actions .btn--pay {
-    margin-left: auto;
+    margin-left: 0;
 }
 
 .sale-card__actions .btn--edit + .btn--pay {
@@ -924,10 +1089,10 @@
     width: 2.15rem;
     height: 2.15rem;
     padding: 0;
-    border: none;
-    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
     cursor: pointer;
-    border-radius: 999px;
+    border-radius: 10px;
     transition: transform .15s ease, filter .2s ease, box-shadow .2s ease, background .2s ease;
 }
 
@@ -967,38 +1132,31 @@
 }
 
 .icon-action--info {
-    background: color-mix(in srgb, #8dc7d8 22%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8dc7d8 60%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8dc7d8 38%, transparent);
 }
 
 .icon-action--detail {
-    background: color-mix(in srgb, #d7c16b 22%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #d7c16b 60%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #d7c16b 44%, transparent);
 }
 
 .icon-action--driver {
-    background: color-mix(in srgb, #8fd3a8 22%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8fd3a8 60%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8fd3a8 38%, transparent);
 }
 
 .icon-action--vehicle {
-    background: color-mix(in srgb, #c7a6e8 22%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #c7a6e8 60%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #c7a6e8 34%, transparent);
 }
 
 .icon-action--transport {
-    background: color-mix(in srgb, #79c7b7 22%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #79c7b7 60%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #79c7b7 34%, transparent);
 }
 
 .icon-action--whatsapp {
-    background: color-mix(in srgb, #67c15e 18%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #67c15e 38%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #67c15e 34%, transparent);
 }
 
 .icon-action--channel {
-    background: color-mix(in srgb, #a78bfa 18%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 50%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 34%, transparent);
 }
 
 .icon-action--excel {
@@ -1068,6 +1226,12 @@
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px dashed var(--border);
+}
+
+.btn--cc {
+    border-color: color-mix(in srgb, var(--amber) 24%, var(--border-2));
+    color: color-mix(in srgb, var(--amber) 80%, #fff 20%);
+    background: color-mix(in srgb, var(--amber) 6%, transparent);
 }
 
 
@@ -1402,6 +1566,10 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .toolbar__actions {
+        margin-left: 0;
+    }
+
     .transport-modal__summary,
     .transport-modal__form,
     .transport-state-card__grid {
@@ -1450,6 +1618,37 @@
     .quick-sale-draft__head {
         display: grid;
         grid-template-columns: 1fr;
+    }
+
+    .toolbar__actions,
+    .toolbar__status,
+    .customer-picker__control-row {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .sale-card__chip-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .45rem;
+    }
+
+    .sale-card__action-tools {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .45rem;
+    }
+
+    .sale-card__action-main {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .45rem;
+    }
+
+    .stacked-picker__menu,
+    .customer-picker__menu {
+        position: static;
+        margin-top: .45rem;
     }
 
     .info-row {
@@ -1613,11 +1812,21 @@
         margin-left: 0;
     }
 
+    .sale-card__amount-block {
+        width: 100%;
+        justify-items: start;
+        text-align: left;
+    }
+
     .sale-card__actions .icon-action {
         width: 100%;
-        height: 2.75rem;
-        border-radius: 3px;
+        height: 3rem;
+        border-radius: 8px;
         justify-content: center;
+    }
+
+    .sale-card__actions .btn {
+        min-width: 0;
     }
 
     .metric-card {
@@ -1716,10 +1925,10 @@
     .table--edit tr,
     .table--picker tr {
         border: 1px solid var(--border);
-        border-radius: 3px;
+        border-radius: 8px;
         background: color-mix(in srgb, var(--bg) 86%, transparent);
         margin-bottom: 0.7rem;
-        padding: 0.2rem 0;
+        padding: 0.25rem 0;
     }
 
     .table--draft td,
@@ -1727,7 +1936,11 @@
     .table--picker td {
         border: none;
         border-bottom: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
-        padding: 0.58rem 0.72rem;
+        padding: 0.72rem 0.8rem;
+        display: grid;
+        grid-template-columns: minmax(5.5rem, 6.5rem) minmax(0, 1fr);
+        gap: .6rem;
+        align-items: center;
     }
 
     .table--draft td:last-child,
@@ -1740,12 +1953,55 @@
     .table--edit td::before,
     .table--picker td::before {
         display: block;
-        margin-bottom: 0.18rem;
+        margin-bottom: 0;
         color: var(--text-dim);
         font-family: 'DM Mono', monospace;
-        font-size: 0.63rem;
+        font-size: 0.6rem;
         letter-spacing: 0.1em;
         text-transform: uppercase;
+        line-height: 1.35;
+    }
+
+    .table--draft td > *,
+    .table--edit td > *,
+    .table--picker td > * {
+        min-width: 0;
+    }
+
+    .table--draft td .control,
+    .table--edit td .control,
+    .table--picker td .control {
+        width: 100%;
+    }
+
+    .table--draft td:last-child,
+    .table--edit td:last-child,
+    .table--picker td:last-child {
+        align-items: start;
+    }
+
+    .table--draft td:last-child .btn,
+    .table--edit td:last-child .btn,
+    .table--picker td:last-child .btn {
+        width: auto;
+        min-width: 8rem;
+        padding-inline: 1rem;
+        justify-self: start;
+    }
+
+    .table--draft td:last-child .btn--ghost,
+    .table--edit td:last-child .btn--ghost,
+    .table--picker td:last-child .btn--ghost {
+        border-color: color-mix(in srgb, var(--amber) 24%, var(--border-2));
+        background: color-mix(in srgb, var(--amber) 6%, transparent);
+        color: var(--text);
+    }
+
+    .table--draft td:last-child .btn--ghost:hover:not(:disabled),
+    .table--edit td:last-child .btn--ghost:hover:not(:disabled),
+    .table--picker td:last-child .btn--ghost:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--amber) 10%, transparent);
+        border-color: color-mix(in srgb, var(--amber) 36%, var(--border-2));
     }
 
     .table--draft td:nth-child(1)::before,
@@ -1804,6 +2060,29 @@
 
     .info-row strong {
         font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .sale-card__chip-row,
+    .sale-card__action-tools,
+    .sale-card__action-main {
+        grid-template-columns: 1fr;
+    }
+
+    .table--draft td,
+    .table--edit td,
+    .table--picker td {
+        grid-template-columns: 1fr;
+        gap: .3rem;
+        align-items: start;
+    }
+
+    .table--draft td:last-child .btn,
+    .table--edit td:last-child .btn,
+    .table--picker td:last-child .btn {
+        width: 100%;
+        min-width: 0;
     }
 }
 

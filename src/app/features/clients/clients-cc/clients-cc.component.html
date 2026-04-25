@@ -1,17 +1,22 @@
 <div class="page">
   <section class="panel">
     <div class="head">
-      <div>
+      <div class="head__copy">
         <p class="eyebrow">Clientes</p>
+        <span class="head__kicker">Workspace CC</span>
         <h1>Cuenta Corriente</h1>
       </div>
     </div>
 
-    <!-- Customer search -->
-    <div class="block">
-      <h2>Buscar cliente</h2>
-      <div *ngIf="!selectedCustomer">
-        <div class="search-content">
+    <div class="workspace">
+      <section class="stage stage--search">
+        <div class="stage__head">
+          <span class="stage__eyebrow">Etapa 1</span>
+          <h2>Buscar cliente</h2>
+          <p>Selecciona un cliente para revisar sus ventas a cuenta corriente y acceder al historial de pagos.</p>
+        </div>
+
+        <div *ngIf="!selectedCustomer" class="search-content">
           <div class="search-row">
             <input class="control" type="text" [(ngModel)]="customerQuery"
                    placeholder="Nombre, email o documento"
@@ -32,83 +37,93 @@
             </button>
           </div>
         </div>
-      </div>
-      <div *ngIf="selectedCustomer" class="selected-customer">
-        <div class="result-card result-card--selected">
-          <strong class="result-card__name">{{ selectedCustomer.fullName || selectedCustomer.name }}</strong>
-          <span class="result-card__meta">{{ selectedCustomer.email }}</span>
-          <span class="result-card__meta" *ngIf="selectedCustomer.documentNumber">
-            {{ selectedCustomer.documentTypeName }} {{ selectedCustomer.documentNumber }}
-          </span>
+
+        <div *ngIf="selectedCustomer" class="selected-customer selected-customer--workspace">
+          <div class="customer-summary">
+            <span class="customer-summary__eyebrow">Cliente activo</span>
+            <div class="result-card result-card--selected">
+              <strong class="result-card__name">{{ selectedCustomer.fullName || selectedCustomer.name }}</strong>
+              <span class="result-card__meta">{{ selectedCustomer.email }}</span>
+              <span class="result-card__meta" *ngIf="selectedCustomer.documentNumber">
+                {{ selectedCustomer.documentTypeName }} {{ selectedCustomer.documentNumber }}
+              </span>
+            </div>
+          </div>
+          <button class="btn btn--ghost btn--sm" type="button" (click)="clearCustomer()">Cambiar cliente</button>
         </div>
-        <button class="btn btn--ghost btn--sm" type="button" (click)="clearCustomer()">Cambiar cliente</button>
-      </div>
-    </div>
+      </section>
 
-    <!-- CC sales table -->
-    <div class="block" *ngIf="selectedCustomer">
-      <h2>Ventas CC · {{ selectedCustomer.fullName || selectedCustomer.name }}</h2>
+      <section class="stage stage--workspace" *ngIf="selectedCustomer">
+        <div class="stage__head stage__head--workspace">
+          <div>
+            <span class="stage__eyebrow">Etapa 2</span>
+            <h2>Ventas CC · {{ selectedCustomer.fullName || selectedCustomer.name }}</h2>
+          </div>
+          <div class="workspace__meta" *ngIf="!loading && ccSales.length > 0">
+            <span class="workspace__meta-pill">{{ ccSales.length }} venta(s)</span>
+          </div>
+        </div>
 
-      <div class="hint" *ngIf="loading">Cargando ventas...</div>
-      <div class="hint" *ngIf="!loading && ccSales.length === 0">
-        Este cliente no tiene ventas a cuenta corriente.
-      </div>
+        <div class="hint" *ngIf="loading">Cargando ventas...</div>
+        <div class="hint" *ngIf="!loading && ccSales.length === 0">
+          Este cliente no tiene ventas a cuenta corriente.
+        </div>
 
-      <table *ngIf="!loading && ccSales.length > 0" class="table">
-        <thead>
-          <tr>
-            <th>Codigo</th>
-            <th>Fecha</th>
-            <th>Total</th>
-            <th>Cobrado</th>
-            <th>Pendiente</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let sale of ccSales" class="row--clickable" (click)="openModal(sale)">
-            <td>{{ sale.code || '-' }}</td>
-            <td>{{ sale.createdAt | date:'dd/MM/yyyy' }}</td>
-            <td>{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</td>
-            <td>{{ sale.ccPaidTotal | currency:'USD':'symbol':'1.2-2' }}</td>
-            <td>{{ sale.ccPendingAmount | currency:'USD':'symbol':'1.2-2' }}</td>
-            <td><span [ngClass]="statusClass(sale)">{{ statusLabel(sale) }}</span></td>
-            <td class="actions-cell">
-              <button class="btn btn--info btn--sm" type="button"
-                      (click)="$event.stopPropagation(); openDetalle(sale)">
-                Detalle
-              </button>
-              <button class="btn btn--secondary btn--sm" type="button"
-                      (click)="$event.stopPropagation(); openModal(sale)">
-                Pagos
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <div class="table-shell" *ngIf="!loading && ccSales.length > 0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Codigo</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Cobrado</th>
+                <th class="th--emphasis">Pendiente</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let sale of ccSales" class="row--clickable" (click)="openModal(sale)">
+                <td class="cell-code">{{ sale.code || '-' }}</td>
+                <td>{{ sale.createdAt | date:'dd/MM/yyyy' }}</td>
+                <td class="cell-soft">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td class="cell-soft">{{ sale.ccPaidTotal | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td class="cell-pending">{{ sale.ccPendingAmount | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td><span class="badge" [ngClass]="statusClass(sale)">{{ statusLabel(sale) }}</span></td>
+                <td class="actions-cell">
+                  <button class="btn btn--info btn--sm" type="button"
+                          (click)="$event.stopPropagation(); openDetalle(sale)">
+                    Detalle
+                  </button>
+                  <button class="btn btn--secondary btn--sm" type="button"
+                          (click)="$event.stopPropagation(); openModal(sale)">
+                    Pagos
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </section>
 </div>
 
-<!-- ── DETALLE Modal ─────────────────────────────────────── -->
 <div class="modal-backdrop" *ngIf="detalleModalOpen" (click)="closeDetalle()"></div>
 <div class="modal-panel" *ngIf="detalleModalOpen">
-  <div class="modal-card" (click)="$event.stopPropagation()">
-
+  <div class="modal-card modal-card--detalle" (click)="$event.stopPropagation()">
     <div class="modal-head">
-      <div>
+      <div class="modal-head__copy">
         <p class="eyebrow">Detalle de venta</p>
         <h2 *ngIf="detalleModalSale">{{ detalleModalSale.code || 'S/N' }} · {{ detalleModalSale.customerFullName }}</h2>
         <h2 *ngIf="!detalleModalSale && modalLoading">Cargando...</h2>
       </div>
-      <button class="modal-close" type="button" (click)="closeDetalle()">✕</button>
+      <button class="modal-close" type="button" (click)="closeDetalle()">×</button>
     </div>
 
     <div *ngIf="modalLoading" class="hint">Cargando...</div>
 
     <ng-container *ngIf="!modalLoading && detalleModalSale as sale">
-      <!-- Sale header info -->
       <div class="detalle-header">
         <div class="detalle-header__row">
           <span class="detalle-header__code">{{ sale.code || 'S/N' }}</span>
@@ -120,7 +135,6 @@
         </div>
       </div>
 
-      <!-- Products table -->
       <div class="detalle-section">
         <div class="detalle-section__title">Productos</div>
         <table class="detalle-table">
@@ -147,7 +161,6 @@
         </table>
       </div>
 
-      <!-- Totals -->
       <div class="detalle-totals">
         <div class="detalle-totals__row" *ngIf="sale.generalDiscountPercent && sale.generalDiscountPercent > 0">
           <span>Subtotal</span>
@@ -167,28 +180,24 @@
         </div>
       </div>
     </ng-container>
-
   </div>
 </div>
 
-<!-- Payments modal (read-only summary + CTA to payment screen) -->
 <div class="modal-backdrop" *ngIf="modalOpen" (click)="closeModal()"></div>
 <div class="modal-panel" *ngIf="modalOpen">
-  <div class="modal-card" (click)="$event.stopPropagation()">
-    <!-- Modal header -->
+  <div class="modal-card modal-card--payments" (click)="$event.stopPropagation()">
     <div class="modal-head">
-      <div>
+      <div class="modal-head__copy">
         <p class="eyebrow">Cuenta Corriente</p>
         <h2 *ngIf="modalSale">{{ modalSale.code || 'Venta' }} · {{ modalSale.customerFullName }}</h2>
         <h2 *ngIf="!modalSale && modalLoading">Cargando...</h2>
       </div>
-      <button class="modal-close" type="button" (click)="closeModal()">✕</button>
+      <button class="modal-close" type="button" (click)="closeModal()">×</button>
     </div>
 
     <div *ngIf="modalLoading" class="hint">Cargando...</div>
 
     <ng-container *ngIf="!modalLoading && modalSale">
-      <!-- Balance metrics -->
       <div class="metrics">
         <div class="metric-card">
           <span class="metric-card__value">{{ modalSale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
@@ -198,7 +207,7 @@
           <span class="metric-card__value">{{ modalSale.ccPaidTotal | currency:'USD':'symbol':'1.2-2' }}</span>
           <span class="metric-card__label">Cobrado</span>
         </div>
-        <div class="metric-card">
+        <div class="metric-card metric-card--pending">
           <span class="metric-card__value">{{ modalSale.ccPendingAmount | currency:'USD':'symbol':'1.2-2' }}</span>
           <span class="metric-card__label">Pendiente</span>
         </div>
@@ -207,14 +216,16 @@
         </div>
       </div>
 
-      <!-- CTA to payment screen — shown only when there is a pending balance -->
       <div class="modal-cta" *ngIf="modalRemaining > 0">
+        <div class="modal-cta__copy">
+          <span class="modal-cta__eyebrow">Accion principal</span>
+          <strong>Hay saldo pendiente por gestionar</strong>
+        </div>
         <button class="btn" type="button" (click)="navigateToPayments(modalSale.id)">
-          Ir a gestión de pagos
+          Ir a gestion de pagos
         </button>
       </div>
 
-      <!-- Payment history -->
       <div class="modal-block">
         <h3>Historial de pagos</h3>
         <div *ngIf="modalGroupedPayments.length > 0; else noPayments">

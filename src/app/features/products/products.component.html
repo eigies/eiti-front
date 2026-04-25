@@ -30,7 +30,7 @@
   </header>
 
   <!-- CREATE CARD -->
-  <section class="card">
+  <section class="card card--create">
     <button class="card__head" type="button" (click)="toggleCreatePanel()">
       <span class="card__icon">+</span>
       <span class="card__title">Nuevo producto</span>
@@ -71,25 +71,27 @@
 
         <div class="pf__section">
           <div class="pf__sec-label">Configuracion de venta</div>
-          <div class="pf__row pf__row--2">
-            <div class="f">
-              <span class="f__l">Uso en venta</span>
-              <label class="tg tg--special"><input type="checkbox" formControlName="allowsManualSaleValue" (change)="toggleManualSaleValue(createForm, createPriceMode, $any($event.target).checked, 'create')" /><span class="tg__track"></span><span class="tg__text">Parte de pago / canje</span></label>
-              <small class="f__hint" *ngIf="createForm.get('allowsManualSaleValue')?.value">Se guarda con precio 0. El valor se define al momento de la venta.</small>
+          <div class="sale-config">
+            <div class="sale-config__main">
+              <div class="f">
+                <span class="f__l">Uso en venta</span>
+                <label class="tg tg--special"><input type="checkbox" formControlName="allowsManualSaleValue" (change)="toggleManualSaleValue(createForm, createPriceMode, $any($event.target).checked, 'create')" /><span class="tg__track"></span><span class="tg__text">Parte de pago / canje</span></label>
+                <small class="f__hint" *ngIf="createForm.get('allowsManualSaleValue')?.value">Se guarda con precio 0. El valor se define al momento de la venta.</small>
+              </div>
+              <label class="f f--narrow">
+                <span class="f__l">Cargo si no entrega en canje (opcional)</span>
+                <input class="f__i f__i--num" type="number" min="0" step="0.01" formControlName="noDeliverySurcharge" placeholder="Opcional" />
+                <small class="f__hint">Vacio = usa el valor global. Un monto = sobreescribe el cargo global para este producto.</small>
+              </label>
             </div>
-            <div class="price-kpi">
-              <span class="f__l">Radar comercial</span>
-              <strong class="price-kpi__val">{{ createForm.get('allowsManualSaleValue')?.value ? 'En venta' : (publicPricePreview(createForm) | currency:'USD':'symbol':'1.2-2') }}</strong>
-              <small *ngIf="canViewCostPrice">Costo {{ costPricePreview(createForm) | currency:'USD':'symbol':'1.2-2' }} · Margen {{ marginPreview(createForm) | number:'1.0-0' }}%</small>
-              <small *ngIf="!canViewCostPrice && !createForm.get('allowsManualSaleValue')?.value">Precio visible para venta y catalogo.</small>
+            <div class="sale-config__aside">
+              <div class="price-kpi">
+                <span class="f__l">Radar comercial</span>
+                <strong class="price-kpi__val">{{ createForm.get('allowsManualSaleValue')?.value ? 'En venta' : (publicPricePreview(createForm) | currency:'USD':'symbol':'1.2-2') }}</strong>
+                <small *ngIf="canViewCostPrice">Costo {{ costPricePreview(createForm) | currency:'USD':'symbol':'1.2-2' }} · Margen {{ marginPreview(createForm) | number:'1.0-0' }}%</small>
+                <small *ngIf="!canViewCostPrice && !createForm.get('allowsManualSaleValue')?.value">Precio visible para venta y catalogo.</small>
+              </div>
             </div>
-          </div>
-          <div class="pf__row pf__row--2" style="margin-top:.85rem">
-            <label class="f">
-              <span class="f__l">Cargo si no entrega en canje (opcional)</span>
-              <input class="f__i f__i--num" type="number" min="0" step="0.01" formControlName="noDeliverySurcharge" placeholder="Opcional" />
-              <small class="f__hint">Vacio = usa el valor global. Un monto = sobreescribe el cargo global para este producto.</small>
-            </label>
           </div>
         </div>
 
@@ -143,34 +145,35 @@
                 <th class="tbl-th--sort" (click)="setSort('sku')">SKU <span class="sort-ind" [class.sort-ind--on]="sortColumn==='sku'">{{ sortColumn==='sku' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th>Tipo</th>
                 <th class="tbl-th--amber tbl-th--sort" (click)="setSort('brand')">Marca <span class="sort-ind" [class.sort-ind--on]="sortColumn==='brand'">{{ sortColumn==='brand' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
-                <th class="tbl-th--sort" (click)="setSort('name')">Producto <span class="sort-ind" [class.sort-ind--on]="sortColumn==='name'">{{ sortColumn==='name' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--sort tbl-th--primary" (click)="setSort('name')">Producto <span class="sort-ind" [class.sort-ind--on]="sortColumn==='name'">{{ sortColumn==='name' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th *ngIf="showHiddenColumns" class="tbl-th--sort" (click)="setSort('description')">Descripcion <span class="sort-ind" [class.sort-ind--on]="sortColumn==='description'">{{ sortColumn==='description' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
-                <th class="tbl-th--r tbl-th--sort" (click)="setSort('publicPrice')">Precio pub. <span class="sort-ind" [class.sort-ind--on]="sortColumn==='publicPrice'">{{ sortColumn==='publicPrice' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--r tbl-th--sort tbl-th--focus" (click)="setSort('publicPrice')">Precio pub. <span class="sort-ind" [class.sort-ind--on]="sortColumn==='publicPrice'">{{ sortColumn==='publicPrice' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th class="tbl-th--r tbl-th--sort" *ngIf="canViewCostPrice" (click)="setSort('costPrice')">Costo <span class="sort-ind" [class.sort-ind--on]="sortColumn==='costPrice'">{{ sortColumn==='costPrice' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th class="tbl-th--r tbl-th--sort" *ngIf="showHiddenColumns" (click)="setSort('unitPrice')">Unitario <span class="sort-ind" [class.sort-ind--on]="sortColumn==='unitPrice'">{{ sortColumn==='unitPrice' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th class="tbl-th--r tbl-th--sort" (click)="setSort('totalOnHandQuantity')">Stock <span class="sort-ind" [class.sort-ind--on]="sortColumn==='totalOnHandQuantity'">{{ sortColumn==='totalOnHandQuantity' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th class="tbl-th--r tbl-th--sort" *ngIf="showHiddenColumns" (click)="setSort('totalReservedQuantity')">Reservado <span class="sort-ind" [class.sort-ind--on]="sortColumn==='totalReservedQuantity'">{{ sortColumn==='totalReservedQuantity' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
-                <th class="tbl-th--r tbl-th--sort" (click)="setSort('totalAvailableQuantity')">Disponible <span class="sort-ind" [class.sort-ind--on]="sortColumn==='totalAvailableQuantity'">{{ sortColumn==='totalAvailableQuantity' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+                <th class="tbl-th--r tbl-th--sort tbl-th--focus" (click)="setSort('totalAvailableQuantity')">Disponible <span class="sort-ind" [class.sort-ind--on]="sortColumn==='totalAvailableQuantity'">{{ sortColumn==='totalAvailableQuantity' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th *ngIf="showHiddenColumns" class="tbl-th--sort" (click)="setSort('updatedAt')">Actualizado <span class="sort-ind" [class.sort-ind--on]="sortColumn==='updatedAt'">{{ sortColumn==='updatedAt' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let product of sortedProducts; trackBy: trackByProduct"
+                  class="tbl-row"
                   [formGroup]="bulkForm(product.id)"
                   [class.tr--bulk]="bulkEditMode"
                   [class.tr--changed]="isBulkProductModified(product.id)"
                   [class.tr--invalid]="bulkEditMode && bulkForm(product.id).invalid">
 
-                <td class="td--mono td--sm" [class.cell-ch]="isBulkFieldChanged(product.id,'code')" [class.cell-inv]="isBulkFieldInvalid(product.id,'code')">
+                <td class="td--mono td--sm" data-label="Codigo" [class.cell-ch]="isBulkFieldChanged(product.id,'code')" [class.cell-inv]="isBulkFieldInvalid(product.id,'code')">
                   <ng-container *ngIf="bulkEditMode; else readCode"><input class="ti" type="text" formControlName="code" /></ng-container>
                   <ng-template #readCode>{{ product.code }}</ng-template>
                 </td>
-                <td class="td--mono td--dim td--sm" [class.cell-ch]="isBulkFieldChanged(product.id,'sku')" [class.cell-inv]="isBulkFieldInvalid(product.id,'sku')">
+                <td class="td--mono td--dim td--sm" data-label="SKU" [class.cell-ch]="isBulkFieldChanged(product.id,'sku')" [class.cell-inv]="isBulkFieldInvalid(product.id,'sku')">
                   <ng-container *ngIf="bulkEditMode; else readSku"><input class="ti" type="text" formControlName="sku" /></ng-container>
                   <ng-template #readSku>{{ product.sku }}</ng-template>
                 </td>
-                <td [class.cell-ch]="isBulkFieldChanged(product.id,'allowsManualSaleValue')">
+                <td data-label="Tipo" [class.cell-ch]="isBulkFieldChanged(product.id,'allowsManualSaleValue')">
                   <ng-container *ngIf="bulkEditMode; else readType">
                     <label class="tbl-toggle"><input type="checkbox" formControlName="allowsManualSaleValue" (change)="toggleManualSaleValue(bulkForm(product.id),'public',$any($event.target).checked,'bulk')" /><span class="tbl-toggle__text">{{ bulkForm(product.id).get('allowsManualSaleValue')?.value ? 'Canje' : 'Comun' }}</span></label>
                   </ng-container>
@@ -178,38 +181,38 @@
                     <span class="type-badge" [class.type-badge--special]="productAllowsManualSaleValue(product)">{{ productAllowsManualSaleValue(product) ? 'Valor en venta' : 'Comun' }}</span>
                   </ng-template>
                 </td>
-                <td class="td--amber td--mono td--sm td--brand" [class.cell-ch]="isBulkFieldChanged(product.id,'brand')" [class.cell-inv]="isBulkFieldInvalid(product.id,'brand')">
+                <td class="td--amber td--mono td--sm td--brand" data-label="Marca" [class.cell-ch]="isBulkFieldChanged(product.id,'brand')" [class.cell-inv]="isBulkFieldInvalid(product.id,'brand')">
                   <ng-container *ngIf="bulkEditMode; else readBrand"><input class="ti ti--amber" type="text" formControlName="brand" /></ng-container>
                   <ng-template #readBrand>{{ product.brand }}</ng-template>
                 </td>
-                <td class="td--name" [class.cell-ch]="isBulkFieldChanged(product.id,'name')" [class.cell-inv]="isBulkFieldInvalid(product.id,'name')">
+                <td class="td--name td--primary" data-label="Producto" [class.cell-ch]="isBulkFieldChanged(product.id,'name')" [class.cell-inv]="isBulkFieldInvalid(product.id,'name')">
                   <ng-container *ngIf="bulkEditMode; else readName"><input class="ti" type="text" formControlName="name" /></ng-container>
                   <ng-template #readName>{{ product.name }}</ng-template>
                 </td>
-                <td *ngIf="showHiddenColumns" class="td--desc" [class.cell-ch]="isBulkFieldChanged(product.id,'description')" [class.cell-inv]="isBulkFieldInvalid(product.id,'description')">
+                <td *ngIf="showHiddenColumns" class="td--desc" data-label="Descripcion" [class.cell-ch]="isBulkFieldChanged(product.id,'description')" [class.cell-inv]="isBulkFieldInvalid(product.id,'description')">
                   <ng-container *ngIf="bulkEditMode; else readDesc"><textarea class="ti ti--area" formControlName="description"></textarea></ng-container>
                   <ng-template #readDesc>{{ product.description || '—' }}</ng-template>
                 </td>
-                <td class="td--mono td--r td--num" [class.cell-ch]="isBulkFieldChanged(product.id,'publicPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'publicPrice')">
+                <td class="td--mono td--r td--num td--price" data-label="Precio publico" [class.cell-ch]="isBulkFieldChanged(product.id,'publicPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'publicPrice')">
                   <ng-container *ngIf="bulkEditMode; else readPub"><input class="ti ti--r" type="number" min="0" step="0.01" formControlName="publicPrice" /><small class="cell-err" *ngIf="isBulkFieldInvalid(product.id,'publicPrice')">Invalido</small></ng-container>
                   <ng-template #readPub>
                     <span *ngIf="!productAllowsManualSaleValue(product)">&#36;{{ visiblePrice(product) | number:'1.2-2' }}</span>
                     <span *ngIf="productAllowsManualSaleValue(product)" class="price-note">En venta</span>
                   </ng-template>
                 </td>
-                <td class="td--mono td--r td--dim" *ngIf="canViewCostPrice" [class.cell-ch]="isBulkFieldChanged(product.id,'costPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'costPrice')">
+                <td class="td--mono td--r td--dim" data-label="Costo" *ngIf="canViewCostPrice" [class.cell-ch]="isBulkFieldChanged(product.id,'costPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'costPrice')">
                   <ng-container *ngIf="bulkEditMode; else readCost"><input class="ti ti--r" type="number" min="0" step="0.01" formControlName="costPrice" /><small class="cell-err" *ngIf="isBulkFieldInvalid(product.id,'costPrice')">Invalido</small></ng-container>
                   <ng-template #readCost>&#36;{{ (product.costPrice ?? 0) | number:'1.2-2' }}</ng-template>
                 </td>
-                <td *ngIf="showHiddenColumns" class="td--mono td--r td--dim" [class.cell-ch]="isBulkFieldChanged(product.id,'unitPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'unitPrice')">
+                <td *ngIf="showHiddenColumns" class="td--mono td--r td--dim" data-label="Unitario" [class.cell-ch]="isBulkFieldChanged(product.id,'unitPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'unitPrice')">
                   <ng-container *ngIf="bulkEditMode; else readUnit"><input class="ti ti--r" type="number" min="0" step="0.01" formControlName="unitPrice" placeholder="—" /><small class="cell-err" *ngIf="isBulkFieldInvalid(product.id,'unitPrice')">Invalido</small></ng-container>
                   <ng-template #readUnit>{{ product.unitPrice == null ? '—' : ('$' + (product.unitPrice | number:'1.2-2')) }}</ng-template>
                 </td>
-                <td class="td--mono td--r td--num">{{ product.totalOnHandQuantity }}</td>
-                <td *ngIf="showHiddenColumns" class="td--mono td--r td--dim">{{ product.totalReservedQuantity }}</td>
-                <td class="td--mono td--r" [class.td--avail]="product.totalAvailableQuantity > 0" [class.td--zero]="product.totalAvailableQuantity === 0">{{ product.totalAvailableQuantity }}</td>
-                <td *ngIf="showHiddenColumns" class="td--mono td--dim td--sm">{{ (product.updatedAt || product.createdAt) | date:'dd/MM/yy' }}</td>
-                <td>
+                <td class="td--mono td--r td--num" data-label="Stock">{{ product.totalOnHandQuantity }}</td>
+                <td *ngIf="showHiddenColumns" class="td--mono td--r td--dim" data-label="Reservado">{{ product.totalReservedQuantity }}</td>
+                <td class="td--mono td--r td--availability" data-label="Disponible" [class.td--avail]="product.totalAvailableQuantity > 0" [class.td--zero]="product.totalAvailableQuantity === 0"><span class="stock-pill" [class.stock-pill--available]="product.totalAvailableQuantity > 0" [class.stock-pill--empty]="product.totalAvailableQuantity === 0">{{ product.totalAvailableQuantity }}</span></td>
+                <td *ngIf="showHiddenColumns" class="td--mono td--dim td--sm" data-label="Actualizado">{{ (product.updatedAt || product.createdAt) | date:'dd/MM/yy' }}</td>
+                <td data-label="Acciones">
                   <div class="action-col">
                     <button class="btn-icon btn-icon--eye" type="button" *ngIf="!bulkEditMode" (click)="openDetailModal(product)" title="Ver detalle">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -379,7 +382,7 @@
             <small *ngIf="!canViewCostPrice && !editForm.get('allowsManualSaleValue')?.value">Compatibilidad legacy activa.</small>
           </div>
           <div *ngIf="modalMode === 'edit'" style="margin-top:.85rem">
-            <label class="f">
+            <label class="f f--narrow">
               <span class="f__l">Cargo si no entrega en canje (opcional)</span>
               <input class="f__i f__i--num" type="number" min="0" step="0.01" formControlName="noDeliverySurcharge" placeholder="Opcional" />
               <small class="f__hint">Vacio = usa el valor global. Un monto = sobreescribe el cargo global para este producto.</small>

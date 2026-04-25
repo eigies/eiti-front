@@ -1,151 +1,307 @@
 <div class="page">
     <section class="panel">
         <div class="head">
-            <div>
+            <div class="head__copy">
                 <p class="eyebrow">Venta completa</p>
+                <span class="head__kicker">Flujo guiado</span>
                 <h1>Carga guiada de venta</h1>
-            </div><a class="btn btn--ghost" routerLink="/sales">Volver a venta rapida</a>
-        </div>
-        <div class="steps"><button *ngFor="let label of stepLabels; let i = index" type="button" class="step"
-                [class.active]="step===i+1" [disabled]="!canJumpToStep(i+1)" (click)="jumpToStep(i+1)">{{ i+1 }} {{
-                label }}</button></div>
-
-        <div *ngIf="step===1" class="block">
-            <h2>Paso 1. Seleccion de cliente</h2>
-            <div class="row row--mode"><button type="button" class="btn" [class.btn--ghost]="customerMode!=='existing'"
-                    (click)="setCustomerMode('existing')">Buscar existente</button><button type="button" class="btn"
-                    [class.btn--ghost]="customerMode!=='new'" (click)="setCustomerMode('new')">Crear nuevo</button>
             </div>
+            <a class="btn btn--ghost head__back" routerLink="/sales">Volver a venta rapida</a>
+        </div>
+
+        <div class="steps">
+            <button *ngFor="let label of stepLabels; let i = index" type="button" class="step"
+                [class.active]="step===i+1" [class.step--future]="!canJumpToStep(i+1)"
+                [disabled]="!canJumpToStep(i+1)" (click)="jumpToStep(i+1)">
+                <span class="step__index">{{ i + 1 }}</span>
+                <span class="step__label">{{ label }}</span>
+            </button>
+        </div>
+
+        <div *ngIf="step===1" class="wizard-step wizard-step--selection">
+            <div class="wizard-step__head">
+                <span class="wizard-step__eyebrow">Paso 1</span>
+                <h2>Seleccion de cliente</h2>
+                <p>Elegi si queres vincular un cliente existente o avanzar con alta nueva antes de completar la venta.</p>
+            </div>
+
+            <div class="row row--mode">
+                <button type="button" class="btn" [class.btn--ghost]="customerMode!=='existing'"
+                    (click)="setCustomerMode('existing')">Buscar existente</button>
+                <button type="button" class="btn" [class.btn--ghost]="customerMode!=='new'"
+                    (click)="setCustomerMode('new')">Crear nuevo</button>
+            </div>
+
             <div *ngIf="customerMode==='existing'">
-                <form class="row row--search" [formGroup]="searchForm" (ngSubmit)="searchCustomers()"><label class="field field--grow"><span class="field__label">Busqueda de cliente</span><input class="control grow"
-                        type="text" formControlName="query" placeholder="Nombre, email o documento" /></label><button
-                        class="btn btn--secondary" type="submit">Buscar</button></form>
+                <form class="row row--search" [formGroup]="searchForm" (ngSubmit)="searchCustomers()">
+                    <label class="field field--grow">
+                        <span class="field__label">Busqueda de cliente</span>
+                        <input class="control grow" type="text" formControlName="query"
+                            placeholder="Nombre, email o documento" />
+                    </label>
+                    <button class="btn btn--secondary" type="submit">Buscar</button>
+                </form>
+
                 <div class="hint">Se muestran clientes de tu empresa actual.</div>
                 <div *ngIf="searchResults.length===0" class="hint">Todavia no hay resultados.</div>
-                <div class="stack"><button *ngFor="let customer of searchResults" type="button" class="card"
+
+                <div class="stack">
+                    <button *ngFor="let customer of searchResults" type="button" class="card"
                         [class.selected]="selectedExistingCustomer?.id===customer.id"
-                        (click)="selectExistingCustomer(customer)"><strong>{{ customer.fullName || customer.name
-                            }}</strong><span>{{ customer.email }}</span></button></div>
+                        (click)="selectExistingCustomer(customer)">
+                        <strong>{{ customer.fullName || customer.name }}</strong>
+                        <span>{{ customer.email }}</span>
+                    </button>
+                </div>
             </div>
+
             <div *ngIf="customerMode==='new'" class="hint">Completa los datos del cliente en el siguiente paso.</div>
         </div>
 
-        <form *ngIf="step===2" class="grid" [formGroup]="customerForm">
-            <h2 class="span">Paso 2. Datos del cliente</h2>
-            <label class="field"><span class="field__label">Nombre</span><input class="control" type="text" formControlName="firstName" placeholder="Nombre" /></label>
-            <label class="field"><span class="field__label">Apellido</span><input class="control" type="text" formControlName="lastName" placeholder="Apellido" /></label>
-            <label class="field"><span class="field__label">Email</span><input class="control" type="email" formControlName="email" placeholder="Email" /></label>
-            <label class="field"><span class="field__label">Telefono</span><input class="control" type="text" formControlName="phone" placeholder="Telefono" /></label>
-            <label class="field"><span class="field__label">Tipo de documento</span><select class="control" formControlName="documentType">
-                <option [ngValue]="null">Tipo de documento</option>
-                <option *ngFor="let type of documentTypes" [ngValue]="type.value">{{ type.label }}</option>
-            </select></label>
-            <label class="field"><span class="field__label">Numero de documento</span><input class="control" type="text" formControlName="documentNumber" placeholder="Numero de documento" /></label>
-            <label class="field span"><span class="field__label">CUIT</span><input class="control span" type="text" formControlName="taxId" placeholder="CUIT" /></label>
-        </form>
-
-        <form *ngIf="step===3" class="grid" [formGroup]="addressForm">
-            <h2 class="span">Paso 3. Domicilio principal</h2>
-            <label class="field span"><span class="field__label">Calle</span><input class="control span" type="text" formControlName="street" placeholder="Calle" /></label>
-            <label class="field"><span class="field__label">Numero</span><input class="control" type="text" formControlName="streetNumber" placeholder="Numero" /></label>
-            <label class="field"><span class="field__label">Codigo postal</span><input class="control" type="text" formControlName="postalCode" placeholder="Codigo postal" /></label>
-            <label class="field"><span class="field__label">Localidad</span><input class="control" type="text" formControlName="city" placeholder="Localidad" /></label>
-            <label class="field"><span class="field__label">Provincia</span><input class="control" type="text" formControlName="stateOrProvince" placeholder="Provincia" /></label>
-            <label class="field"><span class="field__label">Pais</span><input class="control" type="text" formControlName="country" placeholder="Pais" /></label>
-            <label class="field"><span class="field__label">Piso</span><input class="control" type="text" formControlName="floor" placeholder="Piso" /></label>
-            <label class="field"><span class="field__label">Depto</span><input class="control" type="text" formControlName="apartment" placeholder="Depto" /></label>
-            <label class="field span"><span class="field__label">Referencia</span><input class="control span" type="text" formControlName="reference" placeholder="Referencia" /></label>
-        </form>
-
-        <div *ngIf="step===4" class="block">
-            <h2>Paso 4. Datos de la venta</h2>
-            <form class="grid" [formGroup]="saleForm">
-                <label class="field"><span class="field__label">Sucursal</span><select class="control" formControlName="branchId" (change)="handleBranchChange()">
-                    <option value="">Sucursal</option>
-                    <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-                </select></label>
-                <label class="field"><span class="field__label">Estado de venta</span><select class="control" formControlName="idSaleStatus">
-                    <option [ngValue]="1">En espera</option>
-                    <option [ngValue]="2">Pagada</option>
-                </select></label>
-                <div class="field"><span class="field__label">Modalidad de entrega</span><label class="toggle-check">
-                    <input type="checkbox" formControlName="hasDelivery" (change)="handleDeliveryToggle()" />
-                    <span class="toggle-check__track"></span>
-                    <span class="toggle-check__text">{{ requiresDelivery ? 'Con envio' : 'Retiro / sin envio' }}</span>
-                </label></div>
-            </form>
-
-            <app-sale-payment-inline
-                [total]="total"
-                [statusId]="saleForm.get('idSaleStatus')?.value ?? 1"
-                [products]="products"
-                [cashDrawers]="cashDrawers"
-                [state]="paymentState"
-                [cashDrawerId]="saleForm.get('cashDrawerId')?.value ?? null"
-                [banks]="banks"
-                headline="Cobro integrado en la venta"
-                description="Carga el pago principal, combina medios si hace falta y registra canjes sin salir del paso de venta."
-                (cashDrawerIdChange)="setCashDrawerId($event)">
-            </app-sale-payment-inline>
-
-            <div class="row row--product">
-                <div class="toolbar__lead">
-                    <span class="field__label">Productos</span>
-                    <span class="picker-summary">Abri el selector para buscar stock disponible y cargar cantidades.</span>
-                </div>
-                <button *ngIf="auth.hasPermission(permissionCodes.salesCreate)" class="btn btn--secondary" type="button"
-                    (click)="openProductModal()">Buscar y agregar productos</button>
-                <span class="picker-summary" *ngIf="selectedProductsCount > 0">{{ selectedProductsCount }} producto(s)
-                    seleccionado(s)</span>
+        <form *ngIf="step===2" class="wizard-step form-stage" [formGroup]="customerForm">
+            <div class="wizard-step__head span">
+                <span class="wizard-step__eyebrow">Paso 2</span>
+                <h2>Datos del cliente</h2>
+                <p>Primero resolvemos la identidad principal. La documentacion adicional queda como dato complementario.</p>
             </div>
-            <table *ngIf="draftItems.length>0" class="table">
-                <tr *ngFor="let item of draftItems">
-                    <td>{{ item.product.brand }} / {{ item.product.name }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td *ngIf="canOverridePrice; else staticFullPrice">
-                        <input class="control control--compact" type="number" min="0" step="0.01" [value]="item.unitPriceOverride ?? (item.product.publicPrice ?? item.product.price)" (change)="setDraftItemPrice(item, $any($event.target).value)" />
-                    </td>
-                    <ng-template #staticFullPrice>
-                        <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
-                    </ng-template>
-                    <td><button class="btn btn--ghost" type="button"
-                            (click)="removeItem(item.product.id)">Quitar</button></td>
-                </tr>
-            </table>
+
+            <div class="grid form-stage__group form-stage__group--primary span">
+                <label class="field">
+                    <span class="field__label">Nombre</span>
+                    <input class="control" type="text" formControlName="firstName" placeholder="Nombre" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Apellido</span>
+                    <input class="control" type="text" formControlName="lastName" placeholder="Apellido" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Email</span>
+                    <input class="control" type="email" formControlName="email" placeholder="Email" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Telefono</span>
+                    <input class="control" type="text" formControlName="phone" placeholder="Telefono" />
+                </label>
+            </div>
+
+            <div class="grid form-stage__group form-stage__group--secondary span">
+                <label class="field">
+                    <span class="field__label">Tipo de documento</span>
+                    <select class="control" formControlName="documentType">
+                        <option [ngValue]="null">Tipo de documento</option>
+                        <option *ngFor="let type of documentTypes" [ngValue]="type.value">{{ type.label }}</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span class="field__label">Numero de documento</span>
+                    <input class="control" type="text" formControlName="documentNumber" placeholder="Numero de documento" />
+                </label>
+                <label class="field span">
+                    <span class="field__label">CUIT</span>
+                    <input class="control span" type="text" formControlName="taxId" placeholder="CUIT" />
+                </label>
+            </div>
+        </form>
+
+        <form *ngIf="step===3" class="wizard-step form-stage" [formGroup]="addressForm">
+            <div class="wizard-step__head span">
+                <span class="wizard-step__eyebrow">Paso 3</span>
+                <h2>Domicilio principal</h2>
+                <p>Ordena la direccion base primero y deja los datos finos de acceso para el cierre del bloque.</p>
+            </div>
+
+            <div class="grid form-stage__group form-stage__group--primary span">
+                <label class="field span">
+                    <span class="field__label">Calle</span>
+                    <input class="control span" type="text" formControlName="street" placeholder="Calle" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Numero</span>
+                    <input class="control" type="text" formControlName="streetNumber" placeholder="Numero" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Codigo postal</span>
+                    <input class="control" type="text" formControlName="postalCode" placeholder="Codigo postal" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Localidad</span>
+                    <input class="control" type="text" formControlName="city" placeholder="Localidad" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Provincia</span>
+                    <input class="control" type="text" formControlName="stateOrProvince" placeholder="Provincia" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Pais</span>
+                    <input class="control" type="text" formControlName="country" placeholder="Pais" />
+                </label>
+            </div>
+
+            <div class="grid form-stage__group form-stage__group--secondary span">
+                <label class="field">
+                    <span class="field__label">Piso</span>
+                    <input class="control" type="text" formControlName="floor" placeholder="Piso" />
+                </label>
+                <label class="field">
+                    <span class="field__label">Depto</span>
+                    <input class="control" type="text" formControlName="apartment" placeholder="Depto" />
+                </label>
+                <label class="field span">
+                    <span class="field__label">Referencia</span>
+                    <input class="control span" type="text" formControlName="reference" placeholder="Referencia" />
+                </label>
+            </div>
+        </form>
+
+        <div *ngIf="step===4" class="wizard-step sale-stage">
+            <div class="wizard-step__head">
+                <span class="wizard-step__eyebrow">Paso 4</span>
+                <h2>Datos de la venta</h2>
+                <p>Configura la operacion, resuelve el cobro y arma el borrador de productos antes de pasar a la asignacion final.</p>
+            </div>
+
+            <section class="sale-stage__section">
+                <div class="sale-stage__section-head">
+                    <span class="sale-stage__section-kicker">Configuracion</span>
+                    <strong>Contexto de venta</strong>
+                </div>
+                <form class="grid" [formGroup]="saleForm">
+                    <label class="field">
+                        <span class="field__label">Sucursal</span>
+                        <select class="control" formControlName="branchId" (change)="handleBranchChange()">
+                            <option value="">Sucursal</option>
+                            <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span class="field__label">Estado de venta</span>
+                        <select class="control" formControlName="idSaleStatus">
+                            <option [ngValue]="1">En espera</option>
+                            <option [ngValue]="2">Pagada</option>
+                        </select>
+                    </label>
+                    <div class="field">
+                        <span class="field__label">Modalidad de entrega</span>
+                        <label class="toggle-check">
+                            <input type="checkbox" formControlName="hasDelivery" (change)="handleDeliveryToggle()" />
+                            <span class="toggle-check__track"></span>
+                            <span class="toggle-check__text">{{ requiresDelivery ? 'Con envio' : 'Retiro / sin envio' }}</span>
+                        </label>
+                    </div>
+                </form>
+            </section>
+
+            <section class="sale-stage__section sale-stage__section--payment">
+                <div class="sale-stage__section-head">
+                    <span class="sale-stage__section-kicker">Cobro</span>
+                    <strong>Pago integrado</strong>
+                </div>
+                <app-sale-payment-inline
+                    [total]="total"
+                    [statusId]="saleForm.get('idSaleStatus')?.value ?? 1"
+                    [products]="products"
+                    [cashDrawers]="cashDrawers"
+                    [state]="paymentState"
+                    [cashDrawerId]="saleForm.get('cashDrawerId')?.value ?? null"
+                    [banks]="banks"
+                    headline="Cobro integrado en la venta"
+                    description="Carga el pago principal, combina medios si hace falta y registra canjes sin salir del paso de venta."
+                    (cashDrawerIdChange)="setCashDrawerId($event)">
+                </app-sale-payment-inline>
+            </section>
+
+            <section class="sale-stage__section sale-stage__section--products">
+                <div class="row row--product">
+                    <div class="toolbar__lead">
+                        <span class="sale-stage__section-kicker">Productos</span>
+                        <strong class="sale-stage__section-title">Borrador de items</strong>
+                        <span class="picker-summary">Abri el selector para buscar stock disponible y cargar cantidades.</span>
+                    </div>
+                    <button *ngIf="auth.hasPermission(permissionCodes.salesCreate)" class="btn btn--secondary" type="button"
+                        (click)="openProductModal()">Buscar y agregar productos</button>
+                    <span class="picker-summary" *ngIf="selectedProductsCount > 0">{{ selectedProductsCount }} producto(s)
+                        seleccionado(s)</span>
+                </div>
+
+                <table *ngIf="draftItems.length>0" class="table table--draft">
+                    <tr *ngFor="let item of draftItems">
+                        <td>{{ item.product.brand }} / {{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td *ngIf="canOverridePrice; else staticFullPrice">
+                            <input class="control control--compact" type="number" min="0" step="0.01"
+                                [value]="item.unitPriceOverride ?? (item.product.publicPrice ?? item.product.price)"
+                                (change)="setDraftItemPrice(item, $any($event.target).value)" />
+                        </td>
+                        <ng-template #staticFullPrice>
+                            <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+                        </ng-template>
+                        <td>
+                            <button class="btn btn--ghost" type="button" (click)="removeItem(item.product.id)">Quitar</button>
+                        </td>
+                    </tr>
+                </table>
+            </section>
         </div>
 
-        <form *ngIf="isTransportStep" class="grid" [formGroup]="transportForm">
-            <h2 class="span">Paso 5. Asignacion de envio</h2>
-            <label class="field"><span class="field__label">Conductor</span><select class="control" formControlName="driverEmployeeId">
-                <option value="">Seleccionar conductor</option>
-                <option *ngFor="let driver of activeDrivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
-            </select></label>
-            <label class="field"><span class="field__label">Vehiculo</span><select class="control" formControlName="vehicleId">
-                <option value="">Seleccionar vehiculo</option>
-                <option *ngFor="let vehicle of activeVehicles" [value]="vehicle.id">{{ vehicle.plate }} / {{
-                    vehicle.model }}</option>
-            </select></label>
-            <label class="field span"><span class="field__label">Notas de envio</span><input class="control span" type="text" formControlName="notes" placeholder="Notas de envio" /></label>
+        <form *ngIf="isTransportStep" class="wizard-step form-stage" [formGroup]="transportForm">
+            <div class="wizard-step__head span">
+                <span class="wizard-step__eyebrow">Paso 5</span>
+                <h2>Asignacion de envio</h2>
+                <p>Confirma quien entrega, con que vehiculo y cualquier nota operativa antes del cierre.</p>
+            </div>
+
+            <label class="field">
+                <span class="field__label">Conductor</span>
+                <select class="control" formControlName="driverEmployeeId">
+                    <option value="">Seleccionar conductor</option>
+                    <option *ngFor="let driver of activeDrivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
+                </select>
+            </label>
+            <label class="field">
+                <span class="field__label">Vehiculo</span>
+                <select class="control" formControlName="vehicleId">
+                    <option value="">Seleccionar vehiculo</option>
+                    <option *ngFor="let vehicle of activeVehicles" [value]="vehicle.id">{{ vehicle.plate }} / {{ vehicle.model }}</option>
+                </select>
+            </label>
+            <label class="field span">
+                <span class="field__label">Notas de envio</span>
+                <input class="control span" type="text" formControlName="notes" placeholder="Notas de envio" />
+            </label>
         </form>
 
-        <div *ngIf="isConfirmationStep" class="block">
-            <h2>Paso {{ confirmationStepNumber }}. Confirmacion</h2>
-            <div class="grid">
-                <button type="button" class="card" (click)="jumpToSummaryStep('customer')"><strong>{{
-                        summaryCustomerName }}</strong><span>{{ summaryDocument }}</span><span>{{ summaryEmail
-                        }}</span></button>
-                <button type="button" class="card" (click)="jumpToSummaryStep('address')"><strong>{{ summaryAddressLine
-                        }}</strong><span>{{ summaryAddressLocation }}</span></button>
-                <button type="button" class="card" (click)="jumpToSummaryStep('sale')"><strong>{{ isPaid ? 'Pagada' :
-                        'En espera' }}</strong><span>{{ requiresDelivery ? 'Con envio' : 'Retiro / sin envio'
-                        }}</span><span>{{ draftItems.length }} item(s)</span></button>
-                <button *ngIf="requiresDelivery" type="button" class="card"
-                    (click)="jumpToSummaryStep('transport')"><strong>{{ selectedDriverName }}</strong><span>{{
-                        selectedVehicleName }}</span><span>{{ transportForm.get('notes')?.value || 'Sin notas'
-                        }}</span></button>
-                <button type="button" class="card span" (click)="jumpToSummaryStep('sale')"><strong>{{ total |
-                        currency:'USD':'symbol':'1.2-2' }}</strong><span>{{ selectedBranchName }}</span><span>{{
-                        paymentMethodPreview }} · {{ paymentCoverage | currency:'USD':'symbol':'1.2-2' }} cobrados · {{ selectedDrawerName }}</span></button>
+        <div *ngIf="isConfirmationStep" class="wizard-step confirmation-stage">
+            <div class="wizard-step__head">
+                <span class="wizard-step__eyebrow">Paso {{ confirmationStepNumber }}</span>
+                <h2>Confirmacion</h2>
+                <p>Revisa la operacion completa. Las tarjetas funcionan como accesos directos para corregir antes de confirmar.</p>
+            </div>
+
+            <div class="grid confirmation-stage__grid">
+                <button type="button" class="card" (click)="jumpToSummaryStep('customer')">
+                    <strong>{{ summaryCustomerName }}</strong>
+                    <span>{{ summaryDocument }}</span>
+                    <span>{{ summaryEmail }}</span>
+                </button>
+                <button type="button" class="card" (click)="jumpToSummaryStep('address')">
+                    <strong>{{ summaryAddressLine }}</strong>
+                    <span>{{ summaryAddressLocation }}</span>
+                </button>
+                <button type="button" class="card" (click)="jumpToSummaryStep('sale')">
+                    <strong>{{ isPaid ? 'Pagada' : 'En espera' }}</strong>
+                    <span>{{ requiresDelivery ? 'Con envio' : 'Retiro / sin envio' }}</span>
+                    <span>{{ draftItems.length }} item(s)</span>
+                </button>
+                <button *ngIf="requiresDelivery" type="button" class="card" (click)="jumpToSummaryStep('transport')">
+                    <strong>{{ selectedDriverName }}</strong>
+                    <span>{{ selectedVehicleName }}</span>
+                    <span>{{ transportForm.get('notes')?.value || 'Sin notas' }}</span>
+                </button>
+                <button type="button" class="card card--summary span" (click)="jumpToSummaryStep('sale')">
+                    <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
+                    <span>{{ selectedBranchName }}</span>
+                    <span>{{ paymentMethodPreview }} · {{ paymentCoverage | currency:'USD':'symbol':'1.2-2' }} cobrados · {{ selectedDrawerName }}</span>
+                </button>
             </div>
         </div>
 
@@ -173,16 +329,20 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let product of productSuggestions">
-                                <td><input type="checkbox"
+                                <td>
+                                    <input type="checkbox"
                                         [disabled]="availableForProduct(product.id) <= 0 && !isProductSelected(product.id)"
                                         [checked]="isProductSelected(product.id)"
-                                        (change)="toggleProductSelection(product, $any($event.target).checked)" /></td>
+                                        (change)="toggleProductSelection(product, $any($event.target).checked)" />
+                                </td>
                                 <td>{{ product.code }} | {{ product.brand }} - {{ product.name }}</td>
                                 <td>{{ availableForProduct(product.id) }}</td>
-                                <td><input class="control control--compact" type="number" min="1"
+                                <td>
+                                    <input class="control control--compact" type="number" min="1"
                                         [max]="availableForProduct(product.id)" [value]="selectionQuantity(product.id)"
                                         [disabled]="!isProductSelected(product.id)"
-                                        (input)="setSelectionQuantity(product.id, $any($event.target).value)" /></td>
+                                        (input)="setSelectionQuantity(product.id, $any($event.target).value)" />
+                                </td>
                             </tr>
                             <tr *ngIf="productSuggestions.length === 0">
                                 <td colspan="4">No hay coincidencias.</td>
@@ -198,10 +358,11 @@
             </div>
         </section>
 
-        <div class="footer"><button class="btn btn--secondary" type="button" [disabled]="step===1 || saving"
-                (click)="previousStep()">Anterior</button><button *ngIf="!isConfirmationStep" class="btn" type="button"
-                [disabled]="saving" (click)="nextStep()">Siguiente</button><button
-                *ngIf="isConfirmationStep && auth.hasPermission(permissionCodes.salesCreate)" class="btn" type="button"
-                [disabled]="saving" (click)="submit()">{{ saving ? 'Guardando...' : 'Confirmar venta' }}</button></div>
+        <div class="footer">
+            <button class="btn btn--secondary" type="button" [disabled]="step===1 || saving" (click)="previousStep()">Anterior</button>
+            <button *ngIf="!isConfirmationStep" class="btn" type="button" [disabled]="saving" (click)="nextStep()">Siguiente</button>
+            <button *ngIf="isConfirmationStep && auth.hasPermission(permissionCodes.salesCreate)" class="btn" type="button"
+                [disabled]="saving" (click)="submit()">{{ saving ? 'Guardando...' : 'Confirmar venta' }}</button>
+        </div>
     </section>
 </div>

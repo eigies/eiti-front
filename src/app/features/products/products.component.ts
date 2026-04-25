@@ -134,7 +134,8 @@ export class ProductsComponent implements OnInit {
   get invalidBulkRowsCount(): number {
     return this.products.filter(product => {
       const form = this.bulkEditForms[product.id];
-      return !!form && this.modifiedBulkProductIds.has(product.id) && form.invalid;
+      if (!form || !this.modifiedBulkProductIds.has(product.id)) return false;
+      return Object.values(form.controls).some(c => c.invalid && (c.dirty || c.touched));
     }).length;
   }
 
@@ -501,7 +502,7 @@ export class ProductsComponent implements OnInit {
 
     const invalidForms = modifiedProducts
       .map(product => this.bulkEditForms[product.id])
-      .filter((form): form is FormGroup => !!form && form.invalid);
+      .filter((form): form is FormGroup => !!form && Object.values(form.controls).some(c => c.invalid && (c.dirty || c.touched)));
 
     if (invalidForms.length > 0) {
       invalidForms.forEach(form => form.markAllAsTouched());

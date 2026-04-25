@@ -1,55 +1,76 @@
 <div class="page">
   <header class="hero">
-    <div class="eyebrow">_ BANCOS</div>
-    <h1>Administracion de bancos</h1>
-    <p>Gestion de bancos y planes de cuotas para pagos con tarjeta.</p>
+    <div class="hero__copy">
+      <div class="eyebrow">_ BANCOS</div>
+      <span class="hero__kicker">Workspace financiero</span>
+      <h1>Administracion de bancos</h1>
+      <p>Gestiona bancos y sus planes de cuotas para pagos con tarjeta desde una sola superficie de trabajo.</p>
+    </div>
   </header>
 
-  <!-- Create form -->
-  <section class="panel">
-    <div class="panel__header"><span>Nuevo banco</span></div>
+  <section class="panel panel--create">
+    <div class="panel__header panel__header--create">
+      <div>
+        <span class="panel__eyebrow">Etapa 1</span>
+        <span>Nuevo banco</span>
+      </div>
+    </div>
     <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="inline-form">
-      <input class="control" type="text" placeholder="Nombre del banco" formControlName="name" />
+      <label class="field field--grow">
+        <span class="field__label">Nombre del banco</span>
+        <input class="control" type="text" placeholder="Nombre del banco" formControlName="name" />
+      </label>
       <button class="btn btn--primary" type="submit" [disabled]="createForm.invalid || savingCreate">
         {{ savingCreate ? 'Guardando...' : 'Crear banco' }}
       </button>
     </form>
   </section>
 
-  <!-- Banks list -->
-  <section class="panel">
+  <section class="panel panel--list">
     <div class="panel__header">
-      <span>Bancos</span>
-      <span>{{ banks.length }}</span>
+      <div>
+        <span class="panel__eyebrow">Etapa 2</span>
+        <span>Bancos</span>
+      </div>
+      <span class="panel__count">{{ banks.length }}</span>
     </div>
+
     <div class="empty" *ngIf="banks.length === 0">No hay bancos registrados.</div>
+
     <div class="bank-list" *ngIf="banks.length > 0">
-      <div class="bank-item" *ngFor="let view of banks; trackBy: trackById">
-        <!-- Bank row -->
+      <article class="bank-item" *ngFor="let view of banks; trackBy: trackById" [class.bank-item--expanded]="view.expanded">
         <div class="bank-row" (click)="toggleExpand(view)">
           <div class="bank-row__info">
-            <span class="bank-row__name">{{ view.bank.name }}</span>
+            <div class="bank-row__primary">
+              <span class="bank-row__name">{{ view.bank.name }}</span>
+              <span class="bank-row__plans" *ngIf="view.bank.plans.length > 0">
+                {{ view.bank.plans.length }} plan{{ view.bank.plans.length !== 1 ? 'es' : '' }}
+              </span>
+            </div>
             <span [class]="view.bank.active ? 'badge badge--in badge--toggle' : 'badge badge--out badge--toggle'"
                   title="Clic para cambiar estado"
                   (click)="$event.stopPropagation(); toggleActive(view)">
               {{ view.bank.active ? 'Activo' : 'Inactivo' }}
             </span>
-            <span class="bank-row__plans" *ngIf="view.bank.plans.length > 0">
-              {{ view.bank.plans.length }} plan{{ view.bank.plans.length !== 1 ? 'es' : '' }}
-            </span>
           </div>
+
           <div class="bank-row__actions" (click)="$event.stopPropagation()">
             <button class="btn btn--ghost btn--sm" type="button" (click)="startEdit(view)">Editar</button>
-            <svg class="chevron" [class.chevron--open]="view.expanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg class="chevron" [class.chevron--open]="view.expanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
           </div>
         </div>
 
-        <!-- Expanded: edit form + plans -->
         <div class="bank-expand" *ngIf="view.expanded">
-          <!-- Edit form -->
-          <div class="bank-edit" *ngIf="editingBank?.id === view.bank.id">
+          <section class="expand-section bank-edit" *ngIf="editingBank?.id === view.bank.id">
+            <div class="expand-section__head">
+              <span class="expand-section__eyebrow">Banco</span>
+              <strong>Editar configuracion general</strong>
+            </div>
+
             <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="edit-form">
-              <label class="edit-field">
+              <label class="edit-field edit-field--grow">
                 <span class="edit-field__label">Nombre</span>
                 <input class="control" type="text" formControlName="name" />
               </label>
@@ -63,32 +84,41 @@
                 <button class="btn btn--ghost" type="button" (click)="cancelEdit()">Cancelar</button>
               </div>
             </form>
-          </div>
+          </section>
 
-          <!-- Installment plans -->
-          <div class="plans-section" *ngIf="planForms.has(view.bank.id)">
-            <div class="plans-section__title">Planes de cuotas (tarjeta)</div>
+          <section class="expand-section plans-section" *ngIf="planForms.has(view.bank.id)">
+            <div class="expand-section__head">
+              <span class="expand-section__eyebrow">Cuotas</span>
+              <strong>Planes de tarjeta</strong>
+            </div>
+
             <div class="plans-grid">
               <div class="plan-row" *ngFor="let cuotas of VALID_CUOTAS" [class.plan-row--active]="isPlanActive(view.bank, cuotas)">
-                <span class="plan-row__label">{{ cuotas }} cuota{{ cuotas > 1 ? 's' : '' }}</span>
+                <div class="plan-row__summary">
+                  <span class="plan-row__label">{{ cuotas }} cuota{{ cuotas > 1 ? 's' : '' }}</span>
+                  <span class="plan-row__state">{{ isPlanActive(view.bank, cuotas) ? 'Activo' : 'Inactivo' }}</span>
+                </div>
+
                 <label class="plan-field">
                   <span class="plan-field__label">Recargo %</span>
                   <input class="control control--sm" type="number" step="0.01" min="0" max="100"
                     [formControl]="getFormControl(view.bank.id, 'pct_' + cuotas)" />
                 </label>
+
                 <label class="toggle-row-inline">
                   <input type="checkbox" [formControl]="getFormControl(view.bank.id, 'active_' + cuotas)" />
                   <span class="toggle-row-inline__label">Activo</span>
                   <span class="toggle-row-inline__track"></span>
                 </label>
+
                 <button class="btn btn--ghost btn--sm" type="button" (click)="savePlan(view.bank.id, cuotas)" [disabled]="savingPlan">
                   Guardar
                 </button>
               </div>
             </div>
-          </div>
+          </section>
         </div>
-      </div>
+      </article>
     </div>
   </section>
 </div>
