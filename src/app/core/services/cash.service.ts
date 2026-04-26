@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CashDrawerResponse, CashSessionResponse, CashSessionSummaryResponse } from '../models/cash.models';
+import { CashDrawerResponse, CashSessionResponse, CashSessionSummaryResponse, StaleCashSessionResponse } from '../models/cash.models';
 
 @Injectable({ providedIn: 'root' })
 export class CashService {
@@ -59,5 +59,13 @@ export class CashService {
 
     getLastClosedSession(cashDrawerId: string): Observable<{ suggestedOpeningAmount: number }> {
         return this.http.get<{ suggestedOpeningAmount: number }>(`${this.sessionsBase}/last-closed?cashDrawerId=${cashDrawerId}`);
+    }
+
+    getStaleOpenSessions(): Observable<StaleCashSessionResponse[]> {
+        return this.http.get<StaleCashSessionResponse[]>(`${this.sessionsBase}/stale-open`);
+    }
+
+    assignCashDrawer(drawerId: string, userId: string | null): Observable<void> {
+        return this.http.patch<void>(`${this.drawersBase}/${drawerId}/assign`, { userId });
     }
 }

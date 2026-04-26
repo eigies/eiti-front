@@ -125,6 +125,9 @@ type CashSessionView = {
           </div>
 
         <div *ngIf="currentSession" class="session-card">
+          <div class="stale-alert" *ngIf="isCurrentSessionStale">
+            &#9888; Esta caja lleva mas de 20 horas abierta. Recorda cerrarla al final del turno.
+          </div>
           <div class="session-metrics">
             <div class="metric-inline">
               <span class="metric-inline__label">Abierta</span>
@@ -244,6 +247,8 @@ type CashSessionView = {
                       <th>Sentido</th>
                       <th>Monto</th>
                       <th>Medio de pago</th>
+                      <th>Codigo venta</th>
+                      <th>Usuario</th>
                       <th>Descripcion</th>
                     </tr>
                   </thead>
@@ -256,6 +261,8 @@ type CashSessionView = {
                       <td><span class="badge" [class.badge--in]="row.directionName === 'In'" [class.badge--out]="row.directionName === 'Out'">{{ translateDirection(row.directionName) }}</span></td>
                       <td>&#36;{{ row.amount | number: '1.2-2' }}</td>
                       <td>{{ row.paymentMethodLabel }}</td>
+                      <td><span class="sale-code-ref" *ngIf="row.saleCode">{{ row.saleCode }}</span><span *ngIf="!row.saleCode">-</span></td>
+                      <td><span class="username-ref" *ngIf="row.username">{{ row.username }}</span><span *ngIf="!row.username">-</span></td>
                       <td>{{ translateDescription(row.description) }}</td>
                     </tr>
                   </tbody>
@@ -431,6 +438,7 @@ type CashSessionView = {
     .drawer-chip__state{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft)}
     .drawer-chip--active{border-color:color-mix(in srgb,var(--amber) 42%, var(--border-2));background:color-mix(in srgb,var(--amber) 11%, transparent);color:var(--amber);box-shadow:0 0 0 2px color-mix(in srgb,var(--amber) 8%, transparent)}
     .drawer-chip--active .drawer-chip__state{color:color-mix(in srgb,var(--amber) 72%, white 28%)}
+    .stale-alert{padding:.72rem 1rem;border:1px solid color-mix(in srgb,var(--amber) 38%,var(--border-2));background:color-mix(in srgb,var(--amber) 8%,transparent);color:color-mix(in srgb,var(--amber) 85%,var(--text));font-family:'DM Mono',monospace;font-size:.74rem;border-radius:8px;letter-spacing:.04em}
     .session-card,.summary{display:grid;gap:1rem}.session-metrics,.summary{grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--border);background:var(--bg-soft);padding:.85rem 1rem;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem}
     .metric-inline{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap}
     .metric-inline__label{color:var(--text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
@@ -475,6 +483,8 @@ type CashSessionView = {
     .badge--type[data-type="CuentaCorrienteIncome"]{background:color-mix(in srgb,#14b8a6 12%, transparent);color:#14b8a6;border:1px solid color-mix(in srgb,#14b8a6 30%, transparent)}
     .badge--type[data-type="CuentaCorrienteCancellation"]{background:color-mix(in srgb,#f97316 12%, transparent);color:#f97316;border:1px solid color-mix(in srgb,#f97316 30%, transparent)}
     .history-table__row--clickable{cursor:pointer}.history-table__row--clickable:hover{background:color-mix(in srgb,#14b8a6 8%, transparent)}
+    .sale-code-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--amber);letter-spacing:.04em}
+    .username-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim);letter-spacing:.04em}
     .modal--cc-popup{max-width:520px}
     .cc-popup-header{padding:.75rem 1.35rem;border-bottom:1px solid var(--border)}
     .cc-popup-header__row{display:flex;align-items:center;gap:.75rem;margin-bottom:.25rem}
@@ -1289,9 +1299,11 @@ export class CashComponent implements OnInit {
         return this.salePaymentMethodsBySaleId.get(movement.referenceId) || 'Cargando...';
     }
 
-    getDisplayRows(session: CashSessionResponse): { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null }[] {
+    getDisplayRows(session: CashSessionResponse): { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null }[] {
         return session.movements.map(movement => {
             const refId = movement.referenceId ? String(movement.referenceId) : null;
+            const saleCode = movement.saleCode ?? null;
+            const username = movement.createdByUsername ?? null;
             const isSaleRelated = (movement.typeName === 'SaleIncome' || movement.typeName === 'SaleCancellation') && movement.referenceId;
             if (isSaleRelated) {
                 const sale = this.salesBySaleId.get(String(movement.referenceId));
@@ -1307,11 +1319,11 @@ export class CashComponent implements OnInit {
                         }),
                         ...activeTradeIns.map(t => `Canje: $${Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`)
                     ];
-                    return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId };
+                    return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId, saleCode, username };
                 }
             }
 
-            return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId };
+            return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username };
         });
     }
 
@@ -1466,6 +1478,12 @@ export class CashComponent implements OnInit {
 
     isClosedSession(statusName?: string | null): boolean {
         return (statusName || '').toLowerCase() === 'closed';
+    }
+
+    get isCurrentSessionStale(): boolean {
+        if (!this.currentSession) return false;
+        const hoursOpen = (Date.now() - new Date(this.currentSession.openedAt).getTime()) / (1000 * 60 * 60);
+        return hoursOpen >= 20;
     }
 
     handleCashDrawerBannerAction(): void {

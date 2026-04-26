@@ -7,7 +7,7 @@
 }
 
 .hero {
-  margin-bottom: 2rem;
+  margin-bottom: 1.35rem;
   animation: hero-in .55s cubic-bezier(.22,1,.36,1) both;
 }
 
@@ -19,10 +19,11 @@
 }
 
 .hero p {
-  margin: .75rem 0 0;
+  margin: .5rem 0 0;
   color: var(--text-soft);
   font-family: 'Crimson Pro', serif;
-  font-size: 1rem;
+  font-size: .95rem;
+  max-width: 40rem;
 }
 
 .eyebrow {
@@ -37,11 +38,12 @@
 .panel {
   background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1.35rem;
+  border-radius: 12px;
+  padding: 1.2rem 1.25rem;
   margin-bottom: 1.2rem;
   opacity: 0;
   animation: card-in .5s cubic-bezier(.22,1,.36,1) .15s both;
+  box-shadow: 0 14px 30px -28px rgba(39, 28, 9, .36), inset 0 1px 0 color-mix(in srgb, white 28%, transparent);
 }
 
 .panel__header {
@@ -67,7 +69,7 @@
   padding: .8rem .9rem;
   font-family: 'DM Mono', monospace;
   font-size: .84rem;
-  border-radius: 2px;
+  border-radius: 8px;
   outline: none;
   transition: border-color .2s ease, box-shadow .2s ease;
 }
@@ -78,8 +80,8 @@
 }
 
 .btn {
-  border-radius: 2px;
-  padding: .8rem 1rem;
+  border-radius: 8px;
+  padding: .78rem 1rem;
   font-family: 'DM Mono', monospace;
   font-size: .72rem;
   letter-spacing: .12em;
@@ -90,14 +92,16 @@
 
 .btn--primary {
   border: none;
-  background: var(--amber);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--amber) 88%, white 12%) 0%, color-mix(in srgb, var(--amber) 72%, black 28%) 100%);
   color: var(--bg);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 22%, transparent);
 }
 
 .btn--ghost {
-  background: transparent;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
   border: 1px solid var(--border-2);
   color: var(--text-dim);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
 }
 
 .btn--danger {
@@ -119,7 +123,7 @@
 }
 
 .btn--sm {
-  padding: .45rem .75rem;
+  padding: .5rem .8rem;
   font-size: .68rem;
 }
 
@@ -150,12 +154,14 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   align-items: end;
+  padding: .2rem 0;
 }
 
 .filter-form__actions {
   display: flex;
   gap: .5rem;
   align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .field {
@@ -176,6 +182,8 @@
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
 }
 
 .data-table {
@@ -203,13 +211,26 @@
   background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
 }
 
+.cell--code,
+.cell--amount,
+.cell--due {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.cell--bank,
+.cell--holder,
+.cell--sale {
+  color: var(--text-soft);
+}
+
 .data-row {
   cursor: pointer;
-  transition: background .15s;
+  transition: background .15s ease;
 }
 
 .data-row:hover {
-  background: color-mix(in srgb, var(--bg-panel) 60%, transparent);
+  background: color-mix(in srgb, var(--amber) 5%, var(--bg-panel));
 }
 
 .text-right {
@@ -219,8 +240,8 @@
 .sale-type-badge {
   display: inline-block;
   margin-left: .35rem;
-  padding: .1rem .4rem;
-  border-radius: 3px;
+  padding: .14rem .44rem;
+  border-radius: 999px;
   font-family: 'DM Mono', monospace;
   font-size: .6rem;
   letter-spacing: .06em;
@@ -233,8 +254,8 @@
 /* Badges */
 .badge {
   display: inline-block;
-  padding: .18rem .55rem;
-  border-radius: 20px;
+  padding: .22rem .62rem;
+  border-radius: 999px;
   font-family: 'DM Mono', monospace;
   font-size: .65rem;
   font-weight: 700;
@@ -288,12 +309,12 @@
 .modal {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 12px;
   width: 100%;
   max-width: 560px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, .24);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .24), inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
 }
 
 .modal__head {
@@ -313,16 +334,21 @@
 }
 
 .modal__close {
-  background: transparent;
-  border: none;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
   color: var(--text-soft);
   cursor: pointer;
   font-size: 1rem;
-  padding: .2rem .4rem;
+  padding: .34rem .46rem;
   line-height: 1;
+  border-radius: 8px;
 }
 
-.modal__close:hover { color: var(--text); }
+.modal__close:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--amber) 34%, var(--border));
+  background: color-mix(in srgb, var(--amber) 8%, var(--bg));
+}
 
 .modal__body {
   padding: 1.35rem;
@@ -341,16 +367,49 @@
 
 .cheque-detail__header {
   display: flex;
-  align-items: center;
-  gap: .75rem;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.cheque-detail__headline {
+  display: grid;
+  gap: .45rem;
 }
 
 .cheque-detail__num {
   font-family: 'DM Mono', monospace;
-  font-size: .9rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text);
+}
+
+.cheque-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+  min-width: 18rem;
+}
+
+.cheque-summary__item {
+  display: grid;
+  gap: .24rem;
+  padding: .72rem .82rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 10px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--amber) 6%, var(--bg)) 0%,
+    color-mix(in srgb, var(--bg) 90%, transparent) 100%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 20%, transparent);
+}
+
+.cheque-summary__item strong {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .88rem;
 }
 
 .cheque-detail__grid {
@@ -363,6 +422,10 @@
 .detail-field {
   display: grid;
   gap: .25rem;
+  padding: .78rem .86rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
 }
 
 .detail-field--full {
@@ -390,7 +453,7 @@
   gap: .5rem;
   flex-wrap: wrap;
   margin-top: 1rem;
-  padding-top: 1rem;
+  padding: 1rem 0 0;
   border-top: 1px solid var(--border);
 }
 
@@ -417,8 +480,22 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  .filter-form__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
   .cheque-detail__grid {
     grid-template-columns: 1fr;
+  }
+
+  .cheque-detail__header {
+    flex-direction: column;
+  }
+
+  .cheque-summary {
+    min-width: 0;
+    width: 100%;
   }
 
   .data-table th,
@@ -428,7 +505,20 @@
 }
 
 @media (max-width: 480px) {
+  .page {
+    padding: 1rem .85rem 1.5rem;
+  }
+
   .filter-form {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-form__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cheque-summary {
     grid-template-columns: 1fr;
   }
 }

@@ -1,0 +1,74 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">_ CAJAS</div>
+    <h1>Asignacion de cajas</h1>
+    <p>Asigna usuarios a cajas para controlar cuales pueden operar en cada una.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header"><span>Seleccionar sucursal</span></div>
+    <div class="panel__body">
+      <div class="branch-picker">
+        <label class="field">
+          <span>Sucursal</span>
+          <select
+            class="control"
+            [class.control--placeholder]="!selectedBranchId"
+            [(ngModel)]="selectedBranchId"
+            (ngModelChange)="onBranchChange()">
+            <option value="" disabled hidden>Selecciona una sucursal</option>
+            <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
+          </select>
+        </label>
+        <p class="branch-picker__hint">Elige la sucursal para revisar sus cajas activas y definir quién puede operarlas.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" *ngIf="selectedBranchId">
+    <div class="panel__header"><span>Cajas de la sucursal</span></div>
+
+    <div class="empty" *ngIf="loadingDrawers">Cargando cajas...</div>
+
+    <div class="empty" *ngIf="!loadingDrawers && drawers.length === 0">
+      No hay cajas activas para esta sucursal.
+    </div>
+
+    <div class="assignment-table" *ngIf="!loadingDrawers && drawers.length > 0">
+      <div class="assignment-row assignment-row--header">
+        <span class="assignment-col assignment-col--name">Caja</span>
+        <span class="assignment-col assignment-col--current">Usuario actual</span>
+        <span class="assignment-col assignment-col--select">Asignar usuario</span>
+        <span class="assignment-col assignment-col--action"></span>
+      </div>
+
+      <div class="assignment-row" *ngFor="let drawer of drawers">
+        <span class="assignment-col assignment-col--name">
+          <strong>{{ drawer.name }}</strong>
+        </span>
+        <span class="assignment-col assignment-col--current">
+          <span class="assigned-badge" [class.assigned-badge--empty]="!drawer.assignedUserId">
+            {{ getUserDisplayName(drawer.assignedUserId) }}
+          </span>
+        </span>
+        <span class="assignment-col assignment-col--select">
+          <select
+            class="control control--sm"
+            [(ngModel)]="drawerAssignments[drawer.id]">
+            <option value="">Sin asignar</option>
+            <option *ngFor="let user of users" [value]="user.id">{{ user.username }}</option>
+          </select>
+        </span>
+        <span class="assignment-col assignment-col--action">
+          <button
+            class="btn btn--primary btn--sm"
+            type="button"
+            [disabled]="isSaving(drawer.id)"
+            (click)="saveAssignment(drawer)">
+            {{ isSaving(drawer.id) ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </span>
+      </div>
+    </div>
+  </section>
+</div>

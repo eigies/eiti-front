@@ -690,9 +690,13 @@
     align-items: center;
     gap: .75rem;
     min-height: 44px;
-    padding: .55rem .8rem;
-    border-radius: 2px;
+    padding: .62rem .88rem;
+    border-radius: 10px;
     cursor: pointer;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--bg) 92%, transparent),
+        color-mix(in srgb, var(--bg-soft) 96%, transparent));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
 }
 
 .toggle-check input {
@@ -710,6 +714,7 @@
     border-radius: 999px;
     background: color-mix(in srgb, var(--border-2) 75%, transparent);
     transition: background .2s ease;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
 }
 
 .toggle-check__track::after {
@@ -720,7 +725,7 @@
     width: .92rem;
     height: .92rem;
     border-radius: 50%;
-    background: var(--bg-panel);
+    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
     box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
     transition: transform .2s ease;
 }
@@ -738,7 +743,8 @@
     position: relative;
     z-index: 1;
     color: var(--text);
-    font-size: .76rem;
+    font-size: .74rem;
+    letter-spacing: .03em;
 }
 
 .table-wrap {
@@ -1410,9 +1416,9 @@
 
 .confirm-copy {
     margin: 0 0 .75rem;
-    color: var(--text-soft);
-    font-size: .82rem;
-    line-height: 1.45;
+    color: var(--text);
+    font-size: .88rem;
+    line-height: 1.5;
 }
 
 .confirm-meta {
@@ -1429,6 +1435,38 @@
 
 .confirm-meta strong {
     color: var(--text);
+}
+
+.confirm-warning {
+    display: grid;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.confirm-warning__badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: .24rem .58rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, #e2b36a 42%, var(--border));
+    background: color-mix(in srgb, #f4dfb5 44%, var(--bg));
+    color: color-mix(in srgb, #9b6c22 78%, var(--text) 22%);
+    font-family: 'DM Mono', monospace;
+    font-size: .6rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.confirm-meta--warning {
+    margin-bottom: 0;
+    padding: .78rem .85rem;
+    border-radius: 10px;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--amber) 8%, var(--bg)) 0%,
+        color-mix(in srgb, var(--bg) 92%, transparent) 100%);
+    border-color: color-mix(in srgb, var(--amber) 22%, var(--border-2));
+    color: var(--text-soft);
 }
 
 .transport-modal__summary {

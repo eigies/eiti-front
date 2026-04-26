@@ -121,6 +121,9 @@ export class SalesPageComponent implements OnInit {
     channelPopupSale: SaleResponse | null = null;
     channelPopupValue: SaleSourceChannel | null = null;
     savingChannel = false;
+    showDrawerOverrideConfirm = false;
+    pendingOverrideDrawerId: string | null = null;
+    pendingOverrideIsCreate = true;
 
     constructor(
         private fb: FormBuilder,
@@ -293,11 +296,46 @@ export class SalesPageComponent implements OnInit {
     }
 
     setCreateCashDrawerId(value: string | null): void {
+        const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
+        if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerAssign)) {
+            this.pendingOverrideDrawerId = value;
+            this.pendingOverrideIsCreate = true;
+            this.showDrawerOverrideConfirm = true;
+            return;
+        }
         this.lineForm.patchValue({ cashDrawerId: value ?? '' });
     }
 
     setEditCashDrawerId(value: string | null): void {
+        const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
+        if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerAssign)) {
+            this.pendingOverrideDrawerId = value;
+            this.pendingOverrideIsCreate = false;
+            this.showDrawerOverrideConfirm = true;
+            return;
+        }
         this.editMetaForm.patchValue({ cashDrawerId: value ?? '' });
+    }
+
+    confirmDrawerOverride(): void {
+        if (this.pendingOverrideIsCreate) {
+            this.lineForm.patchValue({ cashDrawerId: this.pendingOverrideDrawerId ?? '' });
+        } else {
+            this.editMetaForm.patchValue({ cashDrawerId: this.pendingOverrideDrawerId ?? '' });
+        }
+        this.showDrawerOverrideConfirm = false;
+        this.pendingOverrideDrawerId = null;
+    }
+
+    cancelDrawerOverride(): void {
+        const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? '';
+        if (this.pendingOverrideIsCreate) {
+            this.lineForm.patchValue({ cashDrawerId: assignedId });
+        } else {
+            this.editMetaForm.patchValue({ cashDrawerId: assignedId });
+        }
+        this.showDrawerOverrideConfirm = false;
+        this.pendingOverrideDrawerId = null;
     }
 
     availableForCreate(productId: string): number {
@@ -623,30 +661,15 @@ this.quickPayingSaleId = sale.id;
 
 this.cashService.listCashDrawers(sale.branchId).subscribe({
     next: drawers => {
-        const activeDrawers = drawers.filter(item => item.isActive);
+        const drawer = drawers.find(d => d.isActive && d.hasOpenSession) ?? null;
 
-        if (activeDrawers.length === 0) {
+        if (!drawer) {
             this.quickPayingSaleId = null;
-            this.toast.error('No hay una caja activa disponible para cobrar esta venta.');
+            this.toast.error('No hay una caja con sesion abierta disponible para cobrar esta venta.');
             return;
         }
 
-        forkJoin(
-            activeDrawers.map(drawer =>
-                this.cashService.getCurrentSession(drawer.id).pipe(
-                    map(() => drawer),
-                    catchError(() => of(null))
-                )
-            )
-        ).subscribe({
-            next: availableDrawers => {
-                const drawer = availableDrawers.find((item): item is CashDrawerResponse => item !== null) ?? null;
-
-                if (!drawer) {
-                    this.quickPayingSaleId = null;
-                    this.toast.error('No hay una caja con sesion abierta disponible para cobrar esta venta.');
-                    return;
-                }
+        {
 
                 const existingPayments = (sale.payments ?? []).map(payment => ({
                     idPaymentMethod: payment.idPaymentMethod,
@@ -697,12 +720,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cobrar la venta');
                     }
                 });
-            },
-            error: () => {
-                this.quickPayingSaleId = null;
-                this.toast.error('No se pudo validar la sesion de caja.');
-            }
-        });
+        }
     },
     error: err => {
         this.quickPayingSaleId = null;
@@ -1429,41 +1447,23 @@ handleDocumentClick(event: MouseEvent): void {
 
         this.cashService.listCashDrawers(branchId).subscribe({
         next: drawers => {
-            const activeDrawers = drawers.filter(drawer => drawer.isActive);
-
-            if (activeDrawers.length === 0) {
-                if (isCreate) {
-                    this.createDrawers = [];
-                } else {
-                    this.editDrawers = [];
+            const target = drawers.filter(d => d.isActive && d.hasOpenSession);
+            const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
+            if (isCreate) {
+                this.createDrawers = target;
+                if (target.length === 1) {
+                    this.setCreateCashDrawerId(target[0].id);
+                } else if (assignedId && target.some(d => d.id === assignedId)) {
+                    this.setCreateCashDrawerId(assignedId);
                 }
-                return;
+            } else {
+                this.editDrawers = target;
+                if (target.length === 1) {
+                    this.setEditCashDrawerId(target[0].id);
+                } else if (assignedId && target.some(d => d.id === assignedId)) {
+                    this.setEditCashDrawerId(assignedId);
+                }
             }
-
-            forkJoin(
-                activeDrawers.map(drawer =>
-                    this.cashService.getCurrentSession(drawer.id).pipe(
-                        map(() => drawer),
-                        catchError(() => of(null))
-                    )
-                )
-            ).subscribe({
-                next: availableDrawers => {
-                    const target = availableDrawers.filter((drawer): drawer is CashDrawerResponse => drawer !== null);
-                    if (isCreate) {
-                        this.createDrawers = target;
-                    } else {
-                        this.editDrawers = target;
-                    }
-                },
-                error: () => {
-                    if (isCreate) {
-                        this.createDrawers = [];
-                    } else {
-                        this.editDrawers = [];
-                    }
-                }
-            });
         },
         error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron cargar las cajas')
     });
@@ -1566,7 +1566,7 @@ if (form === this.editLineForm) {
         customerId,
         idSaleStatus: Number(raw.idSaleStatus ?? 1),
         hasDelivery: Boolean(raw.hasDelivery),
-        cashDrawerId: this.requiresCashDrawerFor(form, paymentState) ? raw.cashDrawerId || null : null,
+        cashDrawerId: raw.cashDrawerId || null,
         payments: normalizeSalePayments(paymentState),
         tradeIns: normalizeSaleTradeIns(paymentState),
         noDeliverySurchargeTotal: surcharge > 0 ? surcharge : null,
@@ -1672,8 +1672,9 @@ saveChannelPopup(): void {
         return false;
     }
 
-    if (this.requiresCashDrawerFor(form, paymentState) && !form.get('cashDrawerId')?.value) {
-        this.toast.error('Selecciona una caja abierta si hay efectivo en una venta pagada.');
+    const drawers = form === this.lineForm ? this.createDrawers : this.editDrawers;
+    if (hasCashPayment(paymentState) && drawers.length > 0 && !form.get('cashDrawerId')?.value) {
+        this.toast.error('Selecciona una caja para registrar el cobro en efectivo.');
         return false;
     }
 
@@ -1681,7 +1682,8 @@ saveChannelPopup(): void {
 }
 
     private requiresCashDrawerFor(form: FormGroup, paymentState: SalePaymentDraftState): boolean {
-    return Number(form.get('idSaleStatus')?.value ?? 1) === 2 && hasCashPayment(paymentState);
+    const drawers = form === this.lineForm ? this.createDrawers : this.editDrawers;
+    return drawers.length > 0;
 }
 
     private optionalNumber(value: unknown): number | null {

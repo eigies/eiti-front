@@ -1,6 +1,6 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
 import { ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../core/models/product.models';
@@ -20,7 +20,7 @@ type ProductModalMode = 'detail' | 'edit' | 'delete' | 'stock';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, OnboardingBannerComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, OnboardingBannerComponent],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })

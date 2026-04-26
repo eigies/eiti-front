@@ -6,18 +6,18 @@
     </header>
 
     <section class="overview-strip">
-        <article class="overview-card">
+        <article class="overview-card overview-card--support">
             <span class="overview-card__label">Conductores</span>
             <strong>{{ drivers.length }}</strong>
             <small>{{ activeDrivers.length }} activos</small>
         </article>
-        <article class="overview-card">
+        <article class="overview-card overview-card--focus" [class.overview-card--selected]="selectedVehicle">
             <span class="overview-card__label">Vehiculos cargados</span>
             <strong>{{ vehicles.length }}</strong>
             <small *ngIf="selectedVehicle">Seleccionado: {{ selectedVehicle.plate }}</small>
             <small *ngIf="!selectedVehicle">Sin vehiculo seleccionado</small>
         </article>
-        <article class="overview-card">
+        <article class="overview-card" [class.overview-card--focus]="selectedVehicle">
             <span class="overview-card__label">Actividad de flota</span>
             <strong>{{ logs.length }}</strong>
             <small *ngIf="selectedVehicle">Registros de {{ selectedVehicle.plate }}</small>
@@ -65,9 +65,11 @@
                             [class.vehicle-card--active]="vehicle.id === selectedVehicleId" (click)="selectVehicle(vehicle.id)">
                             <div class="vehicle-card__top">
                                 <strong>{{ vehicle.plate }}</strong>
-                                <span>{{ vehicle.model }}</span>
+                                <span class="vehicle-card__status" *ngIf="vehicle.id === selectedVehicleId">En foco</span>
+                                <span *ngIf="vehicle.id !== selectedVehicleId">{{ vehicle.model }}</span>
                             </div>
                             <div class="vehicle-card__meta">
+                                <span *ngIf="vehicle.id === selectedVehicleId" class="vehicle-card__model">{{ vehicle.model }}</span>
                                 <span>{{ vehicle.brand || 'Sin marca' }}<span *ngIf="vehicle.year"> · {{ vehicle.year }}</span></span>
                                 <span>{{ vehicle.fuelTypeName }}</span>
                                 <span>{{ vehicle.assignedDriverFullName || 'Sin conductor asignado' }}</span>
@@ -95,7 +97,7 @@
                     </span>
                 </button>
 
-                <div *ngIf="activityExpanded" class="panel__body">
+                <div *ngIf="activityExpanded" class="panel__body panel__body--activity">
                     <div class="activity-head">
                         <div class="activity-vehicle">
                             <strong>{{ selectedVehicle.plate }} / {{ selectedVehicle.model }}</strong>
@@ -190,7 +192,7 @@
 
                     <div *ngIf="drivers.length === 0" class="empty">Todavia no hay conductores.</div>
                     <div *ngIf="drivers.length > 0" class="table-cards table-cards--mobile">
-                        <article class="data-card" *ngFor="let driver of drivers">
+                        <article class="data-card data-card--driver" *ngFor="let driver of drivers">
                             <div class="data-card__row">
                                 <span>Nombre</span>
                                 <strong>{{ driver.fullName }}</strong>
@@ -205,7 +207,9 @@
                             </div>
                             <div class="data-card__row">
                                 <span>Estado</span>
-                                <strong>{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</strong>
+                                <strong>
+                                    <span class="status-badge" [class.status-badge--danger]="driver.isLicenseExpired">{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</span>
+                                </strong>
                             </div>
                             <div class="data-card__actions">
                                 <button type="button" class="btn btn--secondary" (click)="openEditModal(driver)">Editar</button>
@@ -227,7 +231,7 @@
                                 <td>{{ driver.fullName }}</td>
                                 <td>{{ driver.licenseNumber }}</td>
                                 <td>{{ driver.licenseExpiresAt ? (driver.licenseExpiresAt | date: 'shortDate') : '-' }}</td>
-                                <td>{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</td>
+                                <td><span class="status-badge" [class.status-badge--danger]="driver.isLicenseExpired">{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</span></td>
                                 <td class="table__actions">
                                     <button type="button" class="btn btn--icon" title="Editar conductor" (click)="openEditModal(driver)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

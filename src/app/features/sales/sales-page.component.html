@@ -469,7 +469,7 @@
               <p class="sale-card__eyebrow">{{ sale.code ? (sale.code + ' · ') : '' }}{{ branchName(sale.branchId) }}</p>
               <h2>{{ sale.customerFullName || sale.code || 'Venta' }}</h2>
               <p class="sale-card__address" *ngIf="sale.deliveryAddress || sale.customerAddress">{{ sale.deliveryAddress || sale.customerAddress }}</p>
-              <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s) · {{ salePaymentMethodSummary(sale) }}</p>
+              <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s)</p>
             </div>
             <div class="sale-card__amount-block">
               <span class="sale-card__amount-label">Total</span>
@@ -812,6 +812,28 @@
       <button class="btn" type="button" [disabled]="savingChannel" (click)="saveChannelPopup()">
         {{ savingChannel ? 'Guardando...' : 'Guardar canal' }}
       </button>
+    </div>
+  </div>
+</section>
+
+<!-- Drawer override confirmation modal -->
+<div class="modal-backdrop" *ngIf="showDrawerOverrideConfirm" (click)="cancelDrawerOverride()"></div>
+<section class="modal-panel" *ngIf="showDrawerOverrideConfirm">
+  <div class="modal-panel__card modal-panel__card--confirm" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>Cambiar caja</strong>
+      <button class="modal-panel__close" type="button" (click)="cancelDrawerOverride()">x</button>
+    </div>
+    <div class="confirm-warning">
+      <span class="confirm-warning__badge">Advertencia</span>
+      <p class="confirm-copy">Esta caja no es la que tenes asignada. ¿Queres continuar de todas formas?</p>
+      <div class="confirm-meta confirm-meta--warning">
+        <span>Si continuas, la venta se registrara con una caja distinta a la configurada para tu usuario.</span>
+      </div>
+    </div>
+    <div class="modal-panel__actions">
+      <button class="btn btn--ghost" type="button" (click)="cancelDrawerOverride()">Cancelar</button>
+      <button class="btn" type="button" (click)="confirmDrawerOverride()">Continuar</button>
     </div>
   </div>
 </section>

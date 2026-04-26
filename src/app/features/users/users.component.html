@@ -1,6 +1,6 @@
 <div class="page">
     <section class="hero">
-        <div>
+        <div class="hero__copy">
             <p class="eyebrow">_ ACCESOS</p>
             <h1>Usuarios y roles</h1>
             <p>Controla quien vende, quien opera caja y quien administra usuarios dentro de la compania.</p>
@@ -14,7 +14,7 @@
     <section class="layout">
         <article class="panel panel--create">
             <div class="panel__head">
-                <div>
+                <div class="panel__copy">
                     <span class="panel__kicker">Alta interna</span>
                     <h2>Crear usuario</h2>
                 </div>
@@ -36,12 +36,18 @@
                         placeholder="Minimo 6 caracteres" />
                 </label>
 
-                <div class="role-grid field--wide">
-                    <button *ngFor="let role of roles" type="button" class="role-chip"
-                        [class.role-chip--active]="isRoleSelected(role.code)" (click)="toggleCreateRole(role.code)">
-                        <strong>{{ role.name }}</strong>
-                        <span>{{ role.description }}</span>
-                    </button>
+                <div class="form__section field--wide">
+                    <div class="form__section-head">
+                        <span class="panel__kicker">Accesos</span>
+                        <span class="form__section-copy">Selecciona los roles base para este usuario.</span>
+                    </div>
+                    <div class="role-grid">
+                        <button *ngFor="let role of roles" type="button" class="role-chip"
+                            [class.role-chip--active]="isRoleSelected(role.code)" (click)="toggleCreateRole(role.code)">
+                            <strong>{{ role.name }}</strong>
+                            <span>{{ role.description }}</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form__actions">
@@ -54,7 +60,7 @@
 
         <article class="panel panel--list">
             <div class="panel__head panel__head--list">
-                <div>
+                <div class="panel__copy">
                     <span class="panel__kicker">Matriz activa</span>
                     <h2>Equipo habilitado</h2>
                 </div>
@@ -67,31 +73,40 @@
             <div class="user-stack" *ngIf="users.length > 0">
                 <article class="user-card" *ngFor="let user of users">
                     <div class="user-card__header">
-                        <div>
+                        <div class="user-card__identity">
                             <div class="user-card__title-row">
                                 <strong>{{ user.username }}</strong>
                                 <span class="status" [class.status--inactive]="!user.isActive">{{ user.isActive ?
                                     'Activo' : 'Inactivo' }}</span>
                             </div>
-                            <div class="user-card__meta">{{ user.email }} · {{ user.employeeName || 'Sin empleado
-                                vinculado' }}</div>
+                            <div class="user-card__meta">{{ user.email }} · {{ user.employeeName || 'Sin empleado vinculado' }}</div>
                         </div>
-                        <button class="btn" [class.btn--danger]="user.isActive" [class.btn--ghost]="!user.isActive"
-                            type="button" (click)="toggleStatus(user)">
-                            {{ user.isActive ? 'Desactivar' : 'Activar' }}
-                        </button>
+                        <div class="user-card__header-actions">
+                            <button class="btn" [class.btn--danger]="user.isActive" [class.btn--ghost]="!user.isActive"
+                                type="button" (click)="toggleStatus(user)">
+                                {{ user.isActive ? 'Desactivar' : 'Activar' }}
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="role-grid role-grid--compact">
-                        <button *ngFor="let role of roles" type="button" class="role-chip role-chip--compact"
-                            [class.role-chip--active]="hasRole(user, role.code)"
-                            (click)="toggleUserRole(user, role.code)">
-                            <strong>{{ role.name }}</strong>
-                            <span>{{ role.code }}</span>
-                        </button>
+                    <div class="user-card__section">
+                        <div class="user-card__section-head">
+                            <span class="panel__kicker">Roles</span>
+                        </div>
+                        <div class="role-grid role-grid--compact">
+                            <button *ngFor="let role of roles" type="button" class="role-chip role-chip--compact"
+                                [class.role-chip--active]="hasRole(user, role.code)"
+                                (click)="toggleUserRole(user, role.code)">
+                                <strong>{{ role.name }}</strong>
+                                <span>{{ role.code }}</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="user-card__footer">
+                        <div class="user-card__section-head">
+                            <span class="panel__kicker">Permisos</span>
+                        </div>
                         <div class="permission-list">
                             <span *ngFor="let permission of user.permissions">{{ permission }}</span>
                         </div>

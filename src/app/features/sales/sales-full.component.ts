@@ -65,6 +65,8 @@ export class SalesFullComponent implements OnInit {
   selectionQuantityByProductId = new Map<string, number>();
   paymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
   whatsAppEnabled = false;
+  showDrawerOverrideConfirm = false;
+  pendingOverrideDrawerId: string | null = null;
   readonly documentTypes = [{ value: 1, label: 'DNI' }, { value: 2, label: 'Pasaporte' }, { value: 3, label: 'LE' }, { value: 4, label: 'LC' }, { value: 5, label: 'Otro' }];
   readonly searchForm = this.fb.group({ query: [''] });
   readonly customerForm = this.fb.group({ firstName: ['', Validators.required], lastName: ['', Validators.required], email: ['', [Validators.required, Validators.email]], phone: ['', Validators.required], documentType: [1, Validators.required], documentNumber: ['', Validators.required], taxId: [''] });
@@ -106,7 +108,7 @@ export class SalesFullComponent implements OnInit {
   get paymentCoverage(): number { return salePaymentCoverage(this.paymentState); }
   get totalCardSurcharge(): number { return roundMoney(this.paymentState.payments.reduce((sum, p) => sum + (p.cardSurchargeAmt ?? 0), 0)); }
   get paymentRemaining(): number { return roundMoney(this.total + this.totalCardSurcharge - this.paymentCoverage); }
-  get requiresCashDrawer(): boolean { return this.isPaid && hasCashPayment(this.paymentState); }
+  get requiresCashDrawer(): boolean { return this.cashDrawers.length > 0; }
   get activeDrivers(): DriverResponse[] { return this.drivers.filter(driver => driver.isActive && !driver.isLicenseExpired); }
   get activeVehicles(): VehicleResponse[] { return this.vehicles.filter(vehicle => vehicle.isActive); }
   get total(): number { return this.draftItems.reduce((sum, item) => sum + item.total, 0); }
@@ -125,7 +127,7 @@ export class SalesFullComponent implements OnInit {
   get selectedDriverName(): string { return this.activeDrivers.find(driver => driver.employeeId === this.transportForm.get('driverEmployeeId')?.value)?.fullName || 'Sin conductor'; }
   get selectedVehicleName(): string { const vehicle = this.activeVehicles.find(item => item.id === this.transportForm.get('vehicleId')?.value); return vehicle ? `${vehicle.plate} / ${vehicle.model}` : 'Sin vehiculo'; }
   get selectedBranchName(): string { return this.branches.find(branch => branch.id === this.saleForm.get('branchId')?.value)?.name || 'Sin sucursal'; }
-  get selectedDrawerName(): string { return this.requiresCashDrawer ? this.cashDrawers.find(drawer => drawer.id === this.saleForm.get('cashDrawerId')?.value)?.name || 'Caja pendiente' : 'Sin cobro en caja'; }
+  get selectedDrawerName(): string { return this.cashDrawers.find(drawer => drawer.id === this.saleForm.get('cashDrawerId')?.value)?.name || (this.cashDrawers.length > 0 ? 'Caja pendiente' : 'Sin caja abierta'); }
   get paymentMethodPreview(): string { return paymentMethodSummary(normalizeSalePayments(this.paymentState), normalizeSaleTradeIns(this.paymentState)); }
 
   setCustomerMode(mode: 'existing' | 'new'): void { this.customerMode = mode; if (mode === 'new') { this.selectedExistingCustomer = null; } }
@@ -181,28 +183,13 @@ export class SalesFullComponent implements OnInit {
 
     this.cashService.listCashDrawers(branchId).subscribe({
       next: drawers => {
-        const activeDrawers = drawers.filter(drawer => drawer.isActive);
-
-        if (activeDrawers.length === 0) {
-          this.cashDrawers = [];
-          return;
+        this.cashDrawers = drawers.filter(d => d.isActive && d.hasOpenSession);
+        const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
+        if (this.cashDrawers.length === 1) {
+          this.setCashDrawerId(this.cashDrawers[0].id);
+        } else if (assignedId && this.cashDrawers.some(d => d.id === assignedId)) {
+          this.setCashDrawerId(assignedId);
         }
-
-        forkJoin(
-          activeDrawers.map(drawer =>
-            this.cashService.getCurrentSession(drawer.id).pipe(
-              map(() => drawer),
-              catchError(() => of(null))
-            )
-          )
-        ).subscribe({
-          next: availableDrawers => {
-            this.cashDrawers = availableDrawers.filter((drawer): drawer is CashDrawerResponse => drawer !== null);
-          },
-          error: () => {
-            this.cashDrawers = [];
-          }
-        });
       },
       error: () => {
         this.cashDrawers = [];
@@ -251,7 +238,28 @@ export class SalesFullComponent implements OnInit {
   jumpToStep(targetStep: number): void { if (this.canJumpToStep(targetStep)) { this.step = targetStep; } }
   jumpToSummaryStep(section: 'customer' | 'address' | 'sale' | 'transport'): void { if (section === 'customer') { this.step = this.customerMode === 'existing' ? 1 : 2; return; } if (section === 'address') { this.step = this.customerMode === 'existing' ? 1 : 3; return; } if (section === 'transport' && this.requiresDelivery) { this.step = 5; return; } this.step = 4; }
   nextStep(): void { if (!this.validateCurrentStep()) { return; } this.step = Math.min(this.totalSteps, this.step + 1); }
-  setCashDrawerId(value: string | null): void { this.saleForm.patchValue({ cashDrawerId: value ?? '' }); }
+  setCashDrawerId(value: string | null): void {
+    const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
+    if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerAssign)) {
+      this.pendingOverrideDrawerId = value;
+      this.showDrawerOverrideConfirm = true;
+      return;
+    }
+    this.saleForm.patchValue({ cashDrawerId: value ?? '' });
+  }
+
+  confirmDrawerOverride(): void {
+    this.saleForm.patchValue({ cashDrawerId: this.pendingOverrideDrawerId ?? '' });
+    this.showDrawerOverrideConfirm = false;
+    this.pendingOverrideDrawerId = null;
+  }
+
+  cancelDrawerOverride(): void {
+    const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? '';
+    this.saleForm.patchValue({ cashDrawerId: assignedId });
+    this.showDrawerOverrideConfirm = false;
+    this.pendingOverrideDrawerId = null;
+  }
 
   submit(): void {
     if (!this.validateCurrentStep()) { return; }
@@ -351,7 +359,7 @@ export class SalesFullComponent implements OnInit {
       customerId,
       idSaleStatus: Number(raw.idSaleStatus ?? 1),
       hasDelivery: Boolean(raw.hasDelivery),
-      cashDrawerId: this.requiresCashDrawer ? raw.cashDrawerId || null : null,
+      cashDrawerId: raw.cashDrawerId || null,
       payments,
       tradeIns,
       details: this.draftItems.map(item => ({ productId: item.product.id, quantity: item.quantity, ...(this.canOverridePrice && item.unitPriceOverride !== undefined ? { unitPrice: item.unitPriceOverride } : {}) }))
@@ -389,8 +397,8 @@ export class SalesFullComponent implements OnInit {
       return false;
     }
 
-    if (this.requiresCashDrawer && !this.saleForm.get('cashDrawerId')?.value) {
-      this.toast.error('Selecciona una caja con sesion abierta si hay efectivo en una venta pagada.');
+    if (hasCashPayment(this.paymentState) && this.cashDrawers.length > 0 && !this.saleForm.get('cashDrawerId')?.value) {
+      this.toast.error('Selecciona una caja para registrar el cobro en efectivo.');
       return false;
     }
 

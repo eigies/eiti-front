@@ -19,6 +19,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   sidebarOpen = false;
   salesMenuOpen = false;
   clientsMenuOpen = false;
+  cashMenuOpen = false;
 
   constructor(
     public auth: AuthService,
@@ -30,6 +31,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.salesMenuOpen = this.router.url.startsWith('/sales');
     this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
+    this.cashMenuOpen = this.router.url.startsWith('/cash');
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -39,6 +41,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (event.url.startsWith('/customers') || event.url.startsWith('/clients')) {
           this.clientsMenuOpen = true;
+        }
+        if (event.url.startsWith('/cash')) {
+          this.cashMenuOpen = true;
         }
       }
     });
@@ -83,6 +88,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleClientsMenu(): void {
     this.clientsMenuOpen = !this.clientsMenuOpen;
+  }
+
+  toggleCashMenu(): void {
+    this.cashMenuOpen = !this.cashMenuOpen;
+  }
+
+  get isCashRouteActive(): boolean {
+    return this.router.url.startsWith('/cash');
   }
 
   get isSalesRouteActive(): boolean {

@@ -97,7 +97,8 @@ export class AuthService {
             email: parsed.email ?? '',
             token: parsed.token ?? '',
             roles: parsed.roles ?? [],
-            permissions: parsed.permissions ?? []
+            permissions: parsed.permissions ?? [],
+            assignedCashDrawerId: parsed.assignedCashDrawerId ?? null
         };
     }
 }

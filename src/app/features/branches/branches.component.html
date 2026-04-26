@@ -14,10 +14,14 @@
     <section class="panel">
         <div class="panel__header"><span>Nueva sucursal</span></div>
         <form class="inline-form" [formGroup]="createForm" (ngSubmit)="createBranch()">
-            <input class="control" type="text" placeholder="Nombre" formControlName="name" />
-            <input class="control" type="text" placeholder="Codigo" formControlName="code" />
-            <input class="control" type="text" placeholder="Direccion" formControlName="address" />
-            <button class="btn btn--primary" type="submit" [disabled]="savingCreate">Crear sucursal</button>
+            <div class="inline-form__fields">
+                <input class="control" type="text" placeholder="Nombre" formControlName="name" />
+                <input class="control" type="text" placeholder="Codigo" formControlName="code" />
+                <input class="control" type="text" placeholder="Direccion" formControlName="address" />
+            </div>
+            <div class="inline-form__actions">
+                <button class="btn btn--primary" type="submit" [disabled]="savingCreate">Crear sucursal</button>
+            </div>
         </form>
     </section>
 
@@ -29,11 +33,17 @@
                 <button type="button" class="branch-card__summary" (click)="toggleBranch(item.branch.id)">
                     <div class="branch-card__headline">
                         <strong>{{ item.branch.name }}</strong>
-                        <span>{{ item.branch.code || 'Sin codigo' }}</span>
+                        <span class="branch-card__code">{{ item.branch.code || 'Sin codigo' }}</span>
                     </div>
                     <div class="branch-card__metrics">
-                        <span>Ventas: {{ item.branch.salesCount }}</span>
-                        <span>Valor de caja: &#36;{{ item.branch.cashValue | number: '1.2-2' }}</span>
+                        <span class="branch-metric">
+                            <small>Ventas</small>
+                            <strong>{{ item.branch.salesCount }}</strong>
+                        </span>
+                        <span class="branch-metric">
+                            <small>Valor de caja</small>
+                            <strong>&#36;{{ item.branch.cashValue | number: '1.2-2' }}</strong>
+                        </span>
                     </div>
                 </button>
 

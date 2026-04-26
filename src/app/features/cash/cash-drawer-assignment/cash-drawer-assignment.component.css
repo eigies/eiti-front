@@ -1,0 +1,278 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 2.5rem;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+}
+
+.hero {
+  margin-bottom: 1.25rem;
+  animation: hero-in .55s cubic-bezier(.22,1,.36,1) both;
+}
+
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .14em;
+  color: var(--amber);
+  margin-bottom: .45rem;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 700;
+  margin: 0 0 .35rem;
+  color: var(--text);
+}
+
+.hero p {
+  font-size: .92rem;
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 38rem;
+  font-family: 'Crimson Pro', serif;
+}
+
+.panel {
+  background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  box-shadow: 0 16px 34px -28px rgba(0, 0, 0, .24), inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+  opacity: 0;
+  animation: card-in .5s cubic-bezier(.22,1,.36,1) .15s both;
+}
+
+.panel__header {
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: .85rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--bg) 72%, transparent),
+    color-mix(in srgb, var(--bg-panel) 96%, transparent));
+}
+
+.panel__body {
+  padding: 1rem 1.1rem;
+}
+
+.branch-picker {
+  display: grid;
+  gap: .55rem;
+  max-width: 32rem;
+}
+
+.branch-picker__hint {
+  margin: 0;
+  color: var(--text-soft);
+  font-family: 'Crimson Pro', serif;
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: .38rem;
+}
+
+.field span {
+  font-size: .66rem;
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+.control {
+  font-family: 'DM Mono', monospace;
+  font-size: .82rem;
+  padding: .72rem .82rem;
+  background: var(--bg);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  color: var(--text);
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.control:hover {
+  border-color: color-mix(in srgb, var(--amber) 24%, var(--border-2));
+}
+
+.control:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--amber) 42%, var(--border-2));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+.control--placeholder {
+  color: var(--text-dim);
+}
+
+.control--sm {
+  font-size: .8rem;
+  padding: .62rem .72rem;
+}
+
+.empty {
+  padding: 1.6rem 1.25rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: .8rem;
+  font-family: 'DM Mono', monospace;
+}
+
+.assignment-table {
+  padding: .2rem 0;
+}
+
+.assignment-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(170px, 1fr) minmax(220px, 1.3fr) auto;
+  gap: .9rem;
+  align-items: center;
+  padding: .9rem 1.1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 92%, transparent);
+  background: color-mix(in srgb, var(--bg-panel) 84%, transparent);
+}
+
+.assignment-row:last-child {
+  border-bottom: none;
+}
+
+.assignment-row--header {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--bg) 68%, transparent),
+    color-mix(in srgb, var(--bg-panel) 94%, transparent));
+  font-family: 'DM Mono', monospace;
+  font-size: .66rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.assignment-col--name strong {
+  font-family: 'DM Mono', monospace;
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.assignment-col--current {
+  font-size: .82rem;
+}
+
+.assignment-col--action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.assigned-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 2rem;
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  padding: .26rem .58rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 14%, var(--bg));
+  color: color-mix(in srgb, var(--success) 62%, white 38%);
+  border: 1px solid color-mix(in srgb, var(--success) 26%, var(--border));
+}
+
+.assigned-badge--empty {
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  color: var(--text-dim);
+  border-color: color-mix(in srgb, var(--border) 92%, transparent);
+}
+
+.btn {
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  font-weight: 400;
+  padding: .8rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transition: transform .15s ease, box-shadow .2s ease, filter .2s ease, background .2s ease;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--amber) 90%, white 10%) 0%,
+    color-mix(in srgb, var(--amber) 78%, black 22%) 100%);
+  color: var(--bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 20%, transparent);
+}
+
+.btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: saturate(1.03);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 30%, transparent);
+}
+
+.btn--sm {
+  font-size: .68rem;
+  padding: .56rem .82rem;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 1rem .85rem 1.5rem;
+  }
+
+  .assignment-row {
+    grid-template-columns: 1fr;
+    gap: .55rem;
+    padding: .92rem;
+    border: 1px solid color-mix(in srgb, var(--border) 92%, transparent);
+    border-radius: 10px;
+    margin: 0 .85rem .75rem;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-panel) 92%, transparent),
+      color-mix(in srgb, var(--bg) 90%, transparent));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+  }
+
+  .assignment-row--header {
+    display: none;
+  }
+
+  .assignment-col--action {
+    justify-content: flex-start;
+  }
+
+  .assignment-col--action .btn,
+  .assignment-col--select .control {
+    width: 100%;
+  }
+}
+
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

@@ -86,6 +86,13 @@ export const routes: Routes = [
             import('./features/cash/cash.component').then(m => m.CashComponent)
     },
     {
+        path: 'cash/assignment',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.cashDrawerAssign },
+        loadComponent: () =>
+            import('./features/cash/cash-drawer-assignment/cash-drawer-assignment.component').then(m => m.CashDrawerAssignmentComponent)
+    },
+    {
         path: 'users',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.usersManage },

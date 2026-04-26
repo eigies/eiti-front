@@ -71,7 +71,7 @@ export class SalePaymentInlineComponent {
     }
 
     get requiresCashDrawer(): boolean {
-        return this.statusId === SALE_STATUS_PAID && hasCashPayment(this.state);
+        return this.cashDrawers.length > 1;
     }
 
     get normalizedPaymentsCount(): number {

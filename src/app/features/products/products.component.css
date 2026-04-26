@@ -598,6 +598,10 @@
   transition: border-color 0.15s ease;
 }
 
+.ti[type=number]::-webkit-inner-spin-button,
+.ti[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.ti[type=number] { -moz-appearance: textfield; }
+
 .ti:focus { border-color: var(--amber); box-shadow: 0 0 0 2px var(--surface-glow); }
 .ti--amber { color: var(--amber); }
 .ti--r { text-align: right; }

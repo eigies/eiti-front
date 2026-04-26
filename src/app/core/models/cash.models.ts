@@ -5,6 +5,8 @@ export interface CashDrawerResponse {
     isActive: boolean;
     createdAt: string;
     updatedAt?: string | null;
+    assignedUserId?: string | null;
+    hasOpenSession?: boolean;
 }
 
 export interface CashSessionMovementResponse {
@@ -18,6 +20,8 @@ export interface CashSessionMovementResponse {
     description: string;
     referenceType?: string | null;
     referenceId?: string | null;
+    saleCode?: string | null;
+    createdByUsername?: string | null;
 }
 
 export interface CashSessionResponse {
@@ -41,6 +45,13 @@ export interface PaymentMethodBreakdownItem {
     method: number;
     methodName: string;
     amount: number;
+}
+
+export interface StaleCashSessionResponse {
+    sessionId: string;
+    cashDrawerId: string;
+    openedAt: string;
+    hoursOpen: number;
 }
 
 export interface CashSessionSummaryResponse {

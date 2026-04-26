@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { CashService } from '../../../core/services/cash.service';
+import { PermissionCodes } from '../../../core/models/permission.models';
 
 @Component({
   selector: 'app-login',
@@ -22,11 +24,25 @@ export class LoginComponent {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private toast: ToastService
+    private toast: ToastService,
+    private cashService: CashService
   ) {
     this.form = this.fb.group({
       usernameOrEmail: ['', Validators.required],
       password: ['', Validators.required]
+    });
+  }
+
+  private checkStaleCashSessions(): void {
+    if (!this.auth.hasPermission(PermissionCodes.cashAccess)) return;
+    this.cashService.getStaleOpenSessions().subscribe({
+      next: (sessions) => {
+        if (sessions.length === 0) return;
+        const msg = sessions.length === 1
+          ? `Hay 1 caja abierta hace mas de 20 horas. Recorda cerrarla.`
+          : `Hay ${sessions.length} cajas abiertas hace mas de 20 horas. Recorda cerrarlas.`;
+        this.toast.show(msg, 'info', 9000);
+      }
     });
   }
 
@@ -44,6 +60,7 @@ export class LoginComponent {
     this.auth.login(this.form.value).subscribe({
       next: () => {
         this.toast.success('Bienvenido de vuelta');
+        this.checkStaleCashSessions();
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {

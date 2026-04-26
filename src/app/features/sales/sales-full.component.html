@@ -366,3 +366,19 @@
         </div>
     </section>
 </div>
+
+<!-- Drawer override confirmation modal -->
+<div class="modal-backdrop" *ngIf="showDrawerOverrideConfirm" (click)="cancelDrawerOverride()"></div>
+<section class="modal-panel" *ngIf="showDrawerOverrideConfirm">
+  <div class="modal-panel__card" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>Cambiar caja</strong>
+      <button class="modal-panel__close" type="button" (click)="cancelDrawerOverride()">x</button>
+    </div>
+    <p style="margin: 0 0 1.25rem; font-size: 0.9rem; color: var(--text-dim);">Esta caja no es la que tenes asignada. ¿Queres continuar de todas formas?</p>
+    <div class="modal-panel__actions">
+      <button class="btn btn--ghost" type="button" (click)="cancelDrawerOverride()">Cancelar</button>
+      <button class="btn" type="button" (click)="confirmDrawerOverride()">Continuar</button>
+    </div>
+  </div>
+</section>

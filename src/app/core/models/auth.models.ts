@@ -28,4 +28,5 @@ export interface AuthResponse {
     token: string;
     roles: string[];
     permissions: string[];
+    assignedCashDrawerId?: string | null;
 }

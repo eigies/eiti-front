@@ -61,13 +61,13 @@
         </thead>
         <tbody>
           <tr class="data-row" *ngFor="let c of cheques; trackBy: trackById" (click)="openDetail(c)">
-            <td>{{ c.numero }}</td>
-            <td>{{ c.bankName }}</td>
-            <td>{{ c.titular }}</td>
-            <td class="text-right">${{ c.monto | number:'1.2-2' }}</td>
-            <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+            <td class="cell cell--code">{{ c.numero }}</td>
+            <td class="cell cell--bank">{{ c.bankName }}</td>
+            <td class="cell cell--holder">{{ c.titular }}</td>
+            <td class="text-right cell cell--amount">${{ c.monto | number:'1.2-2' }}</td>
+            <td class="cell cell--due">{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
             <td><span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span></td>
-            <td>
+            <td class="cell cell--sale">
               <span *ngIf="c.saleCode">{{ c.saleCode }}</span>
               <span class="sale-type-badge" *ngIf="c.saleType">{{ c.saleType }}</span>
             </td>
@@ -88,8 +88,20 @@
       <ng-container *ngIf="!detailLoading && detailCheque as c">
         <div class="cheque-detail">
           <div class="cheque-detail__header">
-            <span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span>
-            <span class="cheque-detail__num">Cheque #{{ c.numero }}</span>
+            <div class="cheque-detail__headline">
+              <span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span>
+              <span class="cheque-detail__num">Cheque #{{ c.numero }}</span>
+            </div>
+            <div class="cheque-summary">
+              <div class="cheque-summary__item">
+                <span class="detail-field__label">Monto</span>
+                <strong>${{ c.monto | number:'1.2-2' }}</strong>
+              </div>
+              <div class="cheque-summary__item">
+                <span class="detail-field__label">Vencimiento</span>
+                <strong>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</strong>
+              </div>
+            </div>
           </div>
           <div class="cheque-detail__grid">
             <div class="detail-field">
@@ -139,7 +151,7 @@
             </button>
           </div>
           <div class="state-terminal" *ngIf="getNextStates(c.estado).length === 0">
-            Estado terminal — no hay transiciones disponibles.
+            Estado terminal - no hay transiciones disponibles.
           </div>
         </div>
       </ng-container>

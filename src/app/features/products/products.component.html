@@ -234,7 +234,7 @@
         <div class="pager">
           <span class="pager__info">{{ pageStart }}–{{ pageEnd }} de {{ totalProducts }}</span>
           <div class="pager__controls">
-            <label class="pager__size"><span class="f__l">Por pagina</span><select class="f__i f__i--sm" [value]="pageSize" (change)="changePageSize($any($event.target).value)"><option *ngFor="let option of pageSizeOptions" [value]="option">{{ option }}</option></select></label>
+            <label class="pager__size"><span class="f__l">Por pagina</span><select class="f__i f__i--sm" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)" [ngModelOptions]="{standalone:true}"><option *ngFor="let option of pageSizeOptions" [ngValue]="option">{{ option }}</option></select></label>
             <button class="btn btn--ghost btn--sm" type="button" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1">←</button>
             <span class="pager__page">{{ currentPage }} / {{ totalPages }}</span>
             <button class="btn btn--ghost btn--sm" type="button" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages">→</button>

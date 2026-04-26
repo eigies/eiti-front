@@ -13,7 +13,8 @@ export const PermissionCodes = {
     usersManage: 'users.manage',
     salesPriceOverride: 'sales.override_price',
     banksManage: 'banks.manage',
-    chequesManage: 'cheques.manage'
+    chequesManage: 'cheques.manage',
+    cashDrawerAssign: 'cash.drawer.assign'
 } as const;
 
 export type PermissionCode = typeof PermissionCodes[keyof typeof PermissionCodes];
