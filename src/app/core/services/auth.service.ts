@@ -64,10 +64,6 @@ export class AuthService {
         return !!this.currentUser?.permissions?.some(value => value === permission);
     }
 
-    hasRole(role: string): boolean {
-        return !!this.currentUser?.roles?.some(value => value === role);
-    }
-
     get currentUser(): AuthResponse | null {
         return this._currentUser$.value;
     }
@@ -98,7 +94,6 @@ export class AuthService {
                     profileId: profile.profileId ?? current.profileId ?? null,
                     profileName: profile.profileName ?? current.profileName ?? null,
                     permissions: profile.permissions ?? current.permissions ?? [],
-                    roles: profile.roles ?? current.roles ?? [],
                     assignedCashDrawerId: current.assignedCashDrawerId ?? null
                 };
 
@@ -130,7 +125,6 @@ export class AuthService {
             username: parsed.username ?? '',
             email: parsed.email ?? '',
             token: parsed.token ?? '',
-            roles: parsed.roles ?? [],
             profileId: parsed.profileId ?? null,
             profileName: parsed.profileName ?? null,
             permissions: parsed.permissions ?? [],

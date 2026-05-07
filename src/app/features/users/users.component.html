@@ -203,8 +203,18 @@
                                 <span class="panel__kicker">Matriz de permisos</span>
                                 <span class="form__section-copy">Selecciona el conjunto exacto de permisos que recibiran los usuarios asignados.</span>
                             </div>
+                            <div class="permission-filter" *ngIf="permissionCategories.length > 1">
+                                <button
+                                    *ngFor="let category of permissionCategories"
+                                    type="button"
+                                    class="permission-filter__chip"
+                                    [class.permission-filter__chip--active]="activePermissionCategory === category"
+                                    (click)="selectPermissionCategory(category)">
+                                    {{ category }}
+                                </button>
+                            </div>
                             <div class="role-grid">
-                                <button *ngFor="let permission of permissionCatalog" type="button" class="role-chip"
+                                <button *ngFor="let permission of filteredPermissionCatalog" type="button" class="role-chip"
                                     [class.role-chip--active]="isProfilePermissionSelected(permission.code)"
                                     (click)="toggleProfilePermission(permission.code)">
                                     <strong>{{ permission.label }}</strong>

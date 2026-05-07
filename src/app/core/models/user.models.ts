@@ -10,7 +10,6 @@ export interface UserResponse {
     permissions: string[];
     createdAt: string;
     lastLoginAt?: string | null;
-    roles?: string[];
 }
 
 export interface CreateUserRequest {

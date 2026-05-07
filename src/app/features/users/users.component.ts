@@ -37,9 +37,11 @@ export class UsersComponent implements OnInit {
   });
 
   readonly permissionCatalog = PermissionCatalog;
+  readonly permissionCategories = this.buildPermissionCategories();
   users: UserResponse[] = [];
   profiles: AccessProfileResponse[] = [];
   activeSection: 'admin' | 'profiles' = 'admin';
+  activePermissionCategory = 'Todas';
   loadingUsers = true;
   loadingProfiles = true;
   savingCreate = false;
@@ -97,6 +99,14 @@ export class UsersComponent implements OnInit {
     return this.selectedProfilePermissionCodes.size > 0
       ? `${this.selectedProfilePermissionCodes.size} permisos seleccionados`
       : 'Selecciona al menos un permiso.';
+  }
+
+  get filteredPermissionCatalog(): ReadonlyArray<{ code: string; label: string; description: string }> {
+    if (this.activePermissionCategory === 'Todas') {
+      return this.permissionCatalog;
+    }
+
+    return this.permissionCatalog.filter(permission => this.permissionCategoryOf(permission.label) === this.activePermissionCategory);
   }
 
   loadData(): void {
@@ -301,6 +311,10 @@ export class UsersComponent implements OnInit {
     this.activeSection = sectionId;
   }
 
+  selectPermissionCategory(category: string): void {
+    this.activePermissionCategory = category;
+  }
+
   toggleUserCollapse(userId: string): void {
     if (this.collapsedUserIds.has(userId)) {
       this.collapsedUserIds.delete(userId);
@@ -362,5 +376,17 @@ export class UsersComponent implements OnInit {
       ?? '';
     const exists = this.profiles.some(profile => profile.id === selectedProfileId);
     this.createForm.controls.profileId.setValue(exists ? selectedProfileId : this.profiles[0]?.id ?? '');
+  }
+
+  private buildPermissionCategories(): string[] {
+    const categories = this.permissionCatalog
+      .map(permission => this.permissionCategoryOf(permission.label))
+      .filter((category, index, all) => all.indexOf(category) === index);
+
+    return ['Todas', ...categories];
+  }
+
+  private permissionCategoryOf(label: string): string {
+    return label.split(':')[0]?.trim() || 'General';
   }
 }
