@@ -192,7 +192,10 @@
         <h2 *ngIf="modalSale">{{ modalSale.code || 'Venta' }} · {{ modalSale.customerFullName }}</h2>
         <h2 *ngIf="!modalSale && modalLoading">Cargando...</h2>
       </div>
-      <button class="modal-close" type="button" (click)="closeModal()">×</button>
+      <div class="modal-head__actions">
+        <button class="btn btn--ghost btn--sm" type="button" (click)="exportModalPdf()" [disabled]="!modalSale || modalLoading">Exportar PDF</button>
+        <button class="modal-close" type="button" (click)="closeModal()">×</button>
+      </div>
     </div>
 
     <div *ngIf="modalLoading" class="hint">Cargando...</div>

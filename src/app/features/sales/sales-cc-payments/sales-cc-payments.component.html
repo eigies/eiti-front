@@ -7,7 +7,6 @@
         <p class="head__meta">{{ sale.customerFullName }} · {{ sale.createdAt | date:'shortDate' }}</p>
       </div>
       <div class="head__actions">
-        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="!sale">Exportar PDF</button>
         <a class="btn btn--ghost" routerLink="/sales">Volver a ventas</a>
       </div>
     </div>

@@ -479,6 +479,13 @@ h2 {
     gap: .25rem;
 }
 
+.modal-head__actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-shrink: 0;
+}
+
 .modal-close {
     width: 2.1rem;
     height: 2.1rem;
