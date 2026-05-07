@@ -168,7 +168,7 @@ export class SalesPageComponent implements OnInit {
             vehicleId: ['', Validators.required],
             notes: ['']
         });
-        this.filterForm = this.fb.group({ dateFrom: [''], dateTo: [''], idSaleStatus: [''], sourceChannel: [''] });
+        this.filterForm = this.fb.group({ dateFrom: [''], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], hasDelivery: [''], deliveryAddress: [''] });
     }
 
     ngOnInit(): void {
@@ -297,7 +297,7 @@ export class SalesPageComponent implements OnInit {
 
     setCreateCashDrawerId(value: string | null): void {
         const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
-        if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerAssign)) {
+        if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerViewAll)) {
             this.pendingOverrideDrawerId = value;
             this.pendingOverrideIsCreate = true;
             this.showDrawerOverrideConfirm = true;
@@ -308,7 +308,7 @@ export class SalesPageComponent implements OnInit {
 
     setEditCashDrawerId(value: string | null): void {
         const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
-        if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerAssign)) {
+        if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerViewAll)) {
             this.pendingOverrideDrawerId = value;
             this.pendingOverrideIsCreate = false;
             this.showDrawerOverrideConfirm = true;
@@ -562,6 +562,19 @@ loadSales(): void {
             if (selectedChannel) {
                 filtered = filtered.filter(sale => sale.sourceChannel === selectedChannel);
             }
+            const hasDelivery = this.filterForm.get('hasDelivery')?.value;
+            if (hasDelivery === 'true') {
+                filtered = filtered.filter(sale => sale.hasDelivery);
+            } else if (hasDelivery === 'false') {
+                filtered = filtered.filter(sale => !sale.hasDelivery);
+            }
+            const addressQuery = (this.filterForm.get('deliveryAddress')?.value || '').trim().toLowerCase();
+            if (addressQuery) {
+                filtered = filtered.filter(sale =>
+                    (sale.deliveryAddress || '').toLowerCase().includes(addressQuery) ||
+                    (sale.customerAddress || '').toLowerCase().includes(addressQuery)
+                );
+            }
             this.sales = filtered;
             this.ensureSalesPageInRange();
             this.loadingSales = false;
@@ -581,7 +594,7 @@ beginEdit(sale: SaleResponse, presetPaid = false): void {
 
 this.editingSale = sale;
 this.createExpanded = false;
-this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: '', sourceChannel: sale.sourceChannel ?? null, deliveryAddress: sale.deliveryAddress ?? '' });
+this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: sale.cashDrawerId ?? '', sourceChannel: sale.sourceChannel ?? null, deliveryAddress: sale.deliveryAddress ?? '' });
 this.editItems = sale.details
     .map(detail => {
         const product = this.findProduct(detail.productId);
@@ -772,7 +785,7 @@ sendSaleWhatsApp(sale: SaleResponse, event?: Event): void {
 }
 
 requestCancelSale(sale: SaleResponse): void {
-    if (sale.idSaleStatus !== 1) {
+    if (sale.idSaleStatus !== 1 && sale.idSaleStatus !== 2) {
         return;
     }
 
@@ -1349,7 +1362,7 @@ applySaleFilters(): void {
 }
 
 clearSaleFilters(): void {
-    this.filterForm.reset({ dateFrom: '', dateTo: '', idSaleStatus: '', sourceChannel: '' });
+    this.filterForm.reset({ dateFrom: '', dateTo: '', idSaleStatus: '', sourceChannel: '', hasDelivery: '', deliveryAddress: '' });
     this.currentSalesPage = 1;
     this.loadSales();
 }
@@ -1450,8 +1463,11 @@ handleDocumentClick(event: MouseEvent): void {
 
         this.cashService.listCashDrawers(branchId).subscribe({
         next: drawers => {
-            const target = drawers.filter(d => d.isActive && d.hasOpenSession);
             const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
+            const canViewAllDrawers = this.auth.hasPermission(PermissionCodes.cashDrawerViewAll);
+            const target = drawers
+                .filter(d => d.isActive && d.hasOpenSession)
+                .filter(d => canViewAllDrawers || !assignedId || d.id === assignedId);
             if (isCreate) {
                 this.createDrawers = target;
                 if (target.length === 1) {
@@ -1612,7 +1628,7 @@ saveChannelPopup(): void {
         customerId: sale.customerId ?? null,
         idSaleStatus: sale.idSaleStatus,
         hasDelivery: sale.hasDelivery,
-        cashDrawerId: null,
+        cashDrawerId: sale.cashDrawerId ?? null,
         payments: (sale.payments ?? []).map(p => ({
             idPaymentMethod: p.idPaymentMethod,
             amount: p.amount,

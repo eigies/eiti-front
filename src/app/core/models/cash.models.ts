@@ -6,6 +6,7 @@ export interface CashDrawerResponse {
     createdAt: string;
     updatedAt?: string | null;
     assignedUserId?: string | null;
+    assignedUserIds?: string[];
     hasOpenSession?: boolean;
 }
 

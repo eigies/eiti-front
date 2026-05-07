@@ -37,8 +37,7 @@
     <div class="assignment-table" *ngIf="!loadingDrawers && drawers.length > 0">
       <div class="assignment-row assignment-row--header">
         <span class="assignment-col assignment-col--name">Caja</span>
-        <span class="assignment-col assignment-col--current">Usuario actual</span>
-        <span class="assignment-col assignment-col--select">Asignar usuario</span>
+        <span class="assignment-col assignment-col--select">Usuarios habilitados</span>
         <span class="assignment-col assignment-col--action"></span>
       </div>
 
@@ -46,19 +45,33 @@
         <span class="assignment-col assignment-col--name">
           <strong>{{ drawer.name }}</strong>
         </span>
-        <span class="assignment-col assignment-col--current">
-          <span class="assigned-badge" [class.assigned-badge--empty]="!drawer.assignedUserId">
-            {{ getUserDisplayName(drawer.assignedUserId) }}
-          </span>
-        </span>
+
         <span class="assignment-col assignment-col--select">
+          <div class="assigned-chips" *ngIf="assignedUsersFor(drawer.id).length > 0">
+            <span class="assigned-chip" *ngFor="let user of assignedUsersFor(drawer.id)">
+              <span class="assigned-chip__name">{{ user.username }}</span>
+              <button
+                type="button"
+                class="assigned-chip__remove"
+                (click)="toggleUser(drawer.id, user.id, false)">&#x2715;</button>
+            </span>
+          </div>
+
           <select
-            class="control control--sm"
-            [(ngModel)]="drawerAssignments[drawer.id]">
-            <option value="">Sin asignar</option>
-            <option *ngFor="let user of users" [value]="user.id">{{ user.username }}</option>
+            class="control control--sm user-add-select"
+            [ngModel]="selectValue[drawer.id] || ''"
+            (ngModelChange)="addUser(drawer.id, $event)"
+            [ngModelOptions]="{standalone: true}"
+            [disabled]="availableUsers(drawer.id).length === 0">
+            <option value="" disabled hidden>
+              {{ availableUsers(drawer.id).length === 0 ? 'Todos asignados' : '+ Agregar usuario' }}
+            </option>
+            <option *ngFor="let user of availableUsers(drawer.id)" [value]="user.id">
+              {{ user.username }}
+            </option>
           </select>
         </span>
+
         <span class="assignment-col assignment-col--action">
           <button
             class="btn btn--primary btn--sm"

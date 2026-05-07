@@ -19,6 +19,7 @@ import { SaleByIdResponse, SaleResponse } from '../../core/models/sale.models';
 import { SALE_PAYMENT_METHODS, paymentMethodSummary } from '../../core/models/sale-payment.models';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
+import { forkJoin } from 'rxjs';
 
 type CashSessionView = {
     session: CashSessionResponse;
@@ -68,7 +69,7 @@ type CashSessionView = {
         <div class="grid">
           <label class="field">
             <span>Sucursal</span>
-            <select class="control" [class.control--placeholder]="!selectedBranchId" [ngModel]="selectedBranchId" (ngModelChange)="selectBranch($event)" [ngModelOptions]="{ standalone: true }">
+            <select class="control" [class.control--placeholder]="!selectedBranchId" [ngModel]="selectedBranchId" (ngModelChange)="selectBranch($event)" [ngModelOptions]="{ standalone: true }" [disabled]="isRestrictedToAssignedDrawer">
               <option value="" disabled hidden>Selecciona sucursal</option>
               <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
             </select>
@@ -91,7 +92,7 @@ type CashSessionView = {
 
         <div class="empty" *ngIf="selectedBranchId && drawers.length === 0">No hay cajas para esta sucursal.</div>
 
-        <div class="drawer-strip" *ngIf="drawers.length > 0" [class.drawer-strip--attention]="!selectedDrawerId">
+        <div class="drawer-strip" *ngIf="canViewAllCashDrawers && drawers.length > 0" [class.drawer-strip--attention]="!selectedDrawerId">
           <div class="drawer-strip__intro">
             <span class="drawer-strip__label">Elegir caja</span>
             <strong class="drawer-strip__title">Selecciona una caja para operar</strong>
@@ -152,7 +153,7 @@ type CashSessionView = {
             <button *ngIf="otherDrawers.length > 0" class="btn btn--transfer" type="button" (click)="openTransferModal()">&#8644; Transferir</button>
           </form>
 
-          <button *ngIf="auth.hasPermission(permissionCodes.cashClose)" class="btn btn--danger" type="button" (click)="openCloseConfirmModal()">Cerrar caja</button>
+          <button *ngIf="auth.hasPermission(permissionCodes.cashClose)" class="btn btn--danger" type="button" (click)="startCloseSessionFlow()" [disabled]="checkingPendingCloseSales">Cerrar caja</button>
 
           <div class="summary" *ngIf="currentSummary">
             <div class="summary-item summary-item--sales">
@@ -326,6 +327,41 @@ type CashSessionView = {
               <button class="btn btn--danger" type="submit" [disabled]="closeForm.invalid">Confirmar cierre</button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" *ngIf="showPendingCloseSalesModal" (click)="closePendingCloseSalesModal()">
+      <div class="modal modal--pending-close" (click)="$event.stopPropagation()">
+        <div class="modal__head">
+          <span class="modal__title">No se puede cerrar la caja</span>
+          <button class="modal__close" type="button" (click)="closePendingCloseSalesModal()">&#x2715;</button>
+        </div>
+        <div class="modal__body">
+          <div class="pending-close-copy">
+            <p>Hay ventas en espera asociadas a esta caja. Primero tienen que resolverse antes de cerrar la caja.</p>
+            <div class="pending-close-total">
+              <span>Ventas bloqueantes</span>
+              <strong>{{ pendingCloseSales.length }}</strong>
+            </div>
+          </div>
+
+          <div class="pending-close-list">
+            <article class="pending-close-sale" *ngFor="let sale of pendingCloseSales">
+              <div class="pending-close-sale__row">
+                <span class="pending-close-sale__code">{{ sale.code || 'S/N' }}</span>
+                <strong class="pending-close-sale__amount">&#36;{{ getBlockingSaleAmount(sale) | number:'1.2-2' }}</strong>
+              </div>
+              <div class="pending-close-sale__meta">
+                <span>{{ sale.customerFullName || 'Sin cliente' }}</span>
+                <span>{{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </article>
+          </div>
+
+          <div class="modal__actions">
+            <button class="btn btn--ghost" type="button" (click)="closePendingCloseSalesModal()">Entendido</button>
+          </div>
         </div>
       </div>
     </div>
@@ -526,6 +562,18 @@ type CashSessionView = {
     .cc-popup-payment__date{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim)}
     .cc-popup-payment__method{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text)}
     .cc-popup-payment__amount{font-family:'DM Mono',monospace;font-weight:600;font-size:.82rem;margin-left:auto;color:var(--text)}
+    .modal--pending-close{max-width:560px}
+    .pending-close-copy{display:grid;gap:.9rem;margin-bottom:1rem}
+    .pending-close-copy p{margin:0;color:var(--text-soft);font-family:'Crimson Pro',serif;font-size:1rem;line-height:1.5}
+    .pending-close-total{display:flex;justify-content:space-between;align-items:center;padding:.8rem .95rem;border:1px solid color-mix(in srgb,var(--danger) 28%, var(--border));background:color-mix(in srgb,var(--danger) 6%, transparent);border-radius:10px}
+    .pending-close-total span{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase}
+    .pending-close-total strong{color:var(--danger);font-family:'DM Mono',monospace;font-size:1rem}
+    .pending-close-list{display:grid;gap:.7rem;max-height:280px;overflow:auto;padding-right:.2rem}
+    .pending-close-sale{padding:.85rem .95rem;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--bg) 70%, transparent)}
+    .pending-close-sale__row{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+    .pending-close-sale__code{color:var(--text);font-family:'DM Mono',monospace;font-size:.82rem}
+    .pending-close-sale__amount{color:var(--danger);font-family:'DM Mono',monospace;font-size:.92rem}
+    .pending-close-sale__meta{display:flex;justify-content:space-between;gap:1rem;margin-top:.45rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.72rem;flex-wrap:wrap}
     .btn--transfer{background:color-mix(in srgb,#6366f1 8%, transparent);border:1px solid color-mix(in srgb,#6366f1 35%, var(--border-2));color:#6366f1;white-space:nowrap}
     .btn--transfer:hover:not(:disabled){background:color-mix(in srgb,#6366f1 14%, transparent);border-color:color-mix(in srgb,#6366f1 55%, var(--border-2));transform:translateY(-1px)}
     .btn--transfer-confirm{font-size:.72rem;letter-spacing:.12em}
@@ -614,6 +662,7 @@ type CashSessionView = {
       .cc-popup-header,.cc-popup-totals,.cc-popup-payments{padding-left:1rem;padding-right:1rem}
       .cc-popup-header__row,.cc-popup-header__meta,.cc-popup-payment__row{display:grid;gap:.35rem}
       .cc-popup-payment__amount{margin-left:0}
+      .pending-close-sale__row,.pending-close-sale__meta,.pending-close-total{display:grid;gap:.35rem}
     }
   `]
 })
@@ -626,6 +675,8 @@ export class CashComponent implements OnInit {
     transferForm: FormGroup;
     showTransferModal = false;
     showCloseConfirmModal = false;
+    showPendingCloseSalesModal = false;
+    checkingPendingCloseSales = false;
     branches: BranchResponse[] = [];
     drawers: CashDrawerResponse[] = [];
     selectedBranchId = '';
@@ -640,6 +691,7 @@ export class CashComponent implements OnInit {
     ccPopupSaleId: string | null = null;
     ccPopupPayments: import('../../core/models/sale.models').CcPaymentResponse[] = [];
     ccPopupLoading = false;
+    pendingCloseSales: SaleResponse[] = [];
     historyFrom = '';
     historyTo = '';
     showCreateDrawer = false;
@@ -695,6 +747,14 @@ export class CashComponent implements OnInit {
         return this.cashDrawerFocusLocked || this.initialCashOpenFocusLocked;
     }
 
+    get canViewAllCashDrawers(): boolean {
+        return this.auth.hasPermission(PermissionCodes.cashDrawerViewAll);
+    }
+
+    get isRestrictedToAssignedDrawer(): boolean {
+        return !this.canViewAllCashDrawers && !!this.auth.currentUser?.assignedCashDrawerId;
+    }
+
     selectBranch(branchId: string): void {
         this.selectedBranchId = branchId;
         this.selectedDrawerId = '';
@@ -715,8 +775,17 @@ export class CashComponent implements OnInit {
             next: drawers => {
                 this.drawers = drawers;
 
-                if (!this.selectedDrawerId && drawers.length > 0 && (this.showCashDrawerOnboarding || this.showInitialCashOpenOnboarding)) {
-                    this.selectDrawer(drawers[0].id);
+                if (!this.selectedDrawerId && drawers.length > 0) {
+                    const assignedDrawerId = this.auth.currentUser?.assignedCashDrawerId;
+                    const autoSelectedDrawer = this.isRestrictedToAssignedDrawer
+                        ? drawers.find(drawer => drawer.id === assignedDrawerId) ?? drawers[0]
+                        : drawers.length === 1 || this.showCashDrawerOnboarding || this.showInitialCashOpenOnboarding
+                            ? drawers[0]
+                            : null;
+
+                    if (autoSelectedDrawer) {
+                        this.selectDrawer(autoSelectedDrawer.id);
+                    }
                 }
             },
             error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron cargar las cajas')
@@ -824,6 +893,36 @@ export class CashComponent implements OnInit {
         return this.currentSession ? this.computeTransferBankBreakdown(this.currentSession) : [];
     }
 
+    startCloseSessionFlow(): void {
+        if (!this.currentSession || this.checkingPendingCloseSales) {
+            return;
+        }
+
+        this.checkingPendingCloseSales = true;
+        this.saleService.listSales({}).subscribe({
+            next: sales => {
+                const pendingSales = sales.filter(sale =>
+                    sale.cashDrawerId === this.selectedDrawerId &&
+                    Number(sale.idSaleStatus) === 1
+                );
+
+                this.checkingPendingCloseSales = false;
+
+                if (pendingSales.length > 0) {
+                    this.pendingCloseSales = pendingSales.sort((a, b) => Number(b.pendingAmount ?? 0) - Number(a.pendingAmount ?? 0));
+                    this.showPendingCloseSalesModal = true;
+                    return;
+                }
+
+                this.openCloseConfirmModal();
+            },
+            error: err => {
+                this.checkingPendingCloseSales = false;
+                this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron validar las ventas pendientes antes del cierre');
+            }
+        });
+    }
+
     openCloseConfirmModal(): void {
         this.closeForm.reset({ actualClosingAmount: null, notes: '' });
         this.showCloseConfirmModal = true;
@@ -832,6 +931,23 @@ export class CashComponent implements OnInit {
     closeCloseConfirmModal(): void {
         this.showCloseConfirmModal = false;
         this.closeForm.reset({ actualClosingAmount: null, notes: '' });
+    }
+
+    closePendingCloseSalesModal(): void {
+        this.showPendingCloseSalesModal = false;
+        this.pendingCloseSales = [];
+    }
+
+    getBlockingSaleAmount(sale: SaleResponse): number {
+        const pendingAmount = Number(sale.pendingAmount ?? 0);
+        if (pendingAmount > 0) {
+            return pendingAmount;
+        }
+
+        const settledAmount = Number(sale.settledAmount ?? 0);
+        const totalAmount = Number(sale.totalAmount ?? 0);
+        const effectivePending = totalAmount - settledAmount;
+        return effectivePending > 0 ? effectivePending : totalAmount;
     }
 
     openTransferModal(): void {
@@ -878,6 +994,7 @@ export class CashComponent implements OnInit {
         this.cashService.closeSession(this.currentSession.id, closingAmount, notes).subscribe({
             next: () => {
                 this.showCloseConfirmModal = false;
+                this.pendingCloseSales = [];
                 this.currentSession = null;
                 this.currentSummary = null;
                 this.openForm.reset({ openingAmount: closingAmount, notes: '' });
@@ -1197,6 +1314,20 @@ export class CashComponent implements OnInit {
         this.branchService.listBranches().subscribe({
             next: branches => {
                 this.branches = branches;
+
+                if (!this.selectedBranchId && this.isRestrictedToAssignedDrawer && branches.length > 0) {
+                    const assignedDrawerId = this.auth.currentUser?.assignedCashDrawerId;
+                    forkJoin(branches.map(branch => this.cashService.listCashDrawers(branch.id))).subscribe({
+                        next: drawerSets => {
+                            const foundIndex = drawerSets.findIndex(drawers => drawers.some(drawer => drawer.id === assignedDrawerId));
+                            if (foundIndex >= 0) {
+                                this.selectBranch(branches[foundIndex].id);
+                            }
+                        },
+                        error: () => undefined
+                    });
+                    return;
+                }
 
                 if (!this.selectedBranchId && branches.length > 0) {
                     this.selectBranch(branches[0].id);

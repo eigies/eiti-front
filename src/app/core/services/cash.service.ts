@@ -65,7 +65,7 @@ export class CashService {
         return this.http.get<StaleCashSessionResponse[]>(`${this.sessionsBase}/stale-open`);
     }
 
-    assignCashDrawer(drawerId: string, userId: string | null): Observable<void> {
-        return this.http.patch<void>(`${this.drawersBase}/${drawerId}/assign`, { userId });
+    assignCashDrawer(drawerId: string, userIds: string[]): Observable<void> {
+        return this.http.patch<void>(`${this.drawersBase}/${drawerId}/assign`, { userIds });
     }
 }

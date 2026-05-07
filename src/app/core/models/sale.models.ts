@@ -49,7 +49,9 @@ export interface SaleResponse {
     customerDocument?: string | null;
     customerTaxId?: string | null;
     customerAddress?: string | null;
+    customerPhone?: string | null;
     deliveryAddress?: string | null;
+    cashDrawerId?: string | null;
     cashSessionId?: string | null;
     hasDelivery: boolean;
     transportAssignmentId?: string | null;
@@ -175,6 +177,7 @@ export interface SaleByIdResponse {
     customerFullName?: string | null;
     customerDocument?: string | null;
     customerTaxId?: string | null;
+    cashDrawerId?: string | null;
     hasDelivery: boolean;
     idSaleStatus: number;
     saleStatus: string;

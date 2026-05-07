@@ -159,6 +159,26 @@
             <p>Asocia un cliente existente (opcional) y define el metodo de pago.</p>
           </div>
 
+          <div class="stacked-picker">
+            <label class="field">
+              <span class="field__label">Dirección de entrega <span class="field__optional">(opcional)</span></span>
+              <input class="control" type="text"
+                [value]="lineForm.get('deliveryAddress')?.value || ''"
+                (input)="handleDeliveryAddressInput(lineForm, $any($event.target).value)"
+                (focus)="showDeliveryAddressSuggestions = deliveryAddressSuggestions.length > 0"
+                (blur)="showDeliveryAddressSuggestions = false"
+                placeholder="Ej: Av. San Martín 1234, piso 2..." autocomplete="off" />
+            </label>
+            <div *ngIf="showDeliveryAddressSuggestions && deliveryAddressSuggestions.length > 0"
+              class="product-picker__menu stacked-picker__menu">
+              <button class="product-picker__option" type="button"
+                *ngFor="let addr of deliveryAddressSuggestions"
+                (mousedown)="selectDeliveryAddress(lineForm, addr)">
+                <strong>{{ addr }}</strong>
+              </button>
+            </div>
+          </div>
+
           <div class="customer-picker stacked-picker" [class.empty]="createCustomerId" [class.empty--soft]="createCustomerId">
             <label class="field">
               <span class="field__label">Cliente <span class="field__optional">(opcional)</span></span>
@@ -186,26 +206,6 @@
             </div>
             <div *ngIf="createCustomerId" class="customer-selected-chip">
               Cliente asignado: <strong>{{ createCustomerQuery }}</strong>
-            </div>
-          </div>
-
-          <div class="stacked-picker">
-            <label class="field">
-              <span class="field__label">Dirección de entrega <span class="field__optional">(opcional)</span></span>
-              <input class="control" type="text"
-                [value]="lineForm.get('deliveryAddress')?.value || ''"
-                (input)="handleDeliveryAddressInput(lineForm, $any($event.target).value)"
-                (focus)="showDeliveryAddressSuggestions = deliveryAddressSuggestions.length > 0"
-                (blur)="showDeliveryAddressSuggestions = false"
-                placeholder="Ej: Av. San Martín 1234, piso 2..." autocomplete="off" />
-            </label>
-            <div *ngIf="showDeliveryAddressSuggestions && deliveryAddressSuggestions.length > 0"
-              class="product-picker__menu stacked-picker__menu">
-              <button class="product-picker__option" type="button"
-                *ngFor="let addr of deliveryAddressSuggestions"
-                (mousedown)="selectDeliveryAddress(lineForm, addr)">
-                <strong>{{ addr }}</strong>
-              </button>
             </div>
           </div>
 
@@ -430,24 +430,36 @@
       <form class="filters" [formGroup]="filterForm" (ngSubmit)="applySaleFilters()">
         <label class="field">
           <span class="field__label">Desde</span>
-          <input class="control" type="date" formControlName="dateFrom" />
+          <input class="control control--sm" type="date" formControlName="dateFrom" />
         </label>
         <label class="field">
           <span class="field__label">Hasta</span>
-          <input class="control" type="date" formControlName="dateTo" />
+          <input class="control control--sm" type="date" formControlName="dateTo" />
         </label>
         <label class="field">
           <span class="field__label">Estado</span>
-          <select class="control" formControlName="idSaleStatus">
-            <option value="">Todos los estados</option>
+          <select class="control control--sm" formControlName="idSaleStatus">
+            <option value="">Todos</option>
             <option [ngValue]="1">En espera</option>
             <option [ngValue]="2">Pagada</option>
             <option [ngValue]="3">Cancelada</option>
           </select>
         </label>
+        <label class="field">
+          <span class="field__label">Entrega</span>
+          <select class="control control--sm" formControlName="hasDelivery">
+            <option value="">Todas</option>
+            <option value="true">Con entrega</option>
+            <option value="false">Sin entrega</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Dirección</span>
+          <input class="control control--sm" type="text" formControlName="deliveryAddress" placeholder="Buscar dirección..." />
+        </label>
         <div class="filters__actions">
-          <button class="btn btn--secondary" type="submit">Filtrar</button>
-          <button class="btn btn--ghost" type="button" (click)="clearSaleFilters()">Limpiar filtros</button>
+          <button class="btn btn--secondary btn--sm" type="submit">Filtrar</button>
+          <button class="btn btn--ghost btn--sm" type="button" (click)="clearSaleFilters()">Limpiar</button>
         </div>
       </form>
 
@@ -468,7 +480,9 @@
             <div class="sale-card__content">
               <p class="sale-card__eyebrow">{{ sale.code ? (sale.code + ' · ') : '' }}{{ branchName(sale.branchId) }}</p>
               <h2>{{ sale.customerFullName || sale.code || 'Venta' }}</h2>
-              <p class="sale-card__address" *ngIf="sale.deliveryAddress || sale.customerAddress">{{ sale.deliveryAddress || sale.customerAddress }}</p>
+              <p class="sale-card__address" *ngIf="sale.deliveryAddress || sale.customerAddress">
+                {{ sale.deliveryAddress || sale.customerAddress }}<ng-container *ngIf="sale.customerPhone"> · {{ sale.customerPhone }}</ng-container>
+              </p>
               <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s)</p>
             </div>
             <div class="sale-card__amount-block">
@@ -550,7 +564,7 @@
               <a *ngIf="sale.isCuentaCorriente" [routerLink]="['/sales-cc', sale.id, 'payments']" class="btn btn--ghost btn--sm btn--cc" (click)="$event.stopPropagation()">Pagos CC</a>
             </div>
             <div class="sale-card__action-main">
-              <button class="btn btn--ghost btn--sm btn--danger btn--cancel" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesDelete)" [disabled]="cancelingSaleId === sale.id" (click)="requestCancelSale(sale); $event.stopPropagation()">{{ cancelingSaleId === sale.id ? 'Cancelando...' : 'Cancelar' }}</button>
+              <button class="btn btn--ghost btn--sm btn--danger btn--cancel" type="button" *ngIf="(sale.idSaleStatus === 1 || sale.idSaleStatus === 2) && auth.hasPermission(permissionCodes.salesDelete)" [disabled]="cancelingSaleId === sale.id" (click)="requestCancelSale(sale); $event.stopPropagation()">{{ cancelingSaleId === sale.id ? 'Cancelando...' : 'Anular' }}</button>
               <button class="btn btn--secondary btn--sm btn--edit" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesUpdate)" (click)="beginEdit(sale); $event.stopPropagation()">Editar</button>
               <button class="btn btn--secondary btn--sm btn--pay" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesPay)" [disabled]="quickPayingSaleId === sale.id" (click)="markAsPaid(sale); $event.stopPropagation()">{{ quickPayingSaleId === sale.id ? 'Cobrando...' : 'Cobrar' }}</button>
             </div>

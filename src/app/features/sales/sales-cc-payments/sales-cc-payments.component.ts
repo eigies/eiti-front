@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { jsPDF } from 'jspdf';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SaleService } from '../../../core/services/sale.service';
 import { CashService } from '../../../core/services/cash.service';
 import { BankService } from '../../../core/services/bank.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { SaleByIdResponse, CcPaymentResponse, AddCcPaymentGroupRequest } from '../../../core/models/sale.models';
 import { CashDrawerResponse } from '../../../core/models/cash.models';
@@ -17,6 +19,7 @@ import {
   normalizeSalePayments
 } from '../../../core/models/sale-payment.models';
 import { SalePaymentInlineComponent } from '../../../shared/components/sale-payment-inline/sale-payment-inline.component';
+import { PermissionCodes } from '../../../core/models/permission.models';
 
 interface PaymentGroup {
   groupId: string | null;
@@ -55,6 +58,7 @@ export class SalesCcPaymentsComponent implements OnInit {
     private readonly saleService: SaleService,
     private readonly cashService: CashService,
     private readonly bankService: BankService,
+    private readonly auth: AuthService,
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -174,9 +178,15 @@ export class SalesCcPaymentsComponent implements OnInit {
   private loadDrawers(branchId: string): void {
     this.cashService.listCashDrawers(branchId).subscribe({
       next: drawers => {
-        this.cashDrawers = drawers;
-        if (drawers.length === 1) {
-          this.selectedCashDrawerId = drawers[0].id;
+        const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
+        const canViewAllDrawers = this.auth.hasPermission(PermissionCodes.cashDrawerViewAll);
+        this.cashDrawers = drawers
+          .filter(d => d.isActive && d.hasOpenSession)
+          .filter(d => canViewAllDrawers || !assignedId || d.id === assignedId);
+        if (this.cashDrawers.length === 1) {
+          this.selectedCashDrawerId = this.cashDrawers[0].id;
+        } else if (assignedId && this.cashDrawers.some(d => d.id === assignedId)) {
+          this.selectedCashDrawerId = assignedId;
         }
       },
       error: () => this.toast.error('No se pudieron cargar las cajas')
@@ -255,6 +265,152 @@ export class SalesCcPaymentsComponent implements OnInit {
   isCancellingGroup(group: PaymentGroup): boolean {
     if (group.groupId) return this.cancellingGroupId === group.groupId;
     return this.cancellingPaymentId === group.payments[0]?.id;
+  }
+
+  exportPdf(): void {
+    const sale = this.sale;
+    if (!sale || sale.details.length === 0) {
+      this.toast.error('La venta no tiene items para exportar.');
+      return;
+    }
+
+    const doc = new jsPDF({ format: 'a4', unit: 'mm' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    const contentWidth = pageWidth - margin * 2;
+    const printableBottom = pageHeight - 18;
+    const colWidths = [12, 84, 18, 34, 34];
+    const colX = [
+      margin,
+      margin + colWidths[0],
+      margin + colWidths[0] + colWidths[1],
+      margin + colWidths[0] + colWidths[1] + colWidths[2],
+      margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
+    ];
+    const fmt = (v: number) => `$${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const fmtDate = (v: string) => new Date(v).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+
+    let y = margin;
+
+    // Header
+    doc.setDrawColor(35, 35, 35);
+    doc.setFillColor(248, 248, 248);
+    doc.roundedRect(margin, y, contentWidth, 20, 2, 2, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(20, 20, 20);
+    doc.text('Comprobante de venta', margin + 4, y + 8);
+    doc.setFontSize(10);
+    doc.text(sale.code ? `Nro. ${sale.code}` : `ID: ${sale.id}`, margin + 4, y + 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(90, 90, 90);
+    doc.text(`Emitido: ${fmtDate(new Date().toISOString())}`, pageWidth - margin - 4, y + 8, { align: 'right' });
+    doc.text(`Fecha venta: ${fmtDate(sale.createdAt)}`, pageWidth - margin - 4, y + 14, { align: 'right' });
+    y += 25;
+
+    // Meta block
+    const metaTop = y;
+    const metaHeight = 38;
+    const halfWidth = contentWidth / 2;
+    const rowH = 6.5;
+    const lx = margin + 3;
+    const rx = margin + halfWidth + 3;
+    const vo = 22;
+    const statusLabel = sale.idSaleStatus === 3 ? 'Cancelada' : sale.idSaleStatus === 2 ? 'Pagada' :
+      (sale.ccPaidTotal > 0 && sale.ccPaidTotal < sale.totalAmount) ? 'Pago parcial' : 'En espera';
+    const rowsL = [
+      ['Cliente', sale.customerFullName || '-'],
+      ['Documento', sale.customerDocument || sale.customerTaxId || '-'],
+      ['Items', `${sale.details.length}`],
+      ['Tipo', 'Cuenta Corriente']
+    ];
+    const rowsR = [
+      ['Total', fmt(sale.totalAmount)],
+      ['Cobrado', fmt(sale.ccPaidTotal ?? 0)],
+      ['Pendiente', fmt(sale.ccPendingAmount ?? 0)],
+      ['Estado', statusLabel]
+    ];
+    doc.setDrawColor(185, 185, 185);
+    doc.rect(margin, metaTop, contentWidth, metaHeight);
+    doc.line(margin + halfWidth, metaTop, margin + halfWidth, metaTop + metaHeight);
+    doc.setFontSize(9);
+    for (let i = 0; i < 4; i++) {
+      const ry = metaTop + 6 + i * rowH;
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(70, 70, 70);
+      doc.text(`${rowsL[i][0]}:`, lx, ry);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(25, 25, 25);
+      doc.text(rowsL[i][1], lx + vo, ry, { maxWidth: halfWidth - vo - 6 });
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(70, 70, 70);
+      doc.text(`${rowsR[i][0]}:`, rx, ry);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(25, 25, 25);
+      doc.text(rowsR[i][1], rx + vo, ry, { maxWidth: halfWidth - vo - 6 });
+    }
+    y = metaTop + metaHeight + 6;
+
+    // Items header
+    const drawItemsHeader = (cont: boolean) => {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(25, 25, 25);
+      doc.text(cont ? 'Detalle de productos (continuacion)' : 'Detalle de productos', margin, y);
+      y += 5;
+      doc.setFillColor(232, 232, 232); doc.setDrawColor(170, 170, 170);
+      doc.rect(margin, y, contentWidth, 8, 'FD');
+      doc.setFontSize(8.6);
+      doc.text('#', colX[0] + 2, y + 5.3);
+      doc.text('Producto', colX[1] + 2, y + 5.3);
+      doc.text('Cant.', colX[2] + colWidths[2] - 2, y + 5.3, { align: 'right' });
+      doc.text('Unitario', colX[3] + colWidths[3] - 2, y + 5.3, { align: 'right' });
+      doc.text('Subtotal', colX[4] + colWidths[4] - 2, y + 5.3, { align: 'right' });
+      y += 8;
+    };
+
+    drawItemsHeader(false);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(25, 25, 25);
+
+    for (let i = 0; i < sale.details.length; i++) {
+      const detail = sale.details[i];
+      const text = `${detail.productBrand} / ${detail.productName}`;
+      const wrapped = doc.splitTextToSize(text, colWidths[1] - 4) as string[];
+      const rh = Math.max(8, wrapped.length * 3.8 + 2.5);
+      if (y + rh > printableBottom) { doc.addPage(); y = margin; drawItemsHeader(true); }
+      doc.setDrawColor(205, 205, 205);
+      doc.rect(colX[0], y, colWidths[0], rh);
+      doc.rect(colX[1], y, colWidths[1], rh);
+      doc.rect(colX[2], y, colWidths[2], rh);
+      doc.rect(colX[3], y, colWidths[3], rh);
+      doc.rect(colX[4], y, colWidths[4], rh);
+      doc.text(`${i + 1}`, colX[0] + 2, y + rh / 2 + 1.2);
+      doc.text(wrapped, colX[1] + 2, y + 4.6);
+      doc.text(`${detail.quantity}`, colX[2] + colWidths[2] - 2, y + rh / 2 + 1.2, { align: 'right' });
+      doc.text(fmt(detail.unitPrice), colX[3] + colWidths[3] - 2, y + rh / 2 + 1.2, { align: 'right' });
+      doc.text(fmt(detail.totalAmount), colX[4] + colWidths[4] - 2, y + rh / 2 + 1.2, { align: 'right' });
+      y += rh;
+    }
+
+    // Summary
+    if (y + 24 > printableBottom) { doc.addPage(); y = margin; }
+    const sw = 72;
+    const sx = pageWidth - margin - sw;
+    doc.setFillColor(246, 246, 246); doc.setDrawColor(150, 150, 150);
+    doc.roundedRect(sx, y + 5, sw, 16, 1.2, 1.2, 'FD');
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(45, 45, 45); doc.setFontSize(9.5);
+    doc.text('TOTAL VENTA', sx + 3, y + 11);
+    doc.setFontSize(12.5);
+    doc.text(fmt(sale.totalAmount), sx + sw - 3, y + 17, { align: 'right' });
+
+    // Footer
+    const pages = doc.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) {
+      doc.setPage(p);
+      doc.setDrawColor(205, 205, 205);
+      doc.line(margin, pageHeight - 13, pageWidth - margin, pageHeight - 13);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
+      doc.text('Documento para control interno de venta', margin, pageHeight - 8);
+      doc.text(`Pagina ${p} de ${pages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+    }
+
+    doc.save(`venta-${sale.createdAt.slice(0, 10)}.pdf`);
   }
 
   private todayIso(): string {

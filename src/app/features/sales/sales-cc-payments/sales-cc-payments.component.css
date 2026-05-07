@@ -25,7 +25,14 @@
 .head {
     justify-content: space-between;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border)
+    border-bottom: 1px solid var(--border);
+}
+
+.head__actions {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    flex-shrink: 0;
 }
 
 .eyebrow {

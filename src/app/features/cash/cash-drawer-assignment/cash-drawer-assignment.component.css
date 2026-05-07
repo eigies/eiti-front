@@ -138,7 +138,7 @@
 
 .assignment-row {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) minmax(170px, 1fr) minmax(220px, 1.3fr) auto;
+  grid-template-columns: minmax(150px, 1fr) minmax(220px, 2fr) auto;
   gap: .9rem;
   align-items: center;
   padding: .9rem 1.1rem;
@@ -169,8 +169,10 @@
   color: var(--text);
 }
 
-.assignment-col--current {
-  font-size: .82rem;
+.assignment-col--select {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
 }
 
 .assignment-col--action {
@@ -178,24 +180,57 @@
   justify-content: flex-end;
 }
 
-.assigned-badge {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  min-height: 2rem;
-  font-family: 'DM Mono', monospace;
-  font-size: .72rem;
-  padding: .26rem .58rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--success) 14%, var(--bg));
-  color: color-mix(in srgb, var(--success) 62%, white 38%);
-  border: 1px solid color-mix(in srgb, var(--success) 26%, var(--border));
+.assigned-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .38rem;
 }
 
-.assigned-badge--empty {
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
-  color: var(--text-dim);
-  border-color: color-mix(in srgb, var(--border) 92%, transparent);
+.assigned-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .32rem;
+  padding: .28rem .5rem .28rem .62rem;
+  border-radius: 999px;
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  background: color-mix(in srgb, var(--amber) 12%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--amber) 32%, var(--border-2));
+  color: var(--amber);
+}
+
+.assigned-chip__name {
+  line-height: 1;
+}
+
+.assigned-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--amber) 18%, var(--bg));
+  color: var(--amber);
+  font-size: .6rem;
+  cursor: pointer;
+  padding: 0;
+  transition: background .13s ease;
+  flex-shrink: 0;
+}
+
+.assigned-chip__remove:hover {
+  background: color-mix(in srgb, var(--amber) 30%, var(--bg));
+}
+
+.user-add-select {
+  max-width: 22rem;
+}
+
+.user-add-select:disabled {
+  opacity: .45;
+  cursor: not-allowed;
 }
 
 .btn {
@@ -261,9 +296,12 @@
     justify-content: flex-start;
   }
 
-  .assignment-col--action .btn,
-  .assignment-col--select .control {
+  .assignment-col--action .btn {
     width: 100%;
+  }
+
+  .user-chips {
+    gap: .32rem;
   }
 }
 

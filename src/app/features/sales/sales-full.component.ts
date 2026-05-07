@@ -183,8 +183,11 @@ export class SalesFullComponent implements OnInit {
 
     this.cashService.listCashDrawers(branchId).subscribe({
       next: drawers => {
-        this.cashDrawers = drawers.filter(d => d.isActive && d.hasOpenSession);
         const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
+        const canViewAllDrawers = this.auth.hasPermission(PermissionCodes.cashDrawerViewAll);
+        this.cashDrawers = drawers
+          .filter(d => d.isActive && d.hasOpenSession)
+          .filter(d => canViewAllDrawers || !assignedId || d.id === assignedId);
         if (this.cashDrawers.length === 1) {
           this.setCashDrawerId(this.cashDrawers[0].id);
         } else if (assignedId && this.cashDrawers.some(d => d.id === assignedId)) {
@@ -240,7 +243,7 @@ export class SalesFullComponent implements OnInit {
   nextStep(): void { if (!this.validateCurrentStep()) { return; } this.step = Math.min(this.totalSteps, this.step + 1); }
   setCashDrawerId(value: string | null): void {
     const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
-    if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerAssign)) {
+    if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerViewAll)) {
       this.pendingOverrideDrawerId = value;
       this.showDrawerOverrideConfirm = true;
       return;
