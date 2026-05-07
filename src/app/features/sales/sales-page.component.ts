@@ -168,7 +168,7 @@ export class SalesPageComponent implements OnInit {
             vehicleId: ['', Validators.required],
             notes: ['']
         });
-        this.filterForm = this.fb.group({ dateFrom: [''], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], hasDelivery: [''], deliveryAddress: [''] });
+        this.filterForm = this.fb.group({ dateFrom: [''], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], deliveryAddress: [''] });
     }
 
     ngOnInit(): void {
@@ -562,11 +562,12 @@ loadSales(): void {
             if (selectedChannel) {
                 filtered = filtered.filter(sale => sale.sourceChannel === selectedChannel);
             }
-            const hasDelivery = this.filterForm.get('hasDelivery')?.value;
-            if (hasDelivery === 'true') {
-                filtered = filtered.filter(sale => sale.hasDelivery);
-            } else if (hasDelivery === 'false') {
-                filtered = filtered.filter(sale => !sale.hasDelivery);
+            const transportStatus = this.filterForm.get('transportStatus')?.value;
+            if (transportStatus === 'pending') {
+                filtered = filtered.filter(sale => sale.hasDelivery && !sale.transportStatus);
+            } else if (transportStatus !== '' && transportStatus !== null && transportStatus !== undefined) {
+                const ts = Number(transportStatus);
+                filtered = filtered.filter(sale => sale.transportStatus === ts);
             }
             const addressQuery = (this.filterForm.get('deliveryAddress')?.value || '').trim().toLowerCase();
             if (addressQuery) {
@@ -1362,7 +1363,7 @@ applySaleFilters(): void {
 }
 
 clearSaleFilters(): void {
-    this.filterForm.reset({ dateFrom: '', dateTo: '', idSaleStatus: '', sourceChannel: '', hasDelivery: '', deliveryAddress: '' });
+    this.filterForm.reset({ dateFrom: '', dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', deliveryAddress: '' });
     this.currentSalesPage = 1;
     this.loadSales();
 }

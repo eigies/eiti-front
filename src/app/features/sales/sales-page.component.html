@@ -446,11 +446,14 @@
           </select>
         </label>
         <label class="field">
-          <span class="field__label">Entrega</span>
-          <select class="control control--sm" formControlName="hasDelivery">
-            <option value="">Todas</option>
-            <option value="true">Con entrega</option>
-            <option value="false">Sin entrega</option>
+          <span class="field__label">Transporte</span>
+          <select class="control control--sm" formControlName="transportStatus">
+            <option value="">Todos</option>
+            <option value="pending">Pendiente</option>
+            <option value="1">Asignado</option>
+            <option value="2">En tránsito</option>
+            <option value="3">Entregado</option>
+            <option value="4">Cancelado</option>
           </select>
         </label>
         <label class="field">
