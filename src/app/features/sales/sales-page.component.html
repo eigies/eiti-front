@@ -480,8 +480,8 @@
             <div class="sale-card__content">
               <p class="sale-card__eyebrow">{{ sale.code ? (sale.code + ' · ') : '' }}{{ branchName(sale.branchId) }}</p>
               <h2>{{ sale.customerFullName || sale.code || 'Venta' }}</h2>
-              <p class="sale-card__address" *ngIf="sale.deliveryAddress || sale.customerAddress">
-                {{ sale.deliveryAddress || sale.customerAddress }}<ng-container *ngIf="sale.customerPhone"> · {{ sale.customerPhone }}</ng-container>
+              <p class="sale-card__address" *ngIf="sale.customerPhone || sale.deliveryAddress || sale.customerAddress">
+                <ng-container *ngIf="sale.customerPhone">{{ sale.customerPhone }}</ng-container><ng-container *ngIf="sale.customerPhone && (sale.deliveryAddress || sale.customerAddress)"> · </ng-container><ng-container *ngIf="sale.deliveryAddress || sale.customerAddress">{{ sale.deliveryAddress || sale.customerAddress }}</ng-container>
               </p>
               <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s)</p>
             </div>
