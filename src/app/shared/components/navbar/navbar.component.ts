@@ -1,4 +1,5 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,7 +12,8 @@ import { CompanyService } from '../../../core/services/company.service';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css']
+  styleUrls: ['./navbar.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   readonly permissionCodes = PermissionCodes;
@@ -20,6 +22,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   salesMenuOpen = false;
   clientsMenuOpen = false;
   cashMenuOpen = false;
+
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     public auth: AuthService,
@@ -33,7 +37,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
     this.cashMenuOpen = this.router.url.startsWith('/cash');
 
-    this.router.events.subscribe(event => {
+    this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.closeSidebar();
         if (event.url.startsWith('/sales')) {
@@ -48,7 +52,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.companyService.getCurrentCompany().subscribe({
+    this.companyService.getCurrentCompany().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: company => {
         this.companyName = company.name;
       },

@@ -674,9 +674,12 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                 const existingPayments = (sale.payments ?? []).map(payment => ({
                     idPaymentMethod: payment.idPaymentMethod,
                     amount: roundMoney(payment.amount),
-                    notes: payment.notes ?? null,
+                    reference: payment.reference ?? null,
                     cardBankId: payment.cardBankId ?? null,
-                    cardCuotas: payment.cardCuotas ?? null
+                    cardCuotas: payment.cardCuotas ?? null,
+                    cardSurchargeAmt: payment.cardSurchargeAmt ?? null,
+                    transferBankId: payment.transferBankId ?? null,
+                    cheque: payment.cheque ?? null
                 }));
                 const existingTradeIns = (sale.tradeIns ?? []).map(tradeIn => ({
                     productId: tradeIn.productId,
@@ -699,7 +702,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                             {
                                 idPaymentMethod: SALE_PAYMENT_METHOD_CASH,
                                 amount: pendingAmount,
-                                notes: null
+                                reference: null
                             }
                         ]
                         : existingPayments,
@@ -1610,7 +1613,16 @@ saveChannelPopup(): void {
         idSaleStatus: sale.idSaleStatus,
         hasDelivery: sale.hasDelivery,
         cashDrawerId: null,
-        payments: (sale.payments ?? []).map(p => ({ idPaymentMethod: p.idPaymentMethod, amount: p.amount, notes: p.notes })),
+        payments: (sale.payments ?? []).map(p => ({
+            idPaymentMethod: p.idPaymentMethod,
+            amount: p.amount,
+            reference: p.reference,
+            cardBankId: p.cardBankId ?? null,
+            cardCuotas: p.cardCuotas ?? null,
+            cardSurchargeAmt: p.cardSurchargeAmt ?? null,
+            transferBankId: p.transferBankId ?? null,
+            cheque: p.cheque ?? null
+        })),
         tradeIns: (sale.tradeIns ?? []).map(t => ({ productId: t.productId, quantity: t.quantity, amount: t.amount })),
         details: sale.details.map(d => ({ productId: d.productId, quantity: d.quantity, unitPrice: d.unitPrice })),
         noDeliverySurchargeTotal: null,

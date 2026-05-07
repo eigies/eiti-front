@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../../core/services/auth.service';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PermissionCodes } from '../../core/models/permission.models';
-import { UserRoleAuditResponse, UserResponse } from '../../core/models/user.models';
+import { UserProfileAuditResponse, UserResponse } from '../../core/models/user.models';
+import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { ToastService } from '../../shared/services/toast.service';
 
@@ -11,12 +12,15 @@ import { ToastService } from '../../shared/services/toast.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.css']
+  styleUrls: ['./profile.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProfileComponent implements OnInit {
   profile: UserResponse | null = null;
-  audits: UserRoleAuditResponse[] = [];
+  audits: UserProfileAuditResponse[] = [];
   loadingAudit = false;
+
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     public readonly auth: AuthService,
@@ -37,7 +41,7 @@ export class ProfileComponent implements OnInit {
     this.loadingAudit = true;
     const userId = this.canReadAllAudits ? null : this.auth.currentUser?.userId ?? null;
 
-    this.userService.listRoleAudits(userId, 40).subscribe({
+    this.userService.listProfileAudits(userId, 40).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: audits => {
         this.audits = audits;
         this.loadingAudit = false;
@@ -49,16 +53,20 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  formatRoles(roles: string[]): string {
-    if (!roles || roles.length === 0) {
+  auditProfileName(value?: string | null): string {
+    return value?.trim() || 'Sin perfil';
+  }
+
+  formatPermissions(permissions?: string[]): string {
+    if (!permissions || permissions.length === 0) {
       return '-';
     }
 
-    return roles.join(', ');
+    return permissions.join(', ');
   }
 
   private loadProfile(): void {
-    this.userService.getMyProfile().subscribe({
+    this.userService.getMyProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: profile => {
         this.profile = profile;
       },

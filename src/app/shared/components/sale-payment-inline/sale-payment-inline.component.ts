@@ -41,6 +41,7 @@ export class SalePaymentInlineComponent {
 
     readonly paymentMethods = SALE_PAYMENT_METHODS;
     readonly paidStatusId = SALE_STATUS_PAID;
+    readonly TRANSFER_METHOD_ID = 2;
     readonly CARD_METHOD_ID = 3;
     readonly CHECK_METHOD_ID = 4;
 
@@ -54,12 +55,15 @@ export class SalePaymentInlineComponent {
     }
 
     get totalCardSurcharge(): number {
-        return roundMoney(
-            this.state.payments.reduce((sum, p) => {
+        // Surcharge is fixed on the SALE TOTAL, not on the card payment amount.
+        // Find the first card payment with a bank+cuotas selection and apply its rate to this.total.
+        for (const p of this.state.payments) {
+            if (p.idPaymentMethod === this.CARD_METHOD_ID && p.cardBankId != null && p.cardCuotas != null) {
                 const pct = this.getSurchargePct(p.cardBankId, p.cardCuotas);
-                return sum + (pct != null ? this.getSurchargeAmt(p.amount, pct) : 0);
-            }, 0)
-        );
+                if (pct != null && pct > 0) return roundMoney(this.total * pct / 100);
+            }
+        }
+        return 0;
     }
 
     get effectiveTotal(): number {
@@ -235,6 +239,10 @@ export class SalePaymentInlineComponent {
         return roundMoney(value);
     }
 
+    get activeBanks(): BankResponse[] {
+        return this.banks.filter(b => b.active);
+    }
+
     get activeBanksWithPlans(): BankResponse[] {
         return this.banks.filter(b => b.active && b.plans.some(p => p.active));
     }
@@ -261,9 +269,14 @@ export class SalePaymentInlineComponent {
     getCardSurcharge(payment: SalePaymentDraftLine): { pct: number; amt: number; total: number } | null {
         const pct = this.getSurchargePct(payment.cardBankId, payment.cardCuotas);
         if (pct == null) return null;
-        const amt = this.getSurchargeAmt(payment.amount, pct);
-        // payment.amount is already the total to charge (includes surcharge)
-        return { pct, amt, total: payment.amount };
+        const amt = roundMoney(this.total * pct / 100);
+        return { pct, amt, total: roundMoney(this.total + amt) };
+    }
+
+    updateTransferBank(index: number, value: number | null): void {
+        this.state.payments = this.state.payments.map((item, i) =>
+            i === index ? { ...item, transferBankId: value ?? null } : item
+        );
     }
 
     updateCardBank(index: number, value: number | null): void {
@@ -271,7 +284,13 @@ export class SalePaymentInlineComponent {
         this.state.payments = this.state.payments.map((item, i) =>
             i === index ? { ...p, cardBankId: value ?? null, cardCuotas: null, cardSurchargePct: null, cardSurchargeAmt: null } : item
         );
-        this.recalculateSurcharge(index);
+        // Auto-select cuotas when the bank has exactly one active plan
+        const plans = value != null ? this.activePlansForBank(value) : [];
+        if (plans.length === 1) {
+            this.updateCardCuotas(index, plans[0].cuotas);
+        } else {
+            this.recalculateSurcharge(index);
+        }
     }
 
     updateCardCuotas(index: number, value: number | null): void {
@@ -280,10 +299,15 @@ export class SalePaymentInlineComponent {
 
         if (amount === 0 && value != null) {
             const pct = this.getSurchargePct(p.cardBankId, value);
-            if (pct != null && pct > 0) {
-                const rem = this.remaining;
+            if (pct != null) {
+                // New effectiveTotal = total + fixed surcharge on total
+                const newSurcharge = roundMoney(this.total * pct / 100);
+                const newEffectiveTotal = roundMoney(this.total + newSurcharge);
+                // Coverage from OTHER payments (exclude this one which has amount=0)
+                const otherCoverage = roundMoney(this.coverage - p.amount);
+                const rem = roundMoney(newEffectiveTotal - otherCoverage);
                 if (rem > 0) {
-                    amount = roundMoney(rem * (1 + pct / 100));
+                    amount = rem;
                 }
             }
         }
@@ -297,8 +321,9 @@ export class SalePaymentInlineComponent {
     private recalculateSurcharge(index: number): void {
         const payment = this.state.payments[index];
         const surchargePct = this.getSurchargePct(payment.cardBankId, payment.cardCuotas);
-        const cardSurchargeAmt = surchargePct != null
-            ? this.getSurchargeAmt(payment.amount, surchargePct)
+        // Surcharge is fixed on the sale total, not on the individual payment amount
+        const cardSurchargeAmt = surchargePct != null && surchargePct > 0
+            ? roundMoney(this.total * surchargePct / 100)
             : null;
         this.state.payments = this.state.payments.map((item, i) =>
             i === index ? { ...item, cardSurchargePct: surchargePct, cardSurchargeAmt } : item

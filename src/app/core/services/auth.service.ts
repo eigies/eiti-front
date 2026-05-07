@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest } from '../models/auth.models';
 import { OnboardingService } from './onboarding.service';
+import { UserResponse } from '../models/user.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -17,7 +18,11 @@ export class AuthService {
     constructor(
         private http: HttpClient,
         private onboarding: OnboardingService
-    ) { }
+    ) {
+        if (this.getToken()) {
+            this.refreshCurrentUserProfile();
+        }
+    }
 
     register(request: RegisterRequest): Observable<AuthResponse> {
         return this.http
@@ -73,6 +78,35 @@ export class AuthService {
         localStorage.setItem(this.TOKEN_KEY, res.token);
         localStorage.setItem(this.USER_KEY, JSON.stringify(res));
         this._currentUser$.next(res);
+        this.refreshCurrentUserProfile();
+    }
+
+    refreshCurrentUserProfile(): void {
+        const current = this._currentUser$.value;
+        const token = this.getToken();
+        if (!current || !token) {
+            return;
+        }
+
+        this.http.get<UserResponse>(`${environment.apiUrl}/users/me`).subscribe({
+            next: profile => {
+                const merged: AuthResponse = {
+                    ...current,
+                    userId: profile.id || current.userId,
+                    username: profile.username || current.username,
+                    email: profile.email || current.email,
+                    profileId: profile.profileId ?? current.profileId ?? null,
+                    profileName: profile.profileName ?? current.profileName ?? null,
+                    permissions: profile.permissions ?? current.permissions ?? [],
+                    roles: profile.roles ?? current.roles ?? [],
+                    assignedCashDrawerId: current.assignedCashDrawerId ?? null
+                };
+
+                localStorage.setItem(this.USER_KEY, JSON.stringify(merged));
+                this._currentUser$.next(merged);
+            },
+            error: () => undefined
+        });
     }
 
     markSessionExpiredHandled(): boolean {
@@ -97,6 +131,8 @@ export class AuthService {
             email: parsed.email ?? '',
             token: parsed.token ?? '',
             roles: parsed.roles ?? [],
+            profileId: parsed.profileId ?? null,
+            profileName: parsed.profileName ?? null,
             permissions: parsed.permissions ?? [],
             assignedCashDrawerId: parsed.assignedCashDrawerId ?? null
         };

@@ -1,7 +1,7 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
 import { ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../core/models/product.models';
 import { ToastService } from '../../shared/services/toast.service';
@@ -13,9 +13,10 @@ import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingStatusResponse } from '../../core/models/onboarding.models';
 import { OnboardingBannerComponent } from '../../shared/components/onboarding-banner/onboarding-banner.component';
 import { AuthService } from '../../core/services/auth.service';
+import { PermissionCodes } from '../../core/models/permission.models';
 import { forkJoin } from 'rxjs';
 
-type ProductModalMode = 'detail' | 'edit' | 'delete' | 'stock';
+type ProductsViewMode = 'list' | 'create' | 'detail';
 
 @Component({
   selector: 'app-products',
@@ -33,6 +34,7 @@ export class ProductsComponent implements OnInit {
   bulkEditForms: Record<string, FormGroup> = {};
   bulkEditSnapshots: Record<string, ReturnType<ProductsComponent['toProductRequest']>> = {};
   modifiedBulkProductIds = new Set<string>();
+  selectedBulkProductIds = new Set<string>();
   products: ProductResponse[] = [];
   branches: BranchResponse[] = [];
   readonly pageSizeOptions = [10, 25, 50];
@@ -44,14 +46,16 @@ export class ProductsComponent implements OnInit {
   stockLoading = false;
   bulkEditMode = false;
   bulkEditSaving = false;
-  showCreatePanel = true;
-  showListPanel = true;
+  viewMode: ProductsViewMode = 'list';
+  routeProductId = '';
+  deleteConfirmOpen = false;
   currentPage = 1;
   pageSize = 10;
-  totalProducts = 0;
-  totalPages = 1;
+  filterBrand = '';
+  filterCode = '';
+  filterSku = '';
+  filterProduct = '';
   selectedProduct: ProductResponse | null = null;
-  modalMode: ProductModalMode = 'edit';
   onboardingStatus: OnboardingStatusResponse | null = null;
   selectedStockBranchId = '';
   selectedBranchStock: BranchProductStockResponse | null = null;
@@ -67,6 +71,7 @@ export class ProductsComponent implements OnInit {
     private stockService: StockService,
     private toast: ToastService,
     private onboardingService: OnboardingService,
+    private route: ActivatedRoute,
     private router: Router,
     public auth: AuthService
   ) {
@@ -80,6 +85,16 @@ export class ProductsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route.paramMap.subscribe(params => {
+      this.routeProductId = params.get('id') ?? '';
+      this.viewMode = this.router.url.endsWith('/new') ? 'create' : this.routeProductId ? 'detail' : 'list';
+      this.deleteConfirmOpen = false;
+      if (this.viewMode === 'detail') {
+        this.selectProductFromRoute();
+      } else {
+        this.selectedProduct = null;
+      }
+    });
     this.refreshOnboarding();
     this.loadBranches();
     this.loadProducts();
@@ -99,7 +114,7 @@ export class ProductsComponent implements OnInit {
   }
 
   get canViewCostPrice(): boolean {
-    return this.auth.hasRole('owner') || this.auth.hasRole('admin');
+    return this.auth.hasPermission(PermissionCodes.productsViewCost);
   }
 
   get showHiddenColumns(): boolean {
@@ -127,14 +142,31 @@ export class ProductsComponent implements OnInit {
     return Math.min(this.currentPage * this.pageSize, this.totalProducts);
   }
 
+  get totalProducts(): number {
+    return this.filteredProducts.length;
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalProducts / this.pageSize));
+  }
+
+  get selectedBulkProductsCount(): number {
+    return this.selectedBulkProductIds.size;
+  }
+
+  get brandOptions(): string[] {
+    return [...new Set(this.products.map(product => product.brand).filter(Boolean))]
+      .sort((left, right) => left.localeCompare(right));
+  }
+
   get modifiedProductsCount(): number {
     return this.modifiedBulkProductIds.size;
   }
 
   get invalidBulkRowsCount(): number {
-    return this.products.filter(product => {
-      const form = this.bulkEditForms[product.id];
-      if (!form || !this.modifiedBulkProductIds.has(product.id)) return false;
+    return [...this.modifiedBulkProductIds].filter(productId => {
+      const form = this.bulkEditForms[productId];
+      if (!form) return false;
       return Object.values(form.controls).some(c => c.invalid && (c.dirty || c.touched));
     }).length;
   }
@@ -238,6 +270,7 @@ export class ProductsComponent implements OnInit {
         this.currentPage = 1;
         this.loadProducts();
         this.refreshOnboarding(true);
+        this.router.navigate(['/products', product.id]);
       },
       error: (err) => {
         this.toast.error(err?.error?.message || 'Error al crear el producto');
@@ -250,23 +283,22 @@ export class ProductsComponent implements OnInit {
     if (!this.canLeaveBulkEdit()) {
       return;
     }
-    this.modalMode = 'edit';
-    this.openModal(product);
+    this.router.navigate(['/products', product.id]);
   }
 
   openDelete(product: ProductResponse): void {
     if (!this.canLeaveBulkEdit()) {
       return;
     }
-    this.modalMode = 'delete';
+    this.selectedProduct = product;
     this.openModal(product);
+    this.deleteConfirmOpen = true;
   }
 
   openStock(product: ProductResponse): void {
     if (!this.canLeaveBulkEdit()) {
       return;
     }
-    this.modalMode = 'stock';
     this.selectedProduct = product;
     this.stockForm.reset({ type: 1, quantity: 1, description: '' });
     this.stockMovements = [];
@@ -274,37 +306,53 @@ export class ProductsComponent implements OnInit {
     this.selectedStockBranchId = '';
   }
 
-  openDetailModal(product: ProductResponse): void {
-    if (!this.canLeaveBulkEdit()) {
-      return;
-    }
-    this.modalMode = 'detail';
-    this.selectedProduct = product;
-  }
-
   toggleCompactMode(): void {
     this.compactMode = !this.compactMode;
   }
 
-  closeModal(): void {
-    if (this.updating || this.deleting || this.stockSaving) {
+  goToList(): void {
+    if (!this.canLeaveBulkEdit()) {
       return;
     }
-    this.selectedProduct = null;
-    this.selectedStockBranchId = '';
-    this.selectedBranchStock = null;
-    this.stockMovements = [];
+    this.router.navigate(['/products']);
   }
 
-  submitModal(): void {
-    if (this.modalMode === 'detail') {
+  goToCreate(): void {
+    if (!this.canLeaveBulkEdit()) {
       return;
     }
-    if (this.modalMode === 'delete') {
-      this.remove();
+    this.router.navigate(['/products/new']);
+  }
+
+  goToProduct(product: ProductResponse): void {
+    if (this.bulkEditMode || !this.canLeaveBulkEdit()) {
       return;
     }
-    this.update();
+    this.router.navigate(['/products', product.id]);
+  }
+
+  setFilter(field: 'brand' | 'code' | 'sku' | 'product', value: string): void {
+    if (!this.canLeaveBulkEdit()) {
+      return;
+    }
+    if (field === 'brand') this.filterBrand = value;
+    if (field === 'code') this.filterCode = value;
+    if (field === 'sku') this.filterSku = value;
+    if (field === 'product') this.filterProduct = value;
+    this.currentPage = 1;
+    this.selectedBulkProductIds.clear();
+  }
+
+  clearFilters(): void {
+    if (!this.canLeaveBulkEdit()) {
+      return;
+    }
+    this.filterBrand = '';
+    this.filterCode = '';
+    this.filterSku = '';
+    this.filterProduct = '';
+    this.currentPage = 1;
+    this.selectedBulkProductIds.clear();
   }
 
   changeStockBranch(branchId: string): void {
@@ -386,7 +434,8 @@ export class ProductsComponent implements OnInit {
         this.products = this.products.map(product => product.id === updated.id ? updated : product);
         this.toast.success(`Producto "${updated.name}" actualizado`);
         this.updating = false;
-        this.selectedProduct = null;
+        this.selectedProduct = updated;
+        this.openModal(updated);
       },
       error: (err) => {
         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo actualizar el producto');
@@ -406,7 +455,9 @@ export class ProductsComponent implements OnInit {
         this.toast.success(`Producto "${this.selectedProduct?.name}" eliminado`);
         this.deleting = false;
         this.selectedProduct = null;
+        this.deleteConfirmOpen = false;
         this.loadProducts();
+        this.router.navigate(['/products']);
       },
       error: (err) => {
         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo eliminar el producto');
@@ -417,17 +468,6 @@ export class ProductsComponent implements OnInit {
 
   trackByProduct(_: number, product: ProductResponse): string {
     return product.id;
-  }
-
-  toggleCreatePanel(): void {
-    this.showCreatePanel = !this.showCreatePanel;
-  }
-
-  toggleListPanel(): void {
-    if (this.showListPanel && !this.canLeaveBulkEdit()) {
-      return;
-    }
-    this.showListPanel = !this.showListPanel;
   }
 
   goToPage(page: number): void {
@@ -460,13 +500,18 @@ export class ProductsComponent implements OnInit {
   }
 
   enterBulkEditMode(): void {
+    if (this.selectedBulkProductIds.size === 0) {
+      this.toast.error('Selecciona al menos un producto para editar.');
+      return;
+    }
+
     this.bulkEditMode = true;
     this.bulkEditSaving = false;
     this.bulkEditForms = {};
     this.bulkEditSnapshots = {};
     this.modifiedBulkProductIds = new Set<string>();
 
-    for (const product of this.products) {
+    for (const product of this.products.filter(product => this.selectedBulkProductIds.has(product.id))) {
       const form = this.buildForm();
       form.reset(this.bulkProductFormValue(product));
       this.updatePriceValidators(form);
@@ -486,6 +531,7 @@ export class ProductsComponent implements OnInit {
     this.bulkEditForms = {};
     this.bulkEditSnapshots = {};
     this.modifiedBulkProductIds = new Set<string>();
+    this.selectedBulkProductIds.clear();
   }
 
   saveBulkChanges(): void {
@@ -522,6 +568,7 @@ export class ProductsComponent implements OnInit {
         this.bulkEditSaving = false;
         this.toast.success(`${updatedProducts.length} producto(s) actualizados.`);
         this.cancelBulkEdit(true);
+        this.loadProducts();
       },
       error: err => {
         this.bulkEditSaving = false;
@@ -536,6 +583,27 @@ export class ProductsComponent implements OnInit {
 
   isBulkProductModified(productId: string): boolean {
     return this.bulkEditMode && this.modifiedBulkProductIds.has(productId);
+  }
+
+  isBulkProductSelected(productId: string): boolean {
+    return this.selectedBulkProductIds.has(productId);
+  }
+
+  isBulkRowEditable(productId: string): boolean {
+    return this.bulkEditMode && this.selectedBulkProductIds.has(productId);
+  }
+
+  toggleBulkProduct(product: ProductResponse, checked: boolean): void {
+    if (this.bulkEditMode) {
+      return;
+    }
+
+    if (checked) {
+      this.selectedBulkProductIds.add(product.id);
+      return;
+    }
+
+    this.selectedBulkProductIds.delete(product.id);
   }
 
   isBulkFieldChanged(productId: string, field: string): boolean {
@@ -595,10 +663,10 @@ export class ProductsComponent implements OnInit {
   }
 
   get sortedProducts(): ProductResponse[] {
-    if (!this.sortColumn) return this.products;
-    const col = this.sortColumn;
-    const dir = this.sortDir === 'desc' ? -1 : 1;
-    return [...this.products].sort((a, b) => {
+    const filtered = this.filteredProducts;
+    const sorted = !this.sortColumn ? filtered : [...filtered].sort((a, b) => {
+      const col = this.sortColumn as string;
+      const dir = this.sortDir === 'desc' ? -1 : 1;
       let av: any = col === 'publicPrice' ? productPublicPrice(a) : (a as any)[col];
       let bv: any = col === 'publicPrice' ? productPublicPrice(b) : (b as any)[col];
       if (av == null && bv == null) return 0;
@@ -607,6 +675,28 @@ export class ProductsComponent implements OnInit {
       if (typeof av === 'string') av = av.toLowerCase();
       if (typeof bv === 'string') bv = bv.toLowerCase();
       return (av < bv ? -1 : av > bv ? 1 : 0) * dir;
+    });
+
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+
+    const start = (this.currentPage - 1) * this.pageSize;
+    return sorted.slice(start, start + this.pageSize);
+  }
+
+  get filteredProducts(): ProductResponse[] {
+    const brand = this.filterBrand.trim().toLowerCase();
+    const code = this.filterCode.trim().toLowerCase();
+    const sku = this.filterSku.trim().toLowerCase();
+    const productQuery = this.filterProduct.trim().toLowerCase();
+
+    return this.products.filter(product => {
+      const matchesBrand = !brand || product.brand.toLowerCase() === brand;
+      const matchesCode = !code || product.code.toLowerCase().includes(code);
+      const matchesSku = !sku || product.sku.toLowerCase().includes(sku);
+      const matchesProduct = !productQuery || product.name.toLowerCase().includes(productQuery);
+      return matchesBrand && matchesCode && matchesSku && matchesProduct;
     });
   }
 
@@ -621,23 +711,18 @@ export class ProductsComponent implements OnInit {
 
   private loadProducts(): void {
     this.loading = true;
-    this.productService.listProductsPaged(this.currentPage, this.pageSize).subscribe({
+    this.productService.listProducts().subscribe({
       next: (response) => {
-        this.products = response.items;
-        this.currentPage = response.page;
-        this.pageSize = response.pageSize;
-        this.totalProducts = response.totalCount;
-        this.totalPages = response.totalPages;
+        this.products = response;
         this.loading = false;
         if (this.bulkEditMode) {
           this.enterBulkEditMode();
         }
+        this.selectProductFromRoute();
       },
       error: (err) => {
         this.toast.error(err?.error?.message || 'No se pudieron cargar los productos');
         this.products = [];
-        this.totalProducts = 0;
-        this.totalPages = 1;
         this.loading = false;
         this.cancelBulkEdit(true);
       }
@@ -653,7 +738,7 @@ export class ProductsComponent implements OnInit {
 
   private openModal(product: ProductResponse): void {
     this.selectedProduct = product;
-    this.editPriceMode = productAllowsManualSaleValue(product) ? 'public' : 'public';
+    this.editPriceMode = 'public';
     this.editForm.reset({
       code: product.code,
       sku: product.sku,
@@ -669,6 +754,25 @@ export class ProductsComponent implements OnInit {
       noDeliverySurcharge: product.noDeliverySurcharge ?? null
     });
     this.updatePriceValidators(this.editForm);
+  }
+
+  private selectProductFromRoute(): void {
+    if (this.viewMode !== 'detail' || !this.routeProductId || this.products.length === 0) {
+      return;
+    }
+
+    const product = this.products.find(item => item.id === this.routeProductId);
+    if (!product) {
+      this.toast.error('Producto no encontrado');
+      this.router.navigate(['/products']);
+      return;
+    }
+
+    const previousProductId = this.selectedProduct?.id ?? '';
+    this.openModal(product);
+    if (previousProductId !== product.id) {
+      this.openStock(product);
+    }
   }
 
   private bulkProductFormValue(product: ProductResponse) {

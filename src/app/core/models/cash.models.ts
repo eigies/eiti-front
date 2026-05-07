@@ -45,6 +45,7 @@ export interface PaymentMethodBreakdownItem {
     method: number;
     methodName: string;
     amount: number;
+    surchargeAmount?: number;
 }
 
 export interface StaleCashSessionResponse {
@@ -52,6 +53,12 @@ export interface StaleCashSessionResponse {
     cashDrawerId: string;
     openedAt: string;
     hoursOpen: number;
+}
+
+export interface TransferBankBreakdownItem {
+    bankId: number;
+    bankName: string;
+    amount: number;
 }
 
 export interface CashSessionSummaryResponse {
@@ -63,4 +70,5 @@ export interface CashSessionSummaryResponse {
     expectedClosingAmount: number;
     actualClosingAmount?: number | null;
     difference: number;
+    transferBankBreakdown?: TransferBankBreakdownItem[];
 }

@@ -93,6 +93,22 @@
             </div>
           </ng-container>
 
+          <!-- Transfer bank: shown when method = 2 (Transferencia) -->
+          <ng-container *ngIf="payment.idPaymentMethod === TRANSFER_METHOD_ID && activeBanks.length > 0">
+            <div class="payment-transfer-fields">
+              <label class="field">
+                <span>Banco receptor</span>
+                <select class="control"
+                  [ngModel]="payment.transferBankId ?? null"
+                  (ngModelChange)="updateTransferBank(index, $event)"
+                  [ngModelOptions]="{standalone: true}">
+                  <option [ngValue]="null">Sin especificar</option>
+                  <option *ngFor="let bank of activeBanks" [ngValue]="bank.id">{{ bank.name }}</option>
+                </select>
+              </label>
+            </div>
+          </ng-container>
+
           <!-- Cheque fields: shown when method = 4 (Cheque) -->
           <ng-container *ngIf="payment.idPaymentMethod === CHECK_METHOD_ID">
             <div class="cheque-section">

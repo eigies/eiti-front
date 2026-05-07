@@ -2,117 +2,273 @@
     <section class="hero">
         <div class="hero__copy">
             <p class="eyebrow">_ ACCESOS</p>
-            <h1>Usuarios y roles</h1>
-            <p>Controla quien vende, quien opera caja y quien administra usuarios dentro de la compania.</p>
+            <h1>Usuarios y perfiles</h1>
+            <p>Ordena la operacion interna desde una sola pantalla: administra altas de usuarios por un lado y perfiles reutilizables por otro, sin salir de la seccion.</p>
         </div>
         <div class="hero__panel">
             <span>{{ users.length }} usuarios</span>
+            <span>{{ profiles.length }} perfiles</span>
             <span>{{ activeUsersCount }} activos</span>
         </div>
     </section>
 
-    <section class="layout">
-        <article class="panel panel--create">
-            <div class="panel__head">
-                <div class="panel__copy">
-                    <span class="panel__kicker">Alta interna</span>
-                    <h2>Crear usuario</h2>
-                </div>
-                <span class="panel__hint">Multiples roles permitidos</span>
+    <section class="section-switch">
+        <button
+            *ngFor="let section of sections"
+            type="button"
+            class="section-switch__item"
+            [class.section-switch__item--active]="activeSection === section.id"
+            (click)="selectSection(section.id)">
+            <span class="section-switch__eyebrow">{{ section.eyebrow }}</span>
+            <strong>{{ section.label }}</strong>
+        </button>
+    </section>
+
+    <section class="workspace">
+        <header class="workspace__header">
+            <div class="workspace__copy" *ngIf="activeSection === 'admin'; else profilesHeader">
+                <p class="workspace__eyebrow">Usuarios / Administrador</p>
+                <h2>Operacion y asignacion de accesos</h2>
+                <p>Da de alta usuarios, cambia el perfil asignado y controla el estado operativo del equipo.</p>
             </div>
-
-            <form class="form" [formGroup]="createForm" (ngSubmit)="createUser()">
-                <label class="field">
-                    <span>Usuario</span>
-                    <input class="control" type="text" formControlName="username" placeholder="operador.caja" />
-                </label>
-                <label class="field">
-                    <span>Email</span>
-                    <input class="control" type="email" formControlName="email" placeholder="operador@empresa.com" />
-                </label>
-                <label class="field">
-                    <span>Password inicial</span>
-                    <input class="control" type="password" formControlName="password"
-                        placeholder="Minimo 6 caracteres" />
-                </label>
-
-                <div class="form__section field--wide">
-                    <div class="form__section-head">
-                        <span class="panel__kicker">Accesos</span>
-                        <span class="form__section-copy">Selecciona los roles base para este usuario.</span>
-                    </div>
-                    <div class="role-grid">
-                        <button *ngFor="let role of roles" type="button" class="role-chip"
-                            [class.role-chip--active]="isRoleSelected(role.code)" (click)="toggleCreateRole(role.code)">
-                            <strong>{{ role.name }}</strong>
-                            <span>{{ role.description }}</span>
-                        </button>
-                    </div>
+            <ng-template #profilesHeader>
+                <div class="workspace__copy">
+                    <p class="workspace__eyebrow">Usuarios / Perfiles</p>
+                    <h2>Biblioteca de perfiles reutilizables</h2>
+                    <p>Crea, ajusta y depura perfiles de acceso sin mezclar ese trabajo con el ABM de usuarios.</p>
                 </div>
+            </ng-template>
 
-                <div class="form__actions">
-                    <div class="selection-copy">{{ selectedCreateRolesLabel }}</div>
-                    <button class="btn" type="submit" [disabled]="savingCreate">{{ savingCreate ? 'Guardando...' :
-                        'Crear usuario' }}</button>
-                </div>
-            </form>
-        </article>
-
-        <article class="panel panel--list">
-            <div class="panel__head panel__head--list">
-                <div class="panel__copy">
-                    <span class="panel__kicker">Matriz activa</span>
-                    <h2>Equipo habilitado</h2>
-                </div>
-                <button class="btn btn--ghost" type="button" (click)="loadData()">Actualizar</button>
+            <div class="workspace__meta">
+                <span class="workspace__pill" *ngIf="activeSection === 'admin'">{{ activeUsersCount }} usuarios activos</span>
+                <span class="workspace__pill" *ngIf="activeSection === 'admin'">{{ profiles.length }} perfiles disponibles</span>
+                <span class="workspace__pill" *ngIf="activeSection === 'profiles'">{{ customProfilesCount }} perfiles personalizados</span>
+                <span class="workspace__pill" *ngIf="activeSection === 'profiles'">{{ profiles.length - customProfilesCount }} perfiles base</span>
             </div>
+        </header>
 
-            <div class="empty" *ngIf="loading">Cargando usuarios...</div>
-            <div class="empty" *ngIf="!loading && users.length === 0">Todavia no hay usuarios internos creados.</div>
-
-            <div class="user-stack" *ngIf="users.length > 0">
-                <article class="user-card" *ngFor="let user of users">
-                    <div class="user-card__header">
-                        <div class="user-card__identity">
-                            <div class="user-card__title-row">
-                                <strong>{{ user.username }}</strong>
-                                <span class="status" [class.status--inactive]="!user.isActive">{{ user.isActive ?
-                                    'Activo' : 'Inactivo' }}</span>
+        <ng-container *ngIf="activeSection === 'admin'; else profilesSection">
+            <section class="layout layout--admin">
+                <div class="sidebar-stack">
+                    <article class="panel panel--create">
+                        <div class="panel__head">
+                            <div class="panel__copy">
+                                <span class="panel__kicker">Alta interna</span>
+                                <h2>Crear usuario</h2>
                             </div>
-                            <div class="user-card__meta">{{ user.email }} · {{ user.employeeName || 'Sin empleado vinculado' }}</div>
+                            <span class="panel__hint">Perfil unico por usuario</span>
                         </div>
-                        <div class="user-card__header-actions">
-                            <button class="btn" [class.btn--danger]="user.isActive" [class.btn--ghost]="!user.isActive"
-                                type="button" (click)="toggleStatus(user)">
-                                {{ user.isActive ? 'Desactivar' : 'Activar' }}
-                            </button>
+
+                        <form class="form" [formGroup]="createForm" (ngSubmit)="createUser()">
+                            <label class="field">
+                                <span>Usuario</span>
+                                <input class="control" type="text" formControlName="username" placeholder="operador.caja" />
+                            </label>
+                            <label class="field">
+                                <span>Email</span>
+                                <input class="control" type="email" formControlName="email" placeholder="operador@empresa.com" />
+                            </label>
+                            <label class="field">
+                                <span>Password inicial</span>
+                                <input class="control" type="password" formControlName="password"
+                                    placeholder="Minimo 6 caracteres" />
+                            </label>
+                            <label class="field field--wide">
+                                <span>Perfil de acceso</span>
+                                <select class="control" formControlName="profileId">
+                                    <option value="">Selecciona un perfil</option>
+                                    <option *ngFor="let profile of profiles; trackBy: trackByProfile" [value]="profile.id">
+                                        {{ profile.name }}
+                                    </option>
+                                </select>
+                            </label>
+
+                            <div class="form__section field--wide">
+                                <div class="form__section-head">
+                                    <span class="panel__kicker">Resumen</span>
+                                    <span class="form__section-copy">El usuario heredara todos los permisos definidos en el perfil seleccionado.</span>
+                                </div>
+                                <div class="permission-list" *ngIf="selectedCreateProfile as profile; else noProfileSelected">
+                                    <span class="permission-list__title">{{ profile.name }}</span>
+                                    <span *ngFor="let permission of profile.permissionCodes">{{ permission }}</span>
+                                </div>
+                                <ng-template #noProfileSelected>
+                                    <div class="empty">Selecciona un perfil para ver los permisos efectivos.</div>
+                                </ng-template>
+                            </div>
+
+                            <div class="form__actions">
+                                <div class="form__actions-row">
+                                    <div class="selection-copy">{{ selectedCreateProfile?.description || 'El perfil define el alcance operativo inicial.' }}</div>
+                                    <button class="btn" type="submit" [disabled]="savingCreate">{{ savingCreate ? 'Guardando...' : 'Crear usuario' }}</button>
+                                </div>
+                            </div>
+                        </form>
+                    </article>
+                </div>
+
+                <article class="panel panel--list">
+                    <div class="panel__head panel__head--list">
+                        <div class="panel__copy">
+                            <span class="panel__kicker">Asignaciones activas</span>
+                            <h2>Equipo habilitado</h2>
                         </div>
+                        <button class="btn btn--ghost" type="button" (click)="loadData()">Actualizar</button>
                     </div>
 
-                    <div class="user-card__section">
-                        <div class="user-card__section-head">
-                            <span class="panel__kicker">Roles</span>
-                        </div>
-                        <div class="role-grid role-grid--compact">
-                            <button *ngFor="let role of roles" type="button" class="role-chip role-chip--compact"
-                                [class.role-chip--active]="hasRole(user, role.code)"
-                                (click)="toggleUserRole(user, role.code)">
-                                <strong>{{ role.name }}</strong>
-                                <span>{{ role.code }}</span>
-                            </button>
-                        </div>
-                    </div>
+                    <div class="empty" *ngIf="loading">Cargando usuarios...</div>
+                    <div class="empty" *ngIf="!loading && users.length === 0">Todavia no hay usuarios internos creados.</div>
 
-                    <div class="user-card__footer">
-                        <div class="user-card__section-head">
-                            <span class="panel__kicker">Permisos</span>
-                        </div>
-                        <div class="permission-list">
-                            <span *ngFor="let permission of user.permissions">{{ permission }}</span>
-                        </div>
+                    <div class="user-stack" *ngIf="users.length > 0">
+                        <article class="user-card" *ngFor="let user of users">
+                            <button class="card-toggle" type="button" (click)="toggleUserCollapse(user.id)">
+                                <div class="user-card__header">
+                                    <div class="user-card__identity">
+                                        <div class="user-card__title-row">
+                                            <strong>{{ user.username }}</strong>
+                                            <span class="status" [class.status--inactive]="!user.isActive">{{ user.isActive ?
+                                                'Activo' : 'Inactivo' }}</span>
+                                        </div>
+                                        <div class="user-card__meta">{{ user.email }} | {{ user.employeeName || 'Sin empleado vinculado' }}</div>
+                                    </div>
+                                    <div class="card-toggle__summary">
+                                        <span>{{ user.profileName || 'Sin perfil asignado' }}</span>
+                                        <span class="card-toggle__chevron" [class.card-toggle__chevron--collapsed]="isUserCollapsed(user.id)">&#9662;</span>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <div class="user-card__body" *ngIf="!isUserCollapsed(user.id)">
+                                <div class="user-card__header-actions">
+                                    <button class="btn" [class.btn--danger]="user.isActive" [class.btn--ghost]="!user.isActive"
+                                        type="button" (click)="toggleStatus(user)">
+                                        {{ user.isActive ? 'Desactivar' : 'Activar' }}
+                                    </button>
+                                </div>
+
+                                <div class="user-card__section">
+                                    <div class="user-card__section-head">
+                                        <span class="panel__kicker">Perfil asignado</span>
+                                    </div>
+                                    <select class="control" [value]="user.profileId || ''" (change)="onProfileSelectChange(user, $event)">
+                                        <option *ngFor="let profile of profiles; trackBy: trackByProfile" [value]="profile.id">
+                                            {{ profile.name }}
+                                        </option>
+                                    </select>
+                                    <p class="selection-copy" *ngIf="user.profileName">{{ user.profileName }}</p>
+                                </div>
+
+                                <div class="user-card__footer">
+                                    <div class="user-card__section-head">
+                                        <span class="panel__kicker">Permisos efectivos</span>
+                                    </div>
+                                    <div class="permission-list" *ngIf="user.permissions && user.permissions.length > 0; else noPerms">
+                                        <span *ngFor="let permission of user.permissions">{{ permission }}</span>
+                                    </div>
+                                    <ng-template #noPerms>
+                                        <span class="selection-copy">Sin permisos asignados.</span>
+                                    </ng-template>
+                                </div>
+                            </div>
+                        </article>
                     </div>
                 </article>
-            </div>
-        </article>
+            </section>
+        </ng-container>
+
+        <ng-template #profilesSection>
+            <section class="layout layout--profiles">
+                <article class="panel panel--profiles-editor">
+                    <div class="panel__head">
+                        <div class="panel__copy">
+                            <span class="panel__kicker">Perfiles reutilizables</span>
+                            <h2>{{ profileEditorTitle }}</h2>
+                        </div>
+                        <button class="btn btn--ghost" type="button" (click)="beginCreateProfile()">Nuevo perfil</button>
+                    </div>
+
+                    <form class="form form--profile" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+                        <label class="field">
+                            <span>Nombre</span>
+                            <input class="control" type="text" formControlName="name" placeholder="Caja tarde" />
+                        </label>
+                        <label class="field field--wide">
+                            <span>Descripcion</span>
+                            <textarea class="control control--textarea" formControlName="description"
+                                placeholder="Define cuando usar este perfil y que cubre."></textarea>
+                        </label>
+
+                        <div class="form__section field--wide">
+                            <div class="form__section-head">
+                                <span class="panel__kicker">Matriz de permisos</span>
+                                <span class="form__section-copy">Selecciona el conjunto exacto de permisos que recibiran los usuarios asignados.</span>
+                            </div>
+                            <div class="role-grid">
+                                <button *ngFor="let permission of permissionCatalog" type="button" class="role-chip"
+                                    [class.role-chip--active]="isProfilePermissionSelected(permission.code)"
+                                    (click)="toggleProfilePermission(permission.code)">
+                                    <strong>{{ permission.label }}</strong>
+                                    <span>{{ permission.description }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form__actions">
+                            <div class="form__actions-row">
+                                <div class="selection-copy">{{ selectedProfilePermissionsLabel }}</div>
+                                <div class="action-row">
+                                    <button *ngIf="editingProfileId" class="btn btn--ghost" type="button" (click)="cancelProfileEditor()">Cancelar</button>
+                                    <button class="btn" type="submit" [disabled]="savingProfile">{{ profileEditorActionLabel }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </article>
+
+                <article class="panel panel--profiles-list">
+                    <div class="panel__head panel__head--list">
+                        <div class="panel__copy">
+                            <span class="panel__kicker">Perfiles cargados</span>
+                            <h2>Catalogo operativo</h2>
+                        </div>
+                        <button class="btn btn--ghost" type="button" (click)="loadData()">Actualizar</button>
+                    </div>
+
+                    <div class="empty" *ngIf="loadingProfiles">Cargando perfiles...</div>
+                    <div class="empty" *ngIf="!loadingProfiles && profiles.length === 0">Todavia no hay perfiles disponibles.</div>
+
+                    <div class="profile-stack" *ngIf="profiles.length > 0">
+                        <article class="profile-card" *ngFor="let profile of profiles; trackBy: trackByProfile">
+                            <button class="card-toggle" type="button" (click)="toggleProfileCollapse(profile.id)">
+                                <div class="profile-card__head">
+                                    <div>
+                                        <strong>{{ profile.name }}</strong>
+                                        <div class="profile-card__meta">
+                                            {{ profile.isSystem ? 'Perfil migrado del sistema' : 'Perfil personalizado' }}
+                                        </div>
+                                    </div>
+                                    <div class="card-toggle__summary">
+                                        <span>{{ profile.permissionCodes.length }} permisos</span>
+                                        <span class="card-toggle__chevron" [class.card-toggle__chevron--collapsed]="isProfileCollapsed(profile.id)">&#9662;</span>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <div class="profile-card__body" *ngIf="!isProfileCollapsed(profile.id)">
+                                <div class="action-row action-row--card-actions">
+                                    <button class="btn btn--ghost" type="button" (click)="beginEditProfile(profile)">Editar</button>
+                                    <button class="btn btn--ghost btn--danger" type="button" (click)="deleteProfile(profile)">Eliminar</button>
+                                </div>
+                                <p class="profile-card__description">{{ profile.description || 'Sin descripcion operativa.' }}</p>
+                                <div class="permission-list">
+                                    <span class="permission-list__title">{{ profile.permissionCodes.length }} permisos</span>
+                                    <span *ngFor="let permission of profile.permissionCodes">{{ permission }}</span>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </article>
+            </section>
+        </ng-template>
     </section>
 </div>

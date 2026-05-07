@@ -39,6 +39,18 @@ export const routes: Routes = [
             import('./features/branches/branches.component').then(m => m.BranchesComponent)
     },
     {
+        path: 'products/new',
+        canActivate: [authGuard],
+        loadComponent: () =>
+            import('./features/products/products.component').then(m => m.ProductsComponent)
+    },
+    {
+        path: 'products/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+            import('./features/products/products.component').then(m => m.ProductsComponent)
+    },
+    {
         path: 'products',
         canActivate: [authGuard],
         loadComponent: () =>

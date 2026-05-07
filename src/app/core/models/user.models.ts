@@ -1,10 +1,3 @@
-export interface RoleDefinition {
-    code: string;
-    name: string;
-    description: string;
-    permissions: string[];
-}
-
 export interface UserResponse {
     id: string;
     username: string;
@@ -12,32 +5,38 @@ export interface UserResponse {
     isActive: boolean;
     employeeId?: string | null;
     employeeName?: string | null;
-    roles: string[];
+    profileId: string | null;
+    profileName: string | null;
     permissions: string[];
     createdAt: string;
     lastLoginAt?: string | null;
+    roles?: string[];
 }
 
 export interface CreateUserRequest {
     username: string;
     email: string;
     password: string;
-    roleCodes: string[];
+    profileId: string;
     employeeId?: string | null;
 }
 
-export interface UpdateUserRolesRequest {
-    roleCodes: string[];
+export interface UpdateUserProfileRequest {
+    profileId: string;
     employeeId?: string | null;
 }
 
-export interface UserRoleAuditResponse {
+export interface UserProfileAuditResponse {
     id: string;
     targetUserId: string;
     targetUsername: string;
     changedByUserId?: string | null;
     changedByUsername?: string | null;
-    previousRoles: string[];
-    newRoles: string[];
+    previousProfileId?: string | null;
+    previousProfileName?: string | null;
+    newProfileId?: string | null;
+    newProfileName?: string | null;
+    previousPermissionCodes?: string[];
+    newPermissionCodes?: string[];
     changedAt: string;
 }

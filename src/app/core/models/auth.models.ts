@@ -26,7 +26,9 @@ export interface AuthResponse {
     username: string;
     email: string;
     token: string;
-    roles: string[];
+    roles?: string[];
+    profileId?: string | null;
+    profileName?: string | null;
     permissions: string[];
     assignedCashDrawerId?: string | null;
 }

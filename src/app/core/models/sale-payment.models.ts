@@ -12,10 +12,11 @@ export interface ChequeFormData {
 export interface SalePaymentRequest {
     idPaymentMethod: number;
     amount: number;
-    notes?: string | null;
+    reference?: string | null;
     cardBankId?: number | null;
     cardCuotas?: number | null;
     cardSurchargeAmt?: number | null;
+    transferBankId?: number | null;
     cheque?: ChequeFormData | null;
 }
 
@@ -41,6 +42,7 @@ export interface SalePaymentDraftLine {
     cardCuotas?: number | null;
     cardSurchargePct?: number | null;
     cardSurchargeAmt?: number | null;
+    transferBankId?: number | null;
     chequeData?: ChequeFormData | null;
 }
 
@@ -105,7 +107,12 @@ export function mapSalePaymentDraftState(
         .map(item => ({
             idPaymentMethod: Number(item.idPaymentMethod || SALE_PAYMENT_METHOD_CASH),
             amount: roundMoney(item.amount),
-            notes: item.notes ?? ''
+            notes: item.reference ?? '',
+            cardBankId: item.cardBankId ?? null,
+            cardCuotas: item.cardCuotas ?? null,
+            cardSurchargeAmt: item.cardSurchargeAmt ?? null,
+            transferBankId: item.transferBankId ?? null,
+            chequeData: item.cheque ?? null
         }));
     const mappedTradeIns = (tradeIns ?? [])
         .filter(item => item.productId && Number(item.quantity) > 0)
@@ -128,10 +135,11 @@ export function normalizeSalePayments(state: SalePaymentDraftState): SalePayment
         .map(item => ({
             idPaymentMethod: Number(item.idPaymentMethod || 0),
             amount: roundMoney(item.amount),
-            notes: normalizeNotes(item.notes),
+            reference: normalizeNotes(item.notes),
             cardBankId: item.cardBankId ?? null,
             cardCuotas: item.cardCuotas ?? null,
             cardSurchargeAmt: item.cardSurchargeAmt ?? null,
+            transferBankId: item.transferBankId ?? null,
             cheque: item.chequeData ?? null
         }))
         .filter(item => item.idPaymentMethod > 0 && item.amount > 0);
