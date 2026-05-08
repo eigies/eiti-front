@@ -416,8 +416,7 @@ export class ProductsComponent implements OnInit {
     // Data validation: branchName column (col index = position of 'branchName' + 1)
     const branchColIdx = PRODUCT_IMPORT_HEADERS.indexOf('branchName') + 1;
     if (branchNames.length > 0) {
-      const maxDataRow = dataRows.length + 1000;
-      for (let r = 2; r <= Math.max(dataRows.length + 1, maxDataRow); r++) {
+      for (let r = 2; r <= dataRows.length + 1; r++) {
         ws.getCell(r, branchColIdx).dataValidation = {
           type: 'list',
           allowBlank: true,
