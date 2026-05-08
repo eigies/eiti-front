@@ -16,7 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { forkJoin } from 'rxjs';
 import * as XLSX from 'xlsx';
-import ExcelJS from 'exceljs';
+import * as ExcelJS from 'exceljs';
 
 type ProductsViewMode = 'list' | 'create' | 'detail';
 type ProductImportColumn =
@@ -429,7 +429,7 @@ export class ProductsComponent implements OnInit {
       }
     }
 
-    wb.xlsx.writeBuffer().then(buffer => {
+    wb.xlsx.writeBuffer().then((buffer: ArrayBuffer) => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
