@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CreateProductRequest, PagedProductsResponse, ProductResponse, UpdateProductRequest } from '../models/product.models';
+import { CreateProductRequest, ImportProductRowRequest, ImportProductsResponse, PagedProductsResponse, ProductResponse, UpdateProductRequest } from '../models/product.models';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -24,6 +24,10 @@ export class ProductService {
 
     updateProduct(id: string, request: UpdateProductRequest): Observable<ProductResponse> {
         return this.http.put<ProductResponse>(`${this.base}/${id}`, request);
+    }
+
+    importProducts(rows: ImportProductRowRequest[]): Observable<ImportProductsResponse> {
+        return this.http.post<ImportProductsResponse>(`${this.base}/import`, { rows });
     }
 
     deleteProduct(id: string): Observable<void> {

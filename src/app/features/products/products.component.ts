@@ -1,9 +1,9 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
-import { ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../core/models/product.models';
+import { ImportProductRowRequest, ImportProductsResponse, ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../core/models/product.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
@@ -15,8 +15,40 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { forkJoin } from 'rxjs';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 type ProductsViewMode = 'list' | 'create' | 'detail';
+type ProductImportColumn =
+  | 'code'
+  | 'sku'
+  | 'brand'
+  | 'name'
+  | 'description'
+  | 'publicPrice'
+  | 'costPrice'
+  | 'unitPrice'
+  | 'allowsManualValueInSale'
+  | 'noDeliverySurcharge'
+  | 'branchName'
+  | 'initialStock';
+
+type ProductImportRow = Record<ProductImportColumn, string | number | boolean | null>;
+
+const PRODUCT_IMPORT_HEADERS: ProductImportColumn[] = [
+  'code',
+  'sku',
+  'brand',
+  'name',
+  'description',
+  'publicPrice',
+  'costPrice',
+  'unitPrice',
+  'allowsManualValueInSale',
+  'noDeliverySurcharge',
+  'branchName',
+  'initialStock'
+];
 
 @Component({
   selector: 'app-products',
@@ -26,6 +58,8 @@ type ProductsViewMode = 'list' | 'create' | 'detail';
   styleUrls: ['./products.component.css']
 })
 export class ProductsComponent implements OnInit {
+  @ViewChild('importFileInput') importFileInput?: ElementRef<HTMLInputElement>;
+
   createPriceMode: 'public' | 'margin' = 'public';
   editPriceMode: 'public' | 'margin' = 'public';
   createForm: FormGroup;
@@ -63,6 +97,8 @@ export class ProductsComponent implements OnInit {
   compactMode = true;
   sortColumn: string | null = null;
   sortDir: 'asc' | 'desc' = 'desc';
+  importInProgress = false;
+  importReport: ImportProductsResponse | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -322,6 +358,147 @@ export class ProductsComponent implements OnInit {
       return;
     }
     this.router.navigate(['/products/new']);
+  }
+
+  downloadImportTemplate(): void {
+    const branchNames = this.branches.map(b => b.name);
+    const dataRows: ProductImportRow[] = this.products.length > 0
+      ? this.products.map(product => ({
+          code: product.code,
+          sku: product.sku,
+          brand: product.brand,
+          name: product.name,
+          description: product.description ?? null,
+          publicPrice: product.publicPrice ?? product.price,
+          costPrice: product.costPrice ?? 0,
+          unitPrice: product.unitPrice ?? null,
+          allowsManualValueInSale: product.allowsManualValueInSale,
+          noDeliverySurcharge: product.noDeliverySurcharge ?? null,
+          branchName: null,
+          initialStock: null
+        }))
+      : [{
+          code: '', sku: '', brand: '', name: '', description: null,
+          publicPrice: null, costPrice: 0, unitPrice: null,
+          allowsManualValueInSale: false, noDeliverySurcharge: null,
+          branchName: null, initialStock: null
+        }];
+
+    const wb = new ExcelJS.Workbook();
+
+    // Hidden helper sheet with branch names for the dropdown formula
+    const branchSheet = wb.addWorksheet('_Sucursales', { state: 'veryHidden' });
+    branchNames.forEach((name, i) => { branchSheet.getCell(i + 1, 1).value = name; });
+
+    const ws = wb.addWorksheet('Productos');
+
+    // Header row
+    ws.addRow(PRODUCT_IMPORT_HEADERS);
+    ws.getRow(1).font = { bold: true };
+    ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8E8E8' } };
+
+    // Column widths
+    const widths: Record<string, number> = {
+      code: 14, sku: 14, brand: 18, name: 28, description: 30,
+      publicPrice: 14, costPrice: 12, unitPrice: 12,
+      allowsManualValueInSale: 22, noDeliverySurcharge: 20,
+      branchName: 22, initialStock: 14
+    };
+    PRODUCT_IMPORT_HEADERS.forEach((h, i) => {
+      ws.getColumn(i + 1).width = widths[h] ?? 16;
+    });
+
+    // Data rows
+    dataRows.forEach(row => {
+      ws.addRow(PRODUCT_IMPORT_HEADERS.map(h => row[h]));
+    });
+
+    // Data validation: branchName column (col index = position of 'branchName' + 1)
+    const branchColIdx = PRODUCT_IMPORT_HEADERS.indexOf('branchName') + 1;
+    if (branchNames.length > 0) {
+      const maxDataRow = dataRows.length + 1000;
+      for (let r = 2; r <= Math.max(dataRows.length + 1, maxDataRow); r++) {
+        ws.getCell(r, branchColIdx).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [`_Sucursales!$A$1:$A$${branchNames.length}`],
+          showErrorMessage: true,
+          errorTitle: 'Sucursal inválida',
+          error: 'Seleccioná una sucursal de la lista.'
+        };
+      }
+    }
+
+    wb.xlsx.writeBuffer().then(buffer => {
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'template-productos.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  openImportPicker(): void {
+    if (!this.canLeaveBulkEdit() || this.importInProgress) {
+      return;
+    }
+
+    this.importFileInput?.nativeElement.click();
+  }
+
+  closeImportReport(): void {
+    this.importReport = null;
+  }
+
+  importErrorRows(report: ImportProductsResponse) {
+    return report.rows.filter(row => row.action === 'error');
+  }
+
+  importProductsFromFile(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    this.importInProgress = true;
+    this.importReport = null;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const rows = this.parseImportRows(reader.result);
+        this.productService.importProducts(rows).subscribe({
+          next: report => {
+            this.importReport = report;
+            this.importInProgress = false;
+            this.toast.success(`Importacion finalizada: ${report.createdCount} creados, ${report.updatedCount} actualizados, ${report.errorCount} rechazados.`);
+            this.resetImportInput();
+            this.currentPage = 1;
+            this.loadProducts();
+          },
+          error: err => {
+            this.importInProgress = false;
+            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo importar el archivo');
+            this.resetImportInput();
+          }
+        });
+      } catch (error) {
+        this.importInProgress = false;
+        this.toast.error(error instanceof Error ? error.message : 'El archivo no tiene un formato valido.');
+        this.resetImportInput();
+      }
+    };
+
+    reader.onerror = () => {
+      this.importInProgress = false;
+      this.toast.error('No se pudo leer el archivo seleccionado.');
+      this.resetImportInput();
+    };
+
+    reader.readAsArrayBuffer(file);
   }
 
   goToProduct(product: ProductResponse): void {
@@ -863,6 +1040,135 @@ export class ProductsComponent implements OnInit {
       && left.unitPrice === right.unitPrice
       && left.allowsManualValueInSale === right.allowsManualValueInSale
       && left.noDeliverySurcharge === right.noDeliverySurcharge;
+  }
+
+  private parseImportRows(source: string | ArrayBuffer | null): ImportProductRowRequest[] {
+    if (!source) {
+      throw new Error('El archivo seleccionado esta vacio.');
+    }
+
+    const workbook = XLSX.read(source, { type: 'array' });
+    const worksheet = workbook.Sheets['Productos'] ?? workbook.Sheets[workbook.SheetNames[0] ?? ''];
+    if (!worksheet) {
+      throw new Error('No se encontro la hoja "Productos" en el archivo.');
+    }
+
+    const headerRows = XLSX.utils.sheet_to_json<(string | null)[]>(worksheet, {
+      header: 1,
+      blankrows: false,
+      defval: null
+    });
+    const normalizedHeaders = (headerRows[0] ?? []).map(header => String(header ?? '').trim());
+    const missingHeaders = PRODUCT_IMPORT_HEADERS.filter(header => !normalizedHeaders.includes(header));
+    if (missingHeaders.length > 0) {
+      throw new Error(`Faltan columnas obligatorias en el template: ${missingHeaders.join(', ')}.`);
+    }
+
+    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
+      defval: null,
+      raw: false
+    });
+
+    if (rawRows.length === 0) {
+      throw new Error('El archivo no contiene filas de productos para importar.');
+    }
+
+    return rawRows.map((row, index) => this.mapImportRow(row, index + 2));
+  }
+
+  private mapImportRow(row: Record<string, unknown>, rowNumber: number): ImportProductRowRequest {
+    const code = this.readRequiredImportText(row, 'code', rowNumber);
+    const sku = this.readRequiredImportText(row, 'sku', rowNumber);
+    const brand = this.readRequiredImportText(row, 'brand', rowNumber);
+    const name = this.readRequiredImportText(row, 'name', rowNumber);
+    const costPrice = this.readRequiredImportNumber(row, 'costPrice', rowNumber);
+    const allowsManualValueInSale = this.readRequiredImportBoolean(row, 'allowsManualValueInSale', rowNumber);
+    const publicPrice = this.readOptionalImportNumber(row, 'publicPrice', rowNumber);
+
+    if (!allowsManualValueInSale && publicPrice == null) {
+      throw new Error(`Fila ${rowNumber}: publicPrice es obligatorio cuando allowsManualValueInSale es false.`);
+    }
+
+    return {
+      code,
+      sku,
+      brand,
+      name,
+      description: this.readOptionalImportText(row, 'description'),
+      publicPrice,
+      costPrice,
+      unitPrice: this.readOptionalImportNumber(row, 'unitPrice', rowNumber),
+      allowsManualValueInSale,
+      noDeliverySurcharge: this.readOptionalImportNumber(row, 'noDeliverySurcharge', rowNumber),
+      branchName: this.readOptionalImportText(row, 'branchName'),
+      initialStock: this.readOptionalImportNumber(row, 'initialStock', rowNumber)
+    };
+  }
+
+  private readRequiredImportText(row: Record<string, unknown>, key: ProductImportColumn, rowNumber: number): string {
+    const value = this.readOptionalImportText(row, key);
+    if (!value) {
+      throw new Error(`Fila ${rowNumber}: ${key} es obligatorio.`);
+    }
+
+    return value;
+  }
+
+  private readOptionalImportText(row: Record<string, unknown>, key: ProductImportColumn): string | null {
+    const value = row[key];
+    const normalized = String(value ?? '').trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private readRequiredImportNumber(row: Record<string, unknown>, key: ProductImportColumn, rowNumber: number): number {
+    const value = this.readOptionalImportNumber(row, key, rowNumber);
+    if (value == null) {
+      throw new Error(`Fila ${rowNumber}: ${key} es obligatorio.`);
+    }
+
+    return value;
+  }
+
+  private readOptionalImportNumber(row: Record<string, unknown>, key: ProductImportColumn, rowNumber: number): number | null {
+    const rawValue = row[key];
+    if (rawValue == null || String(rawValue).trim() === '') {
+      return null;
+    }
+
+    const normalizedValue = Number(String(rawValue).replace(',', '.'));
+    if (!Number.isFinite(normalizedValue)) {
+      throw new Error(`Fila ${rowNumber}: ${key} debe ser numerico.`);
+    }
+
+    return normalizedValue;
+  }
+
+  private readRequiredImportBoolean(row: Record<string, unknown>, key: ProductImportColumn, rowNumber: number): boolean {
+    const rawValue = row[key];
+    if (typeof rawValue === 'boolean') {
+      return rawValue;
+    }
+
+    const normalizedValue = String(rawValue ?? '').trim().toLowerCase();
+    if (!normalizedValue) {
+      throw new Error(`Fila ${rowNumber}: ${key} es obligatorio.`);
+    }
+
+    if (['true', '1', 'si', 'sí', 'yes', 'y'].includes(normalizedValue)) {
+      return true;
+    }
+
+    if (['false', '0', 'no', 'n'].includes(normalizedValue)) {
+      return false;
+    }
+
+    throw new Error(`Fila ${rowNumber}: ${key} debe ser true o false.`);
+  }
+
+  private resetImportInput(): void {
+    if (this.importFileInput?.nativeElement) {
+      this.importFileInput.nativeElement.value = '';
+    }
   }
 
   private buildForm(): FormGroup {

@@ -27,9 +27,15 @@
     </div>
     <div class="ph__actions">
       <button class="btn btn--ghost btn--sm" type="button" *ngIf="viewMode !== 'list'" (click)="goToList()">Volver al listado</button>
-      <button class="btn btn--primary btn--sm" type="button" *ngIf="viewMode === 'list'" (click)="goToCreate()">Nuevo producto</button>
+      <ng-container *ngIf="viewMode === 'list'">
+        <button class="btn btn--ghost btn--sm" type="button" (click)="downloadImportTemplate()">Descargar template</button>
+        <button class="btn btn--outline-amber btn--sm" type="button" (click)="openImportPicker()" [disabled]="importInProgress">{{ importInProgress ? 'Importando...' : 'Importar Excel' }}</button>
+        <button class="btn btn--primary btn--sm" type="button" (click)="goToCreate()">Nuevo producto</button>
+      </ng-container>
     </div>
   </header>
+
+  <input #importFileInput type="file" accept=".xlsx,.xls" class="import-file-input" (change)="importProductsFromFile($event)" />
 
   <section class="card card--create" *ngIf="viewMode === 'create'">
     <div class="card__head-static">
@@ -120,6 +126,46 @@
       <label class="f"><span class="f__l">Producto</span><input class="f__i" type="text" [ngModel]="filterProduct" (ngModelChange)="setFilter('product', $event)" [ngModelOptions]="{standalone:true}" /></label>
       <button class="btn btn--ghost btn--sm" type="button" (click)="clearFilters()">Limpiar</button>
     </div>
+
+    <section class="import-report" *ngIf="importReport as report">
+      <div class="import-report__head">
+        <span class="import-report__title">Resultado de importacion</span>
+        <button class="btn btn--ghost btn--sm" type="button" (click)="closeImportReport()">Cerrar</button>
+      </div>
+
+      <div class="import-report__summary">
+        <div class="import-report__metric">
+          <span class="import-report__label">Filas</span>
+          <strong>{{ report.totalRows }}</strong>
+        </div>
+        <div class="import-report__metric">
+          <span class="import-report__label">Creados</span>
+          <strong>{{ report.createdCount }}</strong>
+        </div>
+        <div class="import-report__metric">
+          <span class="import-report__label">Actualizados</span>
+          <strong>{{ report.updatedCount }}</strong>
+        </div>
+        <div class="import-report__metric import-report__metric--danger">
+          <span class="import-report__label">Rechazados</span>
+          <strong>{{ report.errorCount }}</strong>
+        </div>
+      </div>
+
+      <div class="import-report__rows" *ngIf="report.errorCount > 0">
+        <div class="import-row" *ngFor="let row of importErrorRows(report)">
+          <div class="import-row__main">
+            <span class="import-row__line">Fila {{ row.rowNumber }}</span>
+            <strong>{{ row.code || 'Sin code' }}</strong>
+          </div>
+          <span class="import-row__action" [class.import-row__action--created]="row.action === 'created'" [class.import-row__action--updated]="row.action === 'updated'" [class.import-row__action--error]="row.action === 'error'">{{ row.action }}</span>
+          <span class="import-row__message">{{ row.message }}</span>
+        </div>
+      </div>
+      <div class="import-report__ok" *ngIf="report.errorCount === 0">
+        No hubo rechazos en la importacion.
+      </div>
+    </section>
 
     <div class="state-box" *ngIf="loading">Cargando productos...</div>
     <div class="state-box" *ngIf="!loading && totalProducts === 0">No hay productos para los filtros aplicados.</div>
