@@ -7,11 +7,12 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerResponse } from '../../core/models/customer.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, SearchableSelectComponent],
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.css']
 })
@@ -26,6 +27,11 @@ export class CustomersComponent implements OnInit {
     { value: 4, label: 'LC' },
     { value: 5, label: 'Otro' }
   ];
+
+  readonly documentTypeOptions: SearchableSelectOption[] = this.documentTypes.map(type => ({
+    value: type.value,
+    label: type.label
+  }));
 
   constructor(
     private fb: FormBuilder,

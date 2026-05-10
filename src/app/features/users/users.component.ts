@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccessProfileResponse } from '../../core/models/access-profile.models';
 import { PermissionCatalog } from '../../core/models/permission.models';
 import { UserResponse } from '../../core/models/user.models';
@@ -9,11 +9,12 @@ import { AccessProfileService } from '../../core/services/access-profile.service
 import { UserService } from '../../core/services/user.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, SearchableSelectComponent],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -81,6 +82,14 @@ export class UsersComponent implements OnInit {
 
   get selectedCreateProfile(): AccessProfileResponse | undefined {
     return this.profiles.find(profile => profile.id === this.createForm.controls.profileId.value);
+  }
+
+  get profileOptions(): SearchableSelectOption[] {
+    return this.profiles.map(profile => ({
+      value: profile.id,
+      label: profile.name,
+      meta: profile.description ?? undefined
+    }));
   }
 
   get profileEditorTitle(): string {
@@ -294,9 +303,8 @@ export class UsersComponent implements OnInit {
     });
   }
 
-  onProfileSelectChange(user: UserResponse, event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.updateUserProfile(user, select.value);
+  onProfileSelectChange(user: UserResponse, value: string | number | null): void {
+    this.updateUserProfile(user, String(value ?? ''));
   }
 
   isUserCollapsed(userId: string): boolean {

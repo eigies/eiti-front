@@ -75,12 +75,12 @@
                             </label>
                             <label class="field field--wide">
                                 <span>Perfil de acceso</span>
-                                <select class="control" formControlName="profileId">
-                                    <option value="">Selecciona un perfil</option>
-                                    <option *ngFor="let profile of profiles; trackBy: trackByProfile" [value]="profile.id">
-                                        {{ profile.name }}
-                                    </option>
-                                </select>
+                                <app-searchable-select
+                                    formControlName="profileId"
+                                    [options]="profileOptions"
+                                    placeholder="Selecciona un perfil"
+                                    searchPlaceholder="Buscar perfil...">
+                                </app-searchable-select>
                             </label>
 
                             <div class="form__section field--wide">
@@ -150,11 +150,14 @@
                                     <div class="user-card__section-head">
                                         <span class="panel__kicker">Perfil asignado</span>
                                     </div>
-                                    <select class="control" [value]="user.profileId || ''" (change)="onProfileSelectChange(user, $event)">
-                                        <option *ngFor="let profile of profiles; trackBy: trackByProfile" [value]="profile.id">
-                                            {{ profile.name }}
-                                        </option>
-                                    </select>
+                                    <app-searchable-select
+                                        [ngModel]="user.profileId || ''"
+                                        (ngModelChange)="onProfileSelectChange(user, $event)"
+                                        [ngModelOptions]="{ standalone: true }"
+                                        [options]="profileOptions"
+                                        placeholder="Selecciona un perfil"
+                                        searchPlaceholder="Buscar perfil...">
+                                    </app-searchable-select>
                                     <p class="selection-copy" *ngIf="user.profileName">{{ user.profileName }}</p>
                                 </div>
 

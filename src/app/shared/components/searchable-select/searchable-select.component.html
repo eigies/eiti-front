@@ -1,0 +1,49 @@
+<div class="search-select" [class.search-select--open]="open" [class.search-select--compact]="compact" [class.search-select--disabled]="disabled" [class.search-select--inline]="panelInline">
+  <button
+    type="button"
+    class="search-select__trigger control"
+    [class.control--compact]="compact"
+    [disabled]="disabled"
+    (click)="toggle()">
+    <span class="search-select__copy" [class.search-select__copy--placeholder]="!selectedOption">
+      {{ selectedOption?.label || placeholder }}
+    </span>
+    <span class="search-select__caret" aria-hidden="true">▾</span>
+  </button>
+
+  <div class="search-select__panel" *ngIf="open">
+    <div class="search-select__filter">
+      <input
+        #filterInput
+        class="search-select__input"
+        type="text"
+        [(ngModel)]="query"
+        [ngModelOptions]="{ standalone: true }"
+        [placeholder]="searchPlaceholder"
+        autocomplete="off" />
+    </div>
+
+    <button
+      *ngIf="allowClear"
+      type="button"
+      class="search-select__option search-select__option--clear"
+      [class.search-select__option--selected]="selectedOption == null"
+      (click)="clearSelection()">
+      <span class="search-select__label">{{ clearLabel }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="search-select__option"
+      *ngFor="let option of filteredOptions; trackBy: trackByValue"
+      [class.search-select__option--selected]="isSelected(option)"
+      (click)="selectOption(option)">
+      <span class="search-select__label">{{ option.label }}</span>
+      <span class="search-select__meta" *ngIf="option.meta">{{ option.meta }}</span>
+    </button>
+
+    <div class="search-select__empty" *ngIf="filteredOptions.length === 0">
+      {{ emptyMessage }}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,177 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+.search-select {
+    position: relative;
+    width: 100%;
+}
+
+.search-select__trigger {
+    width: 100%;
+    box-sizing: border-box;
+    padding: .8rem;
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .84rem;
+    line-height: 1.2;
+    outline: none;
+    appearance: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .8rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.search-select__trigger:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
+}
+
+.search-select__trigger:focus,
+.search-select__trigger:focus-visible {
+    border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+.search-select__trigger:disabled {
+    cursor: not-allowed;
+    opacity: .72;
+}
+
+.search-select--compact .search-select__trigger {
+    padding: .55rem .65rem;
+}
+
+.search-select__copy {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-select__copy--placeholder {
+    color: var(--text-soft);
+}
+
+.search-select__caret {
+    flex: 0 0 auto;
+    color: color-mix(in srgb, var(--amber) 72%, var(--text));
+    transition: transform .18s ease;
+}
+
+.search-select--open .search-select__caret {
+    transform: rotate(180deg);
+}
+
+.search-select__panel {
+    position: absolute;
+    top: calc(100% + .45rem);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    display: grid;
+    gap: .4rem;
+    padding: .55rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 22%, var(--border-2));
+    border-radius: 18px;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 98%, transparent), color-mix(in srgb, var(--bg) 96%, transparent));
+    box-shadow:
+        0 20px 48px rgba(0, 0, 0, .18),
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    backdrop-filter: blur(14px);
+}
+
+.search-select--inline .search-select__panel {
+    position: static;
+    top: auto;
+    left: auto;
+    right: auto;
+    margin-top: .55rem;
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+        0 10px 24px rgba(0, 0, 0, .08);
+}
+
+.search-select__filter {
+    position: sticky;
+    top: 0;
+}
+
+.search-select__input {
+    width: 100%;
+    padding: .8rem .9rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border-2));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg) 72%, var(--bg-panel));
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .82rem;
+    outline: none;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+}
+
+.search-select__input:focus {
+    border-color: color-mix(in srgb, var(--amber) 42%, var(--border-2));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+.search-select__option,
+.search-select__empty {
+    width: 100%;
+    padding: .78rem .85rem;
+    border-radius: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: .81rem;
+}
+
+.search-select__option {
+    border: 1px solid transparent;
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    color: var(--text);
+    display: grid;
+    gap: .12rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.search-select__option:hover {
+    border-color: color-mix(in srgb, var(--amber) 24%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 7%, var(--bg));
+    transform: translateY(-1px);
+}
+
+.search-select__option--selected {
+    border-color: color-mix(in srgb, var(--amber) 38%, var(--border-2));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--amber) 10%, transparent), color-mix(in srgb, var(--bg) 86%, transparent));
+}
+
+.search-select__option--clear {
+    color: var(--text-dim);
+}
+
+.search-select__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-select__meta,
+.search-select__empty {
+    color: var(--text-dim);
+    font-size: .72rem;
+}
+
+.search-select__empty {
+    padding: .92rem .85rem;
+    border: 1px dashed color-mix(in srgb, var(--border-2) 90%, transparent);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+}

@@ -120,7 +120,7 @@
     </div>
 
     <div class="filters">
-      <label class="f"><span class="f__l">Marca</span><select class="f__i" [ngModel]="filterBrand" (ngModelChange)="setFilter('brand', $event)" [ngModelOptions]="{standalone:true}"><option value="">Todas</option><option *ngFor="let brand of brandOptions" [value]="brand">{{ brand }}</option></select></label>
+      <label class="f"><span class="f__l">Marca</span><app-searchable-select [ngModel]="filterBrand" (ngModelChange)="setFilter('brand', $event)" [ngModelOptions]="{standalone:true}" [options]="brandSelectOptions" [allowClear]="true" clearLabel="Todas" clearValue="" placeholder="Todas" searchPlaceholder="Buscar marca..."></app-searchable-select></label>
       <label class="f"><span class="f__l">Codigo</span><input class="f__i" type="text" [ngModel]="filterCode" (ngModelChange)="setFilter('code', $event)" [ngModelOptions]="{standalone:true}" /></label>
       <label class="f"><span class="f__l">SKU</span><input class="f__i" type="text" [ngModel]="filterSku" (ngModelChange)="setFilter('sku', $event)" [ngModelOptions]="{standalone:true}" /></label>
       <label class="f"><span class="f__l">Producto</span><input class="f__i" type="text" [ngModel]="filterProduct" (ngModelChange)="setFilter('product', $event)" [ngModelOptions]="{standalone:true}" /></label>
@@ -279,7 +279,7 @@
       <div class="pager">
         <span class="pager__info">{{ pageStart }}-{{ pageEnd }} de {{ totalProducts }}</span>
         <div class="pager__controls">
-          <label class="pager__size"><span class="f__l">Por pagina</span><select class="f__i f__i--sm" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)" [ngModelOptions]="{standalone:true}"><option *ngFor="let option of pageSizeOptions" [ngValue]="option">{{ option }}</option></select></label>
+          <label class="pager__size"><span class="f__l">Por pagina</span><app-searchable-select [ngModel]="pageSize" (ngModelChange)="changePageSize($event)" [ngModelOptions]="{standalone:true}" [options]="pageSizeSelectOptions" [compact]="true" placeholder="Por pagina" searchPlaceholder="Buscar cantidad..."></app-searchable-select></label>
           <button class="btn btn--ghost btn--sm" type="button" (click)="goToPage(currentPage - 1)" [disabled]="currentPage <= 1">Anterior</button>
           <span class="pager__page">{{ currentPage }} / {{ totalPages }}</span>
           <button class="btn btn--ghost btn--sm" type="button" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages">Siguiente</button>
@@ -376,10 +376,7 @@
       </div>
       <div class="card__body stock-panel">
         <label class="f"><span class="f__l">Sucursal</span>
-          <select class="f__i" [value]="selectedStockBranchId" (change)="changeStockBranch($any($event.target).value)">
-            <option value="">Seleccionar sucursal</option>
-            <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-          </select>
+          <app-searchable-select [ngModel]="selectedStockBranchId" (ngModelChange)="changeStockBranch($event)" [ngModelOptions]="{ standalone: true }" [options]="branchSelectOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
         </label>
         <div class="stock-hint" *ngIf="!selectedStockBranchId">
           <strong>Selecciona una sucursal para continuar</strong>
@@ -393,7 +390,7 @@
         <fieldset class="fs" [disabled]="!selectedStockBranchId">
           <form [formGroup]="stockForm" (ngSubmit)="submitStock()" novalidate>
             <div class="pf__row pf__row--3">
-              <label class="f"><span class="f__l">Movimiento</span><select class="f__i" formControlName="type"><option [ngValue]="1">Ingreso manual</option><option [ngValue]="2">Ajuste manual</option></select></label>
+              <label class="f"><span class="f__l">Movimiento</span><app-searchable-select formControlName="type" [options]="stockMovementOptions" placeholder="Movimiento" searchPlaceholder="Buscar movimiento..."></app-searchable-select></label>
               <label class="f"><span class="f__l">Cantidad</span><input class="f__i f__i--num" type="number" formControlName="quantity" /></label>
               <label class="f"><span class="f__l">Descripcion</span><input class="f__i" type="text" formControlName="description" /></label>
             </div>

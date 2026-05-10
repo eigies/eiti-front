@@ -6,11 +6,12 @@ import { VehicleService } from '../../core/services/vehicle.service';
 import { DriverResponse } from '../../core/models/employee.models';
 import { FleetLogResponse, VehicleResponse } from '../../core/models/vehicle.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-transport',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
   templateUrl: './transport.component.html',
   styleUrls: ['./transport.component.css']
 })
@@ -91,6 +92,29 @@ export class TransportComponent implements OnInit {
 
   get activeDrivers(): DriverResponse[] {
     return this.drivers.filter(driver => driver.isActive && !driver.isLicenseExpired);
+  }
+
+  readonly fuelTypeOptions: SearchableSelectOption[] = [
+    { value: 1, label: 'Nafta' },
+    { value: 2, label: 'Diesel' },
+    { value: 3, label: 'GNC' },
+    { value: 4, label: 'Electrico' },
+    { value: 5, label: 'Hibrido' }
+  ];
+
+  readonly logTypeOptions: SearchableSelectOption[] = [
+    { value: 1, label: 'Carga de combustible' },
+    { value: 2, label: 'Mantenimiento' },
+    { value: 3, label: 'Inspeccion' },
+    { value: 4, label: 'Incidente' },
+    { value: 5, label: 'Nota' }
+  ];
+
+  get activeDriverOptions(): SearchableSelectOption[] {
+    return this.activeDrivers.map(driver => ({
+      value: driver.employeeId,
+      label: driver.fullName
+    }));
   }
 
   get selectedVehicle(): VehicleResponse | null {

@@ -10,6 +10,7 @@ import { UserResponse } from '../models/user.models';
 export class AuthService {
     private readonly TOKEN_KEY = 'eiti_token';
     private readonly USER_KEY = 'eiti_user';
+    private readonly REFRESH_TOKEN_KEY = 'eiti_refresh_token';
     private sessionExpiredHandled = false;
 
     private _currentUser$ = new BehaviorSubject<AuthResponse | null>(this.loadUser());
@@ -47,9 +48,33 @@ export class AuthService {
     logout(): void {
         localStorage.removeItem(this.TOKEN_KEY);
         localStorage.removeItem(this.USER_KEY);
+        localStorage.removeItem(this.REFRESH_TOKEN_KEY);
         this.onboarding.reset();
         this.sessionExpiredHandled = false;
         this._currentUser$.next(null);
+    }
+
+    getRefreshToken(): string | null {
+        return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    }
+
+    refreshToken(): Observable<{ token: string; refreshToken: string }> {
+        const refreshToken = this.getRefreshToken();
+        return this.http.post<{ token: string; refreshToken: string }>(
+            `${environment.apiUrl}/auth/refresh`,
+            { refreshToken }
+        );
+    }
+
+    saveNewToken(token: string, refreshToken: string): void {
+        localStorage.setItem(this.TOKEN_KEY, token);
+        localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+        const current = this._currentUser$.value;
+        if (current) {
+            const updated: AuthResponse = { ...current, token, refreshToken };
+            localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+            this._currentUser$.next(updated);
+        }
     }
 
     getToken(): string | null {
@@ -72,6 +97,7 @@ export class AuthService {
         this.onboarding.reset();
         this.sessionExpiredHandled = false;
         localStorage.setItem(this.TOKEN_KEY, res.token);
+        localStorage.setItem(this.REFRESH_TOKEN_KEY, res.refreshToken);
         localStorage.setItem(this.USER_KEY, JSON.stringify(res));
         this._currentUser$.next(res);
         this.refreshCurrentUserProfile();
@@ -125,6 +151,7 @@ export class AuthService {
             username: parsed.username ?? '',
             email: parsed.email ?? '',
             token: parsed.token ?? '',
+            refreshToken: parsed.refreshToken ?? '',
             profileId: parsed.profileId ?? null,
             profileName: parsed.profileName ?? null,
             permissions: parsed.permissions ?? [],

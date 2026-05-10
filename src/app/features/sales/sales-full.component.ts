@@ -26,6 +26,7 @@ import { PermissionCodes } from '../../core/models/permission.models';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import {
   SalePaymentDraftState,
   createEmptySalePaymentDraftState,
@@ -40,7 +41,7 @@ import {
 @Component({
   selector: 'app-sales-full',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, SalePaymentInlineComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, SalePaymentInlineComponent, SearchableSelectComponent],
   templateUrl: './sales-full.component.html',
   styleUrls: ['./sales-full.component.css']
 })
@@ -111,6 +112,11 @@ export class SalesFullComponent implements OnInit {
   get requiresCashDrawer(): boolean { return this.cashDrawers.length > 0; }
   get activeDrivers(): DriverResponse[] { return this.drivers.filter(driver => driver.isActive && !driver.isLicenseExpired); }
   get activeVehicles(): VehicleResponse[] { return this.vehicles.filter(vehicle => vehicle.isActive); }
+  get documentTypeOptions(): SearchableSelectOption[] { return this.documentTypes.map(type => ({ value: type.value, label: type.label })); }
+  get branchOptions(): SearchableSelectOption[] { return this.branches.map(branch => ({ value: branch.id, label: branch.name })); }
+  readonly saleStatusOptions: SearchableSelectOption[] = [{ value: 1, label: 'En espera' }, { value: 2, label: 'Pagada' }];
+  get driverOptions(): SearchableSelectOption[] { return this.activeDrivers.map(driver => ({ value: driver.employeeId, label: driver.fullName })); }
+  get vehicleOptions(): SearchableSelectOption[] { return this.activeVehicles.map(vehicle => ({ value: vehicle.id, label: `${vehicle.plate} / ${vehicle.model}` })); }
   get total(): number { return this.draftItems.reduce((sum, item) => sum + item.total, 0); }
   get productSuggestions(): ProductResponse[] { return this.filterProducts(this.productQuery); }
   get selectedProductsCount(): number { return this.selectedProductIds.size; }

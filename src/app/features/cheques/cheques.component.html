@@ -11,17 +11,27 @@
     <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="filter-form">
       <label class="field">
         <span>Estado</span>
-        <select class="control" formControlName="estado">
-          <option [ngValue]="null">Todos</option>
-          <option *ngFor="let s of allStatuses" [ngValue]="s">{{ statusLabel(s) }}</option>
-        </select>
+        <app-searchable-select
+          formControlName="estado"
+          [options]="statusOptions"
+          [allowClear]="true"
+          clearLabel="Todos"
+          [clearValue]="null"
+          placeholder="Todos"
+          searchPlaceholder="Buscar estado...">
+        </app-searchable-select>
       </label>
       <label class="field">
         <span>Banco</span>
-        <select class="control" formControlName="bankId">
-          <option [ngValue]="null">Todos</option>
-          <option *ngFor="let b of banks" [ngValue]="b.id">{{ b.name }}</option>
-        </select>
+        <app-searchable-select
+          formControlName="bankId"
+          [options]="bankOptions"
+          [allowClear]="true"
+          clearLabel="Todos"
+          [clearValue]="null"
+          placeholder="Todos"
+          searchPlaceholder="Buscar banco...">
+        </app-searchable-select>
       </label>
       <label class="field">
         <span>Venc. desde</span>

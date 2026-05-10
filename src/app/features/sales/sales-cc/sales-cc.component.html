@@ -11,10 +11,7 @@
     <div class="grid">
       <label class="field">
         <span class="field__label">Sucursal</span>
-        <select class="control" [(ngModel)]="selectedBranchId" (change)="onBranchChange()">
-          <option value="">Seleccionar sucursal</option>
-          <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-        </select>
+        <app-searchable-select [(ngModel)]="selectedBranchId" (ngModelChange)="onBranchChange()" [options]="branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
       </label>
     </div>
 

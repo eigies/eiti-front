@@ -87,10 +87,7 @@
             <div class="grid form-stage__group form-stage__group--secondary span">
                 <label class="field">
                     <span class="field__label">Tipo de documento</span>
-                    <select class="control" formControlName="documentType">
-                        <option [ngValue]="null">Tipo de documento</option>
-                        <option *ngFor="let type of documentTypes" [ngValue]="type.value">{{ type.label }}</option>
-                    </select>
+                    <app-searchable-select formControlName="documentType" [options]="documentTypeOptions" placeholder="Tipo de documento" searchPlaceholder="Buscar tipo..."></app-searchable-select>
                 </label>
                 <label class="field">
                     <span class="field__label">Numero de documento</span>
@@ -168,17 +165,11 @@
                 <form class="grid" [formGroup]="saleForm">
                     <label class="field">
                         <span class="field__label">Sucursal</span>
-                        <select class="control" formControlName="branchId" (change)="handleBranchChange()">
-                            <option value="">Sucursal</option>
-                            <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-                        </select>
+                        <app-searchable-select formControlName="branchId" [options]="branchOptions" placeholder="Sucursal" searchPlaceholder="Buscar sucursal..." (valueChange)="handleBranchChange()"></app-searchable-select>
                     </label>
                     <label class="field">
                         <span class="field__label">Estado de venta</span>
-                        <select class="control" formControlName="idSaleStatus">
-                            <option [ngValue]="1">En espera</option>
-                            <option [ngValue]="2">Pagada</option>
-                        </select>
+                        <app-searchable-select formControlName="idSaleStatus" [options]="saleStatusOptions" placeholder="Estado de venta" searchPlaceholder="Buscar estado..."></app-searchable-select>
                     </label>
                     <div class="field">
                         <span class="field__label">Modalidad de entrega</span>
@@ -252,17 +243,11 @@
 
             <label class="field">
                 <span class="field__label">Conductor</span>
-                <select class="control" formControlName="driverEmployeeId">
-                    <option value="">Seleccionar conductor</option>
-                    <option *ngFor="let driver of activeDrivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
-                </select>
+                <app-searchable-select formControlName="driverEmployeeId" [options]="driverOptions" placeholder="Seleccionar conductor" searchPlaceholder="Buscar conductor..."></app-searchable-select>
             </label>
             <label class="field">
                 <span class="field__label">Vehiculo</span>
-                <select class="control" formControlName="vehicleId">
-                    <option value="">Seleccionar vehiculo</option>
-                    <option *ngFor="let vehicle of activeVehicles" [value]="vehicle.id">{{ vehicle.plate }} / {{ vehicle.model }}</option>
-                </select>
+                <app-searchable-select formControlName="vehicleId" [options]="vehicleOptions" placeholder="Seleccionar vehiculo" searchPlaceholder="Buscar vehiculo..."></app-searchable-select>
             </label>
             <label class="field span">
                 <span class="field__label">Notas de envio</span>

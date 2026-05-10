@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CashDrawerResponse } from '../../../core/models/cash.models';
 import { ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../../core/models/product.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../searchable-select/searchable-select.component';
 import {
     SalePaymentDraftLine,
     SalePaymentDraftState,
@@ -20,7 +21,7 @@ import { BankInstallmentPlanResponse, BankResponse } from '../../../core/models/
 @Component({
     selector: 'app-sale-payment-inline',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, SearchableSelectComponent],
     templateUrl: './sale-payment-inline.component.html',
     styleUrls: ['./sale-payment-inline.component.css']
 })
@@ -44,6 +45,50 @@ export class SalePaymentInlineComponent {
     readonly TRANSFER_METHOD_ID = 2;
     readonly CARD_METHOD_ID = 3;
     readonly CHECK_METHOD_ID = 4;
+
+    get paymentMethodOptions(): SearchableSelectOption[] {
+        return this.paymentMethods.map(method => ({
+            value: method.id,
+            label: method.label
+        }));
+    }
+
+    get activeBanksOptions(): SearchableSelectOption[] {
+        return this.activeBanks.map(bank => ({
+            value: bank.id,
+            label: bank.name
+        }));
+    }
+
+    get activeBanksWithPlansOptions(): SearchableSelectOption[] {
+        return this.activeBanksWithPlans.map(bank => ({
+            value: bank.id,
+            label: bank.name
+        }));
+    }
+
+    get bankOptions(): SearchableSelectOption[] {
+        return this.banks.map(bank => ({
+            value: bank.id,
+            label: bank.name
+        }));
+    }
+
+    get tradeInProductOptions(): SearchableSelectOption[] {
+        return this.products.map(product => ({
+            value: product.id,
+            label: `${product.code} | ${product.brand} / ${product.name}`,
+            meta: this.isManualValueTradeIn(product.id) ? 'Valor definido en venta' : undefined,
+            searchText: `${product.code} ${product.brand} ${product.name}`
+        }));
+    }
+
+    get cashDrawerOptions(): SearchableSelectOption[] {
+        return this.cashDrawers.map(drawer => ({
+            value: drawer.id,
+            label: drawer.name
+        }));
+    }
 
     get coverage(): number {
         const payments = this.state.payments
@@ -150,7 +195,7 @@ export class SalePaymentInlineComponent {
         this.state.hasTradeIn = this.state.tradeIns.length > 0;
     }
 
-    updatePaymentMethod(index: number, value: string): void {
+    updatePaymentMethod(index: number, value: string | number | null): void {
         const next = Number(value) || 1;
         this.state.payments[index].idPaymentMethod = next;
     }
@@ -168,10 +213,11 @@ export class SalePaymentInlineComponent {
         this.state.payments[index].notes = value;
     }
 
-    updateTradeInProduct(index: number, value: string): void {
-        this.state.tradeIns[index].productId = value;
+    updateTradeInProduct(index: number, value: string | number | null): void {
+        const nextValue = String(value ?? '');
+        this.state.tradeIns[index].productId = nextValue;
 
-        const product = this.products.find(item => item.id === value);
+        const product = this.products.find(item => item.id === nextValue);
         if (!product) {
             return;
         }
@@ -200,8 +246,9 @@ export class SalePaymentInlineComponent {
         this.state.tradeIns[index].amount = roundMoney(value);
     }
 
-    selectCashDrawer(value: string): void {
-        this.cashDrawerIdChange.emit(value || null);
+    selectCashDrawer(value: string | number | null): void {
+        const nextValue = String(value ?? '');
+        this.cashDrawerIdChange.emit(nextValue || null);
     }
 
     paymentMethodLabel(idPaymentMethod: number): string {
@@ -251,6 +298,14 @@ export class SalePaymentInlineComponent {
         if (!bankId) return [];
         const bank = this.banks.find(b => b.id === bankId);
         return (bank?.plans ?? []).filter(p => p.active);
+    }
+
+    installmentOptions(bankId: number | null | undefined): SearchableSelectOption[] {
+        return this.activePlansForBank(bankId).map(plan => ({
+            value: plan.cuotas,
+            label: `${plan.cuotas} cuota${plan.cuotas > 1 ? 's' : ''}`,
+            meta: plan.surchargePct > 0 ? `Recargo ${plan.surchargePct}%` : 'Sin recargo'
+        }));
     }
 
     getSurchargePct(bankId: number | null | undefined, cuotas: number | null | undefined): number | null {

@@ -65,10 +65,7 @@
       <!-- Cash drawer - always required for CC -->
       <label class="field field--drawer">
         <span class="field__label">Caja</span>
-        <select class="control" [(ngModel)]="selectedCashDrawerId">
-          <option value="">Seleccionar caja</option>
-          <option *ngFor="let d of cashDrawers" [value]="d.id">{{ d.name }}</option>
-        </select>
+        <app-searchable-select [(ngModel)]="selectedCashDrawerId" [options]="cashDrawerOptions" placeholder="Seleccionar caja" searchPlaceholder="Buscar caja..."></app-searchable-select>
       </label>
 
       <app-sale-payment-inline

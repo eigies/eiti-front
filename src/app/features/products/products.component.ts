@@ -14,6 +14,7 @@ import { OnboardingStatusResponse } from '../../core/models/onboarding.models';
 import { OnboardingBannerComponent } from '../../shared/components/onboarding-banner/onboarding-banner.component';
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { forkJoin } from 'rxjs';
 import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
@@ -53,7 +54,7 @@ const PRODUCT_IMPORT_HEADERS: ProductImportColumn[] = [
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, OnboardingBannerComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, OnboardingBannerComponent, SearchableSelectComponent],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })
@@ -194,6 +195,23 @@ export class ProductsComponent implements OnInit {
     return [...new Set(this.products.map(product => product.brand).filter(Boolean))]
       .sort((left, right) => left.localeCompare(right));
   }
+
+  get brandSelectOptions(): SearchableSelectOption[] {
+    return this.brandOptions.map(brand => ({ value: brand, label: brand }));
+  }
+
+  get pageSizeSelectOptions(): SearchableSelectOption[] {
+    return this.pageSizeOptions.map(option => ({ value: option, label: String(option) }));
+  }
+
+  get branchSelectOptions(): SearchableSelectOption[] {
+    return this.branches.map(branch => ({ value: branch.id, label: branch.name }));
+  }
+
+  readonly stockMovementOptions: SearchableSelectOption[] = [
+    { value: 1, label: 'Ingreso manual' },
+    { value: 2, label: 'Ajuste manual' }
+  ];
 
   get modifiedProductsCount(): number {
     return this.modifiedBulkProductIds.size;

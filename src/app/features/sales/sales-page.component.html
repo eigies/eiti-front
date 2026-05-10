@@ -34,18 +34,24 @@
           <form class="grid grid--create" [formGroup]="lineForm">
             <label class="field">
               <span class="field__label">Sucursal</span>
-              <select class="control" formControlName="branchId" (change)="handleCreateBranchChange()">
-                <option value="">Seleccionar sucursal</option>
-                <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-              </select>
+              <app-searchable-select
+                formControlName="branchId"
+                [options]="branchOptions"
+                placeholder="Seleccionar sucursal"
+                searchPlaceholder="Buscar sucursal..."
+                (valueChange)="handleCreateBranchChange()">
+              </app-searchable-select>
             </label>
 
             <label class="field">
               <span class="field__label">Estado de venta</span>
-              <select class="control" formControlName="idSaleStatus" (change)="handleCreateBranchChange()">
-                <option [ngValue]="1">En espera</option>
-                <option [ngValue]="2">Pagada</option>
-              </select>
+              <app-searchable-select
+                formControlName="idSaleStatus"
+                [options]="saleStatusOptions"
+                placeholder="Estado de venta"
+                searchPlaceholder="Buscar estado..."
+                (valueChange)="handleCreateBranchChange()">
+              </app-searchable-select>
             </label>
 
             <label class="field">
@@ -250,18 +256,24 @@
       <form class="grid grid--2col" [formGroup]="editMetaForm">
         <label class="field">
           <span class="field__label">Sucursal</span>
-          <select class="control" formControlName="branchId" (change)="handleEditStatusChange()">
-            <option value="">Seleccionar sucursal</option>
-            <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-          </select>
+          <app-searchable-select
+            formControlName="branchId"
+            [options]="branchOptions"
+            placeholder="Seleccionar sucursal"
+            searchPlaceholder="Buscar sucursal..."
+            (valueChange)="handleEditStatusChange()">
+          </app-searchable-select>
         </label>
 
         <label class="field">
           <span class="field__label">Estado de venta</span>
-          <select class="control" formControlName="idSaleStatus" (change)="handleEditStatusChange()">
-            <option [ngValue]="1">En espera</option>
-            <option [ngValue]="2">Pagada</option>
-          </select>
+          <app-searchable-select
+            formControlName="idSaleStatus"
+            [options]="saleStatusOptions"
+            placeholder="Estado de venta"
+            searchPlaceholder="Buscar estado..."
+            (valueChange)="handleEditStatusChange()">
+          </app-searchable-select>
         </label>
 
         <label class="field">
@@ -438,23 +450,29 @@
         </label>
         <label class="field">
           <span class="field__label">Estado</span>
-          <select class="control control--sm" formControlName="idSaleStatus">
-            <option value="">Todos</option>
-            <option [ngValue]="1">En espera</option>
-            <option [ngValue]="2">Pagada</option>
-            <option [ngValue]="3">Cancelada</option>
-          </select>
+          <app-searchable-select
+            formControlName="idSaleStatus"
+            [options]="saleFilterStatusOptions"
+            [compact]="true"
+            [allowClear]="true"
+            clearLabel="Todos"
+            clearValue=""
+            placeholder="Todos"
+            searchPlaceholder="Buscar estado...">
+          </app-searchable-select>
         </label>
         <label class="field">
           <span class="field__label">Transporte</span>
-          <select class="control control--sm" formControlName="transportStatus">
-            <option value="">Todos</option>
-            <option value="pending">Pendiente</option>
-            <option value="1">Asignado</option>
-            <option value="2">En tránsito</option>
-            <option value="3">Entregado</option>
-            <option value="4">Cancelado</option>
-          </select>
+          <app-searchable-select
+            formControlName="transportStatus"
+            [options]="transportStatusOptions"
+            [compact]="true"
+            [allowClear]="true"
+            clearLabel="Todos"
+            clearValue=""
+            placeholder="Todos"
+            searchPlaceholder="Buscar estado...">
+          </app-searchable-select>
         </label>
         <label class="field">
           <span class="field__label">Dirección</span>
@@ -471,9 +489,7 @@
         <span *ngIf="!loadingSales && sales.length > 0">Mostrando {{ salesPageStart }} a {{ salesPageEnd }} de {{ sales.length }}</span>
         <label class="page-size">
           <span>Pagina</span>
-          <select class="control control--compact" [value]="salesPageSize" (change)="changeSalesPageSize($any($event.target).value)">
-            <option *ngFor="let option of salesPageSizeOptions" [value]="option">{{ option }}</option>
-          </select>
+          <app-searchable-select [ngModel]="salesPageSize" (ngModelChange)="changeSalesPageSize($event)" [ngModelOptions]="{ standalone: true }" [options]="salesPageSizeSelectOptions" [compact]="true" placeholder="Pagina" searchPlaceholder="Buscar cantidad..."></app-searchable-select>
         </label>
       </div>
 
@@ -486,6 +502,7 @@
               <p class="sale-card__address" *ngIf="sale.customerPhone || sale.deliveryAddress || sale.customerAddress">
                 <ng-container *ngIf="sale.customerPhone">{{ sale.customerPhone }}</ng-container><ng-container *ngIf="sale.customerPhone && (sale.deliveryAddress || sale.customerAddress)"> · </ng-container><ng-container *ngIf="sale.deliveryAddress || sale.customerAddress">{{ sale.deliveryAddress || sale.customerAddress }}</ng-container>
               </p>
+              <p class="sale-card__ref" *ngIf="salePaymentRefs(sale)">{{ salePaymentRefs(sale) }}</p>
               <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s)</p>
             </div>
             <div class="sale-card__amount-block">
@@ -687,17 +704,21 @@
     <form class="transport-modal__form" [formGroup]="transportForm">
       <label class="field">
         <span class="field__label">Conductor</span>
-        <select class="control" formControlName="driverEmployeeId">
-          <option value="">Seleccionar conductor</option>
-          <option *ngFor="let driver of drivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
-        </select>
+        <app-searchable-select
+          formControlName="driverEmployeeId"
+          [options]="driverOptions"
+          placeholder="Seleccionar conductor"
+          searchPlaceholder="Buscar conductor...">
+        </app-searchable-select>
       </label>
       <label class="field">
         <span class="field__label">Vehiculo</span>
-        <select class="control" formControlName="vehicleId">
-          <option value="">Seleccionar vehiculo</option>
-          <option *ngFor="let vehicle of activeVehicles" [value]="vehicle.id">{{ vehicle.plate }} / {{ vehicle.model }}</option>
-        </select>
+        <app-searchable-select
+          formControlName="vehicleId"
+          [options]="vehicleOptions"
+          placeholder="Seleccionar vehiculo"
+          searchPlaceholder="Buscar vehiculo...">
+        </app-searchable-select>
       </label>
       <label class="field field--full">
         <span class="field__label">Notas de envio</span>
@@ -851,6 +872,34 @@
     <div class="modal-panel__actions">
       <button class="btn btn--ghost" type="button" (click)="cancelDrawerOverride()">Cancelar</button>
       <button class="btn" type="button" (click)="confirmDrawerOverride()">Continuar</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" *ngIf="showStaleCashSessionModal" (click)="showStaleCashSessionModal = false"></div>
+<section class="modal-panel" *ngIf="showStaleCashSessionModal">
+  <div class="modal-panel__card modal-panel__card--confirm modal-panel__card--stale-session" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head modal-panel__head--stale-session">
+      <div class="stale-session__headcopy">
+        <span class="stale-session__eyebrow">Caja</span>
+        <strong>Sesion del dia anterior</strong>
+      </div>
+      <button class="modal-panel__close" type="button" (click)="showStaleCashSessionModal = false">x</button>
+    </div>
+    <div class="stale-session">
+      <div class="stale-session__alert">
+        <span class="stale-session__icon" aria-hidden="true">!</span>
+        <div class="stale-session__alertcopy">
+          <span class="stale-session__badge">Venta bloqueada</span>
+          <p class="stale-session__copy">La caja seleccionada tiene una sesion abierta del dia anterior. Cerra esa sesion y abri una nueva para poder registrar ventas de hoy.</p>
+        </div>
+      </div>
+      <div class="stale-session__note">
+        <span>Necesitas una sesion nueva del dia actual antes de cargar la venta.</span>
+      </div>
+    </div>
+    <div class="modal-panel__actions modal-panel__actions--stale-session">
+      <button class="btn" type="button" (click)="showStaleCashSessionModal = false">Entendido</button>
     </div>
   </div>
 </section>

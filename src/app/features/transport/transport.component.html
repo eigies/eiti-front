@@ -43,17 +43,8 @@
                             <input class="control" type="text" placeholder="Modelo" formControlName="model" />
                             <input class="control" type="text" placeholder="Marca" formControlName="brand" />
                             <input class="control" type="number" min="1900" placeholder="Ano" formControlName="year" />
-                            <select class="control" formControlName="fuelType">
-                                <option [ngValue]="1">Nafta</option>
-                                <option [ngValue]="2">Diesel</option>
-                                <option [ngValue]="3">GNC</option>
-                                <option [ngValue]="4">Electrico</option>
-                                <option [ngValue]="5">Hibrido</option>
-                            </select>
-                            <select class="control" formControlName="assignedDriverEmployeeId">
-                                <option value="">Asignar conductor</option>
-                                <option *ngFor="let driver of activeDrivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
-                            </select>
+                            <app-searchable-select class="control-host" formControlName="fuelType" [options]="fuelTypeOptions" placeholder="Combustible" searchPlaceholder="Buscar combustible..."></app-searchable-select>
+                            <app-searchable-select class="control-host" formControlName="assignedDriverEmployeeId" [options]="activeDriverOptions" [allowClear]="true" clearLabel="Asignar conductor" clearValue="" placeholder="Asignar conductor" searchPlaceholder="Buscar conductor..."></app-searchable-select>
                         </div>
                         <button class="btn btn--primary" type="submit">Crear vehiculo</button>
                     </form>
@@ -108,13 +99,7 @@
 
                     <form class="log-form" [formGroup]="logForm" (ngSubmit)="createLog()">
                         <div class="log-form__grid">
-                            <select class="control" formControlName="type">
-                                <option [ngValue]="1">Carga de combustible</option>
-                                <option [ngValue]="2">Mantenimiento</option>
-                                <option [ngValue]="3">Inspeccion</option>
-                                <option [ngValue]="4">Incidente</option>
-                                <option [ngValue]="5">Nota</option>
-                            </select>
+                            <app-searchable-select class="control-host" formControlName="type" [options]="logTypeOptions" placeholder="Tipo de registro" searchPlaceholder="Buscar tipo..."></app-searchable-select>
                             <input class="control" type="datetime-local" formControlName="occurredAt" />
                             <input class="control" type="number" min="0" step="0.01" placeholder="Odometro" formControlName="odometer" />
                             <input class="control" type="number" min="0" step="0.01" placeholder="Litros cargados" formControlName="fuelLiters" />
@@ -285,20 +270,11 @@
                 <div class="edit-modal__row">
                     <div class="edit-modal__field">
                         <label class="field__label">Combustible</label>
-                        <select class="control" formControlName="fuelType">
-                            <option [ngValue]="1">Nafta</option>
-                            <option [ngValue]="2">Diesel</option>
-                            <option [ngValue]="3">GNC</option>
-                            <option [ngValue]="4">Electrico</option>
-                            <option [ngValue]="5">Hibrido</option>
-                        </select>
+                        <app-searchable-select class="control-host" formControlName="fuelType" [options]="fuelTypeOptions" placeholder="Combustible" searchPlaceholder="Buscar combustible..."></app-searchable-select>
                     </div>
                     <div class="edit-modal__field">
                         <label class="field__label">Conductor asignado</label>
-                        <select class="control" formControlName="assignedDriverEmployeeId">
-                            <option value="">Sin conductor</option>
-                            <option *ngFor="let driver of activeDrivers" [value]="driver.employeeId">{{ driver.fullName }}</option>
-                        </select>
+                        <app-searchable-select class="control-host" formControlName="assignedDriverEmployeeId" [options]="activeDriverOptions" [allowClear]="true" clearLabel="Sin conductor" clearValue="" placeholder="Sin conductor" searchPlaceholder="Buscar conductor..."></app-searchable-select>
                     </div>
                 </div>
             </div>

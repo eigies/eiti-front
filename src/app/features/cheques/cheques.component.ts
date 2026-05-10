@@ -14,11 +14,12 @@ import {
   ChequeStatus
 } from '../../core/models/cheque.models';
 import { BankResponse } from '../../core/models/bank.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-cheques',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
   templateUrl: './cheques.component.html',
   styleUrls: ['./cheques.component.css']
 })
@@ -44,6 +45,20 @@ export class ChequesComponent implements OnInit {
     ChequeStatus.Rechazado,
     ChequeStatus.Anulado
   ];
+
+  get statusOptions(): SearchableSelectOption[] {
+    return this.allStatuses.map(status => ({
+      value: status,
+      label: this.statusLabel(status)
+    }));
+  }
+
+  get bankOptions(): SearchableSelectOption[] {
+    return this.banks.map(bank => ({
+      value: bank.id,
+      label: bank.name
+    }));
+  }
 
   constructor(
     private readonly fb: FormBuilder,

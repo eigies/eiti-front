@@ -19,6 +19,7 @@ import {
 } from '../../../core/models/sale-payment.models';
 import { SalePaymentInlineComponent } from '../../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { PermissionCodes } from '../../../core/models/permission.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 interface PaymentGroup {
   groupId: string | null;
@@ -32,7 +33,7 @@ interface PaymentGroup {
 @Component({
   selector: 'app-sales-cc-payments',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SalePaymentInlineComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SalePaymentInlineComponent, SearchableSelectComponent],
   templateUrl: './sales-cc-payments.component.html',
   styleUrls: ['./sales-cc-payments.component.css']
 })
@@ -106,6 +107,13 @@ export class SalesCcPaymentsComponent implements OnInit {
     const paid = this.sale.ccPaidTotal ?? 0;
     if (paid > 0 && paid < this.sale.totalAmount) return 'badge--partial';
     return 'badge--pending';
+  }
+
+  get cashDrawerOptions(): SearchableSelectOption[] {
+    return this.cashDrawers.map(drawer => ({
+      value: drawer.id,
+      label: drawer.name
+    }));
   }
 
   get groupedPayments(): PaymentGroup[] {

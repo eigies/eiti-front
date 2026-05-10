@@ -36,9 +36,14 @@
           <div class="payment-line__row">
             <label class="field">
               <span class="field__label">Metodo</span>
-              <select class="control" [value]="payment.idPaymentMethod" (change)="updatePaymentMethod(index, $any($event.target).value)">
-                <option *ngFor="let method of paymentMethods" [value]="method.id">{{ method.label }}</option>
-              </select>
+              <app-searchable-select
+                [ngModel]="payment.idPaymentMethod"
+                (ngModelChange)="updatePaymentMethod(index, $event)"
+                [ngModelOptions]="{ standalone: true }"
+                [options]="paymentMethodOptions"
+                placeholder="Seleccionar metodo"
+                searchPlaceholder="Buscar metodo...">
+              </app-searchable-select>
             </label>
 
             <label class="field">
@@ -54,31 +59,30 @@
             <button class="line-remove" type="button" [disabled]="state.payments.length === 1 && !state.hasCombinedPayment" (click)="removePaymentLine(index)">Quitar</button>
           </div>
 
-          <!-- Card fields: shown when method = 3 (Tarjeta) -->
           <ng-container *ngIf="payment.idPaymentMethod === CARD_METHOD_ID && activeBanksWithPlans.length > 0">
             <div class="payment-card-fields">
               <label class="field">
                 <span>Banco</span>
-                <select class="control"
+                <app-searchable-select
                   [ngModel]="payment.cardBankId ?? null"
                   (ngModelChange)="updateCardBank(index, $event)"
-                  [ngModelOptions]="{standalone: true}">
-                  <option [ngValue]="null" disabled hidden>Seleccionar banco</option>
-                  <option *ngFor="let bank of activeBanksWithPlans" [ngValue]="bank.id">{{ bank.name }}</option>
-                </select>
+                  [ngModelOptions]="{standalone: true}"
+                  [options]="activeBanksWithPlansOptions"
+                  placeholder="Seleccionar banco"
+                  searchPlaceholder="Buscar banco...">
+                </app-searchable-select>
               </label>
               <ng-container *ngIf="payment.cardBankId && activePlansForBank(payment.cardBankId).length > 0">
                 <label class="field">
                   <span>Cuotas</span>
-                  <select class="control"
+                  <app-searchable-select
                     [ngModel]="payment.cardCuotas ?? null"
                     (ngModelChange)="updateCardCuotas(index, $event)"
-                    [ngModelOptions]="{standalone: true}">
-                    <option [ngValue]="null" disabled hidden>Seleccionar cuotas</option>
-                    <option *ngFor="let plan of activePlansForBank(payment.cardBankId)" [ngValue]="plan.cuotas">
-                      {{ plan.cuotas }} cuota{{ plan.cuotas > 1 ? 's' : '' }}
-                    </option>
-                  </select>
+                    [ngModelOptions]="{standalone: true}"
+                    [options]="installmentOptions(payment.cardBankId)"
+                    placeholder="Seleccionar cuotas"
+                    searchPlaceholder="Buscar cuotas...">
+                  </app-searchable-select>
                 </label>
               </ng-container>
               <ng-container *ngIf="getCardSurcharge(payment) as surcharge">
@@ -93,23 +97,25 @@
             </div>
           </ng-container>
 
-          <!-- Transfer bank: shown when method = 2 (Transferencia) -->
           <ng-container *ngIf="payment.idPaymentMethod === TRANSFER_METHOD_ID && activeBanks.length > 0">
             <div class="payment-transfer-fields">
               <label class="field">
                 <span>Banco receptor</span>
-                <select class="control"
+                <app-searchable-select
                   [ngModel]="payment.transferBankId ?? null"
                   (ngModelChange)="updateTransferBank(index, $event)"
-                  [ngModelOptions]="{standalone: true}">
-                  <option [ngValue]="null">Sin especificar</option>
-                  <option *ngFor="let bank of activeBanks" [ngValue]="bank.id">{{ bank.name }}</option>
-                </select>
+                  [ngModelOptions]="{standalone: true}"
+                  [options]="activeBanksOptions"
+                  [allowClear]="true"
+                  clearLabel="Sin especificar"
+                  [clearValue]="null"
+                  placeholder="Sin especificar"
+                  searchPlaceholder="Buscar banco...">
+                </app-searchable-select>
               </label>
             </div>
           </ng-container>
 
-          <!-- Cheque fields: shown when method = 4 (Cheque) -->
           <ng-container *ngIf="payment.idPaymentMethod === CHECK_METHOD_ID">
             <div class="cheque-section">
               <button type="button" class="action-chip cheque-section__toggle" (click)="toggleChequeForm(index)">
@@ -128,12 +134,13 @@
                   </label>
                   <label class="field">
                     <span>Banco emisor *</span>
-                    <select class="control"
+                    <app-searchable-select
                       [(ngModel)]="payment.chequeData.bankId"
-                      [ngModelOptions]="{standalone: true}">
-                      <option [ngValue]="0" disabled hidden>Seleccionar banco</option>
-                      <option *ngFor="let bank of banks" [ngValue]="bank.id">{{ bank.name }}</option>
-                    </select>
+                      [ngModelOptions]="{standalone: true}"
+                      [options]="bankOptions"
+                      placeholder="Seleccionar banco"
+                      searchPlaceholder="Buscar banco...">
+                    </app-searchable-select>
                   </label>
                   <label class="field">
                     <span>Titular *</span>
@@ -195,10 +202,14 @@
           <div class="payment-line__row payment-line__row--tradein">
             <label class="field field--wide">
               <span class="field__label">Producto</span>
-              <select class="control" [value]="tradeIn.productId" (change)="updateTradeInProduct(index, $any($event.target).value)">
-                <option value="">Seleccionar producto</option>
-                <option *ngFor="let product of products" [value]="product.id">{{ product.code }} | {{ product.brand }} / {{ product.name }}{{ isManualValueTradeIn(product.id) ? ' · valor en venta' : '' }}</option>
-              </select>
+              <app-searchable-select
+                [ngModel]="tradeIn.productId"
+                (ngModelChange)="updateTradeInProduct(index, $event)"
+                [ngModelOptions]="{standalone: true}"
+                [options]="tradeInProductOptions"
+                placeholder="Seleccionar producto"
+                searchPlaceholder="Buscar producto...">
+              </app-searchable-select>
             </label>
 
             <label class="field">
@@ -271,10 +282,14 @@
         <span class="drawer-card__eyebrow">Cash drawer</span>
         <label class="field">
           <span class="field__label">Caja obligatoria por efectivo</span>
-          <select class="control" [value]="cashDrawerId ?? ''" (change)="selectCashDrawer($any($event.target).value)">
-            <option value="">Seleccionar caja</option>
-            <option *ngFor="let drawer of cashDrawers" [value]="drawer.id">{{ drawer.name }}</option>
-          </select>
+          <app-searchable-select
+            [ngModel]="cashDrawerId ?? ''"
+            (ngModelChange)="selectCashDrawer($event)"
+            [ngModelOptions]="{standalone: true}"
+            [options]="cashDrawerOptions"
+            placeholder="Seleccionar caja"
+            searchPlaceholder="Buscar caja...">
+          </app-searchable-select>
         </label>
       </div>
 

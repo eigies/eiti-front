@@ -49,9 +49,12 @@
                     <div class="form-grid form-grid--3">
                         <div class="field" [class.field--error]="isInvalid('documentType')">
                             <label class="field__label">Tipo de documento</label>
-                            <select class="field__input" formControlName="documentType">
-                                <option *ngFor="let type of documentTypes" [ngValue]="type.value">{{ type.label }}</option>
-                            </select>
+                            <app-searchable-select
+                                formControlName="documentType"
+                                [options]="documentTypeOptions"
+                                placeholder="Tipo de documento"
+                                searchPlaceholder="Buscar tipo...">
+                            </app-searchable-select>
                         </div>
                         <div class="field" [class.field--error]="isInvalid('documentNumber')">
                             <label class="field__label">Numero de documento</label>

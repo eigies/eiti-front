@@ -1,6 +1,6 @@
 ﻿import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { jsPDF } from 'jspdf';
@@ -29,6 +29,7 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import {
@@ -47,7 +48,7 @@ import {
 @Component({
     selector: 'app-sales-page',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterModule, OnboardingBannerComponent, SalePaymentInlineComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, OnboardingBannerComponent, SalePaymentInlineComponent, SearchableSelectComponent],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
 })
@@ -81,6 +82,7 @@ export class SalesPageComponent implements OnInit {
     loadingSales = false;
     saving = false;
     savingEdit = false;
+    showStaleCashSessionModal = false;
     deletingSaleId: string | null = null;
     cancelingSaleId: string | null = null;
     quickPayingSaleId: string | null = null;
@@ -112,6 +114,22 @@ export class SalesPageComponent implements OnInit {
     whatsAppPhoneNumber: string | null = null;
     readonly salesPageSizeOptions = [10, 25, 50];
     readonly detailPageSize = 5;
+    readonly saleStatusOptions: SearchableSelectOption[] = [
+        { value: 1, label: 'En espera' },
+        { value: 2, label: 'Pagada' }
+    ];
+    readonly saleFilterStatusOptions: SearchableSelectOption[] = [
+        { value: 1, label: 'En espera' },
+        { value: 2, label: 'Pagada' },
+        { value: 3, label: 'Cancelada' }
+    ];
+    readonly transportStatusOptions: SearchableSelectOption[] = [
+        { value: 'pending', label: 'Pendiente' },
+        { value: '1', label: 'Asignado' },
+        { value: '2', label: 'En transito' },
+        { value: '3', label: 'Entregado' },
+        { value: '4', label: 'Cancelado' }
+    ];
     currentSalesPage = 1;
     salesPageSize = 10;
     private readonly detailPageBySaleId = new Map<string, number>();
@@ -238,6 +256,35 @@ export class SalesPageComponent implements OnInit {
 
     get activeVehicles(): VehicleResponse[] {
         return this.vehicles.filter(vehicle => vehicle.isActive);
+    }
+
+    get branchOptions(): SearchableSelectOption[] {
+        return this.branches.map(branch => ({
+            value: branch.id,
+            label: branch.name
+        }));
+    }
+
+    get driverOptions(): SearchableSelectOption[] {
+        return this.drivers.map(driver => ({
+            value: driver.employeeId,
+            label: driver.fullName
+        }));
+    }
+
+    get vehicleOptions(): SearchableSelectOption[] {
+        return this.activeVehicles.map(vehicle => ({
+            value: vehicle.id,
+            label: `${vehicle.plate} / ${vehicle.model}`,
+            meta: vehicle.model
+        }));
+    }
+
+    get salesPageSizeSelectOptions(): SearchableSelectOption[] {
+        return this.salesPageSizeOptions.map(option => ({
+            value: option,
+            label: String(option)
+        }));
     }
 
     get createProductSuggestions(): ProductResponse[] {
@@ -541,8 +588,12 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.loadSales();
     },
     error: err => {
-        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear la venta');
         this.saving = false;
+        if (err?.error?.errorCode === 'Sales.Create.CashSessionFromPreviousDay') {
+            this.showStaleCashSessionModal = true;
+        } else {
+            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear la venta');
+        }
     }
 });
     }
@@ -1342,6 +1393,13 @@ salePaymentDetailSummary(sale: SaleResponse): string {
     return parts.length > 0 ? parts.join(' | ') : 'Sin pagos';
 }
 
+salePaymentRefs(sale: SaleResponse): string {
+    return (sale.payments ?? [])
+        .map(p => p.reference?.trim() ?? '')
+        .filter(r => r.length > 0)
+        .join(' · ');
+}
+
 saleCoveredAmount(sale: SaleResponse): number {
     return roundMoney(
         (sale.payments ?? []).reduce((sum, item) => sum + Number(item.amount || 0), 0)
@@ -1689,6 +1747,22 @@ saveChannelPopup(): void {
             this.toast.error('Completa producto, cantidad y monto en cada item de canje.');
             return false;
         }
+    }
+
+    const missingTransferBank = paymentState.payments.some(
+        p => p.idPaymentMethod === 2 && p.amount > 0 && !p.transferBankId
+    );
+    if (missingTransferBank) {
+        this.toast.error('Seleccioná el banco para el pago por transferencia.');
+        return false;
+    }
+
+    const missingCardBank = paymentState.payments.some(
+        p => p.idPaymentMethod === 3 && p.amount > 0 && (!p.cardBankId || !p.cardCuotas)
+    );
+    if (missingCardBank) {
+        this.toast.error('Seleccioná el banco y las cuotas para el pago con tarjeta.');
+        return false;
     }
 
     if (isPaid && coverage < effectiveTotal) {

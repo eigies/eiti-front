@@ -12,6 +12,7 @@ import { BranchResponse } from '../../../core/models/branch.models';
 import { CustomerSearchItem } from '../../../core/models/customer.models';
 import { BranchProductStockResponse } from '../../../core/models/stock.models';
 import { CreateSaleDetailRequest } from '../../../core/models/sale.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 interface DraftItem {
   stock: BranchProductStockResponse;
@@ -23,7 +24,7 @@ interface DraftItem {
 @Component({
   selector: 'app-sales-cc',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent],
   templateUrl: './sales-cc.component.html',
   styleUrls: ['./sales-cc.component.css']
 })
@@ -107,6 +108,13 @@ export class SalesCcComponent implements OnInit {
 
   get selectedBranchName(): string {
     return this.branches.find(b => b.id === this.selectedBranchId)?.name ?? '';
+  }
+
+  get branchOptions(): SearchableSelectOption[] {
+    return this.branches.map(branch => ({
+      value: branch.id,
+      label: branch.name
+    }));
   }
 
   onBranchChange(): void {

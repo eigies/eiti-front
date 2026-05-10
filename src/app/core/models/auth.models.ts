@@ -26,6 +26,7 @@ export interface AuthResponse {
     username: string;
     email: string;
     token: string;
+    refreshToken: string;
     profileId?: string | null;
     profileName?: string | null;
     permissions: string[];

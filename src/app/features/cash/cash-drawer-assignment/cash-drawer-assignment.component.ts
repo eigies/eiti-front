@@ -8,12 +8,13 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { BranchResponse } from '../../../core/models/branch.models';
 import { CashDrawerResponse } from '../../../core/models/cash.models';
 import { UserResponse } from '../../../core/models/user.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
     selector: 'app-cash-drawer-assignment',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, SearchableSelectComponent],
     templateUrl: './cash-drawer-assignment.component.html',
     styleUrls: ['./cash-drawer-assignment.component.css']
 })
@@ -27,6 +28,13 @@ export class CashDrawerAssignmentComponent implements OnInit {
     selectValue: Record<string, string> = {};
     loading = false;
     loadingDrawers = false;
+
+    get branchOptions(): SearchableSelectOption[] {
+        return this.branches.map(branch => ({
+            value: branch.id,
+            label: branch.name
+        }));
+    }
 
     constructor(
         private readonly branchService: BranchService,
@@ -137,6 +145,13 @@ export class CashDrawerAssignmentComponent implements OnInit {
     availableUsers(drawerId: string): UserResponse[] {
         const assigned = new Set(this.drawerAssignments[drawerId] ?? []);
         return this.users.filter(u => !assigned.has(u.id));
+    }
+
+    availableUserOptions(drawerId: string): SearchableSelectOption[] {
+        return this.availableUsers(drawerId).map(user => ({
+            value: user.id,
+            label: user.username
+        }));
     }
 
     assignedUsersFor(drawerId: string): UserResponse[] {

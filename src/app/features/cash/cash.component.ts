@@ -20,6 +20,7 @@ import { SALE_PAYMENT_METHODS, paymentMethodSummary } from '../../core/models/sa
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import { forkJoin } from 'rxjs';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 
 type CashSessionView = {
     session: CashSessionResponse;
@@ -32,7 +33,7 @@ type CashSessionView = {
 @Component({
     selector: 'app-cash',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, OnboardingBannerComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, OnboardingBannerComponent, SearchableSelectComponent],
     template: `
     <div class="page" [class.page--guided-lock]="isOnboardingFocusLocked">
       <header class="hero">
@@ -69,10 +70,7 @@ type CashSessionView = {
         <div class="grid">
           <label class="field">
             <span>Sucursal</span>
-            <select class="control" [class.control--placeholder]="!selectedBranchId" [ngModel]="selectedBranchId" (ngModelChange)="selectBranch($event)" [ngModelOptions]="{ standalone: true }" [disabled]="isRestrictedToAssignedDrawer">
-              <option value="" disabled hidden>Selecciona sucursal</option>
-              <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-            </select>
+            <app-searchable-select [ngModel]="selectedBranchId" (ngModelChange)="selectBranch($event)" [ngModelOptions]="{ standalone: true }" [options]="branchOptions" placeholder="Selecciona sucursal" searchPlaceholder="Buscar sucursal..." [disabled]="isRestrictedToAssignedDrawer"></app-searchable-select>
           </label>
           <div class="drawer-create">
             <button *ngIf="auth.hasPermission(permissionCodes.cashDrawerManage)" class="btn btn--ghost" type="button" (click)="toggleCreateDrawer()" [disabled]="!selectedBranchId">
@@ -377,10 +375,7 @@ type CashSessionView = {
           <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
             <label class="field">
               <span>Caja destino</span>
-              <select class="control" formControlName="targetCashDrawerId" [class.control--placeholder]="!transferForm.get('targetCashDrawerId')?.value">
-                <option value="" disabled hidden>Selecciona caja destino</option>
-                <option *ngFor="let drawer of otherDrawers" [value]="drawer.id">{{ drawer.name }}</option>
-              </select>
+              <app-searchable-select formControlName="targetCashDrawerId" [options]="otherDrawerOptions" placeholder="Selecciona caja destino" searchPlaceholder="Buscar caja..."></app-searchable-select>
             </label>
             <label class="field">
               <span>Monto</span>
@@ -981,6 +976,20 @@ export class CashComponent implements OnInit {
 
     get otherDrawers(): CashDrawerResponse[] {
         return this.drawers.filter(drawer => drawer.id !== this.selectedDrawerId);
+    }
+
+    get branchOptions(): SearchableSelectOption[] {
+        return this.branches.map(branch => ({
+            value: branch.id,
+            label: branch.name
+        }));
+    }
+
+    get otherDrawerOptions(): SearchableSelectOption[] {
+        return this.otherDrawers.map(drawer => ({
+            value: drawer.id,
+            label: drawer.name
+        }));
     }
 
     closeSession(): void {
