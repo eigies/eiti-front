@@ -1,4 +1,4 @@
-<!-- ── Top bar ── -->
+<!-- Top bar -->
 <nav class="navbar">
   <div class="navbar__left">
     <button
@@ -6,7 +6,7 @@
       type="button"
       [class.is-open]="sidebarOpen"
       [attr.aria-expanded]="sidebarOpen"
-      aria-label="Alternar menú de navegación"
+      aria-label="Alternar menu de navegacion"
       (click)="toggleSidebar()">
       <span class="bar bar-1"></span>
       <span class="bar bar-2"></span>
@@ -42,224 +42,244 @@
   </div>
 </nav>
 
-<!-- ── Backdrop ── -->
+<!-- Backdrop -->
 <div
   class="sidebar-backdrop"
   [class.is-visible]="sidebarOpen"
   (click)="closeSidebar()">
 </div>
 
-<!-- ── Sidebar ── -->
-<aside class="sidebar" [class.is-open]="sidebarOpen" aria-label="Menú lateral">
-
+<!-- Sidebar -->
+<aside class="sidebar" [class.is-open]="sidebarOpen" aria-label="Menu lateral">
   <div class="sidebar__header" *ngIf="auth.currentUser as user">
-    <div class="sidebar__avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
-    <div class="sidebar__user-info">
-      <span class="sidebar__username">{{ user.username }}</span>
-      <span class="sidebar__company">{{ companyName }}</span>
+    <div class="sidebar__header-top">
+      <div class="sidebar__avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+      <div class="sidebar__user-info">
+        <span class="sidebar__eyebrow">Sesion activa</span>
+        <span class="sidebar__username">{{ user.username }}</span>
+      </div>
+    </div>
+    <div class="sidebar__workspace">
+      <span class="sidebar__workspace-label">Espacio de trabajo</span>
+      <strong class="sidebar__workspace-name">{{ companyName }}</strong>
     </div>
   </div>
 
   <nav class="sidebar__nav">
+    <section class="sidebar__section">
+      <span class="sidebar__section-label">Principal</span>
 
-    <a class="sidebar__link" routerLink="/dashboard" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-        <polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-      <span>Inicio</span>
-    </a>
-
-    <div class="sidebar__group">
-      <button class="sidebar__link sidebar__link--parent"
-              type="button"
-              [class.is-active]="isClientsRouteActive"
-              (click)="toggleClientsMenu()">
+      <a class="sidebar__link" routerLink="/dashboard" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
         <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
-        <span>Clientes</span>
-        <svg class="sidebar__chevron" [class.is-open]="clientsMenuOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      <div class="sidebar__submenu" [class.is-open]="clientsMenuOpen">
-        <a class="sidebar__submenu-item" routerLink="/customers" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
+        <span>Inicio</span>
+      </a>
+    </section>
+
+    <section class="sidebar__section">
+      <span class="sidebar__section-label">Operacion</span>
+
+      <div class="sidebar__group">
+        <button class="sidebar__link sidebar__link--parent"
+                type="button"
+                [class.is-active]="isClientsRouteActive"
+                (click)="toggleClientsMenu()">
           <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-            <path d="M16 3.13a4 4 0 010 7.75"/>
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
           </svg>
-          <span>Administrador</span>
-        </a>
-        <a class="sidebar__submenu-item" routerLink="/clients/cc" routerLinkActive="is-active">
-          <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-            <line x1="1" y1="10" x2="23" y2="10"/>
+          <span>Clientes</span>
+          <svg class="sidebar__chevron" [class.is-open]="clientsMenuOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
           </svg>
-          <span>Cuenta Corriente</span>
-        </a>
+        </button>
+        <div class="sidebar__submenu" [class.is-open]="clientsMenuOpen">
+          <a class="sidebar__submenu-item" routerLink="/customers" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+              <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+            <span>Administrador</span>
+          </a>
+          <a class="sidebar__submenu-item" routerLink="/clients/cc" routerLinkActive="is-active">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            <span>Cuenta Corriente</span>
+          </a>
+        </div>
       </div>
-    </div>
 
-    <a class="sidebar__link" routerLink="/products" routerLinkActive="is-active">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-        <line x1="12" y1="22.08" x2="12" y2="12"/>
-      </svg>
-      <span>Productos</span>
-    </a>
-
-    <a class="sidebar__link" routerLink="/company" routerLinkActive="is-active">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-        <rect x="9" y="14" width="6" height="7"/>
-        <path d="M9 9h.01M15 9h.01"/>
-      </svg>
-      <span>Compañia</span>
-    </a>
-
-    <a class="sidebar__link" routerLink="/branches" routerLinkActive="is-active">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
-      <span>Sucursal</span>
-    </a>
-
-    <div *ngIf="auth.hasPermission(permissionCodes.salesAccess)" class="sidebar__group">
-      <button class="sidebar__link sidebar__link--parent"
-              type="button"
-              [class.is-active]="isSalesRouteActive"
-              (click)="toggleSalesMenu()">
+      <a class="sidebar__link" routerLink="/products" routerLinkActive="is-active">
         <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-          <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
         </svg>
-        <span>Ventas</span>
-        <svg class="sidebar__chevron" [class.is-open]="salesMenuOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      <div class="sidebar__submenu" [class.is-open]="salesMenuOpen">
-        <a class="sidebar__submenu-item" routerLink="/sales" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
+        <span>Productos</span>
+      </a>
+
+      <div *ngIf="auth.hasPermission(permissionCodes.salesAccess)" class="sidebar__group">
+        <button class="sidebar__link sidebar__link--parent"
+                type="button"
+                [class.is-active]="isSalesRouteActive"
+                (click)="toggleSalesMenu()">
           <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
             <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
           </svg>
-          <span>Venta</span>
-        </a>
-        <a class="sidebar__submenu-item" routerLink="/sales/full" routerLinkActive="is-active">
-          <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-            <rect x="9" y="3" width="6" height="4" rx="1"/>
-            <path d="M9 14l2 2 4-4"/>
+          <span>Ventas</span>
+          <svg class="sidebar__chevron" [class.is-open]="salesMenuOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
           </svg>
-          <span>Venta Guiada</span>
-        </a>
-        <a class="sidebar__submenu-item" routerLink="/sales-cc" routerLinkActive="is-active">
-          <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 12V8H6a2 2 0 01-2-2c0-1.1.9-2 2-2h12v4"/>
-            <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
-            <path d="M18 12a2 2 0 000 4h4v-4h-4z"/>
-          </svg>
-          <span>Cuenta Corriente</span>
-        </a>
+        </button>
+        <div class="sidebar__submenu" [class.is-open]="salesMenuOpen">
+          <a class="sidebar__submenu-item" routerLink="/sales" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+            </svg>
+            <span>Venta</span>
+          </a>
+          <a class="sidebar__submenu-item" routerLink="/sales/full" routerLinkActive="is-active">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+              <path d="M9 14l2 2 4-4"/>
+            </svg>
+            <span>Venta Guiada</span>
+          </a>
+          <a class="sidebar__submenu-item" routerLink="/sales-cc" routerLinkActive="is-active">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 12V8H6a2 2 0 01-2-2c0-1.1.9-2 2-2h12v4"/>
+              <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
+              <path d="M18 12a2 2 0 000 4h4v-4h-4z"/>
+            </svg>
+            <span>Cuenta Corriente</span>
+          </a>
+        </div>
       </div>
-    </div>
 
-    <div *ngIf="auth.hasPermission(permissionCodes.cashAccess)" class="sidebar__group">
-      <button class="sidebar__link sidebar__link--parent"
-              type="button"
-              [class.is-active]="isCashRouteActive"
-              (click)="toggleCashMenu()">
-        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="5" width="20" height="14" rx="2"/>
-          <line x1="2" y1="10" x2="22" y2="10"/>
-        </svg>
-        <span>Caja</span>
-        <svg class="sidebar__chevron" [class.is-open]="cashMenuOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      <div class="sidebar__submenu" [class.is-open]="cashMenuOpen">
-        <a class="sidebar__submenu-item" routerLink="/cash" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
+      <div *ngIf="auth.hasPermission(permissionCodes.cashAccess)" class="sidebar__group">
+        <button class="sidebar__link sidebar__link--parent"
+                type="button"
+                [class.is-active]="isCashRouteActive"
+                (click)="toggleCashMenu()">
           <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="5" width="20" height="14" rx="2"/>
             <line x1="2" y1="10" x2="22" y2="10"/>
           </svg>
-          <span>Administrador</span>
-        </a>
-        <a *ngIf="auth.hasPermission(permissionCodes.cashDrawerAssign)"
-           class="sidebar__submenu-item" routerLink="/cash/assignment" routerLinkActive="is-active">
-          <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-            <polyline points="16 11 18 13 22 9"/>
+          <span>Caja</span>
+          <svg class="sidebar__chevron" [class.is-open]="cashMenuOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
           </svg>
-          <span>Asignacion</span>
-        </a>
+        </button>
+        <div class="sidebar__submenu" [class.is-open]="cashMenuOpen">
+          <a class="sidebar__submenu-item" routerLink="/cash" routerLinkActive="is-active" [routerLinkActiveOptions]="{exact: true}">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+            <span>Administrador</span>
+          </a>
+          <a *ngIf="auth.hasPermission(permissionCodes.cashDrawerAssign)"
+             class="sidebar__submenu-item" routerLink="/cash/assignment" routerLinkActive="is-active">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+              <polyline points="16 11 18 13 22 9"/>
+            </svg>
+            <span>Asignacion</span>
+          </a>
+        </div>
       </div>
-    </div>
 
-    <a *ngIf="auth.hasPermission(permissionCodes.usersManage)"
-       class="sidebar__link" routerLink="/users" routerLinkActive="is-active">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-        <path d="M16 3.13a4 4 0 010 7.75"/>
-      </svg>
-      <span>Usuarios</span>
-    </a>
+      <a class="sidebar__link" routerLink="/transport" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="3" width="15" height="13" rx="1"/>
+          <path d="M16 8h4l3 5v3h-7V8z"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/>
+          <circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+        <span>Transporte</span>
+      </a>
+    </section>
 
-    <a *ngIf="auth.hasPermission(permissionCodes.banksManage)"
-       class="sidebar__link" routerLink="/banks" routerLinkActive="is-active">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 22h18"/>
-        <path d="M6 18v-7"/>
-        <path d="M10 18v-7"/>
-        <path d="M14 18v-7"/>
-        <path d="M18 18v-7"/>
-        <path d="M4 18h16"/>
-        <path d="M3 11h18"/>
-        <path d="M3 11L12 2l9 9"/>
-      </svg>
-      <span>Bancos</span>
-    </a>
+    <section class="sidebar__section">
+      <span class="sidebar__section-label">Administracion</span>
 
-    <a *ngIf="auth.hasPermission(permissionCodes.chequesManage)"
-       class="sidebar__link" routerLink="/cheques" routerLinkActive="is-active">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2"/>
-        <line x1="2" y1="10" x2="22" y2="10"/>
-      </svg>
-      <span>Cheques</span>
-    </a>
+      <a class="sidebar__link" routerLink="/company" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <rect x="9" y="14" width="6" height="7"/>
+          <path d="M9 9h.01M15 9h.01"/>
+        </svg>
+        <span>Compania</span>
+      </a>
 
-    <a class="sidebar__link" routerLink="/transport" routerLinkActive="is-active">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="1" y="3" width="15" height="13" rx="1"/>
-        <path d="M16 8h4l3 5v3h-7V8z"/>
-        <circle cx="5.5" cy="18.5" r="2.5"/>
-        <circle cx="18.5" cy="18.5" r="2.5"/>
-      </svg>
-      <span>Transporte</span>
-    </a>
+      <a class="sidebar__link" routerLink="/branches" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span>Sucursal</span>
+      </a>
 
+      <a *ngIf="auth.hasPermission(permissionCodes.usersManage)"
+         class="sidebar__link" routerLink="/users" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+          <path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+        <span>Usuarios</span>
+      </a>
+
+      <a *ngIf="auth.hasPermission(permissionCodes.banksManage)"
+         class="sidebar__link" routerLink="/banks" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 22h18"/>
+          <path d="M6 18v-7"/>
+          <path d="M10 18v-7"/>
+          <path d="M14 18v-7"/>
+          <path d="M18 18v-7"/>
+          <path d="M4 18h16"/>
+          <path d="M3 11h18"/>
+          <path d="M3 11L12 2l9 9"/>
+        </svg>
+        <span>Bancos</span>
+      </a>
+
+      <a *ngIf="auth.hasPermission(permissionCodes.chequesManage)"
+         class="sidebar__link" routerLink="/cheques" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+        </svg>
+        <span>Cheques</span>
+      </a>
+    </section>
   </nav>
 
   <div class="sidebar__footer">
-    <a class="sidebar__link sidebar__link--footer" routerLink="/profile" routerLinkActive="is-active">
-      <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="8" r="4"/>
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-      </svg>
-      <span>Perfil</span>
-    </a>
+    <div class="sidebar__footer-card">
+      <a class="sidebar__link sidebar__link--footer" routerLink="/profile" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        <span>Perfil</span>
+      </a>
+      <button class="sidebar__logout" type="button" (click)="logout()">
+        <span class="sidebar__logout-dot"></span>
+        <span>Salir</span>
+      </button>
+    </div>
   </div>
-
 </aside>

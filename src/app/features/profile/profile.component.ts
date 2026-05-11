@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { UserProfileAuditResponse, UserResponse } from '../../core/models/user.models';
@@ -25,7 +25,8 @@ export class ProfileComponent implements OnInit {
   constructor(
     public readonly auth: AuthService,
     private readonly userService: UserService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly cdr: ChangeDetectorRef
   ) { }
 
   get canReadAllAudits(): boolean {
@@ -45,9 +46,11 @@ export class ProfileComponent implements OnInit {
       next: audits => {
         this.audits = audits;
         this.loadingAudit = false;
+        this.cdr.markForCheck();
       },
       error: err => {
         this.loadingAudit = false;
+        this.cdr.markForCheck();
         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cargar la auditoria');
       }
     });
@@ -69,8 +72,10 @@ export class ProfileComponent implements OnInit {
     this.userService.getMyProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: profile => {
         this.profile = profile;
+        this.cdr.markForCheck();
       },
       error: err => {
+        this.cdr.markForCheck();
         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cargar el perfil');
       }
     });
