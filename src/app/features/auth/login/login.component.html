@@ -1,57 +1,79 @@
 <div class="auth-layout">
-    <div class="auth-panel auth-panel--deco" aria-hidden="true">
+    <section class="auth-panel auth-panel--deco" aria-hidden="true">
+        <div class="deco-orbit deco-orbit--one"></div>
+        <div class="deco-orbit deco-orbit--two"></div>
+
         <div class="deco-lines">
-            <div class="deco-line" *ngFor="let i of lines" [style.animation-delay]="i*0.07+'s'"></div>
+            <div class="deco-line" *ngFor="let i of lines" [style.animation-delay]="i * 0.07 + 's'"></div>
         </div>
-        <div class="deco-text">
-            <span class="deco-label">EITI</span>
-            <span class="deco-tagline">Plataforma de<br>gestion comercial</span>
-        </div>
-    </div>
 
-    <div class="auth-panel auth-panel--form">
-        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <header class="auth-form__header">
-                <div class="auth-form__tag">_ ACCESO</div>
-                <h1 class="auth-form__title">Iniciar sesion</h1>
-            </header>
-
-            <div class="field" [class.field--error]="isInvalid('usernameOrEmail')">
-                <label class="field__label">Usuario o email</label>
-                <input class="field__input" type="text" formControlName="usernameOrEmail"
-                    placeholder="tu_usuario o correo@ejemplo.com" autocomplete="username" />
-                <span class="field__error" *ngIf="isInvalid('usernameOrEmail')">
-                    Campo requerido
-                </span>
+        <div class="deco-content">
+            <div class="deco-brand">
+                <span class="deco-label">EITI</span>
+                <span class="deco-kicker">Acceso interno</span>
             </div>
 
-            <div class="field" [class.field--error]="isInvalid('password')">
-                <label class="field__label">Contrasena</label>
-                <div class="field__input-wrap">
-                    <input class="field__input" [type]="showPass ? 'text' : 'password'" formControlName="password"
-                        placeholder="********" autocomplete="current-password" />
-                    <button type="button" class="field__toggle" (click)="showPass = !showPass">
-                        {{ showPass ? 'Ocultar' : 'Ver' }}
-                    </button>
+            <div class="deco-copy">
+                <h2>La operacion en un solo punto de entrada.</h2>
+                <p>Ventas, caja, stock y gestion de usuarios con una lectura clara desde el primer minuto de la jornada.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="auth-panel auth-panel--form">
+        <div class="auth-shell">
+            <div class="auth-mobile-brand">
+                <span class="auth-mobile-brand__label">EITI</span>
+                <span class="auth-mobile-brand__copy">Panel comercial interno</span>
+            </div>
+
+            <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+                <header class="auth-form__header">
+                    <div class="auth-form__tag">_ ACCESO</div>
+                    <h1 class="auth-form__title">Acceso al panel</h1>
+                    <p class="auth-form__subtitle">Ingresa con tu usuario de trabajo para continuar con la operacion.</p>
+                </header>
+
+                <div class="field" [class.field--error]="isInvalid('usernameOrEmail')">
+                    <label class="field__label">Usuario o email</label>
+                    <input class="field__input" type="text" formControlName="usernameOrEmail"
+                        placeholder="usuario o correo@empresa.com" autocomplete="username" />
+                    <span class="field__error" *ngIf="isInvalid('usernameOrEmail')">
+                        Campo requerido
+                    </span>
                 </div>
-                <span class="field__error" *ngIf="isInvalid('password')">
-                    Campo requerido
-                </span>
-            </div>
 
-            <button class="btn-primary" type="submit" [disabled]="loading">
-                <span *ngIf="!loading">Entrar</span>
-                <span *ngIf="loading" class="loading-dots">cargando</span>
-            </button>
+                <div class="field" [class.field--error]="isInvalid('password')">
+                    <label class="field__label">Contrasena</label>
+                    <div class="field__input-wrap">
+                        <input class="field__input field__input--with-toggle" [type]="showPass ? 'text' : 'password'" formControlName="password"
+                            placeholder="********" autocomplete="current-password" />
+                        <button type="button" class="field__toggle" (click)="showPass = !showPass" [attr.aria-label]="showPass ? 'Ocultar contrasena' : 'Mostrar contrasena'">
+                            <span aria-hidden="true">{{ showPass ? '◐' : '◌' }}</span>
+                        </button>
+                    </div>
+                    <span class="field__error" *ngIf="isInvalid('password')">
+                        Campo requerido
+                    </span>
+                </div>
 
-            <p class="auth-form__link">
-                No tenes cuenta?
-                <a routerLink="/register">Registrate</a>
-            </p>
+                <button class="btn-primary" type="submit" [disabled]="loading">
+                    <span *ngIf="!loading">Entrar al sistema</span>
+                    <span *ngIf="loading" class="loading-dots">cargando</span>
+                </button>
 
-            <p class="auth-form__link">
-                <a routerLink="/forgot-password">¿Olvidaste tu contraseña?</a>
-            </p>
-        </form>
-    </div>
+                <div class="auth-form__footer">
+                    <p class="auth-form__link">
+                        <a routerLink="/forgot-password">Olvidaste tu contrasena?</a>
+                    </p>
+
+                    <p class="auth-form__link">
+                        No tenes cuenta?
+                        <a routerLink="/register">Registrate</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </section>
 </div>

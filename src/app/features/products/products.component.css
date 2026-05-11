@@ -61,6 +61,7 @@
   justify-content: flex-end;
   align-items: center;
   align-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.65rem;
 }
 
@@ -190,6 +191,13 @@
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--amber) 4%, transparent), transparent 58%),
     color-mix(in srgb, var(--bg-soft) 54%, transparent);
+}
+
+.filters .btn,
+.filters app-searchable-select,
+.pager__size app-searchable-select,
+.stock-panel app-searchable-select {
+  width: 100%;
 }
 
 .import-report {
@@ -1085,7 +1093,17 @@
   }
   .page { padding: 2rem 0.85rem 1.25rem; }
   .ph { flex-direction: column; align-items: flex-start; gap: 1rem; }
-  .ph__actions { width: 100%; justify-content: flex-start; align-content: start; }
+  .ph__actions {
+    width: 100%;
+    justify-content: flex-start;
+    align-content: start;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+  .ph__actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
   .ph__title { max-width: none; }
   .card__head,
   .card__head-static,
@@ -1152,6 +1170,9 @@
   .modal__actions .btn { width: 100%; }
   .stock-nums { grid-template-columns: 1fr; }
   .f--narrow { max-width: none; }
+  .sale-config__aside {
+    min-width: 0;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1216,6 +1237,10 @@
     width: 100%;
   }
 
+  .filters .btn {
+    min-height: 44px;
+  }
+
   .tbl-wrap {
     overflow: visible;
     padding: 0.85rem;
@@ -1255,6 +1280,7 @@
     border-bottom: 1px solid color-mix(in srgb, var(--border) 52%, transparent);
     text-align: right;
     white-space: normal;
+    min-width: 0;
   }
 
   .tbl td:first-child {
@@ -1295,6 +1321,19 @@
     width: 100%;
   }
 
+  .td--check {
+    align-items: center;
+  }
+
+  .td--check .row-check {
+    margin-left: auto;
+  }
+
+  .td--check::before,
+  td[data-label="Acciones"]::before {
+    flex-basis: 34%;
+  }
+
   .ti {
     min-width: 0;
   }
@@ -1314,6 +1353,12 @@
   .action-col .row-st {
     display: flex;
     justify-content: center;
+  }
+
+  td[data-label="Acciones"] .action-col,
+  td[data-label="Acciones"] .btn,
+  td[data-label="Acciones"] .row-st {
+    width: 100%;
   }
 
   .pager__controls {
@@ -1352,6 +1397,15 @@
     text-align: left;
     max-width: none;
   }
+
+  .danger-zone__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .danger-zone__actions .btn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 520px) {
@@ -1359,6 +1413,10 @@
 
   .ph__title {
     font-size: 1.5rem;
+  }
+
+  .ph__actions {
+    grid-template-columns: 1fr;
   }
 
   .ph__kpi-n {

@@ -35,7 +35,10 @@
       (keydown.space)="theme.toggleTheme(); $event.preventDefault()">
       {{ theme.isDarkTheme ? '☀' : '☾' }}
     </span>
-    <button class="navbar__logout" (click)="logout()">Salir</button>
+    <button class="navbar__logout" type="button" (click)="logout()">
+      <span class="navbar__logout-icon">↗</span>
+      <span>Salir</span>
+    </button>
   </div>
 </nav>
 

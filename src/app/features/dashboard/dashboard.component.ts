@@ -15,6 +15,16 @@ interface DayBar {
   isToday: boolean;
 }
 
+interface DashboardAlert {
+  tone: 'success' | 'warn' | 'danger';
+  label: string;
+  detail: string;
+  statLabel?: string;
+  statValue?: string;
+  compareLabel?: string;
+  compareValue?: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -27,6 +37,8 @@ export class DashboardComponent implements OnInit {
   sales: SaleResponse[] = [];
   loading = true;
   selectedDayKey: string | null = null;
+  selectedStatusKey: 'paid' | 'pending' | 'cancelled' | null = null;
+  chartMetric: 'count' | 'amount' = 'count';
 
   constructor(
     public auth: AuthService,
@@ -52,6 +64,16 @@ export class DashboardComponent implements OnInit {
     }).format(new Date());
   }
 
+  get todayKey(): string {
+    return new Date().toLocaleDateString('en-CA');
+  }
+
+  get yesterdayKey(): string {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toLocaleDateString('en-CA');
+  }
+
   get activeSales(): SaleResponse[] {
     return this.sales.filter(s => s.idSaleStatus !== 3);
   }
@@ -70,6 +92,80 @@ export class DashboardComponent implements OnInit {
 
   private salesForDay(dateKey: string): SaleResponse[] {
     return this.sales.filter(s => new Date(s.createdAt).toLocaleDateString('en-CA') === dateKey);
+  }
+
+  private salesByStatus(statusKey: 'paid' | 'pending' | 'cancelled', sales: SaleResponse[]): SaleResponse[] {
+    if (statusKey === 'paid') {
+      return sales.filter(s => s.idSaleStatus === 2);
+    }
+
+    if (statusKey === 'pending') {
+      return sales.filter(s => s.idSaleStatus === 1);
+    }
+
+    return sales.filter(s => s.idSaleStatus === 3);
+  }
+
+  get todaySales(): SaleResponse[] {
+    return this.salesForDay(this.todayKey);
+  }
+
+  get todayActiveSales(): SaleResponse[] {
+    return this.todaySales.filter(s => s.idSaleStatus !== 3);
+  }
+
+  get todayPaidSales(): SaleResponse[] {
+    return this.todaySales.filter(s => s.idSaleStatus === 2);
+  }
+
+  get todayPendingSales(): SaleResponse[] {
+    return this.todaySales.filter(s => s.idSaleStatus === 1);
+  }
+
+  get todayCancelledSales(): SaleResponse[] {
+    return this.todaySales.filter(s => s.idSaleStatus === 3);
+  }
+
+  get todayRevenue(): number {
+    return this.todayPaidSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+  }
+
+  get todayPendingRevenue(): number {
+    return this.todayPendingSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+  }
+
+  get yesterdayRevenue(): number {
+    return this.salesForDay(this.yesterdayKey)
+      .filter(sale => sale.idSaleStatus === 2)
+      .reduce((sum, sale) => sum + sale.totalAmount, 0);
+  }
+
+  get todayVsYesterdayDelta(): number {
+    if (this.yesterdayRevenue === 0) {
+      return this.todayRevenue > 0 ? 100 : 0;
+    }
+
+    return Math.round(((this.todayRevenue - this.yesterdayRevenue) / this.yesterdayRevenue) * 100);
+  }
+
+  get todayVsYesterdayLabel(): string {
+    if (this.todayRevenue === 0 && this.yesterdayRevenue === 0) {
+      return 'Mismo nivel que ayer';
+    }
+
+    if (this.yesterdayRevenue === 0 && this.todayRevenue > 0) {
+      return 'Mas cobros que ayer';
+    }
+
+    if (this.todayVsYesterdayDelta > 0) {
+      return `${this.todayVsYesterdayDelta}% mas cobrado que ayer`;
+    }
+
+    if (this.todayVsYesterdayDelta < 0) {
+      return `${Math.abs(this.todayVsYesterdayDelta)}% menos cobrado que ayer`;
+    }
+
+    return 'Mismo nivel de cobro que ayer';
   }
 
   get scopeSales(): SaleResponse[] {
@@ -119,9 +215,14 @@ export class DashboardComponent implements OnInit {
   }
 
   get displayedSales(): SaleResponse[] {
-    if (!this.selectedDayKey) return this.recentSales;
-    return [...this.sales]
-      .filter(s => new Date(s.createdAt).toLocaleDateString('en-CA') === this.selectedDayKey)
+    const baseSales = this.selectedDayKey
+      ? this.salesForDay(this.selectedDayKey)
+      : this.recentSales;
+    const filteredByStatus = this.selectedStatusKey
+      ? this.salesByStatus(this.selectedStatusKey, baseSales)
+      : baseSales;
+
+    return [...filteredByStatus]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
@@ -131,8 +232,89 @@ export class DashboardComponent implements OnInit {
     return new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d);
   }
 
+  get selectedStatusLabel(): string {
+    if (this.selectedStatusKey === 'paid') return 'Pagadas';
+    if (this.selectedStatusKey === 'pending') return 'En espera';
+    if (this.selectedStatusKey === 'cancelled') return 'Canceladas';
+    return '';
+  }
+
+  get monthTopLineLabel(): string {
+    return this.selectedDayKey ? 'Lectura del dia filtrado' : 'Lectura del mes en curso';
+  }
+
+  get operationalAlerts(): DashboardAlert[] {
+    const alerts: DashboardAlert[] = [];
+
+    if (this.todayActiveSales.length === 0) {
+      alerts.push({
+        tone: 'danger',
+        label: 'Dia sin ventas',
+        detail: 'Todavia no hay ventas activas registradas hoy.',
+        statLabel: 'Hoy',
+        statValue: '0 ventas'
+      });
+    }
+
+    if (this.todayPendingSales.length >= 3) {
+      alerts.push({
+        tone: 'warn',
+        label: 'Cobros en espera',
+        detail: `${this.todayPendingSales.length} venta(s) siguen abiertas hoy.`,
+        statLabel: 'Pendiente',
+        statValue: this.todayPendingRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 }),
+        compareLabel: 'Ventas abiertas',
+        compareValue: String(this.todayPendingSales.length)
+      });
+    }
+
+    if (this.todayCancelledSales.length > 0) {
+      alerts.push({
+        tone: 'warn',
+        label: 'Cancelaciones detectadas',
+        detail: `${this.todayCancelledSales.length} venta(s) canceladas durante la jornada.`,
+        statLabel: 'Canceladas hoy',
+        statValue: String(this.todayCancelledSales.length)
+      });
+    }
+
+    if (this.todayRevenue > this.yesterdayRevenue && this.todayRevenue > 0) {
+      alerts.push({
+        tone: 'success',
+        label: 'Ritmo superior a ayer',
+        detail: this.todayVsYesterdayLabel.charAt(0).toUpperCase() + this.todayVsYesterdayLabel.slice(1) + '.',
+        statLabel: 'Cobrado hoy',
+        statValue: this.todayRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 }),
+        compareLabel: 'Ayer',
+        compareValue: this.yesterdayRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
+      });
+    }
+
+    if (alerts.length === 0) {
+      alerts.push({
+        tone: 'success',
+        label: 'Operacion estable',
+        detail: 'No hay desvíos operativos relevantes en este momento.',
+        statLabel: 'Cobrado hoy',
+        statValue: this.todayRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 }),
+        compareLabel: 'Ventas activas',
+        compareValue: String(this.todayActiveSales.length)
+      });
+    }
+
+    return alerts.slice(0, 3);
+  }
+
   selectDay(bar: DayBar): void {
     this.selectedDayKey = this.selectedDayKey === bar.dateKey ? null : bar.dateKey;
+  }
+
+  selectStatus(statusKey: 'paid' | 'pending' | 'cancelled'): void {
+    this.selectedStatusKey = this.selectedStatusKey === statusKey ? null : statusKey;
+  }
+
+  setChartMetric(metric: 'count' | 'amount'): void {
+    this.chartMetric = metric;
   }
 
   get last7DaysBars(): DayBar[] {
@@ -152,8 +334,18 @@ export class DashboardComponent implements OnInit {
       bars.push({ label, dateKey: key, total, count: daySales.length, heightPct: 0, isToday: key === todayKey });
     }
 
-    const max = Math.max(...bars.map(b => b.count), 1);
-    return bars.map(b => ({ ...b, heightPct: b.count > 0 ? Math.max(Math.round(b.count / max * 100), 5) : 0 }));
+    const maxCount = Math.max(...bars.map(b => b.count), 1);
+    const maxAmount = Math.max(...bars.map(b => b.total), 1);
+
+    return bars.map(b => {
+      const sourceValue = this.chartMetric === 'amount' ? b.total : b.count;
+      const maxValue = this.chartMetric === 'amount' ? maxAmount : maxCount;
+
+      return {
+        ...b,
+        heightPct: sourceValue > 0 ? Math.max(Math.round((sourceValue / maxValue) * 100), 5) : 0
+      };
+    });
   }
 
   saleStatusLabel(status: number): string {

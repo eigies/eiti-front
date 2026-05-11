@@ -43,6 +43,8 @@ export class UsersComponent implements OnInit {
   profiles: AccessProfileResponse[] = [];
   activeSection: 'admin' | 'profiles' = 'admin';
   activePermissionCategory = 'Todas';
+  permissionSearchTerm = '';
+  showSelectedPermissionsOnly = false;
   loadingUsers = true;
   loadingProfiles = true;
   savingCreate = false;
@@ -51,6 +53,7 @@ export class UsersComponent implements OnInit {
   selectedProfilePermissionCodes = new Set<string>();
   collapsedUserIds = new Set<string>();
   collapsedProfileIds = new Set<string>();
+  expandedPermissionModules = new Set<string>();
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -64,6 +67,7 @@ export class UsersComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.expandedPermissionModules = new Set<string>();
     this.beginCreateProfile();
     this.loadData();
   }
@@ -111,11 +115,48 @@ export class UsersComponent implements OnInit {
   }
 
   get filteredPermissionCatalog(): ReadonlyArray<{ code: string; label: string; description: string }> {
-    if (this.activePermissionCategory === 'Todas') {
-      return this.permissionCatalog;
+    return this.permissionCatalog.filter(permission => {
+      const matchesCategory = this.activePermissionCategory === 'Todas'
+        || this.permissionCategoryOf(permission.label) === this.activePermissionCategory;
+      const matchesSearch = this.permissionMatchesSearch(permission);
+      const matchesSelection = !this.showSelectedPermissionsOnly || this.isProfilePermissionSelected(permission.code);
+
+      return matchesCategory && matchesSearch && matchesSelection;
+    });
+  }
+
+  get permissionModules(): Array<{
+    category: string;
+    total: number;
+    selected: number;
+    permissionCodes: string[];
+    permissions: Array<{ code: string; label: string; description: string; shortLabel: string }>;
+  }> {
+    const groups = new Map<string, Array<{ code: string; label: string; description: string; shortLabel: string }>>();
+
+    for (const permission of this.filteredPermissionCatalog) {
+      const category = this.permissionCategoryOf(permission.label);
+      const bucket = groups.get(category) ?? [];
+      bucket.push({
+        ...permission,
+        shortLabel: this.permissionActionOf(permission.label)
+      });
+      groups.set(category, bucket);
     }
 
-    return this.permissionCatalog.filter(permission => this.permissionCategoryOf(permission.label) === this.activePermissionCategory);
+    return [...groups.entries()].map(([category, permissions]) => ({
+      category,
+      total: permissions.length,
+      selected: permissions.filter(permission => this.isProfilePermissionSelected(permission.code)).length,
+      permissionCodes: permissions.map(permission => permission.code),
+      permissions
+    }));
+  }
+
+  get selectedPermissionLabels(): string[] {
+    return this.permissionCatalog
+      .filter(permission => this.selectedProfilePermissionCodes.has(permission.code))
+      .map(permission => permission.label);
   }
 
   loadData(): void {
@@ -321,6 +362,9 @@ export class UsersComponent implements OnInit {
 
   selectPermissionCategory(category: string): void {
     this.activePermissionCategory = category;
+    if (category !== 'Todas') {
+      this.expandedPermissionModules.add(category);
+    }
   }
 
   toggleUserCollapse(userId: string): void {
@@ -357,6 +401,36 @@ export class UsersComponent implements OnInit {
 
   trackByProfile(_: number, profile: AccessProfileResponse): string {
     return profile.id;
+  }
+
+  isPermissionModuleExpanded(category: string): boolean {
+    return this.expandedPermissionModules.has(category);
+  }
+
+  togglePermissionModule(category: string): void {
+    if (this.expandedPermissionModules.has(category)) {
+      this.expandedPermissionModules.delete(category);
+      return;
+    }
+
+    this.expandedPermissionModules.add(category);
+  }
+
+  areAllModulePermissionsSelected(permissionCodes: string[]): boolean {
+    return permissionCodes.length > 0 && permissionCodes.every(code => this.selectedProfilePermissionCodes.has(code));
+  }
+
+  togglePermissionModuleSelection(permissionCodes: string[]): void {
+    if (this.areAllModulePermissionsSelected(permissionCodes)) {
+      permissionCodes.forEach(code => this.selectedProfilePermissionCodes.delete(code));
+      return;
+    }
+
+    permissionCodes.forEach(code => this.selectedProfilePermissionCodes.add(code));
+  }
+
+  clearPermissionModuleSelection(permissionCodes: string[]): void {
+    permissionCodes.forEach(code => this.selectedProfilePermissionCodes.delete(code));
   }
 
   private reloadUsers(): void {
@@ -396,5 +470,19 @@ export class UsersComponent implements OnInit {
 
   private permissionCategoryOf(label: string): string {
     return label.split(':')[0]?.trim() || 'General';
+  }
+
+  private permissionActionOf(label: string): string {
+    return label.split(':')[1]?.trim() || label.trim();
+  }
+
+  private permissionMatchesSearch(permission: { label: string; description: string }): boolean {
+    const term = this.permissionSearchTerm.trim().toLowerCase();
+    if (!term) {
+      return true;
+    }
+
+    return permission.label.toLowerCase().includes(term)
+      || permission.description.toLowerCase().includes(term);
   }
 }

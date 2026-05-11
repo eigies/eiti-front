@@ -216,14 +216,83 @@
                                     {{ category }}
                                 </button>
                             </div>
-                            <div class="role-grid">
-                                <button *ngFor="let permission of filteredPermissionCatalog" type="button" class="role-chip"
-                                    [class.role-chip--active]="isProfilePermissionSelected(permission.code)"
-                                    (click)="toggleProfilePermission(permission.code)">
-                                    <strong>{{ permission.label }}</strong>
-                                    <span>{{ permission.description }}</span>
+                            <div class="permission-toolbar">
+                                <label class="permission-search">
+                                    <span class="permission-search__label">Buscar permiso</span>
+                                    <input
+                                        class="control permission-search__input"
+                                        type="text"
+                                        [(ngModel)]="permissionSearchTerm"
+                                        [ngModelOptions]="{ standalone: true }"
+                                        placeholder="Caja, ventas, costo..." />
+                                </label>
+                                <button
+                                    type="button"
+                                    class="permission-filter__chip permission-filter__chip--ghost"
+                                    [class.permission-filter__chip--active]="showSelectedPermissionsOnly"
+                                    (click)="showSelectedPermissionsOnly = !showSelectedPermissionsOnly">
+                                    Solo seleccionados
                                 </button>
                             </div>
+                            <div class="permission-summary">
+                                <div class="permission-summary__count">
+                                    <strong>{{ selectedProfilePermissionCodes.size }}</strong>
+                                    <span>permisos activos</span>
+                                </div>
+                                <div class="permission-summary__chips" *ngIf="selectedPermissionLabels.length > 0; else noPermissionSummary">
+                                    <span *ngFor="let label of selectedPermissionLabels | slice:0:6">{{ label }}</span>
+                                    <span *ngIf="selectedPermissionLabels.length > 6">+{{ selectedPermissionLabels.length - 6 }} mas</span>
+                                </div>
+                                <ng-template #noPermissionSummary>
+                                    <div class="selection-copy">Todavia no hay permisos marcados.</div>
+                                </ng-template>
+                            </div>
+                            <div class="permission-modules" *ngIf="permissionModules.length > 0; else noFilteredPermissions">
+                                <article class="permission-module" *ngFor="let module of permissionModules">
+                                    <button type="button" class="permission-module__toggle" (click)="togglePermissionModule(module.category)">
+                                        <div class="permission-module__head">
+                                            <div class="permission-module__title">
+                                                <strong>{{ module.category }}</strong>
+                                                <span>{{ module.selected }} de {{ module.total }} seleccionados</span>
+                                            </div>
+                                            <span class="card-toggle__chevron" [class.card-toggle__chevron--collapsed]="!isPermissionModuleExpanded(module.category)">&#9662;</span>
+                                        </div>
+                                    </button>
+
+                                    <div class="permission-module__body" *ngIf="isPermissionModuleExpanded(module.category)">
+                                        <div class="permission-module__actions">
+                                            <button
+                                                type="button"
+                                                class="permission-filter__chip permission-filter__chip--ghost"
+                                                [class.permission-filter__chip--active]="areAllModulePermissionsSelected(module.permissionCodes)"
+                                                (click)="togglePermissionModuleSelection(module.permissionCodes)">
+                                                {{ areAllModulePermissionsSelected(module.permissionCodes) ? 'Quitar bloque' : 'Seleccionar bloque' }}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="permission-filter__chip permission-filter__chip--ghost"
+                                                (click)="clearPermissionModuleSelection(module.permissionCodes)">
+                                                Limpiar
+                                            </button>
+                                        </div>
+
+                                        <div class="role-list">
+                                            <button *ngFor="let permission of module.permissions" type="button" class="role-row"
+                                                [class.role-row--active]="isProfilePermissionSelected(permission.code)"
+                                                (click)="toggleProfilePermission(permission.code)">
+                                                <span class="role-row__check"></span>
+                                                <span class="role-row__copy">
+                                                    <strong>{{ permission.shortLabel }}</strong>
+                                                    <span>{{ permission.description }}</span>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </article>
+                            </div>
+                            <ng-template #noFilteredPermissions>
+                                <div class="empty">No hay permisos que coincidan con el filtro actual.</div>
+                            </ng-template>
                         </div>
 
                         <div class="form__actions">
