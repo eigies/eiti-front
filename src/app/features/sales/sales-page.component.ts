@@ -186,7 +186,8 @@ export class SalesPageComponent implements OnInit {
             vehicleId: ['', Validators.required],
             notes: ['']
         });
-        this.filterForm = this.fb.group({ dateFrom: [''], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], deliveryAddress: [''] });
+        const today = new Date().toISOString().slice(0, 10);
+        this.filterForm = this.fb.group({ dateFrom: [today], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], deliveryAddress: [''] });
     }
 
     ngOnInit(): void {
@@ -1421,7 +1422,8 @@ applySaleFilters(): void {
 }
 
 clearSaleFilters(): void {
-    this.filterForm.reset({ dateFrom: '', dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', deliveryAddress: '' });
+    const today = new Date().toISOString().slice(0, 10);
+    this.filterForm.reset({ dateFrom: today, dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', deliveryAddress: '' });
     this.currentSalesPage = 1;
     this.loadSales();
 }

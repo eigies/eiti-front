@@ -36,10 +36,37 @@ type CashSessionView = {
     imports: [CommonModule, FormsModule, ReactiveFormsModule, OnboardingBannerComponent, SearchableSelectComponent],
     template: `
     <div class="page" [class.page--guided-lock]="isOnboardingFocusLocked">
+      <div class="page__glow page__glow--left" aria-hidden="true"></div>
+      <div class="page__glow page__glow--right" aria-hidden="true"></div>
+
       <header class="hero">
-        <div class="eyebrow">_ CAJA</div>
-        <h1>Operacion de caja</h1>
-        <p>Selecciona una sucursal, administra sus cajas y opera aperturas, cierres e historial.</p>
+        <div class="hero__copy">
+          <div class="eyebrow">Tesoreria / Caja</div>
+          <h1>Operacion de caja</h1>
+          <p>Selecciona una sucursal, administra sus cajas y opera aperturas, cierres e historial.</p>
+        </div>
+        <div class="hero__rail">
+          <article class="hero-stat hero-stat--focus">
+            <span class="hero-stat__label">Sucursal activa</span>
+            <strong>{{ selectedBranchId ? 'Configurada' : 'Pendiente' }}</strong>
+            <small>{{ selectedBranchId ? 'Ya puedes operar sobre sus cajas.' : 'Empieza seleccionando una sucursal.' }}</small>
+          </article>
+          <article class="hero-stat">
+            <span class="hero-stat__label">Cajas visibles</span>
+            <strong>{{ drawers.length }}</strong>
+            <small>{{ canViewAllCashDrawers ? 'Disponibles en esta sucursal.' : 'Caja asignada al usuario.' }}</small>
+          </article>
+          <article class="hero-stat">
+            <span class="hero-stat__label">Sesion actual</span>
+            <strong>{{ currentSession ? 'Abierta' : 'Sin abrir' }}</strong>
+            <small>{{ currentSession ? 'Lista para movimientos y cierre.' : 'Abre caja para empezar a operar.' }}</small>
+          </article>
+          <article class="hero-stat">
+            <span class="hero-stat__label">Historial</span>
+            <strong>{{ historySessions.length }}</strong>
+            <small>Sesiones cargadas en pantalla.</small>
+          </article>
+        </div>
       </header>
 
       <app-onboarding-banner
@@ -65,8 +92,13 @@ type CashSessionView = {
         (action)="acceptInitialCashOpenStep()">
       </app-onboarding-banner>
 
-      <section class="panel">
-        <div class="panel__header"><span>Configurar caja</span></div>
+      <section class="panel panel--setup">
+        <div class="panel__header">
+          <div class="panel__heading">
+            <span>Configurar caja</span>
+            <p>Define la sucursal activa y prepara la estructura de trabajo.</p>
+          </div>
+        </div>
         <div class="grid">
           <label class="field">
             <span>Sucursal</span>
@@ -112,8 +144,13 @@ type CashSessionView = {
         </div>
       </section>
 
-      <section class="panel" *ngIf="selectedDrawerId">
-        <div class="panel__header"><span>Sesion actual</span></div>
+      <section class="panel panel--session" *ngIf="selectedDrawerId">
+        <div class="panel__header">
+          <div class="panel__heading">
+            <span>Sesion actual</span>
+            <p>Control en vivo de la caja seleccionada.</p>
+          </div>
+        </div>
 
         <div class="empty" *ngIf="loadingSession">Cargando sesion...</div>
 
@@ -144,12 +181,10 @@ type CashSessionView = {
             </div>
           </div>
 
-          <form *ngIf="auth.hasPermission(permissionCodes.cashWithdraw)" class="inline-form" [formGroup]="withdrawForm" (ngSubmit)="withdraw()">
-            <input class="control" type="number" min="0.01" step="0.01" placeholder="Extraccion" formControlName="amount" />
-            <input class="control" type="text" placeholder="Motivo" formControlName="description" />
-            <button class="btn btn--ghost" type="submit">Registrar extraccion</button>
+          <div *ngIf="auth.hasPermission(permissionCodes.cashWithdraw)" class="session-actions">
+            <button class="btn btn--ghost" type="button" (click)="openWithdrawModal()">Registrar extraccion</button>
             <button *ngIf="otherDrawers.length > 0" class="btn btn--transfer" type="button" (click)="openTransferModal()">&#8644; Transferir</button>
-          </form>
+          </div>
 
           <button *ngIf="auth.hasPermission(permissionCodes.cashClose)" class="btn btn--danger" type="button" (click)="startCloseSessionFlow()" [disabled]="checkingPendingCloseSales">Cerrar caja</button>
 
@@ -191,9 +226,12 @@ type CashSessionView = {
         </div>
       </section>
 
-      <section class="panel" *ngIf="selectedDrawerId">
+      <section class="panel panel--history" *ngIf="selectedDrawerId">
         <div class="panel__header panel__header--actions">
-          <span>Historial de caja</span>
+          <div class="panel__heading">
+            <span>Historial de caja</span>
+            <p>Revisa sesiones cerradas, movimientos y exportaciones.</p>
+          </div>
           <div class="history-header-actions">
             <span>{{ historySessions.length }} sesiones</span>
             <button *ngIf="auth.hasPermission(permissionCodes.cashHistoryExport)" class="btn btn--ghost btn--export" type="button" (click)="exportFilteredHistory()" [disabled]="historySessions.length === 0">Exportar caja XLSX</button>
@@ -218,7 +256,7 @@ type CashSessionView = {
         <div class="empty" *ngIf="!loadingHistory && historySessions.length === 0">No hay sesiones para ese rango en esta caja.</div>
 
         <div class="history-group" *ngIf="historySessions.length > 0">
-          <article class="history-session" *ngFor="let item of historySessions">
+          <article class="history-session" *ngFor="let item of historySessions" [class.history-session--closed]="isClosedSession(item.session.statusName)" [class.history-session--open]="!isClosedSession(item.session.statusName)">
             <button type="button" class="history-session__summary" (click)="toggleSession(item.session.id)">
               <div class="history-session__headline">
                 <strong>{{ item.session.openedAt | date: 'short' }}</strong>
@@ -323,6 +361,32 @@ type CashSessionView = {
             <div class="modal__actions">
               <button class="btn btn--ghost" type="button" (click)="closeCloseConfirmModal()">Cancelar</button>
               <button class="btn btn--danger" type="submit" [disabled]="closeForm.invalid">Confirmar cierre</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div class="modal-backdrop" *ngIf="showWithdrawModal" (click)="closeWithdrawModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal__head">
+          <span class="modal__title">Registrar extraccion</span>
+          <button class="modal__close" type="button" (click)="closeWithdrawModal()">&#x2715;</button>
+        </div>
+        <div class="modal__body">
+          <form [formGroup]="withdrawForm" (ngSubmit)="withdraw()">
+            <label class="field">
+              <span>Monto</span>
+              <input class="control" type="number" min="0.01" step="0.01" placeholder="0.00" formControlName="amount" />
+            </label>
+            <label class="field">
+              <span>Motivo</span>
+              <input class="control" type="text" placeholder="Motivo de la extraccion" formControlName="description" />
+            </label>
+            <div class="modal__actions">
+              <button class="btn btn--ghost" type="button" (click)="closeWithdrawModal()">Cancelar</button>
+              <button class="btn btn--ghost" type="submit" [disabled]="withdrawForm.invalid">Confirmar extraccion</button>
             </div>
           </form>
         </div>
@@ -440,20 +504,40 @@ type CashSessionView = {
     </div>
   `,
     styles: [`
-    .page{min-height:calc(100vh - 64px);background:linear-gradient(180deg,var(--bg) 0%,var(--bg-elevated) 100%);padding:3rem 2rem;max-width:1120px;margin:0 auto}
+    .page{position:relative;min-height:calc(100vh - 64px);background:linear-gradient(180deg,var(--bg) 0%,var(--bg-elevated) 100%);padding:2.6rem 1.6rem 3rem;max-width:1240px;margin:0 auto;overflow:visible}
+    .page__glow{position:absolute;width:28rem;height:28rem;border-radius:50%;pointer-events:none;filter:blur(18px);opacity:.52}
+    .page__glow--left{top:-10rem;left:-11rem;background:radial-gradient(circle,color-mix(in srgb,var(--amber) 18%, transparent) 0%,transparent 70%)}
+    .page__glow--right{top:8rem;right:-13rem;background:radial-gradient(circle,color-mix(in srgb,var(--success) 12%, transparent) 0%,transparent 72%)}
     .page--guided-lock .panel{opacity:.34;pointer-events:none;filter:saturate(.7)}
-    .hero{margin-bottom:2rem}.hero h1{margin:0;color:var(--text);font-family:'DM Mono',monospace;font-size:clamp(2rem,4vw,2.8rem)}.hero p{margin:.75rem 0 0;color:var(--text-soft);font-family:'Crimson Pro',serif;font-size:1rem}.eyebrow{color:var(--amber);margin-bottom:.6rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase}
-    .panel{background:color-mix(in srgb,var(--bg-panel) 94%, transparent);border:1px solid var(--border);border-radius:4px;padding:1.35rem;margin-bottom:1.2rem}
-    .panel__header{display:flex;justify-content:space-between;align-items:center;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:1px solid var(--border)}
+    .hero,.panel{position:relative;z-index:1}
+    .hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(21rem,.95fr);gap:1.2rem;align-items:stretch;margin-bottom:1.35rem}
+    .hero__copy{padding:1.6rem 1.7rem;border:1px solid color-mix(in srgb,var(--amber) 18%, var(--border));border-radius:28px;background:linear-gradient(140deg,color-mix(in srgb,var(--bg-panel) 88%, transparent) 0%,color-mix(in srgb,var(--bg) 96%, transparent) 100%);box-shadow:inset 0 1px 0 color-mix(in srgb,white 10%, transparent),0 24px 60px rgba(0,0,0,.18)}
+    .hero h1{margin:0;color:var(--text);font-family:'Crimson Pro',serif;font-size:clamp(2.3rem,4.8vw,4rem);line-height:.92;max-width:10ch}
+    .hero p{margin:1rem 0 0;max-width:42rem;color:color-mix(in srgb,var(--text) 72%, var(--text-soft));font-family:'DM Mono',monospace;font-size:.88rem;line-height:1.75;letter-spacing:.03em}
+    .eyebrow{display:inline-flex;padding:.42rem .72rem;border:1px solid color-mix(in srgb,var(--amber) 30%, transparent);border-radius:999px;color:var(--amber);background:color-mix(in srgb,var(--amber) 8%, transparent);margin-bottom:.9rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase}
+    .hero__rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem}
+    .hero-stat{display:grid;gap:.42rem;align-content:space-between;min-height:9.8rem;padding:1.1rem 1.15rem;border:1px solid var(--border);border-radius:22px;background:linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 94%, transparent) 0%,color-mix(in srgb,var(--bg) 97%, transparent) 100%);box-shadow:inset 0 1px 0 color-mix(in srgb,white 9%, transparent),0 18px 40px rgba(0,0,0,.12)}
+    .hero-stat--focus{border-color:color-mix(in srgb,var(--amber) 28%, var(--border));background:linear-gradient(145deg,color-mix(in srgb,var(--amber) 10%, var(--bg-panel)) 0%,color-mix(in srgb,var(--bg) 97%, transparent) 100%)}
+    .hero-stat__label,.panel__header span{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase}
+    .hero-stat__label{color:var(--text-dim)}
+    .hero-stat strong{color:var(--text);font-family:'Crimson Pro',serif;font-size:clamp(1.55rem,2.6vw,2.2rem);line-height:.95}
+    .hero-stat small{color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.72rem;line-height:1.55}
+    .panel{background:linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 95%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%);border:1px solid var(--border);border-radius:28px;padding:1.2rem;margin-bottom:1rem;box-shadow:inset 0 1px 0 color-mix(in srgb,white 8%, transparent),0 18px 46px rgba(0,0,0,.12);overflow:visible}
+    .panel--session{border-color:color-mix(in srgb,var(--amber) 18%, var(--border))}
+    .panel__header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem;padding-bottom:.9rem;border-bottom:1px solid var(--border)}
     .panel__header--actions{gap:1rem}
+    .panel__heading{display:grid;gap:.28rem}
+    .panel__header span{color:var(--text)}
+    .panel__heading p{margin:0;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.76rem;line-height:1.5}
     .grid{display:grid;gap:1rem}
     .field span{display:block;margin-bottom:.45rem;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase}
     .inline-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:end}.inline-form--drawer{grid-template-columns:minmax(0,1fr) auto}
     .drawer-create{display:grid;gap:.85rem;align-content:start}
     .drawer-create__actions{display:flex;gap:.75rem}
-    .control{width:100%;box-sizing:border-box;border:1px solid var(--border-2);background:var(--bg);color:var(--text);padding:.8rem .9rem;font-family:'DM Mono',monospace;font-size:.84rem;border-radius:8px;outline:none}
+    .control{width:100%;box-sizing:border-box;border:1px solid var(--border-2);background:color-mix(in srgb,var(--bg-panel) 84%, var(--bg));color:var(--text);padding:.88rem 1rem;font-family:'DM Mono',monospace;font-size:.84rem;border-radius:16px;outline:none;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+    .control:focus{transform:translateY(-1px);border-color:color-mix(in srgb,var(--amber) 34%, var(--border-2));box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 10%, transparent)}
     .control--placeholder{color:var(--text-soft)}
-    .btn{position:relative;overflow:hidden;border-radius:10px;padding:.8rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:transform .15s ease,border-color .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease}.btn--primary{border:none;background:var(--amber);color:var(--bg)}.btn--ghost,.btn--danger{background:transparent;border:1px solid var(--border-2);color:var(--text-dim)}.btn--danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%, var(--border-2))}
+    .btn{position:relative;overflow:hidden;min-height:2.9rem;border-radius:16px;padding:.8rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:transform .15s ease,border-color .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease}.btn--primary{border:none;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 90%, white 10%) 0%,color-mix(in srgb,var(--amber) 68%, black 32%) 100%);color:var(--bg);box-shadow:0 14px 28px color-mix(in srgb,var(--amber) 22%, transparent)}.btn--ghost,.btn--danger{background:color-mix(in srgb,var(--bg) 92%, transparent);border:1px solid var(--border-2);color:var(--text-dim)}.btn--danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%, var(--border-2))}
     .btn:hover:not(:disabled){transform:translateY(-1px)}
     .btn--primary:hover:not(:disabled){background:color-mix(in srgb,var(--amber) 88%, white 12%);box-shadow:0 8px 16px rgba(0,0,0,.08)}
     .btn--ghost:hover:not(:disabled){border-color:color-mix(in srgb,var(--amber) 28%, var(--border-2));color:var(--text);background:color-mix(in srgb,var(--amber) 6%, transparent)}
@@ -476,7 +560,7 @@ type CashSessionView = {
     .payment-breakdown__item{display:flex;flex-direction:column;gap:.15rem;padding:.55rem .75rem;border:1px solid var(--border);border-radius:3px;background:color-mix(in srgb,var(--bg-panel) 90%, transparent)}
     .payment-breakdown__label{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase}
     .payment-breakdown__amount{color:var(--success);font-family:'DM Mono',monospace;font-size:.88rem;font-weight:600}
-    .drawer-strip{display:grid;grid-template-columns:minmax(220px,280px) 1fr;gap:1rem;align-items:start;margin-top:1rem;padding:1rem 1rem 0;border:1px solid color-mix(in srgb,var(--border) 78%, transparent);background:color-mix(in srgb,var(--bg-soft) 68%, transparent);border-radius:4px}
+    .drawer-strip{display:grid;grid-template-columns:minmax(220px,280px) 1fr;gap:1rem;align-items:start;margin-top:1rem;padding:1rem;border:1px solid color-mix(in srgb,var(--border) 78%, transparent);background:linear-gradient(180deg,color-mix(in srgb,var(--bg-soft) 70%, transparent) 0%,color-mix(in srgb,var(--bg-panel) 84%, transparent) 100%);border-radius:22px}
     .drawer-strip--attention{border-color:color-mix(in srgb,var(--amber) 34%, var(--border));box-shadow:0 0 0 2px color-mix(in srgb,var(--amber) 9%, transparent)}
     .drawer-strip__intro{display:grid;gap:.35rem;padding-bottom:1rem}
     .drawer-strip__label{color:var(--amber);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase}
@@ -489,27 +573,36 @@ type CashSessionView = {
     .drawer-chip__state{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft)}
     .drawer-chip--active{border-color:color-mix(in srgb,var(--amber) 42%, var(--border-2));background:color-mix(in srgb,var(--amber) 11%, transparent);color:var(--amber);box-shadow:0 0 0 2px color-mix(in srgb,var(--amber) 8%, transparent)}
     .drawer-chip--active .drawer-chip__state{color:color-mix(in srgb,var(--amber) 72%, white 28%)}
-    .stale-alert{padding:.72rem 1rem;border:1px solid color-mix(in srgb,var(--amber) 38%,var(--border-2));background:color-mix(in srgb,var(--amber) 8%,transparent);color:color-mix(in srgb,var(--amber) 85%,var(--text));font-family:'DM Mono',monospace;font-size:.74rem;border-radius:8px;letter-spacing:.04em}
-    .session-card,.summary{display:grid;gap:1rem}.session-metrics,.summary{grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--border);background:var(--bg-soft);padding:.85rem 1rem;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem}
-    .metric-inline{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap}
+    .stale-alert{padding:.78rem 1rem;border:1px solid color-mix(in srgb,var(--amber) 38%,var(--border-2));background:color-mix(in srgb,var(--amber) 8%,transparent);color:color-mix(in srgb,var(--amber) 85%,var(--text));font-family:'DM Mono',monospace;font-size:.74rem;border-radius:16px;letter-spacing:.04em}
+    .session-card,.summary{display:grid;gap:1rem}
+    .session-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+    .session-actions .btn{width:100%}
+    .session-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:.2rem}
+    .summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:.9rem}
+    .metric-inline,.summary-item{display:grid;gap:.25rem;padding:1rem 1rem .95rem;border:1px solid color-mix(in srgb,var(--border) 88%, transparent);border-radius:18px;background:linear-gradient(180deg,color-mix(in srgb,var(--bg-soft) 76%, transparent) 0%,color-mix(in srgb,var(--bg-panel) 88%, transparent) 100%)}
+    .metric-inline{min-height:5.7rem;padding:1.15rem 1.1rem 1.05rem}
     .metric-inline__label{color:var(--text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
-    .metric-inline strong{font-weight:600;color:var(--text)}
-    .summary-item{display:grid;gap:.2rem}
+    .metric-inline strong{font-weight:600;color:var(--text);font-family:'Crimson Pro',serif;font-size:1.48rem;line-height:1.02;max-width:12ch}
     .summary-item span{color:var(--text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
-    .summary-item strong{font-weight:600}
+    .summary-item strong{font-weight:600;font-family:'Crimson Pro',serif;font-size:1.35rem;line-height:.95}
     .summary-item--sales strong{color:var(--success)}
     .summary-item--withdrawals strong{color:var(--danger)}
     .summary-item--cancellations strong{color:var(--danger)}
     .summary-item--balance strong{color:var(--text)}
-    .history-header-actions{display:flex;gap:1rem;align-items:center}
-    .history-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:end;margin-bottom:1rem}
+    .history-header-actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+    .history-header-actions>span{display:inline-flex;align-items:center;min-height:2.2rem;padding:0 .8rem;border:1px solid color-mix(in srgb,var(--amber) 18%, var(--border));border-radius:999px;color:var(--amber);background:color-mix(in srgb,var(--amber) 8%, transparent);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
+    .history-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:end;margin-bottom:1rem;padding:1rem;border:1px solid color-mix(in srgb,var(--border) 88%, transparent);border-radius:20px;background:color-mix(in srgb,var(--bg-soft) 58%, transparent)}
     .history-group{display:grid;gap:1rem}
-    .history-session{border:1px solid var(--border);background:var(--bg-soft)}
-    .history-session__summary{width:100%;display:grid;gap:1rem;background:transparent;border:none;padding:1rem;text-align:left;cursor:pointer}
+    .history-session{border:1px solid color-mix(in srgb,var(--border) 90%, transparent);border-radius:22px;background:linear-gradient(180deg,color-mix(in srgb,var(--bg-soft) 70%, transparent) 0%,color-mix(in srgb,var(--bg-panel) 88%, transparent) 100%);box-shadow:inset 0 1px 0 color-mix(in srgb,white 6%, transparent)}
+    .history-session--open{border-color:color-mix(in srgb,var(--success) 24%, var(--border));background:linear-gradient(180deg,color-mix(in srgb,var(--success) 5%, var(--bg-soft)) 0%,color-mix(in srgb,var(--bg-panel) 88%, transparent) 100%)}
+    .history-session--closed{border-color:color-mix(in srgb,var(--danger) 20%, var(--border));background:linear-gradient(180deg,color-mix(in srgb,var(--danger) 4%, var(--bg-soft)) 0%,color-mix(in srgb,var(--bg-panel) 88%, transparent) 100%)}
+    .history-session__summary{width:100%;display:grid;gap:1rem;background:transparent;border:none;padding:1rem 1rem .95rem;text-align:left;cursor:pointer}
     .history-session__headline{display:flex;justify-content:space-between;gap:1rem;align-items:center;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem}
-    .history-session__headline span{color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;font-size:.68rem}
+    .history-session__headline span{display:inline-flex;align-items:center;min-height:2rem;padding:0 .7rem;border-radius:999px;border:1px solid color-mix(in srgb,var(--success) 24%, var(--border));background:color-mix(in srgb,var(--success) 8%, transparent);color:var(--success);text-transform:uppercase;letter-spacing:.12em;font-size:.68rem}
     .history-session__status--closed{color:var(--danger)!important}
+    .history-session__status--closed{border-color:color-mix(in srgb,var(--danger) 24%, var(--border))!important;background:color-mix(in srgb,var(--danger) 8%, transparent)!important}
     .history-session__metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.74rem}
+    .history-session__metrics span{padding:.75rem .8rem;border:1px solid color-mix(in srgb,var(--border) 82%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 42%, transparent)}
     .session-breakdown{padding:.45rem 0 .55rem;border-bottom:1px solid var(--border);margin-bottom:.75rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.72rem;display:flex;flex-wrap:wrap;align-items:center;gap:.15rem}
     .transfer-bank-breakdown{padding:.4rem 0 .5rem;margin-bottom:.5rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.7rem;display:flex;flex-wrap:wrap;align-items:center;gap:.15rem;border-left:2px solid color-mix(in srgb,var(--amber) 40%,transparent);padding-left:.6rem}
     .transfer-bank-breakdown__title{color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;font-size:.63rem;width:100%;margin-bottom:.2rem}
@@ -518,8 +611,8 @@ type CashSessionView = {
     .session-breakdown__amount{color:var(--success);font-weight:600;margin-left:.3rem}
     .session-breakdown__sep{color:var(--border-2);margin:0 .2rem}
     .history-session__body{padding:0 1rem 1rem}
-    .history-session__toolbar{display:flex;justify-content:space-between;gap:1rem;align-items:center;color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;margin-bottom:.85rem}
-    .history-table{overflow:auto;border:1px solid var(--border);background:var(--bg-soft)}
+    .history-session__toolbar{display:flex;justify-content:space-between;gap:1rem;align-items:center;color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;margin-bottom:.85rem;padding:0 0 .85rem;border-bottom:1px solid color-mix(in srgb,var(--border) 78%, transparent)}
+    .history-table{overflow:auto;border:1px solid color-mix(in srgb,var(--border) 88%, transparent);border-radius:18px;background:color-mix(in srgb,var(--bg-soft) 72%, transparent)}
     .history-table table{width:100%;border-collapse:collapse;min-width:980px}
     .history-table th,.history-table td{padding:.8rem .9rem;border-bottom:1px solid var(--border);text-align:left;color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;vertical-align:top}
     .history-table th{color:var(--text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;background:color-mix(in srgb,var(--bg-panel) 88%, transparent)}
@@ -572,12 +665,12 @@ type CashSessionView = {
     .btn--transfer{background:color-mix(in srgb,#6366f1 8%, transparent);border:1px solid color-mix(in srgb,#6366f1 35%, var(--border-2));color:#6366f1;white-space:nowrap}
     .btn--transfer:hover:not(:disabled){background:color-mix(in srgb,#6366f1 14%, transparent);border-color:color-mix(in srgb,#6366f1 55%, var(--border-2));transform:translateY(-1px)}
     .btn--transfer-confirm{font-size:.72rem;letter-spacing:.12em}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
-    .modal{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,.24)}
-    .modal__head{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.35rem;border-bottom:1px solid var(--border)}
+    .modal-backdrop{position:fixed;inset:0;background:color-mix(in srgb,black 58%, transparent);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+    .modal{background:linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 96%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%);border:1px solid color-mix(in srgb,var(--amber) 14%, var(--border));border-radius:28px;width:100%;max-width:480px;box-shadow:inset 0 1px 0 color-mix(in srgb,white 10%, transparent),0 24px 64px rgba(0,0,0,.24)}
+    .modal__head{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.25rem;border-bottom:1px solid var(--border)}
     .modal__title{color:var(--text);font-family:'DM Mono',monospace;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase}
-    .modal__close{background:transparent;border:none;color:var(--text-soft);cursor:pointer;font-size:1rem;padding:.2rem .4rem;line-height:1}
-    .modal__close:hover{color:var(--text)}
+    .modal__close{width:2.3rem;height:2.3rem;background:color-mix(in srgb,var(--bg) 92%, transparent);border:1px solid var(--border);border-radius:12px;color:var(--text-soft);cursor:pointer;font-size:1rem;padding:.2rem .4rem;line-height:1}
+    .modal__close:hover{color:var(--text);border-color:color-mix(in srgb,var(--amber) 28%, var(--border))}
     .modal__body{padding:1.35rem}
     .modal__body form{display:grid;gap:1rem}
     .modal__body .field{display:grid;gap:.4rem}
@@ -590,16 +683,21 @@ type CashSessionView = {
     .close-confirm-row__value--neg{color:var(--red,#e05252)}
     .close-confirm-row__value--pos{color:var(--green,#52b788)}
     @media (max-width:920px){
-      .page{padding:1.2rem .85rem 1.5rem}
-      .hero{margin-bottom:1.2rem}
+      .page{padding:1.2rem .85rem 1.75rem}
+      .hero{grid-template-columns:1fr;margin-bottom:1.2rem}
+      .hero__copy,.hero-stat,.panel,.modal{border-radius:22px}
       .hero h1{font-size:clamp(1.55rem,6vw,2.1rem)}
       .hero p{font-size:.92rem;line-height:1.55}
+      .hero__rail{grid-template-columns:repeat(2,minmax(0,1fr))}
       .panel{padding:1rem .9rem;margin-bottom:1rem}
       .panel__header{margin-bottom:.85rem;padding-bottom:.7rem;font-size:.7rem}
+      .panel__header--actions{align-items:stretch}
+      .panel__heading p{font-size:.72rem}
 
       .inline-form{grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
       .inline-form--drawer{grid-template-columns:minmax(0,1fr)}
       .drawer-create__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
+      .inline-form .btn{width:100%}
 
       .drawer-strip{grid-template-columns:1fr;padding:.85rem;gap:.8rem}
       .drawer-strip__intro{padding-bottom:0}
@@ -608,23 +706,32 @@ type CashSessionView = {
       .drawer-list{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(180px,78%);overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:.35rem;scroll-snap-type:x proximity}
       .drawer-chip{min-width:unset;scroll-snap-align:start}
 
-      .session-metrics,.summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;padding:.8rem}
-      .metric-inline{display:grid;gap:.18rem}
-      .metric-inline strong{font-size:.92rem}
-      .summary-item{padding:.15rem 0}
-      .summary-item--balance{grid-column:1 / -1;padding-top:.25rem;border-top:1px dashed color-mix(in srgb,var(--border) 72%, transparent)}
+      .session-card{gap:.85rem}
+      .session-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+      .session-metrics,.summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+      .metric-inline{display:grid;gap:.18rem;min-height:0;padding:1rem}
+      .metric-inline strong{font-size:1.02rem}
+      .session-card>.btn--danger{width:100%}
+      .session-breakdown,.transfer-bank-breakdown{gap:.35rem;line-height:1.6}
+      .session-breakdown__sep{display:none}
+      .summary-item--balance{grid-column:1 / -1}
 
       .history-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+      .history-header-actions{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;width:100%}
+      .history-header-actions>span{grid-column:1 / -1;justify-content:center}
+      .history-header-actions .btn{width:100%}
       .history-session__metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;font-size:.7rem}
       .history-session__toolbar,.history-session__headline,.history-header-actions{flex-direction:column;align-items:flex-start}
       .history-session__summary{gap:.75rem;padding:.9rem}
       .history-session__body{padding:0 .85rem .85rem}
       .history-session__toolbar{gap:.65rem}
+      .history-session__toolbar .btn{width:100%}
+      .history-session__headline span{align-self:flex-start}
 
       .history-table table{min-width:0}
       .history-table thead{display:none}
       .history-table tbody,.history-table tr,.history-table td{display:block;width:100%}
-      .history-table tr{border:1px solid var(--border);border-radius:8px;background:color-mix(in srgb,var(--bg) 86%, transparent);margin:.6rem;padding:.22rem 0}
+      .history-table tr{border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--bg) 86%, transparent);margin:.6rem;padding:.22rem 0}
       .history-table td{display:grid;grid-template-columns:minmax(6.1rem,7rem) minmax(0,1fr);gap:.55rem;align-items:start;border:none;border-bottom:1px dashed color-mix(in srgb,var(--border) 70%, transparent);padding:.7rem .78rem;font-size:.74rem}
       .history-table td:last-child{border-bottom:none}
       .history-table td::before{display:block;margin-bottom:0;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.61rem;letter-spacing:.1em;text-transform:uppercase;line-height:1.35}
@@ -647,10 +754,23 @@ type CashSessionView = {
     @media (max-width:560px){
       .page{padding:1rem .72rem 1.25rem}
       .panel{padding:.9rem .8rem}
-      .inline-form,.history-filters,.session-metrics,.summary,.history-session__metrics,.drawer-create__actions,.modal__actions{grid-template-columns:1fr}
+      .hero__rail{grid-template-columns:1fr}
+      .panel__header{gap:.7rem}
+      .panel__heading p{line-height:1.45}
+      .inline-form,.history-filters,.session-metrics,.summary,.history-session__metrics,.drawer-create__actions,.modal__actions,.history-header-actions,.session-actions{grid-template-columns:1fr}
+      .inline-form{gap:.65rem}
+      .inline-form .control,.inline-form .btn{min-height:3rem}
       .drawer-list{grid-auto-columns:minmax(220px,88%)}
+      .metric-inline,.summary-item{padding:.9rem .92rem;border-radius:16px}
+      .metric-inline strong,.summary-item strong{font-size:1.18rem}
+      .history-filters{padding:.85rem;gap:.65rem}
+      .history-session{border-radius:18px}
       .history-session__headline strong{font-size:.74rem}
       .history-session__headline span{font-size:.62rem}
+      .history-session__summary{padding:.85rem}
+      .history-session__metrics span{padding:.68rem .72rem}
+      .history-header-actions>span,.history-header-actions .btn{width:100%}
+      .session-breakdown,.transfer-bank-breakdown{font-size:.68rem}
       .history-table td{grid-template-columns:1fr;gap:.28rem}
       .history-table td::before{margin-bottom:.1rem}
       .history-table td .badge{display:inline-flex;justify-self:start;align-self:start;width:auto;inline-size:max-content;max-inline-size:100%}
@@ -668,6 +788,7 @@ export class CashComponent implements OnInit {
     withdrawForm: FormGroup;
     closeForm: FormGroup;
     transferForm: FormGroup;
+    showWithdrawModal = false;
     showTransferModal = false;
     showCloseConfirmModal = false;
     showPendingCloseSalesModal = false;
@@ -868,6 +989,7 @@ export class CashComponent implements OnInit {
                 this.currentSummary = this.toSummary(session);
                 this.loadHistory();
                 this.withdrawForm.reset({ amount: 0, description: '' });
+                this.showWithdrawModal = false;
                 this.toast.success('Extraccion registrada');
             },
             error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo registrar la extraccion')
@@ -931,6 +1053,16 @@ export class CashComponent implements OnInit {
     closePendingCloseSalesModal(): void {
         this.showPendingCloseSalesModal = false;
         this.pendingCloseSales = [];
+    }
+
+    openWithdrawModal(): void {
+        this.withdrawForm.reset({ amount: 0, description: '' });
+        this.showWithdrawModal = true;
+    }
+
+    closeWithdrawModal(): void {
+        this.showWithdrawModal = false;
+        this.withdrawForm.reset({ amount: 0, description: '' });
     }
 
     getBlockingSaleAmount(sale: SaleResponse): number {
