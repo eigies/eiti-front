@@ -1,13 +1,46 @@
 <div class="page">
+  <div class="page__glow page__glow--left" aria-hidden="true"></div>
+  <div class="page__glow page__glow--right" aria-hidden="true"></div>
+
   <header class="hero">
-    <div class="eyebrow">_ CHEQUES</div>
-    <h1>Gestion de cheques</h1>
-    <p>Seguimiento y estados de cheques recibidos como pago.</p>
+    <div class="hero__copy">
+      <div class="eyebrow">Tesoreria / Cheques</div>
+      <h1>Control operativo de cheques</h1>
+      <p>Seguimiento de cartera, depositos y vencimientos desde una sola vista.</p>
+    </div>
+
+    <div class="hero__metrics">
+      <article class="metric-card metric-card--total">
+        <span class="metric-card__label">Monto visible</span>
+        <strong>${{ totalAmount | number:'1.2-2' }}</strong>
+        <small>{{ cheques.length }} registros en pantalla</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-card__label">En cartera</span>
+        <strong>{{ portfolioCount }}</strong>
+        <small>Listos para seguimiento</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-card__label">Depositados</span>
+        <strong>{{ depositedCount }}</strong>
+        <small>Esperando acreditacion</small>
+      </article>
+      <article class="metric-card metric-card--warning">
+        <span class="metric-card__label">Urgentes</span>
+        <strong>{{ urgentCount }}</strong>
+        <small>Vencen en {{ soonWindowDays }} dias o menos</small>
+      </article>
+    </div>
   </header>
 
-  <!-- Filters -->
   <section class="panel">
-    <div class="panel__header"><span>Filtros</span></div>
+    <div class="panel__header panel__header--filters">
+      <div>
+        <span>Filtros</span>
+        <p>Refina por estado, banco o rango de vencimiento.</p>
+      </div>
+      <span class="panel__counter">{{ activeFilterCount }} activos</span>
+    </div>
     <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="filter-form">
       <label class="field">
         <span>Estado</span>
@@ -48,46 +81,96 @@
     </form>
   </section>
 
-  <!-- Cheques table -->
   <section class="panel">
     <div class="panel__header">
-      <span>Cheques</span>
-      <span>{{ cheques.length }}</span>
+      <div>
+        <span>Vista operativa</span>
+        <p>Selecciona un cheque para ver detalle y moverlo de estado.</p>
+      </div>
+      <span class="panel__counter">{{ cheques.length }} items</span>
     </div>
-    <div class="empty" *ngIf="loading">Cargando...</div>
-    <div class="empty" *ngIf="!loading && cheques.length === 0">No se encontraron cheques.</div>
-    <div class="table-wrap" *ngIf="!loading && cheques.length > 0">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Nro.</th>
-            <th>Banco</th>
-            <th>Titular</th>
-            <th class="text-right">Monto</th>
-            <th>Vencimiento</th>
-            <th>Estado</th>
-            <th>Venta</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="data-row" *ngFor="let c of cheques; trackBy: trackById" (click)="openDetail(c)">
-            <td class="cell cell--code">{{ c.numero }}</td>
-            <td class="cell cell--bank">{{ c.bankName }}</td>
-            <td class="cell cell--holder">{{ c.titular }}</td>
-            <td class="text-right cell cell--amount">${{ c.monto | number:'1.2-2' }}</td>
-            <td class="cell cell--due">{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
-            <td><span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span></td>
-            <td class="cell cell--sale">
-              <span *ngIf="c.saleCode">{{ c.saleCode }}</span>
-              <span class="sale-type-badge" *ngIf="c.saleType">{{ c.saleType }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+
+    <div class="loading-shell" *ngIf="loading">
+      <div class="loading-shell__grid">
+        <div class="loading-card" *ngFor="let _ of [1, 2, 3, 4]"></div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && cheques.length === 0">
+      <span class="empty-state__eyebrow">Sin resultados</span>
+      <h2>No se encontraron cheques con esos filtros.</h2>
+      <p>Prueba limpiar la busqueda o ampliar el rango de vencimiento.</p>
+      <button class="btn btn--ghost" type="button" (click)="clearFilters()">Restablecer filtros</button>
+    </div>
+
+    <div class="results-shell" *ngIf="!loading && cheques.length > 0">
+      <div class="mobile-list">
+        <button class="cheque-card" type="button" *ngFor="let c of cheques; trackBy: trackById" (click)="openDetail(c)">
+          <div class="cheque-card__topline">
+            <span class="cheque-card__number">#{{ c.numero }}</span>
+            <span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span>
+          </div>
+          <div class="cheque-card__amount">${{ c.monto | number:'1.2-2' }}</div>
+          <div class="cheque-card__meta">
+            <span>{{ c.bankName }}</span>
+            <span>{{ c.titular }}</span>
+          </div>
+          <div class="cheque-card__footer">
+            <span>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+            <span class="urgency-pill" *ngIf="isUrgent(c)">{{ urgencyLabel(c) }}</span>
+            <span class="sale-type-badge" *ngIf="!isUrgent(c) && c.saleType">{{ c.saleType }}</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Cheque</th>
+              <th>Banco y titular</th>
+              <th class="text-right">Monto</th>
+              <th>Vencimiento</th>
+              <th>Estado</th>
+              <th>Venta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="data-row" *ngFor="let c of cheques; trackBy: trackById" (click)="openDetail(c)">
+              <td class="cell">
+                <div class="stack">
+                  <span class="cell cell--code">#{{ c.numero }}</span>
+                  <span class="cell-hint">Cheque recibido</span>
+                </div>
+              </td>
+              <td class="cell">
+                <div class="stack">
+                  <span class="cell cell--bank">{{ c.bankName }}</span>
+                  <span class="cell cell--holder">{{ c.titular }}</span>
+                </div>
+              </td>
+              <td class="text-right cell cell--amount">${{ c.monto | number:'1.2-2' }}</td>
+              <td class="cell">
+                <div class="stack stack--compact">
+                  <span class="cell cell--due">{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+                  <span class="urgency-pill" *ngIf="isUrgent(c)">{{ urgencyLabel(c) }}</span>
+                </div>
+              </td>
+              <td><span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span></td>
+              <td class="cell cell--sale">
+                <div class="stack stack--compact">
+                  <span *ngIf="c.saleCode; else noSale">{{ c.saleCode }}</span>
+                  <ng-template #noSale><span class="cell-hint">Sin venta asociada</span></ng-template>
+                  <span class="sale-type-badge" *ngIf="c.saleType">{{ c.saleType }}</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 
-  <!-- Detail modal -->
   <div class="modal-backdrop" *ngIf="detailModalOpen" (click)="closeDetail()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal__head">

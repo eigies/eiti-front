@@ -27,6 +27,7 @@ export class ChequesComponent implements OnInit {
   cheques: ChequeListItem[] = [];
   banks: BankResponse[] = [];
   loading = false;
+  readonly soonWindowDays = 7;
 
   filterForm: FormGroup;
 
@@ -58,6 +59,27 @@ export class ChequesComponent implements OnInit {
       value: bank.id,
       label: bank.name
     }));
+  }
+
+  get totalAmount(): number {
+    return this.cheques.reduce((sum, cheque) => sum + cheque.monto, 0);
+  }
+
+  get portfolioCount(): number {
+    return this.cheques.filter(cheque => cheque.estado === ChequeStatus.EnCartera).length;
+  }
+
+  get depositedCount(): number {
+    return this.cheques.filter(cheque => cheque.estado === ChequeStatus.Depositado).length;
+  }
+
+  get urgentCount(): number {
+    return this.cheques.filter(cheque => this.isUrgent(cheque)).length;
+  }
+
+  get activeFilterCount(): number {
+    const formValue = this.filterForm.value;
+    return Object.values(formValue).filter(value => value !== null && value !== '').length;
   }
 
   constructor(
@@ -156,6 +178,29 @@ export class ChequesComponent implements OnInit {
 
   statusLabel(estado: number): string { return this.statusLabels[estado] ?? estado.toString(); }
   statusClass(estado: number): string { return this.statusBadge[estado] ?? 'badge'; }
+  isUrgent(cheque: Pick<ChequeListItem, 'estado' | 'fechaVencimiento'>): boolean {
+    if (cheque.estado === ChequeStatus.Acreditado || cheque.estado === ChequeStatus.Rechazado || cheque.estado === ChequeStatus.Anulado) {
+      return false;
+    }
+
+    const dueDate = new Date(`${cheque.fechaVencimiento}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
+    return diffDays <= this.soonWindowDays;
+  }
+
+  urgencyLabel(cheque: Pick<ChequeListItem, 'fechaVencimiento'>): string {
+    const dueDate = new Date(`${cheque.fechaVencimiento}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
+
+    if (diffDays < 0) return 'Vencido';
+    if (diffDays === 0) return 'Vence hoy';
+    if (diffDays === 1) return 'Vence manana';
+    return `Vence en ${diffDays} dias`;
+  }
 
   trackById(_: number, item: ChequeListItem): string { return item.id; }
 }

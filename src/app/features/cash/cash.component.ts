@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -1400,9 +1400,9 @@ export class CashComponent implements OnInit {
         this.cashService.listHistory(this.selectedDrawerId, this.historyFrom || undefined, this.historyTo || undefined).subscribe({
             next: sessions => {
                 this.historySessions = sessions.map(session => {
-                    const salesIncome = this.sumMovementsByType(session.movements, 'SaleIncome');
+                    const salesIncome = this.sumMovementsByType(session.movements, 'SaleIncome')
+                        - this.sumMovementsByType(session.movements, 'SaleCancellation');
                     const withdrawals = this.sumMovementsByType(session.movements, 'CashWithdrawal');
-                    const cancellations = this.sumMovementsByType(session.movements, 'SaleCancellation');
                     return {
                         session,
                         expanded: false,
@@ -1666,49 +1666,9 @@ export class CashComponent implements OnInit {
     }
 
     computePaymentBreakdown(session: CashSessionResponse): PaymentMethodBreakdownItem[] {
-        const totals = new Map<number, number>();
-        const surcharges = new Map<number, number>();
-        let tradeInTotal = 0;
-        const CARD_METHOD = 3;
-
-        const seenSales = new Set<string>();
-        for (const movement of session.movements) {
-            if ((movement.typeName === 'SaleIncome' || movement.typeName === 'TransferIncome') && movement.referenceId && !seenSales.has(movement.referenceId)) {
-                seenSales.add(movement.referenceId);
-                const sale = this.salesBySaleId.get(String(movement.referenceId));
-                if (!sale) continue;
-                for (const payment of (sale.payments ?? [])) {
-                    const method = Number(payment.idPaymentMethod);
-                    totals.set(method, (totals.get(method) ?? 0) + Number(payment.amount));
-                }
-                for (const tradeIn of (sale.tradeIns ?? [])) {
-                    tradeInTotal += Number(tradeIn.amount);
-                }
-            } else if (movement.referenceType === 'CuentaCorriente' && movement.referenceId) {
-                const ccSale = this.ccSalesBySaleId.get(String(movement.referenceId));
-                if (!ccSale) continue;
-                const activeCcPayments = (ccSale.ccPayments ?? []).filter(p => p.status === 1);
-                for (const p of activeCcPayments) {
-                    const method = Number(p.idPaymentMethod);
-                    totals.set(method, (totals.get(method) ?? 0) + Number(p.amount));
-                }
-            }
-        }
-
-        const result = Array.from(totals.entries())
-            .filter(([, amount]) => amount > 0)
-            .sort(([a], [b]) => a - b)
-            .map(([method, amount]) => ({
-                method,
-                methodName: SALE_PAYMENT_METHODS.find(m => m.id === method)?.label ?? 'Otros',
-                amount
-            }));
-
-        if (tradeInTotal > 0) {
-            result.push({ method: -1, methodName: 'Canje', amount: tradeInTotal });
-        }
-
-        return result;
+        return [...(session.paymentBreakdown ?? [])]
+            .filter(item => Number(item.amount) > 0)
+            .sort((a, b) => Number(a.method) - Number(b.method));
     }
 
     computeTransferBankBreakdown(session: CashSessionResponse): Array<{ bankName: string; amount: number }> {
@@ -1806,3 +1766,5 @@ export class CashComponent implements OnInit {
     }
 
 }
+
+
