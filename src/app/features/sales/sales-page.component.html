@@ -198,6 +198,10 @@
                   placeholder="Buscar por nombre, email o documento..."
                   autocomplete="off" />
                 <button *ngIf="createCustomerId" class="btn btn--ghost btn--sm" type="button" (click)="clearCreateCustomer()" title="Quitar cliente">✕</button>
+                <button *ngIf="!createCustomerId" class="btn btn--ghost btn--sm customer-picker__create-btn" type="button" (click)="openQuickCreateCustomer()" title="Crear nuevo cliente">
+                  <span class="customer-picker__create-plus" aria-hidden="true">+</span>
+                  <span>Crear</span>
+                </button>
               </div>
             </label>
             <div *ngIf="showCreateCustomerResults && createCustomerSuggestions.length > 0" class="product-picker__menu customer-picker__menu">
@@ -855,6 +859,35 @@
 </section>
 
 <!-- Drawer override confirmation modal -->
+<div class="modal-backdrop" *ngIf="quickCreateCustomerOpen" (click)="closeQuickCreateCustomer()"></div>
+<section class="modal-panel" *ngIf="quickCreateCustomerOpen">
+  <div class="modal-panel__card modal-panel__card--quick-customer" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head modal-panel__head--quick-customer">
+      <div class="quick-customer-modal__headcopy">
+        <span class="quick-customer-modal__eyebrow">Alta rapida</span>
+        <strong>Nuevo cliente</strong>
+      </div>
+      <button class="modal-panel__close modal-panel__close--quick-customer" type="button" [disabled]="quickCreateCustomerSaving" (click)="closeQuickCreateCustomer()" aria-label="Cerrar modal">×</button>
+    </div>
+    <div class="quick-customer-form">
+      <label class="field">
+        <span class="field__label">Nombre <span class="field__required">*</span></span>
+        <input class="control" type="text" [(ngModel)]="quickCreateCustomerName" placeholder="Nombre completo" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
+      </label>
+      <label class="field">
+        <span class="field__label">Teléfono <span class="field__optional">(opcional)</span></span>
+        <input class="control" type="tel" [(ngModel)]="quickCreateCustomerPhone" placeholder="Ej: +54 9 11 1234-5678" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
+      </label>
+    </div>
+    <div class="modal-panel__actions">
+      <button class="btn btn--ghost" type="button" [disabled]="quickCreateCustomerSaving" (click)="closeQuickCreateCustomer()">Cancelar</button>
+      <button class="btn" type="button" [disabled]="quickCreateCustomerSaving || !quickCreateCustomerName.trim()" (click)="submitQuickCreateCustomer()">
+        {{ quickCreateCustomerSaving ? 'Creando...' : 'Crear cliente' }}
+      </button>
+    </div>
+  </div>
+</section>
+
 <div class="modal-backdrop" *ngIf="showDrawerOverrideConfirm" (click)="cancelDrawerOverride()"></div>
 <section class="modal-panel" *ngIf="showDrawerOverrideConfirm">
   <div class="modal-panel__card modal-panel__card--confirm" (click)="$event.stopPropagation()">

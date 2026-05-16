@@ -45,6 +45,13 @@ import {
     roundMoney
 } from '../../core/models/sale-payment.models';
 
+function localDateString(date = new Date()): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
 @Component({
     selector: 'app-sales-page',
     standalone: true,
@@ -96,6 +103,10 @@ export class SalesPageComponent implements OnInit {
     createCustomerSuggestions: CustomerSearchItem[] = [];
     showCreateCustomerResults = false;
     private customerSearchTimer: ReturnType<typeof setTimeout> | null = null;
+    quickCreateCustomerOpen = false;
+    quickCreateCustomerName = '';
+    quickCreateCustomerPhone = '';
+    quickCreateCustomerSaving = false;
     deliveryAddressSuggestions: string[] = [];
     showDeliveryAddressSuggestions = false;
     private addressSearchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -186,7 +197,7 @@ export class SalesPageComponent implements OnInit {
             vehicleId: ['', Validators.required],
             notes: ['']
         });
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localDateString();
         this.filterForm = this.fb.group({ dateFrom: [today], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], deliveryAddress: [''] });
     }
 
@@ -434,6 +445,44 @@ clearCreateCustomer(): void {
     this.createCustomerQuery = '';
     this.createCustomerSuggestions = [];
     this.showCreateCustomerResults = false;
+}
+
+openQuickCreateCustomer(): void {
+    this.quickCreateCustomerName = this.createCustomerQuery.trim();
+    this.quickCreateCustomerPhone = '';
+    this.quickCreateCustomerOpen = true;
+    this.showCreateCustomerResults = false;
+}
+
+closeQuickCreateCustomer(): void {
+    this.quickCreateCustomerOpen = false;
+    this.quickCreateCustomerName = '';
+    this.quickCreateCustomerPhone = '';
+}
+
+submitQuickCreateCustomer(): void {
+    const name = this.quickCreateCustomerName.trim();
+    if (!name) return;
+    this.quickCreateCustomerSaving = true;
+    this.customerService.createCustomer({
+        name,
+        email: null,
+        phone: this.quickCreateCustomerPhone.trim() || null,
+    }).subscribe({
+        next: (customer) => {
+            this.quickCreateCustomerSaving = false;
+            this.quickCreateCustomerOpen = false;
+            this.createCustomerId = customer.id;
+            this.createCustomerQuery = customer.fullName || customer.name || name;
+            this.quickCreateCustomerName = '';
+            this.quickCreateCustomerPhone = '';
+            this.toast.success('Cliente creado');
+        },
+        error: () => {
+            this.quickCreateCustomerSaving = false;
+            this.toast.error('Error al crear el cliente');
+        },
+    });
 }
 
 handleDeliveryAddressInput(form: FormGroup, value: string): void {
@@ -1422,7 +1471,7 @@ applySaleFilters(): void {
 }
 
 clearSaleFilters(): void {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateString();
     this.filterForm.reset({ dateFrom: today, dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', deliveryAddress: '' });
     this.currentSalesPage = 1;
     this.loadSales();

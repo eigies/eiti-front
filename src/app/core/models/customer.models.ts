@@ -29,7 +29,7 @@ export interface CreateCustomerRequest {
     name?: string | null;
     firstName?: string | null;
     lastName?: string | null;
-    email: string;
+    email?: string | null;
     phone?: string | null;
     documentType?: number | null;
     documentNumber?: string | null;
