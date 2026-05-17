@@ -634,6 +634,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.showCreateCustomerResults = false;
         this.saving = false;
         this.currentSalesPage = 1;
+        this.loadDrawers(branchId, true);
         this.loadStockForBranch(branchId, true);
         this.loadSales();
     },

@@ -210,7 +210,7 @@ type CashSessionView = {
           <div class="session-breakdown" *ngIf="currentSession?.paymentBreakdown?.length">
             <span *ngFor="let bd of currentSession!.paymentBreakdown; let last = last">
               <span class="session-breakdown__label">{{ bd.methodName }}</span>
-              <strong class="session-breakdown__amount">&#36;{{ bd.amount | number: '1.2-2' }}</strong>
+              <strong class="session-breakdown__amount">&#36;{{ (bd.amount + (bd.surchargeAmount ?? 0)) | number: '1.2-2' }}</strong>
               <span class="session-breakdown__sep" *ngIf="!last"> | </span>
             </span>
           </div>
@@ -220,6 +220,14 @@ type CashSessionView = {
             <span *ngFor="let tb of currentTransferBankBreakdown; let last = last">
               <span class="session-breakdown__label">{{ tb.bankName }}</span>
               <strong class="session-breakdown__amount">&#36;{{ tb.amount | number: '1.2-2' }}</strong>
+              <span class="session-breakdown__sep" *ngIf="!last"> | </span>
+            </span>
+          </div>
+          <div class="transfer-bank-breakdown" *ngIf="currentCardBankBreakdown.length > 0">
+            <span class="transfer-bank-breakdown__title">Tarjetas por banco <span class="transfer-bank-breakdown__note">(no incluido en caja)</span></span>
+            <span *ngFor="let cb of currentCardBankBreakdown; let last = last">
+              <span class="session-breakdown__label">{{ cb.bankName }}</span>
+              <strong class="session-breakdown__amount">&#36;{{ cb.amount | number: '1.2-2' }}</strong>
               <span class="session-breakdown__sep" *ngIf="!last"> | </span>
             </span>
           </div>
@@ -274,7 +282,7 @@ type CashSessionView = {
               <div class="session-breakdown" *ngIf="computePaymentBreakdown(item.session).length > 0">
                 <span *ngFor="let bd of computePaymentBreakdown(item.session); let last = last">
                   <span class="session-breakdown__label">{{ bd.methodName }}</span>
-                  <strong class="session-breakdown__amount">&#36;{{ bd.amount | number: '1.2-2' }}</strong>
+                  <strong class="session-breakdown__amount">&#36;{{ (bd.amount + (bd.surchargeAmount ?? 0)) | number: '1.2-2' }}</strong>
                   <span class="session-breakdown__sep" *ngIf="!last"> | </span>
                 </span>
               </div>
@@ -284,6 +292,15 @@ type CashSessionView = {
                 <span *ngFor="let tb of computeTransferBankBreakdown(item.session); let last = last">
                   <span class="session-breakdown__label">{{ tb.bankName }}</span>
                   <strong class="session-breakdown__amount">&#36;{{ tb.amount | number: '1.2-2' }}</strong>
+                  <span class="session-breakdown__sep" *ngIf="!last"> | </span>
+                </span>
+              </div>
+
+              <div class="transfer-bank-breakdown" *ngIf="computeCardBankBreakdown(item.session).length > 0">
+                <span class="transfer-bank-breakdown__title">Tarjetas por banco <span class="transfer-bank-breakdown__note">(no incluido en caja)</span></span>
+                <span *ngFor="let cb of computeCardBankBreakdown(item.session); let last = last">
+                  <span class="session-breakdown__label">{{ cb.bankName }}</span>
+                  <strong class="session-breakdown__amount">&#36;{{ cb.amount | number: '1.2-2' }}</strong>
                   <span class="session-breakdown__sep" *ngIf="!last"> | </span>
                 </span>
               </div>
@@ -1206,7 +1223,8 @@ export class CashComponent implements OnInit {
 
         const breakdown = this.computePaymentBreakdown(session);
         const transferBreakdown = this.computeTransferBankBreakdown(session);
-        this.downloadExcel(`cash-session-${session.openedAt.slice(0, 10)}.xlsx`, headers, body, breakdown, transferBreakdown);
+        const cardBreakdown = this.computeCardBankBreakdown(session);
+        this.downloadExcel(`cash-session-${session.openedAt.slice(0, 10)}.xlsx`, headers, body, breakdown, transferBreakdown, cardBreakdown);
     }
 
     exportFilteredHistory(): void {
@@ -1251,7 +1269,11 @@ export class CashComponent implements OnInit {
             ? `${this.historyFrom || 'inicio'}_${this.historyTo || 'hoy'}`
             : new Date().toISOString().slice(0, 10);
 
-        this.downloadExcel(`cash-history-${suffix}.xlsx`, headers, body);
+        const allSessions = this.historySessions.map(item => item.session);
+        const allBreakdown = allSessions.flatMap(s => this.computePaymentBreakdown(s));
+        const allTransferBreakdown = allSessions.flatMap(s => this.computeTransferBankBreakdown(s));
+        const allCardBreakdown = allSessions.flatMap(s => this.computeCardBankBreakdown(s));
+        this.downloadExcel(`cash-history-${suffix}.xlsx`, headers, body, allBreakdown, allTransferBreakdown, allCardBreakdown);
     }
 
     exportSessionPdf(session: CashSessionResponse, expectedOverride?: number): void {
@@ -1421,6 +1443,36 @@ export class CashComponent implements OnInit {
                 y += 6;
 
                 for (const item of transferBreakdown) {
+                    if (y + 5 > maxY) {
+                        doc.addPage();
+                        y = 16;
+                        drawDocumentHeader(true);
+                    }
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.6);
+                    doc.setTextColor(35, 35, 35);
+                    doc.text(`${item.bankName}:`, margin + 4, y + 4);
+                    doc.text(this.formatCurrency(item.amount), margin + 55, y + 4, { align: 'left' });
+                    y += 5;
+                }
+            }
+
+            const cardBreakdown = this.computeCardBankBreakdown(session);
+            if (cardBreakdown.length > 0) {
+                if (y + 6 + cardBreakdown.length * 5 > maxY) {
+                    doc.addPage();
+                    y = 16;
+                    drawDocumentHeader(true);
+                }
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7.8);
+                doc.setTextColor(60, 60, 60);
+                doc.text('Tarjetas por banco (no incluido en caja):', margin, y + 4);
+                y += 6;
+
+                for (const item of cardBreakdown) {
                     if (y + 5 > maxY) {
                         doc.addPage();
                         y = 16;
@@ -1617,6 +1669,7 @@ export class CashComponent implements OnInit {
             CuentaCorrienteIncome: 'Cuenta Corriente',
             CuentaCorrienteCancellation: 'Anulación CC',
             TransferIncome: 'Venta',
+            CardIncome: 'Venta',
         };
         return map[typeName] ?? typeName;
     }
@@ -1646,7 +1699,7 @@ export class CashComponent implements OnInit {
             const refId = movement.referenceId ? String(movement.referenceId) : null;
             const saleCode = movement.saleCode ?? null;
             const username = movement.createdByUsername ?? null;
-            const isSaleRelated = (movement.typeName === 'SaleIncome' || movement.typeName === 'SaleCancellation' || movement.typeName === 'TransferIncome') && movement.referenceId;
+            const isSaleRelated = (movement.typeName === 'SaleIncome' || movement.typeName === 'SaleCancellation' || movement.typeName === 'TransferIncome' || movement.typeName === 'CardIncome') && movement.referenceId;
             if (isSaleRelated) {
                 const sale = this.salesBySaleId.get(String(movement.referenceId));
                 const activePayments = (sale?.payments ?? []).filter(p => Number(p.amount) > 0);
@@ -1658,20 +1711,25 @@ export class CashComponent implements OnInit {
                         ...activePayments.map(p => {
                             const methodLabel = p.paymentMethodName?.trim() || SALE_PAYMENT_METHODS.find(m => m.id === Number(p.idPaymentMethod))?.label || 'Otros';
                             const transferRef = (p as any).reference as string | null | undefined;
-                            const bankSuffix = Number(p.idPaymentMethod) === 2
-                                ? (p.transferBankId
+                            let bankSuffix = '';
+                            if (Number(p.idPaymentMethod) === 2) {
+                                bankSuffix = p.transferBankId
                                     ? ` - ${this.bankNamesById.get(p.transferBankId) ?? 'Banco #' + p.transferBankId}`
-                                    : (transferRef ? ` (${transferRef})` : ''))
-                                : '';
+                                    : (transferRef ? ` (${transferRef})` : '');
+                            } else if (Number(p.idPaymentMethod) === 3 && p.cardBankId) {
+                                bankSuffix = ` - ${this.bankNamesById.get(p.cardBankId) ?? 'Banco #' + p.cardBankId}`;
+                            }
                             return `${methodLabel}${bankSuffix}: $${Number(p.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
                         }),
                         ...activeTradeIns.map(t => `Canje: $${Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`)
                     ];
-                    return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId, saleCode, username };
+                    const effectiveDirection = movement.typeName === 'CardIncome' ? 'In' : movement.directionName;
+                    return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: effectiveDirection, amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId, saleCode, username };
                 }
             }
 
-            return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username };
+            const effectiveDirection = movement.typeName === 'CardIncome' ? 'In' : movement.directionName;
+            return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: effectiveDirection, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username };
         });
     }
 
@@ -1690,7 +1748,8 @@ export class CashComponent implements OnInit {
         headers: string[],
         body: string[][],
         breakdown?: PaymentMethodBreakdownItem[],
-        transferBreakdown?: Array<{ bankName: string; amount: number }>
+        transferBreakdown?: Array<{ bankName: string; amount: number }>,
+        cardBreakdown?: Array<{ bankName: string; amount: number }>
     ): void {
         const rows = body.map(columns =>
             headers.reduce<Record<string, string>>((result, header, index) => {
@@ -1716,6 +1775,14 @@ export class CashComponent implements OnInit {
                 breakdownRows.push({ 'Medio de pago': 'Transferencias por banco (no incluido en caja)', 'Monto': '' });
                 for (const t of transferBreakdown) {
                     breakdownRows.push({ 'Medio de pago': t.bankName, 'Monto': t.amount.toFixed(2) });
+                }
+            }
+
+            if (cardBreakdown && cardBreakdown.length > 0) {
+                breakdownRows.push({ 'Medio de pago': '', 'Monto': '' });
+                breakdownRows.push({ 'Medio de pago': 'Tarjetas por banco (no incluido en caja)', 'Monto': '' });
+                for (const c of cardBreakdown) {
+                    breakdownRows.push({ 'Medio de pago': c.bankName, 'Monto': c.amount.toFixed(2) });
                 }
             }
 
@@ -1820,6 +1887,29 @@ export class CashComponent implements OnInit {
         return Array.from(totals.entries())
             .map(([bankId, amount]) => ({ bankName: this.bankNamesById.get(bankId) ?? 'Banco #' + bankId, amount }))
             .sort((a, b) => a.bankName.localeCompare(b.bankName));
+    }
+
+    computeCardBankBreakdown(session: CashSessionResponse): Array<{ bankName: string; amount: number }> {
+        const totals = new Map<number, number>();
+        const seen = new Set<string>();
+        for (const movement of session.movements) {
+            if ((movement.typeName === 'SaleIncome' || movement.typeName === 'CardIncome') && movement.referenceId && !seen.has(movement.referenceId)) {
+                seen.add(movement.referenceId);
+                const sale = this.salesBySaleId.get(String(movement.referenceId));
+                for (const p of (sale?.payments ?? [])) {
+                    if (Number(p.idPaymentMethod) === 3 && p.cardBankId && Number(p.amount) > 0) {
+                        totals.set(p.cardBankId, (totals.get(p.cardBankId) ?? 0) + Number(p.amount));
+                    }
+                }
+            }
+        }
+        return Array.from(totals.entries())
+            .map(([bankId, amount]) => ({ bankName: this.bankNamesById.get(bankId) ?? 'Banco #' + bankId, amount }))
+            .sort((a, b) => a.bankName.localeCompare(b.bankName));
+    }
+
+    get currentCardBankBreakdown(): Array<{ bankName: string; amount: number }> {
+        return this.currentSession ? this.computeCardBankBreakdown(this.currentSession) : [];
     }
 
     computeTotalCardSurcharge(session: CashSessionResponse): number {

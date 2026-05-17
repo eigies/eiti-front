@@ -1,17 +1,18 @@
 import { SalePaymentRequest, SalePaymentResponse, SaleTradeInRequest, SaleTradeInResponse } from './sale-payment.models';
 
-export type SaleSourceChannel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export type SaleSourceChannel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export const SALE_SOURCE_CHANNELS: { value: SaleSourceChannel; label: string; icon: string; assetPath: string }[] = [
-    { value: 1, label: 'Referido',         icon: '👥', assetPath: 'ch-referido.svg'      },
-    { value: 2, label: 'WhatsApp',         icon: '📱', assetPath: 'ch-whatsapp.svg'      },
-    { value: 3, label: 'Facebook',         icon: '📘', assetPath: 'ch-facebook.svg'      },
-    { value: 4, label: 'Web',              icon: '🌐', assetPath: 'ch-web.svg'           },
-    { value: 5, label: 'Instagram',        icon: '📷', assetPath: 'ch-instagram.svg'     },
-    { value: 6, label: 'Llamada',          icon: '📞', assetPath: 'ch-llamada.svg'       },
-    { value: 7, label: 'Cliente anterior', icon: '🔄', assetPath: 'ch-cliente-ant.svg'   },
-    { value: 8, label: 'Mercado Libre',    icon: '🛒', assetPath: 'ch-mercadolibre.svg'  },
-    { value: 9, label: 'Google',           icon: '🔍', assetPath: 'ch-google.svg'        },
+    { value: 1,  label: 'Referido',         icon: '👥', assetPath: 'ch-referido.svg'      },
+    { value: 2,  label: 'WhatsApp',         icon: '📱', assetPath: 'ch-whatsapp.svg'      },
+    { value: 3,  label: 'Facebook',         icon: '📘', assetPath: 'ch-facebook.svg'      },
+    { value: 4,  label: 'Web',              icon: '🌐', assetPath: 'ch-web.svg'           },
+    { value: 5,  label: 'Instagram',        icon: '📷', assetPath: 'ch-instagram.svg'     },
+    { value: 6,  label: 'Llamada',          icon: '📞', assetPath: 'ch-llamada.svg'       },
+    { value: 7,  label: 'Cliente anterior', icon: '🔄', assetPath: 'ch-cliente-ant.svg'   },
+    { value: 8,  label: 'Mercado Libre',    icon: '🛒', assetPath: 'ch-mercadolibre.svg'  },
+    { value: 9,  label: 'Google',           icon: '🔍', assetPath: 'ch-google.svg'        },
+    { value: 10, label: 'Sin canal',        icon: '—',  assetPath: 'ch-phone-off.png'    },
 ];
 
 export function saleSourceChannelLabel(channel: SaleSourceChannel | null | undefined): string {
