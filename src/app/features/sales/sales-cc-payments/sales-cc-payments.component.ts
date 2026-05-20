@@ -7,7 +7,7 @@ import { CashService } from '../../../core/services/cash.service';
 import { BankService } from '../../../core/services/bank.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { SaleByIdResponse, CcPaymentResponse, AddCcPaymentGroupRequest } from '../../../core/models/sale.models';
+import { SaleByIdResponse, CcPaymentResponse, AddCcPaymentGroupRequest, AddCcPaymentGroupResponse } from '../../../core/models/sale.models';
 import { CashDrawerResponse } from '../../../core/models/cash.models';
 import { BankResponse } from '../../../core/models/bank.models';
 import {
@@ -46,6 +46,8 @@ export class SalesCcPaymentsComponent implements OnInit {
   addingPayment = false;
   cancellingGroupId: string | null = null;
   cancellingPaymentId: string | null = null;
+  cancellingSale = false;
+  readonly permissionCodes = PermissionCodes;
 
   cashDrawers: CashDrawerResponse[] = [];
   selectedCashDrawerId = '';
@@ -58,7 +60,7 @@ export class SalesCcPaymentsComponent implements OnInit {
     private readonly saleService: SaleService,
     private readonly cashService: CashService,
     private readonly bankService: BankService,
-    private readonly auth: AuthService,
+    readonly auth: AuthService,
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -89,6 +91,13 @@ export class SalesCcPaymentsComponent implements OnInit {
       && lines.length > 0
       && lines.some(l => l.amount > 0)
       && !!this.selectedCashDrawerId;
+  }
+
+  get overpaymentAmount(): number {
+    const lines = normalizeSalePayments(this.paymentState);
+    const coverage = lines.reduce((sum, l) => sum + Number(l.amount), 0);
+    const excess = coverage - (this.remaining ?? 0);
+    return excess > 0 ? excess : 0;
   }
 
   get statusLabel(): string {
@@ -158,6 +167,7 @@ export class SalesCcPaymentsComponent implements OnInit {
   }
 
   paymentMethodLabel(id: number): string {
+    if (id === 6) return 'Saldo a favor';
     return this.paymentMethods.find(m => m.id === id)?.label ?? 'Otro';
   }
 
@@ -229,12 +239,17 @@ export class SalesCcPaymentsComponent implements OnInit {
     };
 
     this.saleService.addCcPaymentGroup(this.saleId, request).subscribe({
-      next: () => {
+      next: (res: AddCcPaymentGroupResponse) => {
         this.addingPayment = false;
         this.toast.success('Pago registrado');
         this.paymentState = createEmptySalePaymentDraftState();
         this.paymentForm.patchValue({ notes: '' });
         this.reload();
+        if (res?.creditAdded && res.creditAdded > 0) {
+          const added = res.creditAdded.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          const balance = res.newCustomerCreditBalance?.toLocaleString('es-AR', { minimumFractionDigits: 2 }) ?? '0,00';
+          this.toast.success(`Se acreditaron $${added} como saldo a favor. Nuevo saldo: $${balance}`);
+        }
       },
       error: (err: unknown) => {
         this.addingPayment = false;
@@ -272,6 +287,22 @@ export class SalesCcPaymentsComponent implements OnInit {
   isCancellingGroup(group: PaymentGroup): boolean {
     if (group.groupId) return this.cancellingGroupId === group.groupId;
     return this.cancellingPaymentId === group.payments[0]?.id;
+  }
+
+  cancelSale(): void {
+    if (!this.sale || !confirm('¿Anular esta venta? Esta acción no se puede deshacer.')) return;
+    this.cancellingSale = true;
+    this.saleService.cancelSale(this.saleId).subscribe({
+      next: () => {
+        this.cancellingSale = false;
+        this.toast.success('Venta anulada');
+        this.router.navigate(['/sales']);
+      },
+      error: (err) => {
+        this.cancellingSale = false;
+        this.toast.error(err?.error?.detail || 'No se pudo anular la venta');
+      }
+    });
   }
 
   private todayIso(): string {

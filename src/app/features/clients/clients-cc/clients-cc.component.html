@@ -47,6 +47,10 @@
               <span class="result-card__meta" *ngIf="selectedCustomer.documentNumber">
                 {{ selectedCustomer.documentTypeName }} {{ selectedCustomer.documentNumber }}
               </span>
+              <div *ngIf="selectedCustomer.creditBalance > 0" class="credit-balance-badge">
+                <span class="credit-balance-badge__label">Saldo a favor</span>
+                <span class="credit-balance-badge__value">{{ selectedCustomer.creditBalance | currency:'USD':'symbol':'1.2-2' }}</span>
+              </div>
             </div>
           </div>
           <button class="btn btn--ghost btn--sm" type="button" (click)="clearCustomer()">Cambiar cliente</button>
@@ -98,6 +102,13 @@
                   <button class="btn btn--secondary btn--sm" type="button"
                           (click)="$event.stopPropagation(); openModal(sale)">
                     Pagos
+                  </button>
+                  <button *ngIf="sale.idSaleStatus !== 3 && auth.hasPermission(permissionCodes.salesDelete)"
+                          class="btn btn--ghost btn--sm btn--danger"
+                          type="button"
+                          [disabled]="cancellingSaleId === sale.id"
+                          (click)="cancelSale(sale, $event)">
+                    {{ cancellingSaleId === sale.id ? 'Anulando...' : 'Anular' }}
                   </button>
                 </td>
               </tr>

@@ -57,6 +57,7 @@ export interface CustomerResponse {
     address?: AddressResponse | null;
     createdAt: string;
     updatedAt?: string | null;
+    creditBalance: number;
 }
 
 export interface CustomerSearchItem {
@@ -69,4 +70,5 @@ export interface CustomerSearchItem {
     documentTypeName?: string | null;
     documentNumber?: string | null;
     taxId?: string | null;
+    creditBalance: number;
 }

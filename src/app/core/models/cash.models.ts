@@ -23,6 +23,7 @@ export interface CashSessionMovementResponse {
     referenceId?: string | null;
     saleCode?: string | null;
     createdByUsername?: string | null;
+    originalCashSessionId?: string | null;
 }
 
 export interface CashSessionResponse {

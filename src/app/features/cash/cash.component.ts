@@ -328,8 +328,8 @@ type CashSessionView = {
                   </thead>
                   <tbody>
                     <tr *ngFor="let row of getDisplayRows(item.session)"
-                      [class.history-table__row--clickable]="row.typeName === 'CuentaCorrienteIncome' && row.referenceId"
-                      (click)="row.typeName === 'CuentaCorrienteIncome' && row.referenceId ? openCcPopup(row.referenceId) : null">
+                      [class.history-table__row--clickable]="(row.typeName === 'CuentaCorrienteIncome' || row.typeName === 'SaleCancellation') && row.referenceId"
+                      (click)="row.typeName === 'CuentaCorrienteIncome' && row.referenceId ? openCcPopup(row.referenceId) : row.typeName === 'SaleCancellation' && row.referenceId ? openCancelDetailPopup(row) : null">
                       <td>{{ row.occurredAt | date: 'short' }}</td>
                       <td><span class="badge badge--type" [attr.data-type]="row.typeName">{{ translateType(row.typeName) }}</span></td>
                       <td><span class="badge" [class.badge--in]="row.directionName === 'In'" [class.badge--out]="row.directionName === 'Out'">{{ translateDirection(row.directionName) }}</span></td>
@@ -478,45 +478,131 @@ type CashSessionView = {
     <!-- CC Sale Popup -->
     <div class="modal-backdrop" *ngIf="ccPopupSaleId" (click)="closeCcPopup()">
       <div class="modal modal--cc-popup" (click)="$event.stopPropagation()">
-        <div class="modal__head">
-          <span class="modal__title">Detalle cuenta corriente</span>
+        <div class="modal__head modal__head--cc-popup">
+          <div class="cc-popup-head">
+            <span class="cc-popup-head__eyebrow">Movimiento vinculado</span>
+            <span class="modal__title">Detalle cuenta corriente</span>
+          </div>
           <button class="modal__close" type="button" (click)="closeCcPopup()">&#x2715;</button>
         </div>
-        <div class="modal__body" *ngIf="ccPopupLoading"><p style="color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.78rem">Cargando...</p></div>
+        <div class="modal__body modal__body--cc-popup" *ngIf="ccPopupLoading">
+          <div class="cc-popup-loading">
+            <span class="cc-popup-loading__dot" aria-hidden="true"></span>
+            <p>Cargando detalle de la cuenta…</p>
+          </div>
+        </div>
         <ng-container *ngIf="!ccPopupLoading && ccPopupSale as sale">
-          <div class="cc-popup-header">
-            <div class="cc-popup-header__row">
-              <span class="cc-popup-header__code">{{ sale.code || 'S/N' }}</span>
-              <span class="badge"
-                [class.badge--in]="sale.idSaleStatus === 2"
-                [class.badge--out]="sale.idSaleStatus === 3"
-                [class.badge--type]="sale.idSaleStatus !== 2 && sale.idSaleStatus !== 3">
-                {{ sale.idSaleStatus === 3 ? 'Cancelada' : sale.idSaleStatus === 2 ? 'Pagada' : (sale.ccPaidTotal > 0 && sale.ccPaidTotal < sale.totalAmount) ? 'Pago parcial' : 'En espera' }}
-              </span>
+          <div class="cc-popup-body">
+            <div class="cc-popup-hero">
+              <div class="cc-popup-header__row">
+                <span class="cc-popup-header__code">{{ sale.code || 'S/N' }}</span>
+                <span class="badge"
+                  [class.badge--in]="sale.idSaleStatus === 2"
+                  [class.badge--out]="sale.idSaleStatus === 3"
+                  [class.badge--type]="sale.idSaleStatus !== 2 && sale.idSaleStatus !== 3">
+                  {{ sale.idSaleStatus === 3 ? 'Cancelada' : sale.idSaleStatus === 2 ? 'Pagada' : (sale.ccPaidTotal > 0 && sale.ccPaidTotal < sale.totalAmount) ? 'Pago parcial' : 'En espera' }}
+                </span>
+              </div>
+              <div class="cc-popup-header__meta">
+                <span>{{ sale.customerFullName || 'Sin cliente' }}</span>
+                <span>{{ sale.createdAt | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <p class="cc-popup-hero__copy">Consulta el estado general de la cuenta y el historial de pagos aplicados a esta venta.</p>
             </div>
-            <div class="cc-popup-header__meta">
-              <span>{{ sale.customerFullName || 'Sin cliente' }}</span>
-              <span>{{ sale.createdAt | date:'dd/MM/yyyy' }}</span>
+
+            <div class="cc-popup-totals">
+              <div class="cc-popup-totals__card">
+                <span class="cc-popup-totals__label">Total venta</span>
+                <strong>&#36;{{ sale.totalAmount | number:'1.2-2' }}</strong>
+              </div>
+              <div class="cc-popup-totals__card cc-popup-totals__card--paid">
+                <span class="cc-popup-totals__label">Cobrado</span>
+                <strong>&#36;{{ sale.ccPaidTotal | number:'1.2-2' }}</strong>
+              </div>
+              <div class="cc-popup-totals__card cc-popup-totals__card--pending">
+                <span class="cc-popup-totals__label">Pendiente</span>
+                <strong>&#36;{{ sale.ccPendingAmount | number:'1.2-2' }}</strong>
+              </div>
             </div>
-          </div>
-          <div class="cc-popup-totals">
-            <div class="cc-popup-totals__row"><span>Total venta</span><span>&#36;{{ sale.totalAmount | number:'1.2-2' }}</span></div>
-            <div class="cc-popup-totals__row"><span>Cobrado</span><span>&#36;{{ sale.ccPaidTotal | number:'1.2-2' }}</span></div>
-            <div class="cc-popup-totals__row cc-popup-totals__row--pending"><span>Pendiente</span><span>&#36;{{ sale.ccPendingAmount | number:'1.2-2' }}</span></div>
-          </div>
-          <div class="cc-popup-payments">
-            <div class="cc-popup-payments__title">Historial de pagos</div>
-            <div *ngIf="ccPopupPayments.length === 0" class="cc-popup-payments__empty">Sin pagos registrados</div>
-            <div *ngFor="let p of ccPopupPayments" class="cc-popup-payment" [class.cc-popup-payment--cancelled]="p.status === 2">
-              <div class="cc-popup-payment__row">
-                <span class="cc-popup-payment__date">{{ p.date | date:'dd/MM/yyyy' }}</span>
-                <span class="cc-popup-payment__method">{{ paymentMethodLabel(p.idPaymentMethod) }}</span>
-                <span class="cc-popup-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</span>
-                <span class="badge" [class.badge--in]="p.status === 1" [class.badge--out]="p.status !== 1">{{ p.status === 1 ? 'Activo' : 'Anulado' }}</span>
+
+            <div class="cc-popup-payments">
+              <div class="cc-popup-payments__head">
+                <div>
+                  <span class="cc-popup-payments__title">Historial de pagos</span>
+                  <strong>{{ ccPopupPayments.length }} registro{{ ccPopupPayments.length === 1 ? '' : 's' }}</strong>
+                </div>
+              </div>
+              <div *ngIf="ccPopupPayments.length === 0" class="cc-popup-payments__empty">Sin pagos registrados</div>
+              <div *ngFor="let p of ccPopupPayments" class="cc-popup-payment" [class.cc-popup-payment--cancelled]="p.status === 2">
+                <div class="cc-popup-payment__row">
+                  <div class="cc-popup-payment__copy">
+                    <span class="cc-popup-payment__date">{{ p.date | date:'dd/MM/yyyy' }}</span>
+                    <span class="cc-popup-payment__method">{{ paymentMethodLabel(p.idPaymentMethod) }}</span>
+                  </div>
+                  <span class="cc-popup-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</span>
+                  <span class="badge" [class.badge--in]="p.status === 1" [class.badge--out]="p.status !== 1">{{ p.status === 1 ? 'Activo' : 'Anulado' }}</span>
+                </div>
               </div>
             </div>
           </div>
         </ng-container>
+      </div>
+    </div>
+
+    <!-- Cancel Detail Popup -->
+    <div class="modal-backdrop" *ngIf="cancelDetailPopupRow" (click)="closeCancelDetailPopup()">
+      <div class="modal modal--cancel-detail-popup" (click)="$event.stopPropagation()">
+        <div class="modal__head modal__head--cancel-detail">
+          <div class="cancel-detail-head">
+            <span class="cancel-detail-head__eyebrow">Referencia cruzada</span>
+            <span class="modal__title">Detalle de anulación</span>
+          </div>
+          <button class="modal__close" type="button" (click)="closeCancelDetailPopup()">&#x2715;</button>
+        </div>
+        <div class="modal__body modal__body--cancel-detail">
+          <div class="cancel-detail-hero">
+            <span class="cancel-detail-hero__kicker">Venta anulada vinculada</span>
+            <strong class="cancel-detail-hero__code">{{ cancelDetailPopupRow.saleCode || '—' }}</strong>
+            <span class="cancel-detail-hero__copy">Esta anulación corresponde a una venta registrada originalmente en otra caja.</span>
+          </div>
+
+          <div class="cancel-detail-meta-grid">
+            <div class="cancel-detail-meta-card">
+              <span class="cancel-detail-meta-card__label">Anulada el</span>
+              <strong>{{ cancelDetailPopupRow.occurredAt | date:'short' }}</strong>
+            </div>
+            <ng-container *ngIf="cancelDetailPopupRow.originalCashSessionId">
+              <div class="cancel-detail-meta-card">
+                <span class="cancel-detail-meta-card__label">Sesión original</span>
+                <strong class="cancel-detail-session-id">{{ cancelDetailPopupRow.originalCashSessionId | slice:0:8 }}…</strong>
+              </div>
+            </ng-container>
+          </div>
+
+          <ng-container *ngIf="cancelDetailSale as sale">
+            <div class="cancel-detail-section-title">Pagos originales</div>
+            <div class="cancel-detail-payments">
+              <div *ngFor="let p of (sale.payments ?? [])" class="cancel-detail-payment">
+                <div class="cancel-detail-payment__copy">
+                  <span class="cancel-detail-payment__method">{{ p.paymentMethodName || 'Método' }}</span>
+                  <span class="cancel-detail-payment__note">Registrado en la venta original</span>
+                </div>
+                <strong class="cancel-detail-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</strong>
+              </div>
+              <div *ngIf="(sale.payments ?? []).length === 0" class="cancel-detail-payments__empty">Sin información de pagos</div>
+            </div>
+            <div class="cancel-detail-total">
+              <span class="cancel-detail-total__label">Total original</span>
+              <strong>&#36;{{ sale.totalAmount | number:'1.2-2' }}</strong>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="!cancelDetailSale">
+            <div class="cancel-detail-loading">
+              <span class="cancel-detail-loading__dot" aria-hidden="true"></span>
+              <p>Cargando datos de la venta…</p>
+            </div>
+          </ng-container>
+        </div>
       </div>
     </div>
   `,
@@ -649,24 +735,77 @@ type CashSessionView = {
     .history-table__row--clickable{cursor:pointer}.history-table__row--clickable:hover{background:color-mix(in srgb,#14b8a6 8%, transparent)}
     .sale-code-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--amber);letter-spacing:.04em}
     .username-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim);letter-spacing:.04em}
-    .modal--cc-popup{max-width:520px}
-    .cc-popup-header{padding:.75rem 1.35rem;border-bottom:1px solid var(--border)}
-    .cc-popup-header__row{display:flex;align-items:center;gap:.75rem;margin-bottom:.25rem}
-    .cc-popup-header__code{font-family:'DM Mono',monospace;font-weight:600;font-size:.88rem;color:var(--text)}
-    .cc-popup-header__meta{display:flex;gap:1rem;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text-dim)}
-    .cc-popup-totals{padding:.5rem 1.35rem;border-bottom:1px solid var(--border)}
-    .cc-popup-totals__row{display:flex;justify-content:space-between;padding:.2rem 0;font-family:'DM Mono',monospace;font-size:.82rem;color:var(--text)}
-    .cc-popup-totals__row span:first-child{color:var(--text-dim)}
-    .cc-popup-totals__row--pending{font-weight:600}
-    .cc-popup-payments{padding:.5rem 1.35rem 1rem}
-    .cc-popup-payments__title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.5rem}
-    .cc-popup-payments__empty{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text-soft)}
-    .cc-popup-payment{padding:.35rem 0;border-bottom:1px solid color-mix(in srgb,var(--border) 55%, transparent)}
+    .modal--cc-popup{max-width:620px;background:
+      radial-gradient(circle at top right,color-mix(in srgb,#14b8a6 10%, transparent),transparent 34%),
+      linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 98%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%)}
+    .modal__head--cc-popup{align-items:flex-start;padding-bottom:1rem}
+    .cc-popup-head{display:grid;gap:.28rem}
+    .cc-popup-head__eyebrow{color:color-mix(in srgb,#14b8a6 72%, var(--text-dim) 28%);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase}
+    .modal__body--cc-popup{padding:1.35rem}
+    .cc-popup-loading{display:flex;align-items:center;gap:.7rem;padding:.95rem 1rem;border:1px dashed color-mix(in srgb,var(--border) 88%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 72%, transparent)}
+    .cc-popup-loading p{margin:0;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.76rem}
+    .cc-popup-loading__dot{width:.7rem;height:.7rem;border-radius:999px;background:color-mix(in srgb,#14b8a6 72%, transparent);box-shadow:0 0 0 6px color-mix(in srgb,#14b8a6 12%, transparent)}
+    .cc-popup-body{display:grid;gap:1rem;padding:1.35rem}
+    .cc-popup-hero{display:grid;gap:.38rem;padding:1rem 1.05rem;border:1px solid color-mix(in srgb,#14b8a6 18%, var(--border));border-radius:18px;background:
+      linear-gradient(180deg,color-mix(in srgb,#14b8a6 8%, transparent),transparent 88%),
+      color-mix(in srgb,var(--bg) 74%, transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,white 8%, transparent)}
+    .modal--cancel-detail-popup{max-width:560px;background:
+      radial-gradient(circle at top left,color-mix(in srgb,var(--danger) 10%, transparent),transparent 34%),
+      linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 98%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%)}
+    .modal__head--cancel-detail{align-items:flex-start;padding-bottom:1rem}
+    .cancel-detail-head{display:grid;gap:.28rem}
+    .cancel-detail-head__eyebrow{color:color-mix(in srgb,var(--danger) 62%, var(--text-dim) 38%);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase}
+    .modal__body--cancel-detail{display:grid;gap:1rem}
+    .cancel-detail-hero{display:grid;gap:.4rem;padding:1rem 1.05rem;border:1px solid color-mix(in srgb,var(--danger) 20%, var(--border));border-radius:18px;background:
+      linear-gradient(180deg,color-mix(in srgb,var(--danger) 8%, transparent),transparent 88%),
+      color-mix(in srgb,var(--bg) 72%, transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,white 8%, transparent)}
+    .cancel-detail-hero__kicker{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase}
+    .cancel-detail-hero__code{color:var(--danger);font-family:'DM Mono',monospace;font-size:1.04rem;letter-spacing:.06em}
+    .cancel-detail-hero__copy{color:var(--text-soft);font-family:'Crimson Pro',serif;font-size:.98rem;line-height:1.45}
+    .cancel-detail-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+    .cancel-detail-meta-card{display:grid;gap:.28rem;padding:.85rem .95rem;border:1px solid color-mix(in srgb,var(--border) 86%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 78%, transparent)}
+    .cancel-detail-meta-card__label{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase}
+    .cancel-detail-meta-card strong{color:var(--text);font-family:'DM Mono',monospace;font-size:.84rem;letter-spacing:.03em}
+    .cancel-detail-session-id{font-family:'DM Mono',monospace;font-size:.76rem;color:color-mix(in srgb,var(--amber) 58%, var(--text) 42%)}
+    .cancel-detail-section-title{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--text-dim);margin:.2rem 0 0}
+    .cancel-detail-payments{display:grid;gap:.55rem}
+    .cancel-detail-payment{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.8rem .9rem;border:1px solid color-mix(in srgb,var(--border) 82%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 74%, transparent)}
+    .cancel-detail-payment__copy{display:grid;gap:.18rem}
+    .cancel-detail-payment__method{color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem}
+    .cancel-detail-payment__note{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase}
+    .cancel-detail-payment__amount{color:var(--text);font-family:'DM Mono',monospace;font-size:.88rem}
+    .cancel-detail-payments__empty{padding:.95rem 1rem;border:1px dashed color-mix(in srgb,var(--border) 88%, transparent);border-radius:14px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.76rem;background:color-mix(in srgb,var(--bg) 72%, transparent)}
+    .cancel-detail-total{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.05rem;border:1px solid color-mix(in srgb,var(--danger) 24%, var(--border));border-radius:16px;background:
+      linear-gradient(135deg,color-mix(in srgb,var(--danger) 10%, transparent),transparent 70%),
+      color-mix(in srgb,var(--bg) 72%, transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,white 8%, transparent)}
+    .cancel-detail-total__label{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase}
+    .cancel-detail-total strong{color:var(--danger);font-family:'DM Mono',monospace;font-size:1.05rem}
+    .cancel-detail-loading{display:flex;align-items:center;gap:.7rem;padding:.95rem 1rem;border:1px dashed color-mix(in srgb,var(--border) 88%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 72%, transparent)}
+    .cancel-detail-loading p{margin:0;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.76rem}
+    .cancel-detail-loading__dot{width:.7rem;height:.7rem;border-radius:999px;background:color-mix(in srgb,var(--danger) 72%, transparent);box-shadow:0 0 0 6px color-mix(in srgb,var(--danger) 12%, transparent)}
+    .cc-popup-header__row{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .cc-popup-header__code{font-family:'DM Mono',monospace;font-weight:600;font-size:1rem;color:var(--text)}
+    .cc-popup-header__meta{display:flex;gap:1rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.76rem;color:var(--text-dim)}
+    .cc-popup-hero__copy{margin:0;color:var(--text-soft);font-family:'Crimson Pro',serif;font-size:.98rem;line-height:1.45}
+    .cc-popup-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}
+    .cc-popup-totals__card{display:grid;gap:.24rem;padding:.95rem 1rem;border:1px solid color-mix(in srgb,var(--border) 84%, transparent);border-radius:16px;background:color-mix(in srgb,var(--bg) 76%, transparent)}
+    .cc-popup-totals__card--paid{border-color:color-mix(in srgb,#22c55e 18%, var(--border));background:color-mix(in srgb,#22c55e 6%, transparent)}
+    .cc-popup-totals__card--pending{border-color:color-mix(in srgb,var(--amber) 20%, var(--border));background:color-mix(in srgb,var(--amber) 8%, transparent)}
+    .cc-popup-totals__label{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase}
+    .cc-popup-totals__card strong{color:var(--text);font-family:'DM Mono',monospace;font-size:1.08rem}
+    .cc-popup-payments{display:grid;gap:.7rem}
+    .cc-popup-payments__head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem}
+    .cc-popup-payments__head div{display:grid;gap:.18rem}
+    .cc-popup-payments__head strong{color:var(--text);font-family:'DM Mono',monospace;font-size:.78rem}
+    .cc-popup-payments__title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
+    .cc-popup-payments__empty{padding:.95rem 1rem;border:1px dashed color-mix(in srgb,var(--border) 88%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 72%, transparent);font-family:'DM Mono',monospace;font-size:.76rem;color:var(--text-soft)}
+    .cc-popup-payment{padding:.8rem .9rem;border:1px solid color-mix(in srgb,var(--border) 82%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 74%, transparent)}
     .cc-popup-payment--cancelled{opacity:.5;text-decoration:line-through}
-    .cc-popup-payment__row{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
-    .cc-popup-payment__date{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim)}
-    .cc-popup-payment__method{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text)}
-    .cc-popup-payment__amount{font-family:'DM Mono',monospace;font-weight:600;font-size:.82rem;margin-left:auto;color:var(--text)}
+    .cc-popup-payment__row{display:flex;align-items:center;gap:.85rem}
+    .cc-popup-payment__copy{display:grid;gap:.16rem}
+    .cc-popup-payment__date{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text-dim)}
+    .cc-popup-payment__method{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--text)}
+    .cc-popup-payment__amount{font-family:'DM Mono',monospace;font-weight:600;font-size:.86rem;margin-left:auto;color:var(--text)}
     .modal--pending-close{max-width:560px}
     .pending-close-copy{display:grid;gap:.9rem;margin-bottom:1rem}
     .pending-close-copy p{margin:0;color:var(--text-soft);font-family:'Crimson Pro',serif;font-size:1rem;line-height:1.5}
@@ -766,6 +905,7 @@ type CashSessionView = {
       .modal__body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1rem}
       .modal__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
       .modal__actions .btn{width:100%}
+      .cancel-detail-meta-grid{grid-template-columns:1fr}
     }
 
     @media (max-width:560px){
@@ -791,10 +931,14 @@ type CashSessionView = {
       .history-table td{grid-template-columns:1fr;gap:.28rem}
       .history-table td::before{margin-bottom:.1rem}
       .history-table td .badge{display:inline-flex;justify-self:start;align-self:start;width:auto;inline-size:max-content;max-inline-size:100%}
-      .cc-popup-header,.cc-popup-totals,.cc-popup-payments{padding-left:1rem;padding-right:1rem}
+      .cc-popup-body,.modal__body--cc-popup{padding:1rem}
       .cc-popup-header__row,.cc-popup-header__meta,.cc-popup-payment__row{display:grid;gap:.35rem}
+      .cc-popup-totals{grid-template-columns:1fr}
       .cc-popup-payment__amount{margin-left:0}
       .pending-close-sale__row,.pending-close-sale__meta,.pending-close-total{display:grid;gap:.35rem}
+      .cancel-detail-hero,.cancel-detail-payment,.cancel-detail-total,.cancel-detail-loading{padding:.9rem}
+      .cancel-detail-payment{align-items:flex-start;flex-direction:column}
+      .cancel-detail-payment__amount{font-size:.94rem}
     }
   `]
 })
@@ -824,6 +968,7 @@ export class CashComponent implements OnInit {
     ccPopupSaleId: string | null = null;
     ccPopupPayments: import('../../core/models/sale.models').CcPaymentResponse[] = [];
     ccPopupLoading = false;
+    cancelDetailPopupRow: { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null } | null = null;
     pendingCloseSales: SaleResponse[] = [];
     historyFrom = '';
     historyTo = '';
@@ -1196,6 +1341,7 @@ export class CashComponent implements OnInit {
             'Cerrada',
             'Movimiento',
             'Tipo',
+            'Codigo venta',
             'Sentido',
             'Monto',
             'Medio de pago',
@@ -1212,6 +1358,7 @@ export class CashComponent implements OnInit {
             this.formatDate(session.closedAt),
             this.formatDate(row.occurredAt),
             row.typeName,
+            row.saleCode || '',
             row.directionName,
             row.amount.toFixed(2),
             row.paymentMethodLabel,
@@ -1240,6 +1387,7 @@ export class CashComponent implements OnInit {
             'Cerrada',
             'Movimiento',
             'Tipo',
+            'Codigo venta',
             'Sentido',
             'Monto',
             'Medio de pago',
@@ -1256,6 +1404,7 @@ export class CashComponent implements OnInit {
             this.formatDate(item.session.closedAt),
             this.formatDate(row.occurredAt),
             row.typeName,
+            row.saleCode || '',
             row.directionName,
             row.amount.toFixed(2),
             row.paymentMethodLabel,
@@ -1302,42 +1451,99 @@ export class CashComponent implements OnInit {
     }
 
     private exportSessionsPdf(fileName: string, title: string, sessions: CashSessionResponse[], expectedOverrides?: Map<string, number>): void {
-        const doc = new jsPDF({ format: 'a4', unit: 'mm' });
+        const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
         const margin = 14;
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         const maxY = pageHeight - 14;
         let y = 16;
 
+        const movementColumns = {
+            movement: { x: margin + 2, width: 25 },
+            type: { x: margin + 30, width: 18 },
+            saleCode: { x: margin + 51, width: 22 },
+            direction: { x: margin + 76, width: 13 },
+            amount: { x: margin + 92, width: 18 },
+            payment: { x: margin + 113, width: 50 },
+            description: { x: margin + 166, width: 103 }
+        };
+
         const drawDocumentHeader = (continuation = false): void => {
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(13);
-            doc.setTextColor(25, 25, 25);
-            doc.text(continuation ? `${title} (continuacion)` : title, margin, y);
+            doc.setFontSize(15);
+            doc.setTextColor(28, 28, 28);
+            doc.text(continuation ? `${title} / Continuacion` : title, margin, y);
+
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8.5);
-            doc.setTextColor(95, 95, 95);
-            doc.text(`Emitido: ${new Date().toLocaleString('es-AR')}`, pageWidth - margin, y, { align: 'right' });
-            y += 6;
-            doc.setDrawColor(210, 210, 210);
-            doc.line(margin, y, pageWidth - margin, y);
-            y += 6;
+            doc.setFontSize(8.6);
+            doc.setTextColor(108, 108, 108);
+            doc.text(`Emitido: ${new Date().toLocaleString('es-AR')}`, pageWidth - margin, y - .2, { align: 'right' });
+            y += 3.5;
+
+            doc.setFontSize(8);
+            doc.setTextColor(132, 132, 132);
+            doc.text('Caja / Sesiones / Movimientos', margin, y + 1.5);
+            y += 4.5;
+
+            doc.setFillColor(244, 239, 229);
+            doc.setDrawColor(221, 206, 180);
+            doc.roundedRect(margin, y, pageWidth - margin * 2, 8, 2, 2, 'FD');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.6);
+            doc.setTextColor(120, 88, 33);
+            doc.text('Reporte preparado para lectura operativa: resumen superior, movimientos centrales y desglose al cierre de cada sesion.', margin + 3, y + 5.1);
+            y += 12;
         };
 
         const drawMovementHeader = (): void => {
-            doc.setFillColor(239, 239, 239);
-            doc.setDrawColor(190, 190, 190);
-            doc.rect(margin, y, pageWidth - margin * 2, 7, 'FD');
+            doc.setFillColor(235, 232, 225);
+            doc.setDrawColor(206, 202, 192);
+            doc.roundedRect(margin, y, pageWidth - margin * 2, 7, 1.5, 1.5, 'FD');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.7);
+            doc.setTextColor(62, 62, 62);
+            doc.text('Movimiento', movementColumns.movement.x, y + 4.7);
+            doc.text('Tipo', movementColumns.type.x, y + 4.7);
+            doc.text('Cod. venta', movementColumns.saleCode.x, y + 4.7);
+            doc.text('Sentido', movementColumns.direction.x, y + 4.7);
+            doc.text('Monto', movementColumns.amount.x, y + 4.7);
+            doc.text('Pago', movementColumns.payment.x, y + 4.7);
+            doc.text('Descripcion', movementColumns.description.x, y + 4.7);
+            y += 7;
+        };
+
+        const drawMetricCard = (x: number, width: number, label: string, value: string, tone: 'neutral' | 'accent' | 'success' | 'danger' = 'neutral'): void => {
+            if (tone === 'accent') {
+                doc.setFillColor(244, 239, 229);
+                doc.setDrawColor(221, 206, 180);
+            } else if (tone === 'success') {
+                doc.setFillColor(233, 245, 237);
+                doc.setDrawColor(181, 217, 190);
+            } else if (tone === 'danger') {
+                doc.setFillColor(248, 235, 235);
+                doc.setDrawColor(228, 191, 191);
+            } else {
+                doc.setFillColor(245, 245, 244);
+                doc.setDrawColor(220, 220, 218);
+            }
+
+            doc.roundedRect(x, y, width, 13, 2, 2, 'FD');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(112, 112, 112);
+            doc.text(label.toUpperCase(), x + 2.5, y + 4.4);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9.6);
+            doc.setTextColor(36, 36, 36);
+            doc.text(value, x + 2.5, y + 9.7);
+        };
+
+        const drawSectionLabel = (label: string): void => {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(8);
-            doc.setTextColor(35, 35, 35);
-            doc.text('Movimiento', margin + 2, y + 4.8);
-            doc.text('Tipo', margin + 37, y + 4.8);
-            doc.text('Sentido', margin + 67, y + 4.8);
-            doc.text('Monto', margin + 93, y + 4.8);
-            doc.text('Pago', margin + 114, y + 4.8);
-            doc.text('Descripcion', margin + 145, y + 4.8);
-            y += 7;
+            doc.setTextColor(96, 96, 96);
+            doc.text(label.toUpperCase(), margin, y);
+            y += 3.2;
         };
 
         drawDocumentHeader();
@@ -1345,35 +1551,64 @@ export class CashComponent implements OnInit {
         for (let index = 0; index < sessions.length; index += 1) {
             const session = sessions[index];
             const expectedClosingAmount = expectedOverrides?.get(session.id) ?? session.expectedClosingAmount;
+            const sessionRows = this.getDisplayRows(session);
 
-            if (y > maxY - 30) {
+            if (y > maxY - 52) {
                 doc.addPage();
                 y = 16;
                 drawDocumentHeader(true);
             }
 
+            drawSectionLabel(`Sesion ${index + 1}`);
+
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(9.3);
+            doc.setFontSize(10.4);
             doc.setTextColor(30, 30, 30);
-            doc.text(`Sesion ${session.id} | ${session.statusName}`, margin, y);
-            y += 4.8;
+            doc.text(`Sesion ${session.id}`, margin, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8.2);
+            doc.setTextColor(92, 92, 92);
+            doc.text(session.statusName, margin + 42, y);
+            y += 4.4;
 
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8.2);
             doc.setTextColor(60, 60, 60);
-            const meta = `Apertura: ${this.formatDate(session.openedAt)} | Cierre: ${this.formatDate(session.closedAt) || '-'} | Esperado: ${this.formatCurrency(expectedClosingAmount)} | Real: ${session.actualClosingAmount == null ? '-' : this.formatCurrency(session.actualClosingAmount)} | Diferencia: ${this.formatCurrency(session.difference)}`;
+            const meta = `Apertura: ${this.formatDate(session.openedAt)} | Cierre: ${this.formatDate(session.closedAt) || '-'} | Movimientos: ${sessionRows.length}`;
             const metaLines = doc.splitTextToSize(meta, pageWidth - margin * 2) as string[];
             doc.text(metaLines, margin, y);
-            y += metaLines.length * 4.2;
+            y += metaLines.length * 4 + 2;
+
+            const cardGap = 4;
+            const cardWidth = (pageWidth - margin * 2 - cardGap * 3) / 4;
+            drawMetricCard(margin, cardWidth, 'Esperado', this.formatCurrency(expectedClosingAmount), 'accent');
+            drawMetricCard(margin + cardWidth + cardGap, cardWidth, 'Cierre real', session.actualClosingAmount == null ? '-' : this.formatCurrency(session.actualClosingAmount), 'neutral');
+            drawMetricCard(margin + (cardWidth + cardGap) * 2, cardWidth, 'Diferencia', this.formatCurrency(session.difference), session.difference < 0 ? 'danger' : session.difference > 0 ? 'success' : 'neutral');
+            drawMetricCard(margin + (cardWidth + cardGap) * 3, cardWidth, 'Estado', session.statusName, 'neutral');
+            y += 17;
 
             drawMovementHeader();
 
-            for (const row of this.getDisplayRows(session)) {
+            for (let rowIndex = 0; rowIndex < sessionRows.length; rowIndex += 1) {
+                const row = sessionRows[rowIndex];
                 const description = row.description || '-';
-                const paymentMethodLines = doc.splitTextToSize(row.paymentMethodLabel, 30) as string[];
-                const descriptionLines = doc.splitTextToSize(description, 48) as string[];
+                const saleCode = row.saleCode || '-';
+                const typeLabel = this.translateType(row.typeName);
+                const directionLabel = this.translateDirection(row.typeName === 'TransferIncome' ? 'In' : row.directionName);
+                const typeLines = doc.splitTextToSize(typeLabel, movementColumns.type.width) as string[];
+                const saleCodeLines = doc.splitTextToSize(saleCode, movementColumns.saleCode.width) as string[];
+                const directionLines = doc.splitTextToSize(directionLabel, movementColumns.direction.width) as string[];
+                const paymentMethodLines = doc.splitTextToSize(row.paymentMethodLabel, movementColumns.payment.width) as string[];
+                const descriptionLines = doc.splitTextToSize(description, movementColumns.description.width) as string[];
                 const clippedDescription = descriptionLines.slice(0, 2);
-                const rowHeight = Math.max(6.8, clippedDescription.length * 3.4 + 1.6, paymentMethodLines.length * 3.4 + 1.6);
+                const rowHeight = Math.max(
+                    8.2,
+                    clippedDescription.length * 3.4 + 2.4,
+                    paymentMethodLines.length * 3.4 + 2.4,
+                    typeLines.length * 3.4 + 2.4,
+                    saleCodeLines.length * 3.4 + 2.4,
+                    directionLines.length * 3.4 + 2.4
+                );
 
                 if (y + rowHeight > maxY) {
                     doc.addPage();
@@ -1382,35 +1617,41 @@ export class CashComponent implements OnInit {
                     drawMovementHeader();
                 }
 
-                doc.setDrawColor(220, 220, 220);
+                if (rowIndex % 2 === 0) {
+                    doc.setFillColor(249, 248, 245);
+                    doc.rect(margin, y, pageWidth - margin * 2, rowHeight, 'F');
+                }
+
+                doc.setDrawColor(228, 228, 226);
                 doc.line(margin, y + rowHeight, pageWidth - margin, y + rowHeight);
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7.9);
                 doc.setTextColor(35, 35, 35);
-                doc.text(this.formatDate(row.occurredAt), margin + 2, y + 4.4);
-                doc.text(this.translateType(row.typeName), margin + 37, y + 4.4);
-                doc.text(this.translateDirection(row.typeName === 'TransferIncome' ? 'In' : row.directionName), margin + 67, y + 4.4);
-                doc.text(this.formatCurrency(row.amount), margin + 111, y + 4.4, { align: 'right' });
-                doc.text(paymentMethodLines, margin + 114, y + 4.4);
-                doc.text(clippedDescription, margin + 145, y + 4.4);
+                doc.text(this.formatDate(row.occurredAt), movementColumns.movement.x, y + 4.8);
+                doc.text(typeLines, movementColumns.type.x, y + 4.8);
+                doc.text(saleCodeLines, movementColumns.saleCode.x, y + 4.8);
+                doc.text(directionLines, movementColumns.direction.x, y + 4.8);
+                doc.text(this.formatCurrency(row.amount), movementColumns.amount.x + movementColumns.amount.width, y + 4.8, { align: 'right' });
+                doc.text(paymentMethodLines, movementColumns.payment.x, y + 4.8);
+                doc.text(clippedDescription, movementColumns.description.x, y + 4.8);
 
                 y += rowHeight;
             }
 
             const breakdown = this.computePaymentBreakdown(session);
             if (breakdown.length > 0) {
-                if (y + 6 + breakdown.length * 5 > maxY) {
+                if (y + 10 + breakdown.length * 5 > maxY) {
                     doc.addPage();
                     y = 16;
                     drawDocumentHeader(true);
                 }
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.8);
+                doc.setFontSize(8);
                 doc.setTextColor(60, 60, 60);
-                doc.text('Desglose por medio de pago:', margin, y + 4);
-                y += 6;
+                doc.text('Desglose por medio de pago', margin, y + 4);
+                y += 6.5;
 
                 for (const item of breakdown) {
                     if (y + 5 > maxY) {
@@ -1422,25 +1663,27 @@ export class CashComponent implements OnInit {
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(7.6);
                     doc.setTextColor(35, 35, 35);
-                    doc.text(`${item.methodName}:`, margin + 4, y + 4);
-                    doc.text(this.formatCurrency(item.amount), margin + 55, y + 4, { align: 'left' });
+                    doc.setFillColor(246, 246, 244);
+                    doc.roundedRect(margin + 1, y, 80, 4.8, 1.2, 1.2, 'F');
+                    doc.text(item.methodName, margin + 4, y + 3.5);
+                    doc.text(this.formatCurrency(item.amount), margin + 77, y + 3.5, { align: 'right' });
                     y += 5;
                 }
             }
 
             const transferBreakdown = this.computeTransferBankBreakdown(session);
             if (transferBreakdown.length > 0) {
-                if (y + 6 + transferBreakdown.length * 5 > maxY) {
+                if (y + 10 + transferBreakdown.length * 5 > maxY) {
                     doc.addPage();
                     y = 16;
                     drawDocumentHeader(true);
                 }
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.8);
+                doc.setFontSize(8);
                 doc.setTextColor(60, 60, 60);
-                doc.text('Transferencias por banco (no incluido en caja):', margin, y + 4);
-                y += 6;
+                doc.text('Transferencias por banco (no incluido en caja)', margin, y + 4);
+                y += 6.5;
 
                 for (const item of transferBreakdown) {
                     if (y + 5 > maxY) {
@@ -1452,25 +1695,27 @@ export class CashComponent implements OnInit {
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(7.6);
                     doc.setTextColor(35, 35, 35);
-                    doc.text(`${item.bankName}:`, margin + 4, y + 4);
-                    doc.text(this.formatCurrency(item.amount), margin + 55, y + 4, { align: 'left' });
+                    doc.setFillColor(241, 247, 249);
+                    doc.roundedRect(margin + 1, y, 80, 4.8, 1.2, 1.2, 'F');
+                    doc.text(item.bankName, margin + 4, y + 3.5);
+                    doc.text(this.formatCurrency(item.amount), margin + 77, y + 3.5, { align: 'right' });
                     y += 5;
                 }
             }
 
             const cardBreakdown = this.computeCardBankBreakdown(session);
             if (cardBreakdown.length > 0) {
-                if (y + 6 + cardBreakdown.length * 5 > maxY) {
+                if (y + 10 + cardBreakdown.length * 5 > maxY) {
                     doc.addPage();
                     y = 16;
                     drawDocumentHeader(true);
                 }
 
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7.8);
+                doc.setFontSize(8);
                 doc.setTextColor(60, 60, 60);
-                doc.text('Tarjetas por banco (no incluido en caja):', margin, y + 4);
-                y += 6;
+                doc.text('Tarjetas por banco (no incluido en caja)', margin, y + 4);
+                y += 6.5;
 
                 for (const item of cardBreakdown) {
                     if (y + 5 > maxY) {
@@ -1482,13 +1727,15 @@ export class CashComponent implements OnInit {
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(7.6);
                     doc.setTextColor(35, 35, 35);
-                    doc.text(`${item.bankName}:`, margin + 4, y + 4);
-                    doc.text(this.formatCurrency(item.amount), margin + 55, y + 4, { align: 'left' });
+                    doc.setFillColor(243, 243, 249);
+                    doc.roundedRect(margin + 1, y, 80, 4.8, 1.2, 1.2, 'F');
+                    doc.text(item.bankName, margin + 4, y + 3.5);
+                    doc.text(this.formatCurrency(item.amount), margin + 77, y + 3.5, { align: 'right' });
                     y += 5;
                 }
             }
 
-            y += 6;
+            y += 7;
         }
 
         const pageCount = doc.getNumberOfPages();
@@ -1585,6 +1832,7 @@ export class CashComponent implements OnInit {
             next: sessions => {
                 this.historySessions = sessions.map(session => {
                     const salesIncome = this.sumMovementsByType(session.movements, 'SaleIncome')
+                        + this.sumMovementsByType(session.movements, 'CuentaCorrienteIncome')
                         - this.sumMovementsByType(session.movements, 'SaleCancellation');
                     const withdrawals = this.sumMovementsByType(session.movements, 'CashWithdrawal');
                     return {
@@ -1607,7 +1855,7 @@ export class CashComponent implements OnInit {
 
     private toSummary(session: CashSessionResponse): CashSessionSummaryResponse {
         const salesIncome = session.movements
-            .filter(movement => movement.typeName === 'SaleIncome')
+            .filter(movement => movement.typeName === 'SaleIncome' || movement.typeName === 'CuentaCorrienteIncome')
             .reduce((total, movement) => total + movement.amount, 0);
 
         const withdrawals = session.movements
@@ -1684,6 +1932,10 @@ export class CashComponent implements OnInit {
     }
 
     movementPaymentMethod(movement: CashSessionMovementResponse): string {
+        if (movement.typeName === 'CuentaCorrienteCancellation') {
+            return 'Cuenta Corriente';
+        }
+
         const refType = movement.referenceType;
         const isRegularSale = refType?.toLowerCase() === 'sale';
         const isCcSale = refType === 'CuentaCorriente';
@@ -1694,14 +1946,22 @@ export class CashComponent implements OnInit {
         return this.salePaymentMethodsBySaleId.get(movement.referenceId) || 'Cargando...';
     }
 
-    getDisplayRows(session: CashSessionResponse): { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null }[] {
-        return session.movements.map(movement => {
+    getDisplayRows(session: CashSessionResponse): { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null }[] {
+        const seenSaleIncomeIds = new Set<string>();
+        const rows: { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null }[] = [];
+
+        for (const movement of session.movements) {
             const refId = movement.referenceId ? String(movement.referenceId) : null;
             const saleCode = movement.saleCode ?? null;
             const username = movement.createdByUsername ?? null;
-            const isSaleRelated = (movement.typeName === 'SaleIncome' || movement.typeName === 'SaleCancellation' || movement.typeName === 'TransferIncome' || movement.typeName === 'CardIncome') && movement.referenceId;
-            if (isSaleRelated) {
-                const sale = this.salesBySaleId.get(String(movement.referenceId));
+            const isSaleIncome = (movement.typeName === 'SaleIncome' || movement.typeName === 'TransferIncome' || movement.typeName === 'CardIncome') && movement.referenceId;
+
+            if (isSaleIncome) {
+                const saleRefId = String(movement.referenceId);
+                if (seenSaleIncomeIds.has(saleRefId)) continue;
+                seenSaleIncomeIds.add(saleRefId);
+
+                const sale = this.salesBySaleId.get(saleRefId);
                 const activePayments = (sale?.payments ?? []).filter(p => Number(p.amount) > 0);
                 const activeTradeIns = (sale?.tradeIns ?? []).filter(t => Number(t.amount) > 0);
                 if (activePayments.length > 0 || activeTradeIns.length > 0) {
@@ -1723,14 +1983,17 @@ export class CashComponent implements OnInit {
                         }),
                         ...activeTradeIns.map(t => `Canje: $${Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`)
                     ];
-                    const effectiveDirection = movement.typeName === 'CardIncome' ? 'In' : movement.directionName;
-                    return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: effectiveDirection, amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId, saleCode, username };
+                    rows.push({ occurredAt: movement.occurredAt, typeName: 'SaleIncome', directionName: 'In', amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId, saleCode, username });
+                    continue;
                 }
+                rows.push({ occurredAt: movement.occurredAt, typeName: 'SaleIncome', directionName: 'In', amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username });
+                continue;
             }
 
-            const effectiveDirection = movement.typeName === 'CardIncome' ? 'In' : movement.directionName;
-            return { occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: effectiveDirection, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username };
-        });
+            rows.push({ occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null });
+        }
+
+        return rows;
     }
 
     sessionPaymentMethodsSummary(session: CashSessionResponse): string {
@@ -1810,7 +2073,7 @@ export class CashComponent implements OnInit {
 
         const saleIds = [...new Set(
             allMovements
-                .filter(movement => movement.referenceType?.toLowerCase() === 'sale' && !!movement.referenceId)
+                .filter(movement => (movement.referenceType?.toLowerCase() === 'sale' || movement.typeName === 'SaleCancellation') && !!movement.referenceId)
                 .map(movement => String(movement.referenceId))
         )];
 
@@ -1846,12 +2109,14 @@ export class CashComponent implements OnInit {
             this.saleService.getSaleById(saleId).subscribe({
                 next: (sale: SaleByIdResponse) => {
                     this.ccSalesBySaleId.set(saleId, sale);
-                    const activeCcPayments = (sale.ccPayments ?? []).filter(p => p.status === 1);
-                    if (activeCcPayments.length === 0) {
+                    const allCcPayments = (sale.ccPayments ?? []);
+                    const activeCcPayments = allCcPayments.filter(p => p.status === 1);
+                    const ccPaymentsForLabel = activeCcPayments.length > 0 ? activeCcPayments : allCcPayments.filter(p => p.status === 2);
+                    if (ccPaymentsForLabel.length === 0) {
                         return;
                     }
                     const methodMap = new Map<number, number>();
-                    for (const p of activeCcPayments) {
+                    for (const p of ccPaymentsForLabel) {
                         methodMap.set(p.idPaymentMethod, (methodMap.get(p.idPaymentMethod) ?? 0) + p.amount);
                     }
                     const parts = Array.from(methodMap.entries()).map(([id, amount]) => {
@@ -1874,7 +2139,7 @@ export class CashComponent implements OnInit {
         const totals = new Map<number, number>();
         const seen = new Set<string>();
         for (const movement of session.movements) {
-            if ((movement.typeName === 'SaleIncome' || movement.typeName === 'TransferIncome') && movement.referenceId && !seen.has(movement.referenceId)) {
+            if ((movement.typeName === 'SaleIncome' || movement.typeName === 'TransferIncome' || movement.typeName === 'SaleCancellation') && movement.referenceId && !seen.has(movement.referenceId)) {
                 seen.add(movement.referenceId);
                 const sale = this.salesBySaleId.get(String(movement.referenceId));
                 for (const p of (sale?.payments ?? [])) {
@@ -1893,7 +2158,7 @@ export class CashComponent implements OnInit {
         const totals = new Map<number, number>();
         const seen = new Set<string>();
         for (const movement of session.movements) {
-            if ((movement.typeName === 'SaleIncome' || movement.typeName === 'CardIncome') && movement.referenceId && !seen.has(movement.referenceId)) {
+            if ((movement.typeName === 'SaleIncome' || movement.typeName === 'CardIncome' || movement.typeName === 'SaleCancellation') && movement.referenceId && !seen.has(movement.referenceId)) {
                 seen.add(movement.referenceId);
                 const sale = this.salesBySaleId.get(String(movement.referenceId));
                 for (const p of (sale?.payments ?? [])) {
@@ -1965,6 +2230,20 @@ export class CashComponent implements OnInit {
     }
 
     closeCcPopup(): void { this.ccPopupSaleId = null; this.ccPopupPayments = []; }
+
+    openCancelDetailPopup(row: { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null }): void {
+        this.cancelDetailPopupRow = row;
+    }
+
+    closeCancelDetailPopup(): void {
+        this.cancelDetailPopupRow = null;
+    }
+
+    get cancelDetailSale(): SaleResponse | undefined {
+        return this.cancelDetailPopupRow?.referenceId
+            ? this.salesBySaleId.get(this.cancelDetailPopupRow.referenceId)
+            : undefined;
+    }
 
     get ccPopupSale(): SaleByIdResponse | null {
         return this.ccPopupSaleId ? (this.ccSalesBySaleId.get(this.ccPopupSaleId) ?? null) : null;

@@ -170,6 +170,19 @@ export interface AddCcPaymentGroupRequest {
     cashDrawerId: string;
 }
 
+export interface AddCcPaymentGroupResponse {
+    payments: CcPaymentResponse[];
+    creditAdded?: number;
+    newCustomerCreditBalance?: number;
+}
+
+export interface CreateCcSaleResponse {
+    id: string;
+    code?: string | null;
+    creditApplied?: number;
+    remainingCustomerCredit?: number;
+}
+
 export interface SaleByIdResponse {
     id: string;
     code?: string | null;

@@ -5,7 +5,9 @@ import { Router, RouterModule } from '@angular/router';
 import { jsPDF } from 'jspdf';
 import { CustomerService } from '../../../core/services/customer.service';
 import { SaleService } from '../../../core/services/sale.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { PermissionCodes } from '../../../core/models/permission.models';
 import { CustomerSearchItem } from '../../../core/models/customer.models';
 import {
   CcSaleListItem,
@@ -32,6 +34,8 @@ interface PaymentGroup {
 })
 export class ClientsCcComponent {
   readonly paymentMethods: SalePaymentMethodOption[] = SALE_PAYMENT_METHODS;
+  readonly permissionCodes = PermissionCodes;
+  cancellingSaleId: string | null = null;
 
   // Customer search
   customerQuery = '';
@@ -55,6 +59,7 @@ export class ClientsCcComponent {
   constructor(
     private readonly customerService: CustomerService,
     private readonly saleService: SaleService,
+    readonly auth: AuthService,
     private readonly toast: ToastService,
     private readonly router: Router
   ) {}
@@ -208,6 +213,7 @@ export class ClientsCcComponent {
   }
 
   paymentMethodLabel(id: number): string {
+    if (id === 6) return 'Saldo a favor';
     return this.paymentMethods.find(m => m.id === id)?.label ?? 'Otro';
   }
 
@@ -461,5 +467,24 @@ export class ClientsCcComponent {
     }
 
     doc.save(`venta-cc-${sale.code ?? sale.createdAt.slice(0, 10)}.pdf`);
+  }
+
+  cancelSale(sale: CcSaleListItem, event: Event): void {
+    event.stopPropagation();
+    if (!confirm(`¿Anular la venta ${sale.code ?? ''}? Esta acción no se puede deshacer.`)) return;
+    this.cancellingSaleId = sale.id;
+    this.saleService.cancelSale(sale.id).subscribe({
+      next: () => {
+        this.cancellingSaleId = null;
+        this.toast.success('Venta anulada');
+        this.ccSales = this.ccSales.map(s =>
+          s.id === sale.id ? { ...s, idSaleStatus: 3 } : s
+        );
+      },
+      error: (err) => {
+        this.cancellingSaleId = null;
+        this.toast.error(err?.error?.detail || 'No se pudo anular la venta');
+      }
+    });
   }
 }

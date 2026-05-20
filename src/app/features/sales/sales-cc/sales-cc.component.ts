@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { BranchService } from '../../../core/services/branch.service';
 import { CustomerService } from '../../../core/services/customer.service';
 import { StockService } from '../../../core/services/stock.service';
@@ -55,7 +55,6 @@ export class SalesCcComponent implements OnInit {
     private readonly stockService: StockService,
     private readonly saleService: SaleService,
     private readonly toast: ToastService,
-    private readonly router: Router,
     public readonly auth: AuthService
   ) {}
 
@@ -307,10 +306,22 @@ export class SalesCcComponent implements OnInit {
       generalDiscountPercent: this.generalDiscountPercent || undefined,
       manualOverridePrice: this.manualOverridePrice ?? undefined
     }).subscribe({
-      next: () => {
+      next: (res) => {
         this.saving = false;
         this.toast.success('Venta CC creada exitosamente');
-        this.router.navigate(['/sales']);
+        if (res?.creditApplied && res.creditApplied > 0) {
+          const applied = res.creditApplied.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          const remaining = res.remainingCustomerCredit?.toLocaleString('es-AR', { minimumFractionDigits: 2 }) ?? '0,00';
+          this.toast.success(`Se aplicaron $${applied} de saldo a favor. Crédito restante: $${remaining}`);
+        }
+        this.selectedCustomer = null;
+        this.customerQuery = '';
+        this.searchResults = [];
+        this.draftItems = [];
+        this.generalDiscountPercent = 0;
+        this.manualOverridePrice = null;
+        this.selectedProductIds.clear();
+        this.selectionQuantityByProductId.clear();
       },
       error: err => {
         this.saving = false;

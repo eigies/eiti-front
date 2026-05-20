@@ -48,7 +48,7 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     const now = new Date();
     const dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
-    this.saleService.listSales({ dateFrom }).subscribe({
+    this.saleService.listSales({ dateFrom, includeCuentaCorriente: true }).subscribe({
       next: sales => { this.sales = sales; this.loading = false; },
       error: () => { this.loading = false; }
     });

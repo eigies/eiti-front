@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CashDrawerResponse } from '../../../core/models/cash.models';
 import { ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../../core/models/product.models';
@@ -25,7 +25,7 @@ import { BankInstallmentPlanResponse, BankResponse } from '../../../core/models/
     templateUrl: './sale-payment-inline.component.html',
     styleUrls: ['./sale-payment-inline.component.css']
 })
-export class SalePaymentInlineComponent {
+export class SalePaymentInlineComponent implements OnChanges {
     @Input({ required: true }) total = 0;
     @Input({ required: true }) statusId = 1;
     @Input({ required: true }) products: ProductResponse[] = [];
@@ -195,9 +195,24 @@ export class SalePaymentInlineComponent {
         this.state.hasTradeIn = this.state.tradeIns.length > 0;
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        if (!changes['total']) return;
+        for (const payment of this.state?.payments ?? []) {
+            if (payment.idPaymentMethod !== this.CARD_METHOD_ID && payment.amount === 0 && this.remaining > 0) {
+                payment.amount = this.remaining;
+                break;
+            }
+        }
+    }
+
     updatePaymentMethod(index: number, value: string | number | null): void {
         const next = Number(value) || 1;
         this.state.payments[index].idPaymentMethod = next;
+
+        // Auto-fill amount for non-card methods (card waits for bank+cuotas selection)
+        if (next !== this.CARD_METHOD_ID && this.state.payments[index].amount === 0 && this.remaining > 0) {
+            this.state.payments[index].amount = this.remaining;
+        }
     }
 
     updatePaymentAmount(index: number, value: string | number): void {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AddCcPaymentGroupRequest, AddCcPaymentRequest, CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateSaleRequest, SaleByIdResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
+import { AddCcPaymentGroupRequest, AddCcPaymentGroupResponse, AddCcPaymentRequest, CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, SaleByIdResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -19,6 +19,7 @@ export class SaleService {
         dateFrom?: string;
         dateTo?: string;
         idSaleStatus?: number | null;
+        includeCuentaCorriente?: boolean;
     }): Observable<SaleResponse[]> {
         const params = new URLSearchParams();
 
@@ -32,6 +33,10 @@ export class SaleService {
 
         if (filters.idSaleStatus) {
             params.set('idSaleStatus', String(filters.idSaleStatus));
+        }
+
+        if (filters.includeCuentaCorriente === true) {
+            params.set('includeCuentaCorriente', 'true');
         }
 
         const query = params.toString();
@@ -84,8 +89,8 @@ export class SaleService {
         return this.http.get<SaleByIdResponse>(`${this.base}/${id}`);
     }
 
-    createCcSale(request: CreateCcSaleRequest): Observable<SaleResponse> {
-        return this.http.post<SaleResponse>(`${this.base}/cc`, request);
+    createCcSale(request: CreateCcSaleRequest): Observable<CreateCcSaleResponse> {
+        return this.http.post<CreateCcSaleResponse>(`${this.base}/cc`, request);
     }
 
     listCcPayments(saleId: string): Observable<CcPaymentResponse[]> {
@@ -105,7 +110,7 @@ export class SaleService {
         return this.http.get<CcSaleListItem[]>(`${this.base}/cc${params}`);
     }
 
-    addCcPaymentGroup(saleId: string, request: AddCcPaymentGroupRequest): Observable<CcPaymentResponse[]> {
-        return this.http.post<CcPaymentResponse[]>(`${this.base}/${saleId}/cc-payment-group`, request);
+    addCcPaymentGroup(saleId: string, request: AddCcPaymentGroupRequest): Observable<AddCcPaymentGroupResponse> {
+        return this.http.post<AddCcPaymentGroupResponse>(`${this.base}/${saleId}/cc-payment-group`, request);
     }
 }
