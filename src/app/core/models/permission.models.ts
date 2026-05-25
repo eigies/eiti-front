@@ -17,7 +17,13 @@ export const PermissionCodes = {
     banksManage: 'banks.manage',
     chequesManage: 'cheques.manage',
     cashDrawerAssign: 'cash.drawer.assign',
-    productsViewCost: 'products.view_cost'
+    productsViewCost: 'products.view_cost',
+    suppliersManage: 'suppliers.manage',
+    purchasesAccess: 'purchases.access',
+    purchasesCreate: 'purchases.create',
+    purchasesUpdate: 'purchases.update',
+    purchasesPay: 'purchases.pay',
+    purchasesCancel: 'purchases.cancel'
 } as const;
 
 export type PermissionCode = typeof PermissionCodes[keyof typeof PermissionCodes];
@@ -41,5 +47,11 @@ export const PermissionCatalog: ReadonlyArray<{ code: PermissionCode; label: str
     { code: PermissionCodes.banksManage, label: 'Bancos: administrar', description: 'Permite administrar bancos.' },
     { code: PermissionCodes.chequesManage, label: 'Cheques: administrar', description: 'Permite administrar cheques.' },
     { code: PermissionCodes.cashDrawerAssign, label: 'Caja: asignar', description: 'Permite reasignar cajas entre usuarios.' },
-    { code: PermissionCodes.productsViewCost, label: 'Productos: ver costo', description: 'Permite ver la columna de costo en la lista y edición de productos.' }
+    { code: PermissionCodes.productsViewCost, label: 'Productos: ver costo', description: 'Permite ver la columna de costo en la lista y edición de productos.' },
+    { code: PermissionCodes.suppliersManage, label: 'Proveedores: administrar', description: 'Permite gestionar proveedores.' },
+    { code: PermissionCodes.purchasesAccess, label: 'Compras: acceso', description: 'Permite ingresar al módulo de compras.' },
+    { code: PermissionCodes.purchasesCreate, label: 'Compras: crear', description: 'Permite registrar compras nuevas.' },
+    { code: PermissionCodes.purchasesUpdate, label: 'Compras: editar', description: 'Permite editar compras existentes.' },
+    { code: PermissionCodes.purchasesPay, label: 'Compras: pagar', description: 'Permite registrar pagos de compras.' },
+    { code: PermissionCodes.purchasesCancel, label: 'Compras: cancelar', description: 'Permite cancelar compras.' }
 ];

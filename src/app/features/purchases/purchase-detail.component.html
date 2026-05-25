@@ -1,0 +1,174 @@
+<div class="page">
+  <div class="loading-state" *ngIf="loading">
+    <span>Cargando compra...</span>
+  </div>
+
+  <ng-container *ngIf="!loading && purchase">
+    <div class="page__header">
+      <div class="header-main">
+        <a class="back-link back-link--strong" routerLink="/purchases">&larr; Volver al listado</a>
+        <div class="page__eyebrow">_ COMPRAS</div>
+        <div class="header-row">
+          <h1 class="page__title">
+            {{ purchase.supplierName || 'Sin proveedor' }}
+            <span *ngIf="purchase.invoiceNumber" class="invoice-number">/ {{ purchase.invoiceNumber }}</span>
+          </h1>
+        </div>
+        <div class="meta-row">
+          <span class="meta-item">Fecha: {{ formatDate(purchase.createdAt) }}</span>
+          <span class="meta-item" *ngIf="purchase.notes">{{ purchase.notes }}</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span class="chip" [ngClass]="statusChipClass(purchase.status)">
+          {{ statusLabel(purchase.status) }}
+        </span>
+        <button
+          class="btn-danger"
+          type="button"
+          *ngIf="purchase.status === PurchaseStatus.Active"
+          [disabled]="cancelling"
+          (click)="cancelPurchase()">
+          {{ cancelling ? 'Cancelando...' : 'Cancelar compra' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Total compra</span>
+        <strong class="summary-value">${{ formatCurrency(purchase.totalAmount) }}</strong>
+      </div>
+      <div class="summary-card summary-card--paid">
+        <span class="summary-label">Total pagado</span>
+        <strong class="summary-value">${{ formatCurrency(purchase.totalPaid) }}</strong>
+      </div>
+      <div class="summary-card summary-card--pending">
+        <span class="summary-label">Saldo pendiente</span>
+        <strong class="summary-value">${{ formatCurrency(purchase.pendingAmount) }}</strong>
+        <small *ngIf="purchase.status === PurchaseStatus.Paid && purchase.paidAt">Pagada el {{ formatDate(purchase.paidAt) }}</small>
+      </div>
+    </div>
+
+    <div class="section-card section-card--payment" *ngIf="purchase.status === PurchaseStatus.Active">
+      <div class="section-head section-head--inline">
+        <div>
+          <span class="section-label">Registrar pago</span>
+          <p class="section-hint">Carga rapida para actualizar el saldo de esta compra.</p>
+        </div>
+      </div>
+
+      <div class="add-payment-form">
+        <div class="field field--method">
+          <label class="field__label">Metodo</label>
+          <app-searchable-select
+            [(ngModel)]="newPaymentMethod"
+            [ngModelOptions]="{ standalone: true }"
+            [options]="paymentMethodOptions"
+            placeholder="Metodo"
+            searchPlaceholder="Buscar metodo..."
+            [compact]="true">
+          </app-searchable-select>
+        </div>
+
+        <div class="field">
+          <label class="field__label">Monto</label>
+          <input class="field__input" type="number" min="0" step="0.01" [(ngModel)]="newPaymentAmount" />
+        </div>
+
+        <div class="field">
+          <label class="field__label">Fecha</label>
+          <input class="field__input" type="date" [(ngModel)]="newPaymentDate" />
+        </div>
+
+        <div class="field">
+          <label class="field__label">Referencia</label>
+          <input class="field__input" type="text" placeholder="Nro. transferencia" [(ngModel)]="newPaymentReference" />
+        </div>
+
+        <div class="field field--notes">
+          <label class="field__label">Notas</label>
+          <input class="field__input" type="text" placeholder="Observaciones" [(ngModel)]="newPaymentNotes" />
+        </div>
+
+        <button
+          class="btn-primary"
+          type="button"
+          [disabled]="addingPayment || newPaymentAmount <= 0"
+          (click)="submitPayment()">
+          {{ addingPayment ? 'Registrando...' : 'Registrar pago' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="section-card">
+        <div class="section-head">
+          <span class="section-label">Productos</span>
+        </div>
+        <div class="table-shell">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th class="col-num">Cantidad</th>
+                <th class="col-num">Costo unit.</th>
+                <th class="col-num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of purchase.details">
+                <td class="cell-product">{{ d.productName }}</td>
+                <td class="col-num">{{ d.quantity }}</td>
+                <td class="col-num">${{ formatCurrency(d.unitCost) }}</td>
+                <td class="col-num cell-total">${{ formatCurrency(d.totalAmount) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <span class="section-label">Historial de pagos</span>
+        </div>
+
+        <div class="empty-payments" *ngIf="activePayments.length === 0">
+          No se registraron pagos aun.
+        </div>
+
+        <div class="table-shell" *ngIf="activePayments.length > 0">
+          <table class="payments-table">
+            <thead>
+              <tr>
+                <th>Metodo</th>
+                <th>Fecha</th>
+                <th class="col-num">Monto</th>
+                <th>Referencia</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of activePayments">
+                <td class="cell-mono">{{ paymentMethodLabel(p.method) }}</td>
+                <td class="cell-mono">{{ formatDate(p.date) }}</td>
+                <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
+                <td class="cell-ref">{{ p.reference || '-' }}</td>
+                <td class="col-remove">
+                  <button
+                    class="btn-cancel-payment"
+                    type="button"
+                    [disabled]="cancellingPaymentId === p.id"
+                    (click)="cancelPayment(p)">
+                    {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

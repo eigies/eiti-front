@@ -1,0 +1,112 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <div class="page__eyebrow">_ COMPRAS</div>
+      <h1 class="page__title">Registro de compras</h1>
+    </div>
+    <button class="btn-primary" type="button" (click)="goToCreate()">+ Nueva compra</button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="filter-field filter-field--wide">
+      <span class="filter-label">Proveedor</span>
+      <app-searchable-select
+        [(ngModel)]="filterSupplierId"
+        [options]="supplierOptions"
+        placeholder="Todos los proveedores"
+        searchPlaceholder="Buscar proveedor..."
+        [allowClear]="true"
+        clearLabel="Todos los proveedores"
+        clearValue="">
+      </app-searchable-select>
+    </div>
+
+    <div class="filter-field">
+      <span class="filter-label">Estado</span>
+      <app-searchable-select
+        [(ngModel)]="filterStatus"
+        [options]="statusOptions"
+        placeholder="Todos los estados"
+        searchPlaceholder="Buscar estado..."
+        [allowClear]="true"
+        clearLabel="Todos los estados"
+        clearValue="">
+      </app-searchable-select>
+    </div>
+
+    <label class="filter-field">
+      <span class="filter-label">Desde</span>
+      <input class="filter-input" type="date" [(ngModel)]="filterFrom" title="Desde" />
+    </label>
+
+    <label class="filter-field">
+      <span class="filter-label">Hasta</span>
+      <input class="filter-input" type="date" [(ngModel)]="filterTo" title="Hasta" />
+    </label>
+
+    <div class="filter-actions">
+      <button class="btn-filter" type="button" (click)="applyFilters()">Filtrar</button>
+      <button class="btn-ghost-sm" type="button" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <span>Cargando compras...</span>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <!-- Empty -->
+    <div class="empty-state" *ngIf="purchases.length === 0">
+      <span class="empty-state__icon">o</span>
+      <span>No hay compras registradas para los filtros seleccionados</span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap" *ngIf="purchases.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Proveedor</th>
+            <th>N° Factura</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th class="col-num">Total</th>
+            <th class="col-num">Pagado</th>
+            <th class="col-num">Pendiente</th>
+            <th class="col-num">Items</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            class="row-clickable"
+            *ngFor="let p of purchases"
+            (click)="goToDetail(p.id)">
+            <td class="cell-name">{{ p.supplierName || '—' }}</td>
+            <td class="cell-mono">{{ p.invoiceNumber || '—' }}</td>
+            <td class="cell-mono">{{ formatDate(p.createdAt) }}</td>
+            <td>
+              <span class="chip" [ngClass]="statusChipClass(p.status)">
+                {{ statusLabel(p.status) }}
+              </span>
+            </td>
+            <td class="cell-num">${{ formatCurrency(p.totalAmount) }}</td>
+            <td class="cell-num cell-paid">${{ formatCurrency(p.totalPaid) }}</td>
+            <td class="cell-num" [class.cell-pending]="p.pendingAmount > 0">${{ formatCurrency(p.pendingAmount) }}</td>
+            <td class="cell-num">{{ p.detailCount }}</td>
+            <td class="cell-arrow">Abrir &rarr;</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button class="btn-ghost-sm" type="button" [disabled]="page === 1" (click)="prevPage()">&#8592; Anterior</button>
+        <span class="pagination__info">{{ page }} / {{ totalPages }} &middot; {{ total }} compras</span>
+        <button class="btn-ghost-sm" type="button" [disabled]="page >= totalPages" (click)="nextPage()">Siguiente &#8594;</button>
+      </div>
+    </div>
+  </ng-container>
+</div>

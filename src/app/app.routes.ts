@@ -138,6 +138,34 @@ export const routes: Routes = [
             import('./features/transport/transport.component').then(m => m.TransportComponent)
     },
     {
+        path: 'suppliers',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.suppliersManage },
+        loadComponent: () =>
+            import('./features/suppliers/suppliers.component').then(m => m.SuppliersComponent)
+    },
+    {
+        path: 'purchases',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.purchasesAccess },
+        loadComponent: () =>
+            import('./features/purchases/purchases-list.component').then(m => m.PurchasesListComponent)
+    },
+    {
+        path: 'purchases/new',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.purchasesCreate },
+        loadComponent: () =>
+            import('./features/purchases/purchase-create.component').then(m => m.PurchaseCreateComponent)
+    },
+    {
+        path: 'purchases/:id',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.purchasesAccess },
+        loadComponent: () =>
+            import('./features/purchases/purchase-detail.component').then(m => m.PurchaseDetailComponent)
+    },
+    {
         path: 'clients/cc',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.salesAccess },

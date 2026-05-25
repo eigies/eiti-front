@@ -1,0 +1,126 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <div class="page__eyebrow">_ PROVEEDORES</div>
+      <h1 class="page__title">Gestion de proveedores</h1>
+    </div>
+    <button class="btn-primary" type="button" (click)="openCreate()">+ Nuevo proveedor</button>
+  </div>
+
+  <div class="toolbar">
+    <label class="search-field">
+      <span class="search-field__label">Buscar proveedor</span>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Nombre, CUIT o email..."
+        [(ngModel)]="searchQuery" />
+    </label>
+    <div class="toolbar__metric">
+      <span>Total</span>
+      <strong>{{ filteredSuppliers.length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-wrap" *ngIf="!loading">
+    <div class="empty-state" *ngIf="filteredSuppliers.length === 0">
+      <span class="empty-state__icon">o</span>
+      <span>No hay proveedores{{ searchQuery ? ' que coincidan con la busqueda' : ' registrados' }}</span>
+    </div>
+
+    <table class="data-table" *ngIf="filteredSuppliers.length > 0">
+      <thead>
+        <tr>
+          <th>Proveedor</th>
+          <th>CUIT / RUT</th>
+          <th>Telefono</th>
+          <th>Email</th>
+          <th>Estado</th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s of filteredSuppliers">
+          <td class="cell-name">
+            <span class="supplier-avatar">{{ s.name.slice(0, 1).toUpperCase() }}</span>
+            <span>{{ s.name }}</span>
+          </td>
+          <td class="cell-mono">{{ s.taxId || '-' }}</td>
+          <td class="cell-mono">{{ s.phone || '-' }}</td>
+          <td class="cell-email">{{ s.email || '-' }}</td>
+          <td>
+            <span class="chip" [class.chip--active]="s.isActive" [class.chip--inactive]="!s.isActive">
+              {{ s.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="cell-actions">
+            <button class="action-btn" type="button" (click)="openEdit(s)" title="Editar">Editar</button>
+            <button
+              class="action-btn action-btn--danger"
+              type="button"
+              *ngIf="s.isActive"
+              [disabled]="deactivating === s.id"
+              (click)="confirmDeactivate(s)"
+              title="Desactivar">
+              {{ deactivating === s.id ? '...' : 'Desactivar' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <span>Cargando proveedores...</span>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()"></div>
+<div class="modal" *ngIf="showModal" role="dialog" aria-modal="true">
+  <div class="modal__header">
+    <div>
+      <span class="modal__eyebrow">{{ editingSupplier ? 'Edicion' : 'Alta' }}</span>
+      <h2 class="modal__title">{{ editingSupplier ? 'Editar proveedor' : 'Nuevo proveedor' }}</h2>
+    </div>
+    <button class="modal__close" type="button" (click)="closeModal()" aria-label="Cerrar">x</button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="modal__body">
+      <div class="field" [class.field--error]="isInvalid('name')">
+        <label class="field__label">Nombre <span class="required">*</span></label>
+        <input class="field__input" type="text" formControlName="name" placeholder="Distribuidora XYZ" />
+        <span class="field__error" *ngIf="isInvalid('name')">El nombre es requerido</span>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label class="field__label">CUIT / RUT</label>
+          <input class="field__input" type="text" formControlName="taxId" placeholder="20-12345678-9" />
+        </div>
+        <div class="field">
+          <label class="field__label">Telefono</label>
+          <input class="field__input" type="text" formControlName="phone" placeholder="+54 11 1234-5678" />
+        </div>
+      </div>
+
+      <div class="field" [class.field--error]="isInvalid('email')">
+        <label class="field__label">Email</label>
+        <input class="field__input" type="email" formControlName="email" placeholder="contacto@proveedor.com" />
+        <span class="field__error" *ngIf="isInvalid('email')">Email invalido</span>
+      </div>
+
+      <div class="field">
+        <label class="field__label">Notas</label>
+        <textarea class="field__input" formControlName="notes" placeholder="Observaciones adicionales..." rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="modal__footer">
+      <button class="btn-ghost" type="button" (click)="closeModal()">Cancelar</button>
+      <button class="btn-primary" type="submit" [disabled]="saving">
+        {{ saving ? 'Guardando...' : (editingSupplier ? 'Guardar cambios' : 'Crear proveedor') }}
+      </button>
+    </div>
+  </form>
+</div>

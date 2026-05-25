@@ -1,0 +1,212 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <div class="page__eyebrow">_ COMPRAS</div>
+      <h1 class="page__title">Registrar compra</h1>
+    </div>
+    <a class="back-link" routerLink="/purchases">&larr; Volver al listado</a>
+  </div>
+
+  <form [formGroup]="headerForm" (ngSubmit)="submit()" novalidate>
+    <div class="purchase-layout">
+      <div class="form-grid">
+        <div class="section-card">
+          <div class="section-card__head">
+            <span class="section-label">Informacion de la compra</span>
+            <span class="section-hint">Datos base</span>
+          </div>
+
+          <div class="fields-row">
+            <div class="field" [class.field--error]="isHeaderInvalid('branchId')">
+              <label class="field__label">Sucursal <span class="required">*</span></label>
+              <app-searchable-select
+                formControlName="branchId"
+                [options]="branchOptions"
+                placeholder="Seleccionar sucursal"
+                searchPlaceholder="Buscar sucursal...">
+              </app-searchable-select>
+              <span class="field__error" *ngIf="isHeaderInvalid('branchId')">Requerida</span>
+            </div>
+
+            <div class="field">
+              <label class="field__label">Proveedor</label>
+              <app-searchable-select
+                formControlName="supplierId"
+                [options]="supplierOptions"
+                placeholder="Sin proveedor"
+                searchPlaceholder="Buscar proveedor..."
+                [allowClear]="true"
+                clearLabel="Sin proveedor"
+                clearValue="">
+              </app-searchable-select>
+            </div>
+
+            <div class="field">
+              <label class="field__label">Nro. Factura</label>
+              <input class="field__input" type="text" formControlName="invoiceNumber" placeholder="0001-00012345" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Notas</label>
+            <textarea class="field__input" formControlName="notes" rows="2" placeholder="Observaciones de la compra..."></textarea>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-card__head">
+            <div>
+              <span class="section-label">Productos</span>
+              <span class="section-subcopy">Enfoca el buscador para ver productos disponibles o escribi para filtrar.</span>
+            </div>
+            <span class="section-hint">{{ details.length }} item{{ details.length === 1 ? '' : 's' }}</span>
+          </div>
+
+          <div class="product-search-wrap">
+            <input
+              class="field__input product-search-input"
+              type="text"
+              placeholder="Buscar producto por nombre, codigo o SKU..."
+              [(ngModel)]="productSearch"
+              [ngModelOptions]="{ standalone: true }"
+              (input)="onProductSearchInput()"
+              (focus)="openProductResults()"
+              (blur)="closeProductResults()"
+              (keydown.escape)="closeProductResults()"
+              autocomplete="off" />
+
+            <div class="product-results" *ngIf="showProductResults">
+              <button
+                class="product-result-item"
+                type="button"
+                *ngFor="let p of productSearchResults"
+                (mousedown)="$event.preventDefault()"
+                (click)="selectProduct(p)">
+                <span class="product-result-main">
+                  <span class="product-result-name">{{ p.name }}</span>
+                  <span class="product-result-code">{{ p.code }}<ng-container *ngIf="p.sku"> · {{ p.sku }}</ng-container></span>
+                </span>
+                <span class="product-result-cost">${{ formatCurrency(p.costPrice ?? 0) }}</span>
+                <span class="product-result-add">Agregar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="detail-empty" *ngIf="details.length === 0">
+            Busca o selecciona un producto para empezar la compra.
+          </div>
+
+          <div class="detail-table-wrap" *ngIf="details.length > 0">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="col-num">Cantidad</th>
+                  <th class="col-num">Costo unit.</th>
+                  <th class="col-num">Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let d of details; let i = index">
+                  <td class="cell-product">{{ d.productName }}</td>
+                  <td class="col-num">
+                    <input
+                      class="num-input"
+                      type="number"
+                      min="1"
+                      [(ngModel)]="d.quantity"
+                      [ngModelOptions]="{ standalone: true }" />
+                  </td>
+                  <td class="col-num">
+                    <input
+                      class="num-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="d.unitCost"
+                      [ngModelOptions]="{ standalone: true }" />
+                  </td>
+                  <td class="col-num cell-total">${{ formatCurrency(d.quantity * d.unitCost) }}</td>
+                  <td class="col-remove">
+                    <button class="btn-remove" type="button" (click)="removeDetail(i)" title="Quitar">x</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="section-card section-card--payments">
+          <div class="section-card__head">
+            <div>
+              <span class="section-label">Pagos</span>
+              <span class="section-subcopy">Carga uno o varios pagos sin perder el saldo de vista.</span>
+            </div>
+            <button class="btn-add" type="button" (click)="addPayment()">+ Agregar pago</button>
+          </div>
+
+          <div class="payment-empty" *ngIf="payments.length === 0">
+            La compra quedara pendiente de pago. Podes agregar pagos ahora o mas adelante.
+          </div>
+
+          <div class="payment-line" *ngFor="let p of payments; let i = index">
+            <div class="payment-line__head">
+              <span>Pago {{ i + 1 }}</span>
+              <button class="btn-remove-payment" type="button" (click)="removePayment(i)" title="Quitar">x</button>
+            </div>
+
+            <div class="payment-line__fields">
+              <div class="field">
+                <label class="field__label">Metodo</label>
+                <app-searchable-select
+                  [(ngModel)]="p.method"
+                  [ngModelOptions]="{ standalone: true }"
+                  [options]="paymentMethodOptions"
+                  placeholder="Metodo"
+                  searchPlaceholder="Buscar metodo..."
+                  [compact]="true">
+                </app-searchable-select>
+              </div>
+              <div class="field">
+                <label class="field__label">Monto</label>
+                <input class="field__input" type="number" min="0" step="0.01" [(ngModel)]="p.amount" [ngModelOptions]="{ standalone: true }" />
+              </div>
+              <div class="field">
+                <label class="field__label">Fecha</label>
+                <input class="field__input" type="date" [(ngModel)]="p.date" [ngModelOptions]="{ standalone: true }" />
+              </div>
+              <div class="field field--wide">
+                <label class="field__label">Referencia</label>
+                <input class="field__input" type="text" placeholder="Nro. transferencia, cheque..." [(ngModel)]="p.reference" [ngModelOptions]="{ standalone: true }" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-kicker">Resumen</div>
+        <div class="summary-row">
+          <span class="summary-label">Total compra</span>
+          <span class="summary-value">${{ formatCurrency(totalAmount) }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Total pagado</span>
+          <span class="summary-value summary-value--paid">${{ formatCurrency(totalPaid) }}</span>
+        </div>
+        <div class="summary-row summary-row--pending">
+          <span class="summary-label">Saldo pendiente</span>
+          <span class="summary-value summary-value--pending">${{ formatCurrency(pendingAmount) }}</span>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-ghost" type="button" routerLink="/purchases">Cancelar</button>
+          <button class="btn-primary" type="submit" [disabled]="submitting || details.length === 0">
+            {{ submitting ? 'Registrando...' : 'Registrar compra' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

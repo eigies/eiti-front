@@ -22,6 +22,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   salesMenuOpen = false;
   clientsMenuOpen = false;
   cashMenuOpen = false;
+  purchasesMenuOpen = false;
 
   private readonly destroyRef = inject(DestroyRef);
 
@@ -36,6 +37,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.salesMenuOpen = this.router.url.startsWith('/sales');
     this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
     this.cashMenuOpen = this.router.url.startsWith('/cash');
+    this.purchasesMenuOpen = this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
 
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -48,6 +50,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (event.url.startsWith('/cash')) {
           this.cashMenuOpen = true;
+        }
+        if (event.url.startsWith('/purchases') || event.url.startsWith('/suppliers')) {
+          this.purchasesMenuOpen = true;
         }
       }
     });
@@ -77,6 +82,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (this.sidebarOpen) {
       this.salesMenuOpen = this.router.url.startsWith('/sales');
       this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
+      this.purchasesMenuOpen = this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
     }
     document.body.classList.toggle('sidebar-open', this.sidebarOpen);
   }
@@ -98,6 +104,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.cashMenuOpen = !this.cashMenuOpen;
   }
 
+  togglePurchasesMenu(): void {
+    this.purchasesMenuOpen = !this.purchasesMenuOpen;
+  }
+
   get isCashRouteActive(): boolean {
     return this.router.url.startsWith('/cash');
   }
@@ -108,6 +118,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   get isClientsRouteActive(): boolean {
     return this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
+  }
+
+  get isPurchasesRouteActive(): boolean {
+    return this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
   }
 
   @HostListener('document:keydown.escape')
