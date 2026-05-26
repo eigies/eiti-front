@@ -424,9 +424,18 @@ textarea.field__input {
 
 .payment-line__fields {
   display: grid;
-  grid-template-columns: 150px 130px 145px minmax(0, 1fr);
+  grid-template-columns: 150px 130px 140px 130px 130px minmax(0, 1fr);
   gap: .7rem;
   align-items: end;
+}
+
+.field__select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .75rem center;
+  padding-right: 2rem;
+  cursor: pointer;
 }
 
 .summary-card {

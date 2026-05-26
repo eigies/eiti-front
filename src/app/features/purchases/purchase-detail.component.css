@@ -181,6 +181,8 @@
 }
 
 .section-card--payment {
+  position: relative;
+  z-index: 1;
   margin-bottom: .9rem;
   border-color: color-mix(in srgb, var(--amber) 24%, var(--border));
   background:
@@ -216,6 +218,38 @@
   grid-template-columns: minmax(170px, 1fr) minmax(130px, .75fr) minmax(140px, .75fr) minmax(170px, 1fr) minmax(190px, 1.15fr) auto;
   gap: .72rem;
   align-items: end;
+}
+
+.tax-row {
+  display: grid;
+  grid-template-columns: 160px 160px 1fr;
+  gap: .72rem;
+  align-items: end;
+  padding-top: .65rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  grid-column: 1 / -1;
+}
+
+.field__select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .75rem center;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.tax-calc {
+  display: block;
+  color: var(--amber);
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  padding: .55rem 0;
+  line-height: 1.5;
+}
+
+.field--tax-hint .field__label {
+  opacity: .7;
 }
 
 .field {
@@ -508,5 +542,13 @@
 
   .section-card {
     padding: .9rem;
+  }
+
+  .tax-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .field--tax-hint {
+    grid-column: span 2;
   }
 }

@@ -26,6 +26,8 @@ interface DraftPayment {
   date: string;
   reference: string;
   notes: string;
+  ivaPct: string;              // '' = Exento, '10.5', '21'
+  ingresosBrutosPct: number | null;
 }
 
 const PAYMENT_METHODS = [
@@ -169,7 +171,9 @@ export class PurchaseCreateComponent implements OnInit {
       amount: 0,
       date: this.todayIso(),
       reference: '',
-      notes: ''
+      notes: '',
+      ivaPct: '',
+      ingresosBrutosPct: null
     });
     this.cdr.markForCheck();
   }
@@ -216,7 +220,9 @@ export class PurchaseCreateComponent implements OnInit {
         amount: Number(p.amount),
         date: p.date,
         reference: p.reference.trim() || null,
-        notes: p.notes.trim() || null
+        notes: p.notes.trim() || null,
+        ivaPct: p.ivaPct ? +p.ivaPct : null,
+        ingresosBrutosPct: p.ingresosBrutosPct
       }));
 
     const req: CreatePurchaseRequest = {

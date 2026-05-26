@@ -176,6 +176,27 @@
                 <label class="field__label">Fecha</label>
                 <input class="field__input" type="date" [(ngModel)]="p.date" [ngModelOptions]="{ standalone: true }" />
               </div>
+              <div class="field">
+                <label class="field__label">IVA</label>
+                <select class="field__input field__select"
+                  [(ngModel)]="p.ivaPct"
+                  [ngModelOptions]="{ standalone: true }">
+                  <option value="">Exento</option>
+                  <option value="10.5">10.5%</option>
+                  <option value="21">21%</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field__label">IIBB %</label>
+                <input class="field__input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  [ngModel]="p.ingresosBrutosPct"
+                  (ngModelChange)="p.ingresosBrutosPct = $event ?? null"
+                  [ngModelOptions]="{ standalone: true }" />
+              </div>
               <div class="field field--wide">
                 <label class="field__label">Referencia</label>
                 <input class="field__input" type="text" placeholder="Nro. transferencia, cheque..." [(ngModel)]="p.reference" [ngModelOptions]="{ standalone: true }" />

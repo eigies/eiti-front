@@ -16,6 +16,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SaleService } from '../../core/services/sale.service';
 import { SaleByIdResponse, SaleResponse } from '../../core/models/sale.models';
+import { PurchaseService } from '../../core/services/purchase.service';
+import { PurchaseDetailResponse } from '../../core/models/purchase.models';
 import { SALE_PAYMENT_METHODS, paymentMethodSummary } from '../../core/models/sale-payment.models';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
@@ -328,8 +330,8 @@ type CashSessionView = {
                   </thead>
                   <tbody>
                     <tr *ngFor="let row of getDisplayRows(item.session)"
-                      [class.history-table__row--clickable]="(row.typeName === 'CuentaCorrienteIncome' || row.typeName === 'SaleCancellation') && row.referenceId"
-                      (click)="row.typeName === 'CuentaCorrienteIncome' && row.referenceId ? openCcPopup(row.referenceId) : row.typeName === 'SaleCancellation' && row.referenceId ? openCancelDetailPopup(row) : null">
+                      [class.history-table__row--clickable]="(row.typeName === 'CuentaCorrienteIncome' || row.typeName === 'SaleCancellation' || row.typeName === 'PurchaseExpense') && row.referenceId"
+                      (click)="row.typeName === 'CuentaCorrienteIncome' && row.referenceId ? openCcPopup(row.referenceId) : row.typeName === 'SaleCancellation' && row.referenceId ? openCancelDetailPopup(row) : row.typeName === 'PurchaseExpense' && row.referenceId ? openPurchasePopup(row.referenceId) : null">
                       <td>{{ row.occurredAt | date: 'short' }}</td>
                       <td><span class="badge badge--type" [attr.data-type]="row.typeName">{{ translateType(row.typeName) }}</span></td>
                       <td><span class="badge" [class.badge--in]="row.directionName === 'In'" [class.badge--out]="row.directionName === 'Out'">{{ translateDirection(row.directionName) }}</span></td>
@@ -549,6 +551,97 @@ type CashSessionView = {
       </div>
     </div>
 
+    <!-- Purchase Popup -->
+    <div class="modal-backdrop" *ngIf="purchasePopupId" (click)="closePurchasePopup()">
+      <div class="modal modal--purchase-popup" (click)="$event.stopPropagation()">
+        <div class="modal__head modal__head--purchase-popup">
+          <div class="purchase-popup-head">
+            <span class="purchase-popup-head__eyebrow">Movimiento vinculado</span>
+            <span class="modal__title">Detalle compra proveedor</span>
+          </div>
+          <button class="modal__close" type="button" (click)="closePurchasePopup()">&#x2715;</button>
+        </div>
+        <div class="modal__body modal__body--purchase-popup" *ngIf="purchasePopupLoading">
+          <div class="purchase-popup-loading">
+            <span class="purchase-popup-loading__dot" aria-hidden="true"></span>
+            <p>Cargando detalle de la compra…</p>
+          </div>
+        </div>
+        <ng-container *ngIf="!purchasePopupLoading && purchasePopupData as purchase">
+          <div class="purchase-popup-body">
+            <div class="purchase-popup-hero">
+              <div class="purchase-popup-header__row">
+                <span class="purchase-popup-header__code">{{ purchase.code }}</span>
+                <span class="badge"
+                  [class.badge--in]="purchase.status === 2"
+                  [class.badge--out]="purchase.status === 3"
+                  [class.badge--type]="purchase.status === 1">
+                  {{ purchase.statusName }}
+                </span>
+              </div>
+              <div class="purchase-popup-header__meta">
+                <span>{{ purchase.supplierName || 'Sin proveedor' }}</span>
+                <span *ngIf="purchase.invoiceNumber">Factura: {{ purchase.invoiceNumber }}</span>
+                <span>{{ purchase.createdAt | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+
+            <div class="purchase-popup-totals">
+              <div class="purchase-popup-totals__card">
+                <span class="purchase-popup-totals__label">Total compra</span>
+                <strong>&#36;{{ purchase.totalAmount | number:'1.2-2' }}</strong>
+              </div>
+              <div class="purchase-popup-totals__card purchase-popup-totals__card--paid">
+                <span class="purchase-popup-totals__label">Pagado</span>
+                <strong>&#36;{{ purchase.totalPaid | number:'1.2-2' }}</strong>
+              </div>
+              <div class="purchase-popup-totals__card purchase-popup-totals__card--pending">
+                <span class="purchase-popup-totals__label">Pendiente</span>
+                <strong>&#36;{{ purchase.pendingAmount | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+
+            <div class="purchase-popup-products">
+              <div class="purchase-popup-section-title">Productos</div>
+              <div class="purchase-popup-products__table">
+                <div class="purchase-popup-products__head">
+                  <span>Producto</span>
+                  <span>Cantidad</span>
+                  <span>Costo unit.</span>
+                  <span>Subtotal</span>
+                </div>
+                <div *ngFor="let d of purchase.details" class="purchase-popup-products__row">
+                  <span>{{ d.productName }}</span>
+                  <span>{{ d.quantity }}</span>
+                  <span>&#36;{{ d.unitCost | number:'1.2-2' }}</span>
+                  <span>&#36;{{ d.totalAmount | number:'1.2-2' }}</span>
+                </div>
+                <div *ngIf="purchase.details.length === 0" class="purchase-popup-products__empty">Sin productos registrados</div>
+              </div>
+            </div>
+
+            <div class="purchase-popup-payments">
+              <div class="purchase-popup-section-title">Pagos registrados</div>
+              <div *ngIf="purchase.payments.length === 0" class="purchase-popup-payments__empty">Sin pagos registrados</div>
+              <div *ngFor="let p of purchase.payments" class="purchase-popup-payment">
+                <div class="purchase-popup-payment__row">
+                  <div class="purchase-popup-payment__copy">
+                    <span class="purchase-popup-payment__date">{{ p.date | date:'dd/MM/yyyy' }}</span>
+                    <span class="purchase-popup-payment__method">{{ purchasePaymentMethodLabel(p.method) }}</span>
+                    <span class="purchase-popup-payment__taxes" *ngIf="p.ivaPct != null || p.ingresosBrutosPct != null">
+                      <span *ngIf="p.ivaPct != null">IVA {{ p.ivaPct }}% (&#36;{{ p.ivaAmount | number:'1.2-2' }})</span>
+                      <span *ngIf="p.ingresosBrutosPct != null"> · IIBB {{ p.ingresosBrutosPct }}% (&#36;{{ p.ingresosBrutosAmount | number:'1.2-2' }})</span>
+                    </span>
+                  </div>
+                  <strong class="purchase-popup-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
     <!-- Cancel Detail Popup -->
     <div class="modal-backdrop" *ngIf="cancelDetailPopupRow" (click)="closeCancelDetailPopup()">
       <div class="modal modal--cancel-detail-popup" (click)="$event.stopPropagation()">
@@ -733,7 +826,7 @@ type CashSessionView = {
     .badge--type[data-type="CuentaCorrienteIncome"]{background:color-mix(in srgb,#14b8a6 12%, transparent);color:#14b8a6;border:1px solid color-mix(in srgb,#14b8a6 30%, transparent)}
     .badge--type[data-type="CuentaCorrienteCancellation"]{background:color-mix(in srgb,#f97316 12%, transparent);color:#f97316;border:1px solid color-mix(in srgb,#f97316 30%, transparent)}
     .badge--type[data-type="PurchaseExpense"]{background:color-mix(in srgb,#a855f7 12%, transparent);color:#a855f7;border:1px solid color-mix(in srgb,#a855f7 30%, transparent)}
-    .history-table__row--clickable{cursor:pointer}.history-table__row--clickable:hover{background:color-mix(in srgb,#14b8a6 8%, transparent)}
+    .history-table__row--clickable{cursor:pointer}.history-table__row--clickable:hover{background:color-mix(in srgb,#14b8a6 8%, transparent)}.history-table__row--clickable[data-type-purchase]:hover{background:color-mix(in srgb,#a855f7 8%, transparent)}
     .sale-code-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--amber);letter-spacing:.04em}
     .username-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim);letter-spacing:.04em}
     .modal--cc-popup{max-width:620px;background:
@@ -750,6 +843,45 @@ type CashSessionView = {
     .cc-popup-hero{display:grid;gap:.38rem;padding:1rem 1.05rem;border:1px solid color-mix(in srgb,#14b8a6 18%, var(--border));border-radius:18px;background:
       linear-gradient(180deg,color-mix(in srgb,#14b8a6 8%, transparent),transparent 88%),
       color-mix(in srgb,var(--bg) 74%, transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,white 8%, transparent)}
+    .modal--purchase-popup{max-width:640px;background:
+      radial-gradient(circle at top right,color-mix(in srgb,#a855f7 10%, transparent),transparent 34%),
+      linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 98%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%)}
+    .modal__head--purchase-popup{align-items:flex-start;padding-bottom:1rem}
+    .purchase-popup-head{display:grid;gap:.28rem}
+    .purchase-popup-head__eyebrow{color:color-mix(in srgb,#a855f7 72%, var(--text-dim) 28%);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase}
+    .modal__body--purchase-popup{padding:1.35rem}
+    .purchase-popup-loading{display:flex;align-items:center;gap:.7rem;padding:.95rem 1rem;border:1px dashed color-mix(in srgb,var(--border) 88%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 72%, transparent)}
+    .purchase-popup-loading p{margin:0;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.76rem}
+    .purchase-popup-loading__dot{width:.7rem;height:.7rem;border-radius:999px;background:color-mix(in srgb,#a855f7 72%, transparent);box-shadow:0 0 0 6px color-mix(in srgb,#a855f7 12%, transparent)}
+    .purchase-popup-body{display:grid;gap:1rem;padding:1.35rem}
+    .purchase-popup-hero{display:grid;gap:.38rem;padding:1rem 1.05rem;border:1px solid color-mix(in srgb,#a855f7 18%, var(--border));border-radius:18px;background:
+      linear-gradient(180deg,color-mix(in srgb,#a855f7 8%, transparent),transparent 88%),
+      color-mix(in srgb,var(--bg) 74%, transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,white 8%, transparent)}
+    .purchase-popup-header__row{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .purchase-popup-header__code{font-family:'DM Mono',monospace;font-weight:600;font-size:1rem;color:var(--text)}
+    .purchase-popup-header__meta{display:flex;gap:1rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.76rem;color:var(--text-dim)}
+    .purchase-popup-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}
+    .purchase-popup-totals__card{display:grid;gap:.24rem;padding:.95rem 1rem;border:1px solid color-mix(in srgb,var(--border) 84%, transparent);border-radius:16px;background:color-mix(in srgb,var(--bg) 76%, transparent)}
+    .purchase-popup-totals__card--paid{border-color:color-mix(in srgb,#22c55e 18%, var(--border));background:color-mix(in srgb,#22c55e 6%, transparent)}
+    .purchase-popup-totals__card--pending{border-color:color-mix(in srgb,var(--amber) 20%, var(--border));background:color-mix(in srgb,var(--amber) 8%, transparent)}
+    .purchase-popup-totals__label{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase}
+    .purchase-popup-totals__card strong{color:var(--text);font-family:'DM Mono',monospace;font-size:1.08rem}
+    .purchase-popup-section-title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
+    .purchase-popup-products__table{display:grid;gap:.3rem;margin-top:.4rem}
+    .purchase-popup-products__head,.purchase-popup-products__row{display:grid;grid-template-columns:minmax(0,2fr) 80px 110px 110px;gap:.5rem;padding:.55rem .8rem;font-family:'DM Mono',monospace;font-size:.72rem}
+    .purchase-popup-products__head{background:color-mix(in srgb,var(--bg-panel) 88%, transparent);border:1px solid color-mix(in srgb,var(--border) 84%, transparent);border-radius:12px 12px 0 0;color:var(--text-dim);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase}
+    .purchase-popup-products__row{border:1px solid color-mix(in srgb,var(--border) 72%, transparent);border-top:none;color:var(--text);background:color-mix(in srgb,var(--bg) 74%, transparent)}
+    .purchase-popup-products__row:last-of-type{border-radius:0 0 12px 12px}
+    .purchase-popup-products__empty{padding:.9rem 1rem;border:1px dashed color-mix(in srgb,var(--border) 80%, transparent);border-radius:12px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.74rem;margin-top:.4rem}
+    .purchase-popup-payments{display:grid;gap:.7rem}
+    .purchase-popup-payments__empty{padding:.95rem 1rem;border:1px dashed color-mix(in srgb,var(--border) 88%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 72%, transparent);font-family:'DM Mono',monospace;font-size:.76rem;color:var(--text-soft)}
+    .purchase-popup-payment{padding:.8rem .9rem;border:1px solid color-mix(in srgb,#a855f7 14%, var(--border));border-radius:14px;background:color-mix(in srgb,var(--bg) 74%, transparent)}
+    .purchase-popup-payment__row{display:flex;align-items:flex-start;gap:.85rem}
+    .purchase-popup-payment__copy{display:grid;gap:.14rem;flex:1}
+    .purchase-popup-payment__date{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text-dim)}
+    .purchase-popup-payment__method{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--text)}
+    .purchase-popup-payment__taxes{font-family:'DM Mono',monospace;font-size:.68rem;color:color-mix(in srgb,#a855f7 72%, var(--text-dim) 28%)}
+    .purchase-popup-payment__amount{font-family:'DM Mono',monospace;font-weight:600;font-size:.86rem;color:var(--text);white-space:nowrap}
     .modal--cancel-detail-popup{max-width:560px;background:
       radial-gradient(circle at top left,color-mix(in srgb,var(--danger) 10%, transparent),transparent 34%),
       linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 98%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%)}
@@ -936,6 +1068,11 @@ type CashSessionView = {
       .cc-popup-header__row,.cc-popup-header__meta,.cc-popup-payment__row{display:grid;gap:.35rem}
       .cc-popup-totals{grid-template-columns:1fr}
       .cc-popup-payment__amount{margin-left:0}
+      .purchase-popup-body,.modal__body--purchase-popup{padding:1rem}
+      .purchase-popup-header__row,.purchase-popup-header__meta{display:grid;gap:.35rem}
+      .purchase-popup-totals{grid-template-columns:1fr}
+      .purchase-popup-products__head,.purchase-popup-products__row{grid-template-columns:minmax(0,1fr) 70px;font-size:.7rem}
+      .purchase-popup-products__head span:nth-child(3),.purchase-popup-products__head span:nth-child(4),.purchase-popup-products__row span:nth-child(3),.purchase-popup-products__row span:nth-child(4){display:none}
       .pending-close-sale__row,.pending-close-sale__meta,.pending-close-total{display:grid;gap:.35rem}
       .cancel-detail-hero,.cancel-detail-payment,.cancel-detail-total,.cancel-detail-loading{padding:.9rem}
       .cancel-detail-payment{align-items:flex-start;flex-direction:column}
@@ -970,6 +1107,9 @@ export class CashComponent implements OnInit {
     ccPopupPayments: import('../../core/models/sale.models').CcPaymentResponse[] = [];
     ccPopupLoading = false;
     cancelDetailPopupRow: { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null } | null = null;
+    purchasePopupId: string | null = null;
+    purchasePopupData: PurchaseDetailResponse | null = null;
+    purchasePopupLoading = false;
     pendingCloseSales: SaleResponse[] = [];
     historyFrom = '';
     historyTo = '';
@@ -984,6 +1124,7 @@ export class CashComponent implements OnInit {
         private cashService: CashService,
         private saleService: SaleService,
         private bankService: BankService,
+        private purchaseService: PurchaseService,
         private toast: ToastService,
         private onboardingService: OnboardingService,
         private router: Router,
@@ -2260,6 +2401,23 @@ export class CashComponent implements OnInit {
 
     paymentMethodLabel(idPaymentMethod: number): string {
         return SALE_PAYMENT_METHODS.find(m => m.id === idPaymentMethod)?.label ?? 'Otro';
+    }
+
+    openPurchasePopup(purchaseId: string): void {
+        this.purchasePopupId = purchaseId;
+        this.purchasePopupData = null;
+        this.purchasePopupLoading = true;
+        this.purchaseService.getPurchaseById(purchaseId).subscribe({
+            next: data => { this.purchasePopupData = data; this.purchasePopupLoading = false; },
+            error: () => { this.purchasePopupLoading = false; this.toast.error('No se pudo cargar el detalle de la compra'); }
+        });
+    }
+
+    closePurchasePopup(): void { this.purchasePopupId = null; this.purchasePopupData = null; }
+
+    purchasePaymentMethodLabel(method: number): string {
+        const map: Record<number, string> = { 1: 'Efectivo', 2: 'Transferencia', 3: 'Cheque', 4: 'Otro' };
+        return map[method] ?? 'Otro';
     }
 
     private refreshOnboarding(force = false): void {
