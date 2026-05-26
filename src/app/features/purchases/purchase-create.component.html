@@ -206,6 +206,14 @@
           <span class="summary-label">Total compra</span>
           <span class="summary-value">${{ formatCurrency(totalAmount) }}</span>
         </div>
+        <div class="summary-row summary-row--tax" *ngIf="ivaAmount !== null">
+          <span class="summary-label">IVA {{ headerForm.get('ivaPct')?.value }}%</span>
+          <span class="summary-value summary-value--tax">${{ formatCurrency(ivaAmount!) }}</span>
+        </div>
+        <div class="summary-row summary-row--tax" *ngIf="iibbAmount !== null">
+          <span class="summary-label">IIBB {{ headerForm.get('ingresosBrutosPct')?.value }}%</span>
+          <span class="summary-value summary-value--tax">${{ formatCurrency(iibbAmount!) }}</span>
+        </div>
         <div class="summary-row">
           <span class="summary-label">Total pagado</span>
           <span class="summary-value summary-value--paid">${{ formatCurrency(totalPaid) }}</span>

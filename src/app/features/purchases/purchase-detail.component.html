@@ -16,8 +16,8 @@
         </div>
         <div class="meta-row">
           <span class="meta-item">Fecha: {{ formatDate(purchase.createdAt) }}</span>
-          <span class="meta-item" *ngIf="purchase.ivaPct !== null">IVA {{ purchase.ivaPct }}%</span>
-          <span class="meta-item" *ngIf="purchase.ingresosBrutosPct !== null">IIBB {{ purchase.ingresosBrutosPct }}%</span>
+          <span class="meta-item" *ngIf="purchase.ivaPct != null">IVA {{ purchase.ivaPct }}%</span>
+          <span class="meta-item" *ngIf="purchase.ingresosBrutosPct != null">IIBB {{ purchase.ingresosBrutosPct }}%</span>
           <span class="meta-item" *ngIf="purchase.notes">{{ purchase.notes }}</span>
         </div>
       </div>
@@ -39,8 +39,17 @@
 
     <div class="summary-grid">
       <div class="summary-card">
-        <span class="summary-label">Total compra</span>
+        <span class="summary-label">Total neto</span>
         <strong class="summary-value">${{ formatCurrency(purchase.totalAmount) }}</strong>
+        <small *ngIf="purchase.taxAmount > 0">
+          <ng-container *ngIf="purchase.ivaPct != null">IVA {{ purchase.ivaPct }}%: ${{ formatCurrency(purchase.totalAmount * purchase.ivaPct / 100) }}</ng-container>
+          <ng-container *ngIf="purchase.ivaPct != null && purchase.ingresosBrutosPct != null"> · </ng-container>
+          <ng-container *ngIf="purchase.ingresosBrutosPct != null">IIBB {{ purchase.ingresosBrutosPct }}%: ${{ formatCurrency(purchase.totalAmount * purchase.ingresosBrutosPct / 100) }}</ng-container>
+        </small>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Total c/ impuestos</span>
+        <strong class="summary-value">${{ formatCurrency(purchase.grandTotal) }}</strong>
       </div>
       <div class="summary-card summary-card--paid">
         <span class="summary-label">Total pagado</span>

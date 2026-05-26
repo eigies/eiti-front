@@ -477,6 +477,8 @@ textarea.field__input {
 
 .summary-value--paid { color: var(--success); }
 .summary-value--pending { color: var(--amber); font-size: 1.22rem; }
+.summary-row--tax { padding: .45rem 0; }
+.summary-value--tax { color: var(--text-soft); font-size: .9rem; }
 
 .form-actions {
   display: grid;

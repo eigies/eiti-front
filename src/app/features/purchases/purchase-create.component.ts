@@ -189,8 +189,22 @@ export class PurchaseCreateComponent implements OnInit {
     return this.payments.reduce((s, p) => s + Number(p.amount), 0);
   }
 
+  get grandTotal(): number {
+    return this.totalAmount + (this.ivaAmount ?? 0) + (this.iibbAmount ?? 0);
+  }
+
   get pendingAmount(): number {
-    return Math.max(0, this.totalAmount - this.totalPaid);
+    return Math.max(0, this.grandTotal - this.totalPaid);
+  }
+
+  get ivaAmount(): number | null {
+    const pct = this.headerForm.get('ivaPct')?.value;
+    return pct ? Math.round(this.totalAmount * +pct / 100 * 100) / 100 : null;
+  }
+
+  get iibbAmount(): number | null {
+    const pct = this.headerForm.get('ingresosBrutosPct')?.value;
+    return pct != null && pct !== '' ? Math.round(this.totalAmount * +pct / 100 * 100) / 100 : null;
   }
 
   isHeaderInvalid(field: string): boolean {
@@ -227,7 +241,7 @@ export class PurchaseCreateComponent implements OnInit {
       invoiceNumber: raw.invoiceNumber.trim() || null,
       notes: raw.notes.trim() || null,
       ivaPct: raw.ivaPct ? +raw.ivaPct : null,
-      ingresosBrutosPct: raw.ingresosBrutosPct ?? null,
+      ingresosBrutosPct: raw.ingresosBrutosPct != null && raw.ingresosBrutosPct !== '' ? +raw.ingresosBrutosPct : null,
       details: detailReqs,
       payments: paymentReqs
     };

@@ -17,6 +17,8 @@ export interface PurchaseListItem {
   invoiceNumber: string | null;
   status: PurchaseStatus;
   totalAmount: number;
+  taxAmount: number;
+  grandTotal: number;
   totalPaid: number;
   pendingAmount: number;
   createdAt: string;
@@ -55,6 +57,8 @@ export interface PurchaseDetailResponse {
   status: PurchaseStatus;
   statusName: string;
   totalAmount: number;
+  taxAmount: number;
+  grandTotal: number;
   totalPaid: number;
   pendingAmount: number;
   createdAt: string;
