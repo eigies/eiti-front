@@ -583,6 +583,8 @@ type CashSessionView = {
                 <span>{{ purchase.supplierName || 'Sin proveedor' }}</span>
                 <span *ngIf="purchase.invoiceNumber">Factura: {{ purchase.invoiceNumber }}</span>
                 <span>{{ purchase.createdAt | date:'dd/MM/yyyy' }}</span>
+                <span *ngIf="purchase.ivaPct != null">IVA {{ purchase.ivaPct }}%</span>
+                <span *ngIf="purchase.ingresosBrutosPct != null">IIBB {{ purchase.ingresosBrutosPct }}%</span>
               </div>
             </div>
 
@@ -628,10 +630,6 @@ type CashSessionView = {
                   <div class="purchase-popup-payment__copy">
                     <span class="purchase-popup-payment__date">{{ p.date | date:'dd/MM/yyyy' }}</span>
                     <span class="purchase-popup-payment__method">{{ purchasePaymentMethodLabel(p.method) }}</span>
-                    <span class="purchase-popup-payment__taxes" *ngIf="p.ivaPct != null || p.ingresosBrutosPct != null">
-                      <span *ngIf="p.ivaPct != null">IVA {{ p.ivaPct }}% (&#36;{{ p.ivaAmount | number:'1.2-2' }})</span>
-                      <span *ngIf="p.ingresosBrutosPct != null"> · IIBB {{ p.ingresosBrutosPct }}% (&#36;{{ p.ingresosBrutosAmount | number:'1.2-2' }})</span>
-                    </span>
                   </div>
                   <strong class="purchase-popup-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</strong>
                 </div>

@@ -35,8 +35,6 @@ export class PurchaseDetailComponent implements OnInit {
   newPaymentDate = '';
   newPaymentReference = '';
   newPaymentNotes = '';
-  newPaymentIvaPct: string = '';       // '' = Exento/null, '10.5', '21'
-  newPaymentIgBrutosPct: number | null = null;
 
   readonly PurchaseStatus = PurchaseStatus;
   readonly paymentMethods = [
@@ -136,9 +134,7 @@ export class PurchaseDetailComponent implements OnInit {
       amount: this.newPaymentAmount,
       date: this.newPaymentDate,
       reference: this.newPaymentReference.trim() || null,
-      notes: this.newPaymentNotes.trim() || null,
-      ivaPct: this.newPaymentIvaPct ? +this.newPaymentIvaPct : null,
-      ingresosBrutosPct: this.newPaymentIgBrutosPct
+      notes: this.newPaymentNotes.trim() || null
     };
 
     this.purchaseService.addPayment(this.purchaseId, req).subscribe({
@@ -148,8 +144,6 @@ export class PurchaseDetailComponent implements OnInit {
         this.newPaymentReference = '';
         this.newPaymentNotes = '';
         this.newPaymentDate = this.todayIso();
-        this.newPaymentIvaPct = '';
-        this.newPaymentIgBrutosPct = null;
         this.toast.success('Pago registrado');
         this.load(this.purchaseId);
       },

@@ -16,6 +16,8 @@
         </div>
         <div class="meta-row">
           <span class="meta-item">Fecha: {{ formatDate(purchase.createdAt) }}</span>
+          <span class="meta-item" *ngIf="purchase.ivaPct !== null">IVA {{ purchase.ivaPct }}%</span>
+          <span class="meta-item" *ngIf="purchase.ingresosBrutosPct !== null">IIBB {{ purchase.ingresosBrutosPct }}%</span>
           <span class="meta-item" *ngIf="purchase.notes">{{ purchase.notes }}</span>
         </div>
       </div>
@@ -92,42 +94,6 @@
           <input class="field__input" type="text" placeholder="Observaciones" [(ngModel)]="newPaymentNotes" />
         </div>
 
-        <div class="tax-row">
-          <div class="field">
-            <label class="field__label">IVA</label>
-            <select class="field__input field__select"
-              [(ngModel)]="newPaymentIvaPct"
-              [ngModelOptions]="{ standalone: true }">
-              <option value="">Exento</option>
-              <option value="10.5">10.5%</option>
-              <option value="21">21%</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field__label">IIBB %</label>
-            <input class="field__input"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              [ngModel]="newPaymentIgBrutosPct"
-              (ngModelChange)="newPaymentIgBrutosPct = $event ?? null"
-              [ngModelOptions]="{ standalone: true }" />
-          </div>
-          <div class="field field--tax-hint" *ngIf="newPaymentIvaPct || newPaymentIgBrutosPct">
-            <label class="field__label">Sobre monto</label>
-            <span class="tax-calc">
-              <ng-container *ngIf="newPaymentIvaPct">
-                IVA {{ newPaymentIvaPct }}% = ${{ formatCurrency(newPaymentAmount * (+newPaymentIvaPct) / 100) }}
-              </ng-container>
-              <ng-container *ngIf="newPaymentIvaPct && newPaymentIgBrutosPct"> · </ng-container>
-              <ng-container *ngIf="newPaymentIgBrutosPct">
-                IIBB {{ newPaymentIgBrutosPct }}% = ${{ formatCurrency(newPaymentAmount * newPaymentIgBrutosPct / 100) }}
-              </ng-container>
-            </span>
-          </div>
-        </div>
-
         <button
           class="btn-primary"
           type="button"
@@ -181,8 +147,6 @@
                 <th>Metodo</th>
                 <th>Fecha</th>
                 <th class="col-num">Monto</th>
-                <th>IVA</th>
-                <th>IIBB</th>
                 <th>Referencia</th>
                 <th></th>
               </tr>
@@ -192,8 +156,6 @@
                 <td class="cell-mono">{{ paymentMethodLabel(p.method) }}</td>
                 <td class="cell-mono">{{ formatDate(p.date) }}</td>
                 <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
-                <td class="cell-mono">{{ p.ivaPct !== null ? p.ivaPct + '%' : 'Exento' }}</td>
-                <td class="cell-mono">{{ p.ingresosBrutosPct !== null ? p.ingresosBrutosPct + '%' : '-' }}</td>
                 <td class="cell-ref">{{ p.reference || '-' }}</td>
                 <td class="col-remove">
                   <button

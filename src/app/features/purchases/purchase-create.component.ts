@@ -26,8 +26,6 @@ interface DraftPayment {
   date: string;
   reference: string;
   notes: string;
-  ivaPct: string;              // '' = Exento, '10.5', '21'
-  ingresosBrutosPct: number | null;
 }
 
 const PAYMENT_METHODS = [
@@ -100,7 +98,9 @@ export class PurchaseCreateComponent implements OnInit {
       branchId: ['', Validators.required],
       supplierId: [''],
       invoiceNumber: [''],
-      notes: ['']
+      notes: [''],
+      ivaPct: [''],
+      ingresosBrutosPct: [null as number | null]
     });
   }
 
@@ -171,9 +171,7 @@ export class PurchaseCreateComponent implements OnInit {
       amount: 0,
       date: this.todayIso(),
       reference: '',
-      notes: '',
-      ivaPct: '',
-      ingresosBrutosPct: null
+      notes: ''
     });
     this.cdr.markForCheck();
   }
@@ -220,9 +218,7 @@ export class PurchaseCreateComponent implements OnInit {
         amount: Number(p.amount),
         date: p.date,
         reference: p.reference.trim() || null,
-        notes: p.notes.trim() || null,
-        ivaPct: p.ivaPct ? +p.ivaPct : null,
-        ingresosBrutosPct: p.ingresosBrutosPct
+        notes: p.notes.trim() || null
       }));
 
     const req: CreatePurchaseRequest = {
@@ -230,6 +226,8 @@ export class PurchaseCreateComponent implements OnInit {
       supplierId: raw.supplierId || null,
       invoiceNumber: raw.invoiceNumber.trim() || null,
       notes: raw.notes.trim() || null,
+      ivaPct: raw.ivaPct ? +raw.ivaPct : null,
+      ingresosBrutosPct: raw.ingresosBrutosPct ?? null,
       details: detailReqs,
       payments: paymentReqs
     };

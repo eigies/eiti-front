@@ -41,10 +41,6 @@ export interface PurchasePayment {
   notes: string | null;
   date: string;
   createdAt: string;
-  ivaPct: number | null;
-  ingresosBrutosPct: number | null;
-  ivaAmount: number | null;
-  ingresosBrutosAmount: number | null;
 }
 
 export interface PurchaseDetailResponse {
@@ -54,6 +50,8 @@ export interface PurchaseDetailResponse {
   supplierName: string | null;
   invoiceNumber: string | null;
   notes: string | null;
+  ivaPct: number | null;
+  ingresosBrutosPct: number | null;
   status: PurchaseStatus;
   statusName: string;
   totalAmount: number;
@@ -77,8 +75,6 @@ export interface CreatePurchasePaymentRequest {
   date: string;
   reference: string | null;
   notes: string | null;
-  ivaPct: number | null;
-  ingresosBrutosPct: number | null;
 }
 
 export interface CreatePurchaseRequest {
@@ -86,6 +82,8 @@ export interface CreatePurchaseRequest {
   supplierId: string | null;
   invoiceNumber: string | null;
   notes: string | null;
+  ivaPct: number | null;
+  ingresosBrutosPct: number | null;
   details: CreatePurchaseDetailRequest[];
   payments: CreatePurchasePaymentRequest[];
 }
@@ -96,8 +94,6 @@ export interface AddPurchasePaymentRequest {
   date: string;
   reference: string | null;
   notes: string | null;
-  ivaPct: number | null;
-  ingresosBrutosPct: number | null;
 }
 
 export interface PurchaseListResponse {
