@@ -23,7 +23,8 @@ export const PermissionCodes = {
     purchasesCreate: 'purchases.create',
     purchasesUpdate: 'purchases.update',
     purchasesPay: 'purchases.pay',
-    purchasesCancel: 'purchases.cancel'
+    purchasesCancel: 'purchases.cancel',
+    productsCostPriceAlert: 'products.cost_price_alert'
 } as const;
 
 export type PermissionCode = typeof PermissionCodes[keyof typeof PermissionCodes];
@@ -53,5 +54,6 @@ export const PermissionCatalog: ReadonlyArray<{ code: PermissionCode; label: str
     { code: PermissionCodes.purchasesCreate, label: 'Compras: crear', description: 'Permite registrar compras nuevas.' },
     { code: PermissionCodes.purchasesUpdate, label: 'Compras: editar', description: 'Permite editar compras existentes.' },
     { code: PermissionCodes.purchasesPay, label: 'Compras: pagar', description: 'Permite registrar pagos de compras.' },
-    { code: PermissionCodes.purchasesCancel, label: 'Compras: cancelar', description: 'Permite cancelar compras.' }
+    { code: PermissionCodes.purchasesCancel, label: 'Compras: cancelar', description: 'Permite cancelar compras.' },
+    { code: PermissionCodes.productsCostPriceAlert, label: 'Productos: alerta precio costo', description: 'Muestra alerta cuando hay productos sin precio de costo cargado.' }
 ];

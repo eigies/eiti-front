@@ -200,6 +200,177 @@
   width: 100%;
 }
 
+/* ── ACTIVE FILTERS STRIP ── */
+.active-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 1.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+  background: color-mix(in srgb, var(--bg-soft) 38%, transparent);
+  flex-wrap: wrap;
+}
+
+.active-filters__label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.active-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.26rem 0.6rem 0.26rem 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--amber);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.active-filter-tag:hover {
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+  border-color: color-mix(in srgb, var(--amber) 50%, var(--border));
+}
+
+.active-filter-tag__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.1rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 22%, transparent);
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.active-filter-tag__remove {
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+/* ── COST PRICE ALERT BANNER ── */
+.cost-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.88rem 1.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--amber) 24%, var(--border));
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--amber) 10%, transparent) 0%,
+      color-mix(in srgb, var(--amber) 4%, transparent) 55%,
+      transparent 100%);
+  animation: cost-alert-in 0.32s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+@keyframes cost-alert-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cost-alert__body {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.cost-alert__icon {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+  font-size: 0.7rem;
+  color: var(--amber);
+}
+
+.cost-alert__copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.cost-alert__count {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.cost-alert__sub {
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  line-height: 1.35;
+}
+
+.cost-alert__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.cost-alert__cta {
+  padding: 0.42rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 42%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  color: var(--amber);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  white-space: nowrap;
+}
+
+.cost-alert__cta:hover {
+  background: color-mix(in srgb, var(--amber) 20%, transparent);
+  border-color: color-mix(in srgb, var(--amber) 62%, var(--border));
+  transform: translateY(-1px);
+}
+
+.cost-alert__dismiss {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.cost-alert__dismiss:hover {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+  color: var(--danger);
+}
+
 .import-report {
   display: grid;
   gap: 1rem;

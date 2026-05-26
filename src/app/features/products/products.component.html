@@ -127,6 +127,31 @@
       <button class="btn btn--ghost btn--sm" type="button" (click)="clearFilters()">Limpiar</button>
     </div>
 
+    <!-- Active no-cost filter tag -->
+    <div class="active-filters" *ngIf="filterNoCost">
+      <span class="active-filters__label">Filtro activo</span>
+      <button class="active-filter-tag" type="button" (click)="toggleNoCostFilter()">
+        <span>Sin precio de costo</span>
+        <span class="active-filter-tag__count">{{ noCostProductCount }}</span>
+        <span class="active-filter-tag__remove" aria-hidden="true">×</span>
+      </button>
+    </div>
+
+    <!-- Cost price alert banner -->
+    <div class="cost-alert" *ngIf="showCostPriceAlert" role="alert">
+      <div class="cost-alert__body">
+        <span class="cost-alert__icon" aria-hidden="true">▲</span>
+        <div class="cost-alert__copy">
+          <strong class="cost-alert__count">{{ noCostProductCount }} {{ noCostProductCount === 1 ? 'producto' : 'productos' }} sin precio de costo</strong>
+          <span class="cost-alert__sub">Completá los precios para calcular márgenes correctamente.</span>
+        </div>
+      </div>
+      <div class="cost-alert__actions">
+        <button class="cost-alert__cta" type="button" (click)="activateNoCostFilter()">Ver productos →</button>
+        <button class="cost-alert__dismiss" type="button" (click)="dismissCostPriceAlert()" aria-label="Cerrar alerta">×</button>
+      </div>
+    </div>
+
     <section class="import-report" *ngIf="importReport as report">
       <div class="import-report__head">
         <span class="import-report__title">Resultado de importacion</span>

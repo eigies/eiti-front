@@ -90,6 +90,8 @@ export class ProductsComponent implements OnInit {
   filterCode = '';
   filterSku = '';
   filterProduct = '';
+  filterNoCost = false;
+  costPriceAlertDismissed = false;
   selectedProduct: ProductResponse | null = null;
   onboardingStatus: OnboardingStatusResponse | null = null;
   selectedStockBranchId = '';
@@ -152,6 +154,32 @@ export class ProductsComponent implements OnInit {
 
   get canViewCostPrice(): boolean {
     return this.auth.hasPermission(PermissionCodes.productsViewCost);
+  }
+
+  get noCostProductCount(): number {
+    return this.products.filter(p => !p.costPrice || p.costPrice === 0).length;
+  }
+
+  get showCostPriceAlert(): boolean {
+    return !this.costPriceAlertDismissed
+      && this.auth.hasPermission(PermissionCodes.productsCostPriceAlert)
+      && this.noCostProductCount > 0
+      && this.viewMode === 'list';
+  }
+
+  dismissCostPriceAlert(): void {
+    this.costPriceAlertDismissed = true;
+  }
+
+  activateNoCostFilter(): void {
+    this.filterNoCost = true;
+    this.costPriceAlertDismissed = true;
+    this.currentPage = 1;
+  }
+
+  toggleNoCostFilter(): void {
+    this.filterNoCost = !this.filterNoCost;
+    this.currentPage = 1;
   }
 
   get showHiddenColumns(): boolean {
@@ -545,6 +573,7 @@ export class ProductsComponent implements OnInit {
     this.filterCode = '';
     this.filterSku = '';
     this.filterProduct = '';
+    this.filterNoCost = false;
     this.currentPage = 1;
     this.selectedBulkProductIds.clear();
   }
@@ -890,7 +919,8 @@ export class ProductsComponent implements OnInit {
       const matchesCode = !code || product.code.toLowerCase().includes(code);
       const matchesSku = !sku || product.sku.toLowerCase().includes(sku);
       const matchesProduct = !productQuery || product.name.toLowerCase().includes(productQuery);
-      return matchesBrand && matchesCode && matchesSku && matchesProduct;
+      const matchesNoCost = !this.filterNoCost || (!product.costPrice || product.costPrice === 0);
+      return matchesBrand && matchesCode && matchesSku && matchesProduct && matchesNoCost;
     });
   }
 
