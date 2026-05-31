@@ -197,9 +197,16 @@ export class SalePaymentInlineComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (!changes['total']) return;
+        const prevTotal: number = changes['total'].previousValue ?? 0;
         for (const payment of this.state?.payments ?? []) {
-            if (payment.idPaymentMethod !== this.CARD_METHOD_ID && payment.amount === 0 && this.remaining > 0) {
+            if (payment.idPaymentMethod === this.CARD_METHOD_ID) continue;
+            if (payment.amount === 0 && this.remaining > 0) {
                 payment.amount = this.remaining;
+                break;
+            }
+            // If amount was auto-set to the previous total, keep it in sync as items are added/removed
+            if (payment.amount === prevTotal && prevTotal > 0) {
+                payment.amount = Math.max(0, roundMoney(this.remaining + payment.amount));
                 break;
             }
         }

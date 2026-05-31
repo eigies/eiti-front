@@ -133,10 +133,16 @@
 }
 
 .panel {
+    position: relative;
+    z-index: 0;
     padding: 1.25rem;
     margin-bottom: 1rem;
     opacity: 0;
     animation: card-in .5s cubic-bezier(.22,1,.36,1) .15s both;
+}
+
+.panel:focus-within {
+    z-index: 30;
 }
 
 .panel--collapsible {
@@ -1020,6 +1026,13 @@
     text-transform: uppercase;
 }
 
+.chip__trade-icon {
+    margin-left: .45rem;
+    font-size: .85rem;
+    line-height: 1;
+    opacity: .85;
+}
+
 .chip--neutral {
     background: color-mix(in srgb, var(--border-2) 16%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-2) 45%, transparent);
@@ -1304,6 +1317,49 @@
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px dashed var(--border);
+}
+
+.detail-row--tradein td {
+    padding-block: .7rem;
+    background: color-mix(in srgb, var(--success, #4caf7d) 4%, var(--bg) 96%);
+    color: var(--text-soft);
+    border-bottom-color: color-mix(in srgb, var(--success, #4caf7d) 16%, var(--border));
+}
+
+.detail-row--tradein--first td {
+    border-top: .45rem solid color-mix(in srgb, var(--bg-panel) 92%, var(--bg));
+    padding-top: .85rem;
+}
+
+.detail-row--tradein td:first-child {
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--success, #4caf7d) 54%, transparent);
+}
+
+.tradein-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-width: 0;
+}
+
+.tradein-cell__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--success, #4caf7d) 28%, var(--border-2));
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--success, #4caf7d) 7%, transparent);
+    font-size: .78rem;
+    font-style: normal;
+    line-height: 1;
+}
+
+.tradein-cell__name {
+    color: var(--text-soft);
+    font-style: italic;
 }
 
 .btn--cc {
@@ -2076,6 +2132,7 @@
     .table--details td:nth-child(2)::before { content: 'Cantidad'; }
     .table--details td:nth-child(3)::before { content: 'Unitario'; }
     .table--details td:nth-child(4)::before { content: 'Subtotal'; }
+    .detail-row--tradein td:nth-child(1)::before { content: 'Canje'; }
 }
 
 @media (max-width: 980px) {

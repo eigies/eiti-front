@@ -1,0 +1,121 @@
+- Generating browser application bundles (phase: setup)...
+✔ Browser application bundle generation complete.
+✔ Browser application bundle generation complete.
+- Copying assets...
+✔ Copying assets complete.
+- Generating index html...
+✔ Index html generation complete.
+
+Initial Chunk Files                                                                                     | Names                                                                 |  Raw Size
+vendor.js                                                                                               | vendor                                                                |   2.16 MB |
+main.js                                                                                                 | main                                                                  | 152.44 kB |
+polyfills.js                                                                                            | polyfills                                                             | 104.17 kB |
+runtime.js                                                                                              | runtime                                                               |  13.98 kB |
+styles.css                                                                                              | styles                                                                |   7.38 kB |
+
+| Initial Total                                                         |   2.43 MB
+
+Lazy Chunk Files                                                                                        | Names                                                                 |  Raw Size
+src_app_features_products_products_component_ts.js                                                      | features-products-products-component                                  |   1.77 MB |
+default-node_modules_xlsx_xlsx_mjs.js                                                                   | features-products-products-component                                  | 973.52 kB |
+default-src_app_core_models_sale-payment_models_ts-src_app_core_services_sale_service_ts-node-b07e9b.js | features-sales-sales-page-component                                   | 555.83 kB |
+src_app_features_sales_sales-page_component_ts.js                                                       | features-sales-sales-page-component                                   | 487.07 kB |
+node_modules_canvg_lib_index_es_js.js                                                                   | canvg                                                                 | 432.66 kB |
+node_modules_html2canvas_dist_html2canvas_js.js                                                         | html2canvas                                                           | 377.66 kB |
+src_app_features_cash_cash_component_ts.js                                                              | features-cash-cash-component                                          | 363.48 kB |
+default-node_modules_angular_forms_fesm2022_forms_mjs.js                                                | features-auth-login-login-component                                   | 295.69 kB |
+src_app_features_sales_sales-full_component_ts.js                                                       | features-sales-sales-full-component                                   | 167.35 kB |
+src_app_features_users_users_component_ts.js                                                            | features-users-users-component                                        | 167.20 kB |
+src_app_features_clients_clients-cc_clients-cc_component_ts.js                                          | features-clients-clients-cc-clients-cc-component                      | 143.07 kB |
+default-src_app_core_services_bank_service_ts-src_app_core_services_cash_service_ts-src_app_s-b9c929.js | features-sales-sales-page-component                                   | 142.25 kB |
+src_app_features_transport_transport_component_ts.js                                                    | features-transport-transport-component                                | 135.66 kB |
+src_app_features_dashboard_dashboard_component_ts.js                                                    | features-dashboard-dashboard-component                                | 134.69 kB |
+src_app_features_cheques_cheques_component_ts.js                                                        | features-cheques-cheques-component                                    | 119.40 kB |
+src_app_features_sales_sales-cc-payments_sales-cc-payments_component_ts.js                              | features-sales-sales-cc-payments-sales-cc-payments-component          | 100.04 kB |
+src_app_features_sales_sales-cc_sales-cc_component_ts.js                                                | features-sales-sales-cc-sales-cc-component                            |  95.44 kB |
+src_app_features_purchases_purchase-create_component_ts.js                                              | features-purchases-purchase-create-component                          |  88.58 kB |
+src_app_features_purchases_purchase-detail_component_ts.js                                              | features-purchases-purchase-detail-component                          |  82.55 kB |
+src_app_features_customers_customers_component_ts.js                                                    | features-customers-customers-component                                |  68.64 kB |
+node_modules_dompurify_dist_purify_js.js                                                                | dompurify                                                             |  65.89 kB |
+src_app_features_suppliers_suppliers_component_ts.js                                                    | features-suppliers-suppliers-component                                |  64.66 kB |
+src_app_features_companies_company_component_ts.js                                                      | features-companies-company-component                                  |  62.55 kB |
+src_app_features_banks_banks_component_ts.js                                                            | features-banks-banks-component                                        |  61.12 kB |
+src_app_features_auth_forgot-password_forgot-password_component_ts.js                                   | features-auth-forgot-password-forgot-password-component               |  53.51 kB |
+src_app_features_branches_branches_component_ts.js                                                      | features-branches-branches-component                                  |  53.49 kB |
+src_app_features_profile_profile_component_ts.js                                                        | features-profile-profile-component                                    |  52.32 kB |
+src_app_features_purchases_purchases-list_component_ts.js                                               | features-purchases-purchases-list-component                           |  50.51 kB |
+src_app_features_cash_cash-drawer-assignment_cash-drawer-assignment_component_ts.js                     | features-cash-cash-drawer-assignment-cash-drawer-assignment-component |  49.33 kB |
+src_app_features_auth_register_register_component_ts.js                                                 | features-auth-register-register-component                             |  47.51 kB |
+src_app_features_auth_login_login_component_ts.js                                                       | features-auth-login-login-component                                   |  47.22 kB |
+default-src_app_shared_components_searchable-select_searchable-select_component_ts.js                   | features-customers-customers-component                                |  29.64 kB |
+src_app_features_customers_customer-detail_customer-detail_component_ts.js                              | features-customers-customer-detail-customer-detail-component          |  26.83 kB |
+default-src_app_core_services_branch_service_ts-src_app_shared_components_onboarding-banner_o-57d65a.js | features-branches-branches-component                                  |  20.45 kB |
+common.js                                                                                               | common                                                                |  18.38 kB |
+
+Build at: 2026-05-31T03:05:58.073Z - Hash: c962ead6caee746b - Time: 8029ms
+
+./src/app/features/sales/sales-cc/sales-cc.component.css?ngResource - Warning: Module Warning (from ./node_modules/postcss-loader/dist/cjs.js):
+(459:5) from "autoprefixer" plugin: end value has mixed support, consider using flex-end instead
+
+Code:
+  align-items: end
+
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.array.index-of.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.array.iterator.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.array.reduce.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.array.reverse.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.promise.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.regexp.to-string.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.string.ends-with.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.string.includes.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.string.match.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.string.replace.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.string.split.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.string.starts-with.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/es.string.trim.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'core-js/modules/web.dom-collections.iterator.js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'raf'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\canvg\lib\index.es.js depends on 'rgbcolor'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\jspdf\dist\jspdf.es.min.js depends on 'dompurify'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\node_modules\jspdf\dist\jspdf.es.min.js depends on 'html2canvas'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: C:\EiTeFront\eiti-front\src\app\features\products\products.component.ts depends on 'exceljs'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+

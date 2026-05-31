@@ -6,10 +6,12 @@
 .search-select {
     position: relative;
     width: 100%;
+    min-width: 0;
 }
 
 .search-select__trigger {
     width: 100%;
+    min-width: 0;
     box-sizing: border-box;
     padding: .8rem;
     border: 1px solid var(--border-2);
@@ -50,6 +52,7 @@
 }
 
 .search-select__copy {
+    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -78,6 +81,9 @@
     z-index: 40;
     display: grid;
     gap: .4rem;
+    max-height: min(22rem, calc(100vh - 10rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: .55rem;
     border: 1px solid color-mix(in srgb, var(--amber) 22%, var(--border-2));
     border-radius: 18px;
@@ -103,6 +109,10 @@
 .search-select__filter {
     position: sticky;
     top: 0;
+    z-index: 1;
+    padding-bottom: .15rem;
+    background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
+    border-radius: 14px;
 }
 
 .search-select__input {

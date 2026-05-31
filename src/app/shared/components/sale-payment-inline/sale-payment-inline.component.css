@@ -220,8 +220,21 @@
     align-items: end;
 }
 
+.payment-line__row > .field {
+    min-width: 0;
+}
+
+.payment-line__row--tradein {
+    grid-template-columns: minmax(0, 2.1fr) minmax(7.5rem, .55fr) minmax(12rem, 1fr) auto;
+}
+
 .payment-line__row--tradein .field--wide {
-    min-width: min(100%, 340px);
+    min-width: 0;
+}
+
+.payment-line__row--tradein app-searchable-select {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .field {
@@ -240,6 +253,7 @@
 
 .control {
     width: 100%;
+    min-width: 0;
     box-sizing: border-box;
     padding: .78rem;
     border: 1px solid var(--border-2);

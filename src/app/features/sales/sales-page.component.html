@@ -524,7 +524,7 @@
                 <strong>Estado transporte:</strong> {{ transportStatusChipLabel(sale) }}
               </span>
               <span class="chip"><strong>Entrega:</strong> {{ sale.hasDelivery ? 'Con envio' : 'Retiro' }}</span>
-              <span class="chip"><strong>Pago:</strong> {{ salePaymentDetailSummary(sale) }}</span>
+              <span class="chip"><strong>Pago:</strong> {{ salePaymentDetailSummary(sale) }}<span *ngIf="(sale.tradeInAmount ?? 0) > 0" title="Incluye canje" class="chip__trade-icon">♻️</span></span>
             </div>
             <div class="sale-card__chip-row sale-card__chip-row--secondary">
               <span class="chip" *ngIf="sale.customerFullName"><strong>Cliente:</strong> {{ sale.customerFullName }}</span>
@@ -612,6 +612,19 @@
                     <td>{{ detail.unitPrice | currency:'USD':'symbol':'1.2-2' }}</td>
                     <td>{{ detail.totalAmount | currency:'USD':'symbol':'1.2-2' }}</td>
                   </tr>
+                  <ng-container *ngIf="(sale.tradeIns?.length ?? 0) > 0 && saleDetailPage(sale.id) === 1">
+                    <tr class="detail-row--tradein" [class.detail-row--tradein--first]="i === 0" *ngFor="let tradeIn of sale.tradeIns; let i = index">
+                      <td>
+                        <span class="tradein-cell">
+                          <span class="tradein-cell__badge" title="Canje" aria-label="Canje">♻️</span>
+                          <span class="tradein-cell__name">{{ tradeIn.productName ?? 'Producto recibido' }}</span>
+                        </span>
+                      </td>
+                      <td>{{ tradeIn.quantity }}</td>
+                      <td>—</td>
+                      <td>{{ tradeIn.amount | currency:'USD':'symbol':'1.2-2' }}</td>
+                    </tr>
+                  </ng-container>
                 </tbody>
               </table>
             </div>

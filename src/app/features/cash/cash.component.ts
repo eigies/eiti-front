@@ -1511,7 +1511,8 @@ export class CashComponent implements OnInit {
         const breakdown = this.computePaymentBreakdown(session);
         const transferBreakdown = this.computeTransferBankBreakdown(session);
         const cardBreakdown = this.computeCardBankBreakdown(session);
-        this.downloadExcel(`cash-session-${session.openedAt.slice(0, 10)}.xlsx`, headers, body, breakdown, transferBreakdown, cardBreakdown);
+        const tradeInBreakdown = this.computeTradeInBreakdown(session);
+        this.downloadExcel(`cash-session-${session.openedAt.slice(0, 10)}.xlsx`, headers, body, breakdown, transferBreakdown, cardBreakdown, tradeInBreakdown);
     }
 
     exportFilteredHistory(): void {
@@ -1562,7 +1563,8 @@ export class CashComponent implements OnInit {
         const allBreakdown = allSessions.flatMap(s => this.computePaymentBreakdown(s));
         const allTransferBreakdown = allSessions.flatMap(s => this.computeTransferBankBreakdown(s));
         const allCardBreakdown = allSessions.flatMap(s => this.computeCardBankBreakdown(s));
-        this.downloadExcel(`cash-history-${suffix}.xlsx`, headers, body, allBreakdown, allTransferBreakdown, allCardBreakdown);
+        const allTradeInBreakdown = allSessions.flatMap(s => this.computeTradeInBreakdown(s));
+        this.downloadExcel(`cash-history-${suffix}.xlsx`, headers, body, allBreakdown, allTransferBreakdown, allCardBreakdown, allTradeInBreakdown);
     }
 
     exportSessionPdf(session: CashSessionResponse, expectedOverride?: number): void {
@@ -1592,20 +1594,20 @@ export class CashComponent implements OnInit {
 
     private exportSessionsPdf(fileName: string, title: string, sessions: CashSessionResponse[], expectedOverrides?: Map<string, number>): void {
         const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
-        const margin = 14;
+        const margin = 10;
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         const maxY = pageHeight - 14;
         let y = 16;
 
         const movementColumns = {
-            movement: { x: margin + 2, width: 25 },
-            type: { x: margin + 30, width: 18 },
-            saleCode: { x: margin + 51, width: 22 },
-            direction: { x: margin + 76, width: 13 },
-            amount: { x: margin + 92, width: 18 },
-            payment: { x: margin + 113, width: 50 },
-            description: { x: margin + 166, width: 103 }
+            movement: { x: margin + 2, width: 28 },
+            type: { x: margin + 33, width: 18 },
+            saleCode: { x: margin + 54, width: 36 },
+            direction: { x: margin + 93, width: 16 },
+            amount: { x: margin + 112, width: 23 },
+            payment: { x: margin + 138, width: 67 },
+            description: { x: margin + 208, width: pageWidth - margin - (margin + 208) }
         };
 
         const drawDocumentHeader = (continuation = false): void => {
@@ -1875,6 +1877,38 @@ export class CashComponent implements OnInit {
                 }
             }
 
+            const tradeInBreakdown = this.computeTradeInBreakdown(session);
+            if (tradeInBreakdown.length > 0) {
+                if (y + 10 + tradeInBreakdown.length * 5 > maxY) {
+                    doc.addPage();
+                    y = 16;
+                    drawDocumentHeader(true);
+                }
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(60, 60, 60);
+                doc.text('Canjes (no incluido en caja)', margin, y + 4);
+                y += 6.5;
+
+                for (const item of tradeInBreakdown) {
+                    if (y + 5 > maxY) {
+                        doc.addPage();
+                        y = 16;
+                        drawDocumentHeader(true);
+                    }
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7.6);
+                    doc.setTextColor(35, 35, 35);
+                    doc.setFillColor(232, 245, 237);
+                    doc.roundedRect(margin + 1, y, 80, 4.8, 1.2, 1.2, 'F');
+                    doc.text(item.productName, margin + 4, y + 3.5);
+                    doc.text(this.formatCurrency(item.amount), margin + 77, y + 3.5, { align: 'right' });
+                    y += 5;
+                }
+            }
+
             y += 7;
         }
 
@@ -2109,8 +2143,9 @@ export class CashComponent implements OnInit {
 
                 const sale = this.salesBySaleId.get(saleRefId);
                 const activePayments = (sale?.payments ?? []).filter(p => Number(p.amount) > 0);
-                const activeTradeIns = (sale?.tradeIns ?? []).filter(t => Number(t.amount) > 0);
-                if (activePayments.length > 0 || activeTradeIns.length > 0) {
+                const allTradeIns = sale?.tradeIns ?? [];
+                const activeTradeIns = allTradeIns.filter(t => Number(t.amount) > 0);
+                if (activePayments.length > 0 || allTradeIns.length > 0) {
                     const totalAmount = activePayments.reduce((sum, p) => sum + Number(p.amount), 0)
                         + activeTradeIns.reduce((sum, t) => sum + Number(t.amount), 0);
                     const parts: string[] = [
@@ -2127,7 +2162,9 @@ export class CashComponent implements OnInit {
                             }
                             return `${methodLabel}${bankSuffix}: $${Number(p.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
                         }),
-                        ...activeTradeIns.map(t => `Canje: $${Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`)
+                        ...allTradeIns.map(t => Number(t.amount) > 0
+                            ? `Canje: $${Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+                            : 'Canje')
                     ];
                     rows.push({ occurredAt: movement.occurredAt, typeName: 'SaleIncome', directionName: 'In', amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId, saleCode, username });
                     continue;
@@ -2160,7 +2197,8 @@ export class CashComponent implements OnInit {
         body: string[][],
         breakdown?: PaymentMethodBreakdownItem[],
         transferBreakdown?: Array<{ bankName: string; amount: number }>,
-        cardBreakdown?: Array<{ bankName: string; amount: number }>
+        cardBreakdown?: Array<{ bankName: string; amount: number }>,
+        tradeInBreakdown?: Array<{ productName: string; amount: number }>
     ): void {
         const rows = body.map(columns =>
             headers.reduce<Record<string, string>>((result, header, index) => {
@@ -2194,6 +2232,14 @@ export class CashComponent implements OnInit {
                 breakdownRows.push({ 'Medio de pago': 'Tarjetas por banco (no incluido en caja)', 'Monto': '' });
                 for (const c of cardBreakdown) {
                     breakdownRows.push({ 'Medio de pago': c.bankName, 'Monto': c.amount.toFixed(2) });
+                }
+            }
+
+            if (tradeInBreakdown && tradeInBreakdown.length > 0) {
+                breakdownRows.push({ 'Medio de pago': '', 'Monto': '' });
+                breakdownRows.push({ 'Medio de pago': 'Canjes (no incluido en caja)', 'Monto': '' });
+                for (const t of tradeInBreakdown) {
+                    breakdownRows.push({ 'Medio de pago': t.productName, 'Monto': t.amount.toFixed(2) });
                 }
             }
 
@@ -2319,6 +2365,26 @@ export class CashComponent implements OnInit {
         return Array.from(totals.entries())
             .map(([bankId, amount]) => ({ bankName: this.bankNamesById.get(bankId) ?? 'Banco #' + bankId, amount }))
             .sort((a, b) => a.bankName.localeCompare(b.bankName));
+    }
+
+    computeTradeInBreakdown(session: CashSessionResponse): Array<{ productName: string; amount: number }> {
+        const totals = new Map<string, number>();
+        const seen = new Set<string>();
+        for (const movement of session.movements) {
+            if ((movement.typeName === 'SaleIncome' || movement.typeName === 'SaleCancellation') && movement.referenceId && !seen.has(movement.referenceId)) {
+                seen.add(movement.referenceId);
+                const sale = this.salesBySaleId.get(String(movement.referenceId));
+                for (const t of (sale?.tradeIns ?? [])) {
+                    if (Number(t.amount) > 0) {
+                        const name = t.productName?.trim() || 'Canje';
+                        totals.set(name, (totals.get(name) ?? 0) + Number(t.amount));
+                    }
+                }
+            }
+        }
+        return Array.from(totals.entries())
+            .map(([productName, amount]) => ({ productName, amount }))
+            .sort((a, b) => a.productName.localeCompare(b.productName));
     }
 
     get currentCardBankBreakdown(): Array<{ bankName: string; amount: number }> {
