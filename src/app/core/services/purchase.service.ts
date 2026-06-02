@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AddPurchasePaymentRequest,
+  AddPurchasePaymentResult,
   CreatePurchaseRequest,
   PurchaseDetailResponse,
   PurchaseListResponse
@@ -47,8 +48,8 @@ export class PurchaseService {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
 
-  addPayment(purchaseId: string, req: AddPurchasePaymentRequest): Observable<void> {
-    return this.http.post<void>(`${this.base}/${purchaseId}/payments`, req);
+  addPayment(purchaseId: string, req: AddPurchasePaymentRequest): Observable<AddPurchasePaymentResult> {
+    return this.http.post<AddPurchasePaymentResult>(`${this.base}/${purchaseId}/payments`, req);
   }
 
   cancelPayment(purchaseId: string, paymentId: string): Observable<void> {

@@ -222,6 +222,11 @@
           <span class="summary-label">Saldo pendiente</span>
           <span class="summary-value summary-value--pending">${{ formatCurrency(pendingAmount) }}</span>
         </div>
+        <div class="summary-row summary-row--credit" *ngIf="selectedSupplierCredit > 0">
+          <span class="summary-label">Saldo a favor</span>
+          <span class="summary-value summary-value--paid">${{ formatCurrency(selectedSupplierCredit) }}</span>
+        </div>
+        <p class="summary-credit-note" *ngIf="selectedSupplierCredit > 0">Se aplicará automáticamente a esta compra.</p>
 
         <div class="form-actions">
           <button class="btn-ghost" type="button" routerLink="/purchases">Cancelar</button>

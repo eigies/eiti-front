@@ -5,6 +5,8 @@ export interface SupplierListItem {
   email: string | null;
   taxId: string | null;
   isActive: boolean;
+  creditBalance: number;
+  owedAmount: number;
 }
 
 export interface CreateSupplierRequest {

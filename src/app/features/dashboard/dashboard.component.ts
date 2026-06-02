@@ -54,6 +54,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  get canViewFinancials(): boolean {
+    return this.auth.hasPermission(PermissionCodes.dashboardViewFinancials);
+  }
+
   get username(): string {
     return this.auth.currentUser?.username ?? '';
   }
@@ -245,6 +249,7 @@ export class DashboardComponent implements OnInit {
 
   get operationalAlerts(): DashboardAlert[] {
     const alerts: DashboardAlert[] = [];
+    const showMoney = this.canViewFinancials;
 
     if (this.todayActiveSales.length === 0) {
       alerts.push({
@@ -261,10 +266,12 @@ export class DashboardComponent implements OnInit {
         tone: 'warn',
         label: 'Cobros en espera',
         detail: `${this.todayPendingSales.length} venta(s) siguen abiertas hoy.`,
-        statLabel: 'Pendiente',
-        statValue: this.todayPendingRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 }),
-        compareLabel: 'Ventas abiertas',
-        compareValue: String(this.todayPendingSales.length)
+        statLabel: showMoney ? 'Pendiente' : 'Ventas abiertas',
+        statValue: showMoney
+          ? this.todayPendingRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
+          : String(this.todayPendingSales.length),
+        compareLabel: showMoney ? 'Ventas abiertas' : undefined,
+        compareValue: showMoney ? String(this.todayPendingSales.length) : undefined
       });
     }
 
@@ -278,7 +285,7 @@ export class DashboardComponent implements OnInit {
       });
     }
 
-    if (this.todayRevenue > this.yesterdayRevenue && this.todayRevenue > 0) {
+    if (showMoney && this.todayRevenue > this.yesterdayRevenue && this.todayRevenue > 0) {
       alerts.push({
         tone: 'success',
         label: 'Ritmo superior a ayer',
@@ -295,10 +302,12 @@ export class DashboardComponent implements OnInit {
         tone: 'success',
         label: 'Operacion estable',
         detail: 'No hay desvíos operativos relevantes en este momento.',
-        statLabel: 'Cobrado hoy',
-        statValue: this.todayRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 }),
-        compareLabel: 'Ventas activas',
-        compareValue: String(this.todayActiveSales.length)
+        statLabel: showMoney ? 'Cobrado hoy' : 'Ventas activas',
+        statValue: showMoney
+          ? this.todayRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
+          : String(this.todayActiveSales.length),
+        compareLabel: showMoney ? 'Ventas activas' : undefined,
+        compareValue: showMoney ? String(this.todayActiveSales.length) : undefined
       });
     }
 
@@ -314,6 +323,9 @@ export class DashboardComponent implements OnInit {
   }
 
   setChartMetric(metric: 'count' | 'amount'): void {
+    if (metric === 'amount' && !this.canViewFinancials) {
+      return;
+    }
     this.chartMetric = metric;
   }
 

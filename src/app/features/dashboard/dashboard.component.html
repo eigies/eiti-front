@@ -32,11 +32,17 @@
       <article class="hero-card hero-card--primary">
         <span class="hero-card__eyebrow">Resumen de hoy</span>
         <div class="hero-card__headline">
-          <div>
+          <div *ngIf="canViewFinancials; else todayCountHeadline">
             <strong>{{ todayRevenue | currency:'ARS':'code':'1.0-0' }}</strong>
             <span>Cobrado hoy</span>
           </div>
-          <span class="hero-delta" [class.hero-delta--up]="todayVsYesterdayDelta >= 0" [class.hero-delta--down]="todayVsYesterdayDelta < 0">
+          <ng-template #todayCountHeadline>
+            <div>
+              <strong>{{ todayActiveSales.length }}</strong>
+              <span>Ventas hoy</span>
+            </div>
+          </ng-template>
+          <span class="hero-delta" *ngIf="canViewFinancials" [class.hero-delta--up]="todayVsYesterdayDelta >= 0" [class.hero-delta--down]="todayVsYesterdayDelta < 0">
             {{ todayVsYesterdayLabel }}
           </span>
         </div>
@@ -45,7 +51,7 @@
             <span>Ventas activas</span>
             <strong>{{ todayActiveSales.length }}</strong>
           </div>
-          <div class="hero-metric">
+          <div class="hero-metric" *ngIf="canViewFinancials">
             <span>Pendiente</span>
             <strong>{{ todayPendingRevenue | currency:'ARS':'code':'1.0-0' }}</strong>
           </div>
@@ -94,17 +100,17 @@
         <strong class="kpi-value">{{ scopeSales.length }}</strong>
         <span class="kpi-sub">{{ scopePaidSales.length }} pagadas · {{ scopePendingSales.length }} en espera</span>
       </article>
-      <article class="kpi-card kpi-card--primary">
+      <article class="kpi-card kpi-card--primary" *ngIf="canViewFinancials">
         <span class="kpi-label">Ingresos cobrados</span>
         <strong class="kpi-value">{{ totalRevenue | currency:'ARS':'code':'1.0-0' }}</strong>
         <span class="kpi-sub">{{ scopePaidSales.length }} transacciones cerradas</span>
       </article>
-      <article class="kpi-card kpi-card--warn">
+      <article class="kpi-card kpi-card--warn" *ngIf="canViewFinancials">
         <span class="kpi-label">Pendiente de cobro</span>
         <strong class="kpi-value">{{ pendingRevenue | currency:'ARS':'code':'1.0-0' }}</strong>
         <span class="kpi-sub">{{ scopePendingSales.length }} venta(s) abiertas</span>
       </article>
-      <article class="kpi-card">
+      <article class="kpi-card" *ngIf="canViewFinancials">
         <span class="kpi-label">Ticket promedio</span>
         <strong class="kpi-value">{{ avgSaleValue | currency:'ARS':'code':'1.0-0' }}</strong>
         <span class="kpi-sub">Sobre {{ scopeSales.length }} ventas activas</span>
@@ -119,7 +125,7 @@
             <span class="data-panel__sub">{{ chartMetric === 'count' ? 'Cantidad de ventas por día' : 'Facturación cobrada por día' }}</span>
           </div>
 
-          <div class="panel-toggle">
+          <div class="panel-toggle" *ngIf="canViewFinancials">
             <button type="button" class="panel-toggle__item" [class.panel-toggle__item--active]="chartMetric === 'count'" (click)="setChartMetric('count')">Cantidad</button>
             <button type="button" class="panel-toggle__item" [class.panel-toggle__item--active]="chartMetric === 'amount'" (click)="setChartMetric('amount')">Monto</button>
           </div>
@@ -267,7 +273,7 @@
 
           <div class="sale-card__meta">
             <span>{{ sale.createdAt | date:'dd/MM/yy HH:mm' }}</span>
-            <strong>{{ sale.totalAmount | currency:'ARS':'code':'1.2-2' }}</strong>
+            <strong *ngIf="canViewFinancials">{{ sale.totalAmount | currency:'ARS':'code':'1.2-2' }}</strong>
           </div>
         </article>
       </div>

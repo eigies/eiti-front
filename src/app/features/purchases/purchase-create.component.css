@@ -578,3 +578,40 @@ textarea.field__input {
     width: 100%;
   }
 }
+
+.supplier-credit-hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .4rem .55rem;
+  margin-top: .5rem;
+  padding: .5rem .7rem;
+  border: 1px solid color-mix(in srgb, var(--success) 32%, var(--border-2));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+}
+
+.supplier-credit-hint__label {
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--success);
+}
+
+.supplier-credit-hint__value {
+  font-weight: 700;
+  color: var(--success);
+}
+
+.supplier-credit-hint__note {
+  font-size: .72rem;
+  color: var(--text-dim);
+}
+
+.summary-credit-note {
+  margin: -.2rem 0 .2rem;
+  font-size: .72rem;
+  color: var(--success);
+  opacity: .85;
+}

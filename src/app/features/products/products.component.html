@@ -219,7 +219,9 @@
         <table class="tbl">
           <thead>
             <tr>
-              <th class="tbl-th--check"></th>
+              <th class="tbl-th--check">
+                <input class="row-check" type="checkbox" [checked]="allFilteredSelected" [indeterminate]="someFilteredSelected" [disabled]="bulkEditMode || filteredProducts.length === 0" (change)="toggleSelectAllFiltered($any($event.target).checked)" title="Seleccionar todo" />
+              </th>
               <th class="tbl-th--sort" (click)="setSort('code')">Codigo <span class="sort-ind" [class.sort-ind--on]="sortColumn==='code'">{{ sortColumn==='code' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
               <th class="tbl-th--sort" (click)="setSort('sku')">SKU <span class="sort-ind" [class.sort-ind--on]="sortColumn==='sku'">{{ sortColumn==='sku' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
               <th>Tipo</th>
@@ -412,7 +414,11 @@
           <div class="stock-num"><span class="f__l">Reservado</span><strong>{{ selectedBranchStock.reservedQuantity }}</strong></div>
           <div class="stock-num stock-num--hi"><span class="f__l">Disponible</span><strong>{{ selectedBranchStock.availableQuantity }}</strong></div>
         </div>
-        <fieldset class="fs" [disabled]="!selectedStockBranchId">
+        <div class="stock-hint" *ngIf="!canManageStock">
+          <strong>No tenes permiso para cargar stock</strong>
+          <span>Solo podes consultar el stock. Pedi a un administrador el permiso de carga de stock.</span>
+        </div>
+        <fieldset class="fs" [disabled]="!selectedStockBranchId || !canManageStock">
           <form [formGroup]="stockForm" (ngSubmit)="submitStock()" novalidate>
             <div class="pf__row pf__row--3">
               <label class="f"><span class="f__l">Movimiento</span><app-searchable-select formControlName="type" [options]="stockMovementOptions" placeholder="Movimiento" searchPlaceholder="Buscar movimiento..."></app-searchable-select></label>
@@ -443,11 +449,9 @@
           <span class="card__icon">!</span>
           <span class="card__title">Eliminar producto</span>
         </div>
-      </div>
-      <div class="card__body danger-zone">
-        <p>Si el producto ya fue usado en una venta, la API puede bloquear el borrado.</p>
         <div class="danger-zone__actions">
-          <button class="btn btn--danger" type="button" *ngIf="!deleteConfirmOpen" (click)="deleteConfirmOpen = true">Eliminar producto</button>
+          <button class="btn btn--danger" type="button" *ngIf="!deleteConfirmOpen" [disabled]="!canDeleteProduct" (click)="deleteConfirmOpen = true">Eliminar producto</button>
+          <span class="danger-zone__hint" *ngIf="!canDeleteProduct">No tenes permiso para eliminar productos.</span>
           <ng-container *ngIf="deleteConfirmOpen">
             <button class="btn btn--ghost" type="button" (click)="deleteConfirmOpen = false">Cancelar</button>
             <button class="btn btn--danger" type="button" (click)="remove()" [disabled]="deleting">{{ deleting ? 'Eliminando...' : 'Confirmar eliminacion' }}</button>

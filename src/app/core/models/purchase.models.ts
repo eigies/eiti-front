@@ -8,7 +8,8 @@ export enum PurchasePaymentMethod {
   Cash = 1,
   BankTransfer = 2,
   Check = 3,
-  Other = 4
+  Other = 4,
+  SupplierCredit = 5
 }
 
 export interface PurchaseListItem {
@@ -65,6 +66,24 @@ export interface PurchaseDetailResponse {
   paidAt: string | null;
   details: PurchaseDetail[];
   payments: PurchasePayment[];
+  // Saldo a favor (presentes en la respuesta de creación de compra)
+  creditApplied?: number;
+  excess?: number;
+  supplierCreditBalance?: number;
+}
+
+export interface AddPurchasePaymentResult {
+  purchaseId: string;
+  status: PurchaseStatus;
+  statusName: string;
+  totalAmount: number;
+  taxAmount: number;
+  grandTotal: number;
+  totalPaid: number;
+  pendingAmount: number;
+  paymentId: string;
+  excess: number;
+  supplierCreditBalance: number;
 }
 
 export interface CreatePurchaseDetailRequest {

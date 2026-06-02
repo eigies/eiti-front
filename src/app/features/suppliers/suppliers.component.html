@@ -35,6 +35,8 @@
           <th>CUIT / RUT</th>
           <th>Telefono</th>
           <th>Email</th>
+          <th>Saldo a favor</th>
+          <th>Adeudado</th>
           <th>Estado</th>
           <th class="col-actions">Acciones</th>
         </tr>
@@ -48,6 +50,14 @@
           <td class="cell-mono">{{ s.taxId || '-' }}</td>
           <td class="cell-mono">{{ s.phone || '-' }}</td>
           <td class="cell-email">{{ s.email || '-' }}</td>
+          <td class="cell-mono">
+            <span *ngIf="s.creditBalance > 0" class="credit-chip">${{ s.creditBalance | number:'1.2-2' }}</span>
+            <span *ngIf="!s.creditBalance">-</span>
+          </td>
+          <td class="cell-mono">
+            <span *ngIf="s.owedAmount > 0" class="owed-chip">${{ s.owedAmount | number:'1.2-2' }}</span>
+            <span *ngIf="!s.owedAmount">-</span>
+          </td>
           <td>
             <span class="chip" [class.chip--active]="s.isActive" [class.chip--inactive]="!s.isActive">
               {{ s.isActive ? 'Activo' : 'Inactivo' }}

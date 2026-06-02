@@ -546,6 +546,12 @@
   display: flex;
   gap: 0.7rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.danger-zone__hint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
 }
 
 /* ── PRODUCT FORM ── */

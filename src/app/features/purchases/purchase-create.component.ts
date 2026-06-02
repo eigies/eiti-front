@@ -68,6 +68,12 @@ export class PurchaseCreateComponent implements OnInit {
     }));
   }
 
+  get selectedSupplierCredit(): number {
+    const id = this.headerForm.get('supplierId')?.value;
+    if (!id) return 0;
+    return this.suppliers.find(s => s.id === id)?.creditBalance ?? 0;
+  }
+
   get supplierOptions(): SearchableSelectOption[] {
     return this.suppliers.map(supplier => ({
       value: supplier.id,
@@ -248,7 +254,13 @@ export class PurchaseCreateComponent implements OnInit {
 
     this.purchaseService.createPurchase(req).subscribe({
       next: res => {
-        this.toast.success('Compra registrada correctamente');
+        if (res.creditApplied && res.creditApplied > 0) {
+          const applied = res.creditApplied.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          const remaining = (res.supplierCreditBalance ?? 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          this.toast.success(`Se aplicaron $${applied} de saldo a favor. Crédito restante: $${remaining}`);
+        } else {
+          this.toast.success('Compra registrada correctamente');
+        }
         this.router.navigate(['/purchases', res.id]);
       },
       error: (err: { error?: { detail?: string } }) => {

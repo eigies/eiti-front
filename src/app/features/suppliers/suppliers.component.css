@@ -480,3 +480,27 @@ textarea.field__input {
   .modal__footer .btn-primary,
   .modal__footer .btn-ghost { width: 100%; }
 }
+
+.credit-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+  font-weight: 700;
+  font-size: .74rem;
+}
+
+.owed-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--danger) 32%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+  font-weight: 700;
+  font-size: .74rem;
+}

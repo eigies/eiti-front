@@ -156,6 +156,14 @@ export class ProductsComponent implements OnInit {
     return this.auth.hasPermission(PermissionCodes.productsViewCost);
   }
 
+  get canManageStock(): boolean {
+    return this.auth.hasPermission(PermissionCodes.stockManage);
+  }
+
+  get canDeleteProduct(): boolean {
+    return this.auth.hasPermission(PermissionCodes.productsDelete);
+  }
+
   get noCostProductCount(): number {
     return this.products.filter(p => !p.costPrice || p.costPrice === 0).length;
   }
@@ -648,6 +656,7 @@ export class ProductsComponent implements OnInit {
 
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();
+      this.toast.error('Revisa los campos marcados: hay datos invalidos en el formulario.');
       return;
     }
 
@@ -827,6 +836,31 @@ export class ProductsComponent implements OnInit {
     }
 
     this.selectedBulkProductIds.delete(product.id);
+  }
+
+  get allFilteredSelected(): boolean {
+    const filtered = this.filteredProducts;
+    return filtered.length > 0 && filtered.every(product => this.selectedBulkProductIds.has(product.id));
+  }
+
+  get someFilteredSelected(): boolean {
+    const filtered = this.filteredProducts;
+    const selected = filtered.filter(product => this.selectedBulkProductIds.has(product.id)).length;
+    return selected > 0 && selected < filtered.length;
+  }
+
+  toggleSelectAllFiltered(checked: boolean): void {
+    if (this.bulkEditMode) {
+      return;
+    }
+
+    const filtered = this.filteredProducts;
+    if (checked) {
+      filtered.forEach(product => this.selectedBulkProductIds.add(product.id));
+      return;
+    }
+
+    filtered.forEach(product => this.selectedBulkProductIds.delete(product.id));
   }
 
   isBulkFieldChanged(productId: string, field: string): boolean {
@@ -1229,7 +1263,7 @@ export class ProductsComponent implements OnInit {
       price: [0],
       costPrice: [0, [Validators.required, Validators.min(0)]],
       unitPrice: [null, [Validators.min(0)]],
-      marginPercent: [0, [Validators.min(0)]],
+      marginPercent: [0],
       allowsManualSaleValue: [false],
       noDeliverySurcharge: [null, [Validators.min(0)]]
     });

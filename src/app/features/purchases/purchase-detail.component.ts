@@ -11,7 +11,8 @@ const PAYMENT_METHOD_LABELS: Record<number, string> = {
   [PurchasePaymentMethod.Cash]: 'Efectivo',
   [PurchasePaymentMethod.BankTransfer]: 'Transferencia',
   [PurchasePaymentMethod.Check]: 'Cheque',
-  [PurchasePaymentMethod.Other]: 'Otro'
+  [PurchasePaymentMethod.Other]: 'Otro',
+  [PurchasePaymentMethod.SupplierCredit]: 'Saldo a favor'
 };
 
 @Component({
@@ -138,13 +139,19 @@ export class PurchaseDetailComponent implements OnInit {
     };
 
     this.purchaseService.addPayment(this.purchaseId, req).subscribe({
-      next: () => {
+      next: res => {
         this.addingPayment = false;
         this.newPaymentAmount = 0;
         this.newPaymentReference = '';
         this.newPaymentNotes = '';
         this.newPaymentDate = this.todayIso();
-        this.toast.success('Pago registrado');
+        if (res?.excess && res.excess > 0) {
+          const added = res.excess.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          const balance = (res.supplierCreditBalance ?? 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+          this.toast.success(`Se acreditaron $${added} como saldo a favor del proveedor. Nuevo saldo: $${balance}`);
+        } else {
+          this.toast.success('Pago registrado');
+        }
         this.load(this.purchaseId);
       },
       error: (err: { error?: { detail?: string } }) => {

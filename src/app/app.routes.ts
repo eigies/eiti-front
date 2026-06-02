@@ -126,6 +126,13 @@ export const routes: Routes = [
             import('./features/cheques/cheques.component').then(m => m.ChequesComponent)
     },
     {
+        path: 'auditoria',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsAudit },
+        loadComponent: () =>
+            import('./features/audit/audit.component').then(m => m.AuditComponent)
+    },
+    {
         path: 'profile',
         canActivate: [authGuard],
         loadComponent: () =>
