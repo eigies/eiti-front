@@ -6,6 +6,8 @@ export interface AuditLogItem {
     succeeded: boolean;
     errorCode: string | null;
     payloadJson: string | null;
+    beforeJson: string | null;
+    afterJson: string | null;
     timestamp: string;
 }
 

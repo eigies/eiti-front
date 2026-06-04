@@ -106,7 +106,65 @@
               </tr>
               <tr class="detail-row" *ngIf="expandedId === item.id">
                 <td colspan="5">
-                  <pre class="payload">{{ prettyPayload(item.payloadJson) }}</pre>
+                  <ng-container *ngIf="changeRows(item) as changes">
+                    <section class="audit-block audit-changes" *ngIf="changes.length > 0">
+                      <div class="audit-block__title">Cambios</div>
+                      <div class="audit-change-table">
+                        <div class="audit-change-table__head">
+                          <span>Campo</span>
+                          <span>Antes</span>
+                          <span>Despues</span>
+                        </div>
+                        <div class="audit-change-table__row" *ngFor="let change of changes">
+                          <span class="audit-change-table__label">{{ change.label }}</span>
+                          <span>{{ change.before }}</span>
+                          <span>{{ change.after }}</span>
+                        </div>
+                      </div>
+                    </section>
+                  </ng-container>
+
+                  <div class="audit-snapshots" *ngIf="item.beforeJson || item.afterJson">
+                    <section class="audit-block audit-snapshot">
+                      <div class="audit-block__title">Antes</div>
+                      <ng-container *ngIf="snapshotRows(item, 'before') as beforeRows">
+                        <dl class="audit-detail audit-detail--snapshot" *ngIf="beforeRows.length > 0">
+                          <div class="audit-detail__row" *ngFor="let row of beforeRows">
+                            <dt class="audit-detail__label">{{ row.label }}</dt>
+                            <dd class="audit-detail__value">{{ row.value }}</dd>
+                          </div>
+                        </dl>
+                        <p class="audit-detail__empty" *ngIf="beforeRows.length === 0">Sin estado previo.</p>
+                      </ng-container>
+                    </section>
+
+                    <section class="audit-block audit-snapshot">
+                      <div class="audit-block__title">Despues</div>
+                      <ng-container *ngIf="snapshotRows(item, 'after') as afterRows">
+                        <dl class="audit-detail audit-detail--snapshot" *ngIf="afterRows.length > 0">
+                          <div class="audit-detail__row" *ngFor="let row of afterRows">
+                            <dt class="audit-detail__label">{{ row.label }}</dt>
+                            <dd class="audit-detail__value">{{ row.value }}</dd>
+                          </div>
+                        </dl>
+                        <p class="audit-detail__empty" *ngIf="afterRows.length === 0">Sin estado posterior.</p>
+                      </ng-container>
+                    </section>
+                  </div>
+
+                  <ng-container *ngIf="humanizeRows(item) as rows">
+                    <dl class="audit-detail" *ngIf="rows.length > 0">
+                      <div class="audit-detail__row" *ngFor="let row of rows">
+                        <dt class="audit-detail__label">{{ row.label }}</dt>
+                        <dd class="audit-detail__value">{{ row.value }}</dd>
+                      </div>
+                    </dl>
+                    <p class="audit-detail__empty" *ngIf="rows.length === 0">Esta acción no registró datos adicionales.</p>
+                  </ng-container>
+                  <button class="raw-toggle" type="button" (click)="toggleRaw(item.id)">
+                    {{ rawVisibleId === item.id ? 'Ocultar datos técnicos' : 'Ver datos técnicos' }}
+                  </button>
+                  <pre class="payload" *ngIf="rawVisibleId === item.id">{{ prettyPayload(item.payloadJson) }}</pre>
                 </td>
               </tr>
             </ng-container>
