@@ -67,7 +67,7 @@ export const PermissionCatalog: ReadonlyArray<{ code: PermissionCode; label: str
     { code: PermissionCodes.productsViewCost, label: 'Productos: ver costo', description: 'Permite ver la columna de costo en la lista y edición de productos.' },
     { code: PermissionCodes.productsDelete, label: 'Productos: eliminar', description: 'Permite eliminar productos.' },
     { code: PermissionCodes.stockManage, label: 'Stock: cargar', description: 'Permite cargar y ajustar stock de productos.' },
-    { code: PermissionCodes.stockTransfer, label: 'Stock: transferir entre sucursales', description: 'Permite transferir stock de una sucursal a otra. Requiere ver todas las sucursales.' },
+    { code: PermissionCodes.stockTransfer, label: 'Stock: transferir entre sucursales', description: 'Permite transferir stock entre las sucursales asignadas al usuario (o todas, si tiene ese permiso).' },
     { code: PermissionCodes.dashboardViewFinancials, label: 'Dashboard: ver montos', description: 'Permite ver importes y montos de dinero en el panel.' },
     { code: PermissionCodes.reportsAudit, label: 'Reportería: auditoría', description: 'Permite ver el reporte de auditoría de acciones de los usuarios.' },
     { code: PermissionCodes.reportsSalesModel, label: 'Reportería: ventas por modelo', description: 'Reporte de ventas/ganancia y rentabilidad por modelo.' },

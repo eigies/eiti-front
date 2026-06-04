@@ -86,7 +86,13 @@ export class BranchesComponent implements OnInit {
   }
 
   get canTransferStock(): boolean {
-    return this.auth.hasPermission(PermissionCodes.stockTransfer) && !!this.auth.currentUser?.canViewAllBranches;
+    // Alcanza con el permiso: el usuario puede transferir entre las sucursales que tenga asignadas
+    // (los selects ya vienen filtrados a las suyas). El backend valida acceso a origen y destino.
+    return this.auth.hasPermission(PermissionCodes.stockTransfer);
+  }
+
+  get canViewFinancials(): boolean {
+    return this.auth.hasPermission(PermissionCodes.dashboardViewFinancials);
   }
 
   get transferItems(): FormArray {
