@@ -1,0 +1,67 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Reporteria / Clientes</div>
+    <h1>Clientes deudores</h1>
+    <p>Clientes con saldo pendiente en cuenta corriente. "Neto" descuenta el saldo a favor.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div><span>Deudores</span><p *ngIf="data">{{ data.rows.length }} cliente(s) con saldo pendiente</p></div>
+      <div class="panel__actions">
+        <button class="btn btn--ghost btn--sm" type="button" (click)="load()">Actualizar</button>
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.rows.length === 0">Exportar XLSX</button>
+      </div>
+    </div>
+
+    <div class="loading-shell" *ngIf="loading"><div class="loading-shell__grid"><div class="loading-card" *ngFor="let _ of [1,2,3,4]"></div></div></div>
+
+    <div class="empty-state" *ngIf="!loading && data && data.rows.length === 0">
+      <span class="empty-state__eyebrow">Todo al día</span>
+      <h2>No hay clientes con saldo pendiente.</h2>
+    </div>
+
+    <div class="table-wrap" *ngIf="!loading && data && data.rows.length > 0">
+      <table class="data-table data-table--debtors data-table--sticky-first">
+        <colgroup>
+          <col />
+          <col />
+          <col />
+          <col />
+          <col />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th class="t-right">Ventas abiertas</th>
+            <th>Más antigua</th>
+            <th class="t-right">Adeudado</th>
+            <th class="t-right">A favor</th>
+            <th class="t-right">Neto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="data-row" *ngFor="let r of data.rows">
+            <td class="strong">{{ r.customerName }}</td>
+            <td class="t-right">{{ r.openSalesCount }}</td>
+            <td class="dim">{{ formatDate(r.oldestDate) }}</td>
+            <td class="t-right neg">$ {{ money(r.owed) }}</td>
+            <td class="t-right dim">$ {{ money(r.creditBalance) }}</td>
+            <td class="t-right" [class.neg]="r.net > 0" [class.pos]="r.net <= 0">$ {{ money(r.net) }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td>TOTAL</td>
+            <td></td>
+            <td></td>
+            <td class="t-right">$ {{ money(data.totalOwed) }}</td>
+            <td class="t-right">$ {{ money(data.totalCredit) }}</td>
+            <td class="t-right">$ {{ money(data.totalNet) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+</div>

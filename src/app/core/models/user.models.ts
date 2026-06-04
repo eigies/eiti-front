@@ -8,6 +8,7 @@ export interface UserResponse {
     profileId: string | null;
     profileName: string | null;
     permissions: string[];
+    branchIds: string[];
     createdAt: string;
     lastLoginAt?: string | null;
 }
@@ -18,11 +19,13 @@ export interface CreateUserRequest {
     password: string;
     profileId: string;
     employeeId?: string | null;
+    branchIds?: string[];
 }
 
 export interface UpdateUserProfileRequest {
     profileId: string;
     employeeId?: string | null;
+    branchIds?: string[];
 }
 
 export interface UserProfileAuditResponse {

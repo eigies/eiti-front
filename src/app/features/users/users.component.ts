@@ -9,6 +9,8 @@ import { AccessProfileService } from '../../core/services/access-profile.service
 import { UserService } from '../../core/services/user.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
+import { BranchService } from '../../core/services/branch.service';
+import { BranchResponse } from '../../core/models/branch.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
@@ -41,6 +43,11 @@ export class UsersComponent implements OnInit {
   readonly permissionCategories = this.buildPermissionCategories();
   users: UserResponse[] = [];
   profiles: AccessProfileResponse[] = [];
+  branches: BranchResponse[] = [];
+  createBranchIds = new Set<string>();
+  editBranchUserId: string | null = null;
+  editBranchIds = new Set<string>();
+  savingBranches = false;
   activeSection: 'admin' | 'profiles' = 'admin';
   activePermissionCategory = 'Todas';
   permissionSearchTerm = '';
@@ -63,13 +70,89 @@ export class UsersComponent implements OnInit {
     private readonly userService: UserService,
     private readonly accessProfileService: AccessProfileService,
     private readonly toast: ToastService,
-    private readonly auth: AuthService
+    private readonly auth: AuthService,
+    private readonly branchService: BranchService
   ) { }
 
   ngOnInit(): void {
     this.expandedPermissionModules = new Set<string>();
     this.beginCreateProfile();
     this.loadData();
+    this.branchService.listBranches().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: branches => { this.branches = branches; this.cdr.markForCheck(); },
+      error: () => {}
+    });
+  }
+
+  // --- Sucursales (acceso por sucursal) ---
+  branchName(id: string): string {
+    return this.branches.find(b => b.id === id)?.name ?? 'Sucursal';
+  }
+
+  branchDetail(branch: BranchResponse): string {
+    return [branch.code, branch.address].filter(Boolean).join(' · ');
+  }
+
+  branchSelectionLabel(count: number): string {
+    return count === 1 ? '1 sucursal seleccionada' : `${count} sucursales seleccionadas`;
+  }
+
+  toggleCreateBranch(id: string): void {
+    if (this.createBranchIds.has(id)) this.createBranchIds.delete(id);
+    else this.createBranchIds.add(id);
+  }
+
+  clearCreateBranches(): void {
+    this.createBranchIds = new Set<string>();
+  }
+
+  isCreateBranchSelected(id: string): boolean {
+    return this.createBranchIds.has(id);
+  }
+
+  beginEditBranches(user: UserResponse): void {
+    this.editBranchUserId = user.id;
+    this.editBranchIds = new Set<string>(user.branchIds ?? []);
+  }
+
+  cancelEditBranches(): void {
+    this.editBranchUserId = null;
+    this.editBranchIds = new Set<string>();
+  }
+
+  toggleEditBranch(id: string): void {
+    if (this.editBranchIds.has(id)) this.editBranchIds.delete(id);
+    else this.editBranchIds.add(id);
+  }
+
+  clearEditBranches(): void {
+    this.editBranchIds = new Set<string>();
+  }
+
+  isEditBranchSelected(id: string): boolean {
+    return this.editBranchIds.has(id);
+  }
+
+  saveUserBranches(user: UserResponse): void {
+    this.savingBranches = true;
+    this.userService.updateProfile(user.id, {
+      profileId: user.profileId || '',
+      employeeId: user.employeeId || null,
+      branchIds: Array.from(this.editBranchIds)
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: updated => {
+        this.patchUser(updated);
+        this.savingBranches = false;
+        this.editBranchUserId = null;
+        this.toast.success('Sucursales actualizadas');
+        this.cdr.markForCheck();
+      },
+      error: err => {
+        this.savingBranches = false;
+        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron actualizar las sucursales');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   get activeUsersCount(): number {
@@ -219,11 +302,13 @@ export class UsersComponent implements OnInit {
       email: String(raw.email || '').trim(),
       password: String(raw.password || ''),
       profileId: String(raw.profileId || ''),
-      employeeId: null
+      employeeId: null,
+      branchIds: Array.from(this.createBranchIds)
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: user => {
         this.users = [user, ...this.users].sort((left, right) => left.username.localeCompare(right.username));
         this.collapsedUserIds.add(user.id);
+        this.createBranchIds = new Set<string>();
         this.createForm.reset({
           username: '',
           email: '',

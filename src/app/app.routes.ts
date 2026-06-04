@@ -133,6 +133,60 @@ export const routes: Routes = [
             import('./features/audit/audit.component').then(m => m.AuditComponent)
     },
     {
+        path: 'reportes/ventas/modelo',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesModel, tipo: 'product' },
+        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+    },
+    {
+        path: 'reportes/ventas/marca',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesBrand, tipo: 'brand' },
+        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+    },
+    {
+        path: 'reportes/ventas/canal',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesChannel, tipo: 'channel' },
+        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+    },
+    {
+        path: 'reportes/ventas/canal-marca',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesChannelBrand, tipo: 'channel_brand' },
+        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+    },
+    {
+        path: 'reportes/ventas/transporte',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesTransport, tipo: 'installer' },
+        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+    },
+    {
+        path: 'reportes/ventas/ranking',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesRanking, tipo: 'product_ranking' },
+        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+    },
+    {
+        path: 'reportes/comparativo',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesComparison },
+        loadComponent: () => import('./features/reports/comparison/comparison-report.component').then(m => m.ComparisonReportComponent)
+    },
+    {
+        path: 'reportes/deudores',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsDebtors },
+        loadComponent: () => import('./features/reports/debtors/debtors-report.component').then(m => m.DebtorsReportComponent)
+    },
+    {
+        path: 'reportes/caja',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsCash },
+        loadComponent: () => import('./features/reports/cash/cash-report.component').then(m => m.CashReportComponent)
+    },
+    {
         path: 'profile',
         canActivate: [authGuard],
         loadComponent: () =>

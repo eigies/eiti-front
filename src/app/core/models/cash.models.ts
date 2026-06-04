@@ -67,6 +67,7 @@ export interface CashSessionSummaryResponse {
     id: string;
     openingAmount: number;
     salesIncome: number;
+    manualDeposits: number;
     withdrawals: number;
     salesCancellations: number;
     expectedClosingAmount: number;

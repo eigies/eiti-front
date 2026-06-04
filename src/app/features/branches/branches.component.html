@@ -83,6 +83,160 @@
         </div>
     </section>
 
+    <section class="panel panel--transfer" *ngIf="canTransferStock">
+        <div class="transfer-header">
+            <div class="transfer-header__identity">
+                <span class="transfer-header__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 7h11l-3-3"></path>
+                        <path d="M17 17H6l3 3"></path>
+                        <path d="M18 7l-3 3"></path>
+                        <path d="M6 17l3-3"></path>
+                    </svg>
+                </span>
+                <div>
+                    <span class="transfer-header__kicker">Movimiento interno</span>
+                    <h2>Traspaso de stock</h2>
+                </div>
+            </div>
+            <span class="transfer-header__status"><i></i> Entre sucursales</span>
+        </div>
+
+        <form class="transfer-form" [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+            <div class="transfer-route">
+                <label class="transfer-stop transfer-stop--source">
+                    <span class="transfer-stop__topline">
+                        <span class="transfer-stop__step">01</span>
+                        <span class="transfer-field__label">Sale de</span>
+                    </span>
+                    <app-searchable-select formControlName="sourceBranchId" [options]="branchSelectOptions"
+                        placeholder="Sucursal de origen" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+                    <span class="transfer-stop__meta" [class.transfer-stop__meta--loading]="transferStockLoading">
+                        <i></i>{{ transferStockLoading ? 'Consultando stock...' : 'Stock de origen' }}
+                    </span>
+                </label>
+
+                <div class="transfer-route__connector" aria-hidden="true">
+                    <span></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="m14 7 5 5-5 5"></path>
+                    </svg>
+                    <span></span>
+                </div>
+
+                <label class="transfer-stop transfer-stop--destination">
+                    <span class="transfer-stop__topline">
+                        <span class="transfer-stop__step">02</span>
+                        <span class="transfer-field__label">Llega a</span>
+                    </span>
+                    <app-searchable-select formControlName="destinationBranchId" [options]="transferDestinationOptions"
+                        placeholder="Sucursal de destino" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+                    <span class="transfer-stop__meta"><i></i> Sucursal receptora</span>
+                </label>
+            </div>
+
+            <label class="transfer-note">
+                <span class="transfer-note__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 5h16v14H4z"></path>
+                        <path d="M8 9h8"></path>
+                        <path d="M8 13h5"></path>
+                    </svg>
+                </span>
+                <span class="transfer-note__content">
+                    <span class="transfer-field__label">Referencia opcional</span>
+                    <input class="transfer-note__input" type="text" formControlName="description"
+                        placeholder="Motivo, responsable o numero interno" />
+                </span>
+            </label>
+
+            <div class="transfer-cargo">
+                <div class="transfer-cargo__header">
+                    <div>
+                        <span class="transfer-header__kicker">Contenido del movimiento</span>
+                        <h3>Productos a trasladar</h3>
+                    </div>
+                    <span class="transfer-cargo__count">{{ transferItems.length }} producto{{ transferItems.length === 1 ? '' : 's' }}</span>
+                </div>
+
+                <div class="transfer-lines" formArrayName="items">
+                    <div class="transfer-line transfer-line--head">
+                        <span>Producto</span>
+                        <span>Cantidad</span>
+                        <span>Disponible</span>
+                        <span></span>
+                    </div>
+                    <div class="transfer-line" *ngFor="let item of transferItems.controls; let i = index" [formGroupName]="i">
+                        <span class="transfer-line__index">{{ i + 1 }}</span>
+                        <label class="transfer-line__field transfer-line__field--product">
+                            <span class="transfer-line__mobile-label">Producto</span>
+                            <app-searchable-select formControlName="productId" [options]="productOptionsForLine(i)"
+                                placeholder="Seleccionar producto" searchPlaceholder="Buscar producto..."></app-searchable-select>
+                        </label>
+                        <label class="transfer-line__field transfer-line__field--quantity">
+                            <span class="transfer-line__mobile-label">Cantidad</span>
+                            <input class="control control--num" type="number" min="1" formControlName="quantity" />
+                        </label>
+                        <div class="transfer-line__stock">
+                            <span class="transfer-line__mobile-label">Disponible</span>
+                            <span class="transfer-line__avail" [class.transfer-line__avail--loading]="transferStockLoading">
+                                {{ transferStockLoading ? '...' : (availableForProduct(item.get('productId')?.value) === null ? '—' : availableForProduct(item.get('productId')?.value)) }}
+                            </span>
+                            <small>unidades</small>
+                        </div>
+                        <button class="btn btn--ghost btn--icon" type="button" (click)="removeTransferItem(i)"
+                            [disabled]="transferItems.length <= 1" title="Quitar producto" aria-label="Quitar producto">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M3 6h18"></path>
+                                <path d="M8 6V4h8v2"></path>
+                                <path d="m19 6-1 14H6L5 6"></path>
+                                <path d="M10 11v5"></path>
+                                <path d="M14 11v5"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn btn--add-product" type="button" (click)="addTransferItem()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 5v14"></path>
+                        <path d="M5 12h14"></path>
+                    </svg>
+                    Agregar producto
+                </button>
+            </div>
+
+            <div class="transfer-actions">
+                <div class="transfer-actions__summary">
+                    <span class="transfer-actions__mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m5 12 4 4L19 6"></path>
+                        </svg>
+                    </span>
+                    <span>
+                        <small>Movimiento preparado</small>
+                        <strong>{{ transferItems.length }} producto{{ transferItems.length === 1 ? '' : 's' }} en el traspaso</strong>
+                    </span>
+                </div>
+                <button class="btn btn--primary btn--transfer-submit" type="submit" [disabled]="savingTransfer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="m14 7 5 5-5 5"></path>
+                    </svg>
+                    {{ savingTransfer ? 'Transfiriendo...' : 'Confirmar traspaso' }}
+                </button>
+            </div>
+        </form>
+    </section>
+
     <div class="modal-backdrop" *ngIf="editingBranch">
         <section class="modal">
             <div class="panel__header"><span>Editar sucursal</span></div>

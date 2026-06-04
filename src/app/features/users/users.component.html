@@ -83,6 +83,30 @@
                                 </app-searchable-select>
                             </label>
 
+                            <div class="form__section field--wide" *ngIf="branches.length > 0">
+                                <div class="form__section-head">
+                                    <span class="panel__kicker">Sucursales</span>
+                                    <span class="form__section-copy">Definí en qué sucursales podrá operar este usuario.</span>
+                                </div>
+                                <div class="branch-access-state" [class.branch-access-state--restricted]="createBranchIds.size > 0">
+                                    <div class="branch-access-state__copy">
+                                        <span>{{ createBranchIds.size === 0 ? 'Acceso total' : 'Acceso restringido' }}</span>
+                                        <strong>{{ createBranchIds.size === 0 ? 'Puede operar en todas las sucursales' : branchSelectionLabel(createBranchIds.size) }}</strong>
+                                    </div>
+                                    <button class="branch-access-state__action" type="button" *ngIf="createBranchIds.size > 0" (click)="clearCreateBranches()">Ver todas</button>
+                                </div>
+                                <div class="branch-options">
+                                    <label class="branch-option" *ngFor="let b of branches" [class.branch-option--selected]="isCreateBranchSelected(b.id)">
+                                        <input class="branch-option__input" type="checkbox" [checked]="isCreateBranchSelected(b.id)" (change)="toggleCreateBranch(b.id)" />
+                                        <span class="branch-option__check" aria-hidden="true"></span>
+                                        <span class="branch-option__copy">
+                                            <strong>{{ b.name }}</strong>
+                                            <small *ngIf="b.code || b.address">{{ branchDetail(b) }}</small>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
                             <div class="form__section field--wide">
                                 <div class="form__section-head">
                                     <span class="panel__kicker">Resumen</span>
@@ -159,6 +183,42 @@
                                         searchPlaceholder="Buscar perfil...">
                                     </app-searchable-select>
                                     <p class="selection-copy" *ngIf="user.profileName">{{ user.profileName }}</p>
+                                </div>
+
+                                <div class="user-card__section" *ngIf="branches.length > 0">
+                                    <div class="user-card__section-head">
+                                        <span class="panel__kicker">Sucursales</span>
+                                    </div>
+                                    <ng-container *ngIf="editBranchUserId !== user.id">
+                                        <p class="selection-copy" *ngIf="user.branchIds && user.branchIds.length > 0">
+                                            <span *ngFor="let bid of user.branchIds; let last = last">{{ branchName(bid) }}<span *ngIf="!last"> · </span></span>
+                                        </p>
+                                        <p class="selection-copy" *ngIf="!user.branchIds || user.branchIds.length === 0">Ve todas las sucursales</p>
+                                        <button class="btn btn--ghost" type="button" (click)="beginEditBranches(user)">Editar sucursales</button>
+                                    </ng-container>
+                                    <ng-container *ngIf="editBranchUserId === user.id">
+                                        <div class="branch-access-state" [class.branch-access-state--restricted]="editBranchIds.size > 0">
+                                            <div class="branch-access-state__copy">
+                                                <span>{{ editBranchIds.size === 0 ? 'Acceso total' : 'Acceso restringido' }}</span>
+                                                <strong>{{ editBranchIds.size === 0 ? 'Puede operar en todas las sucursales' : branchSelectionLabel(editBranchIds.size) }}</strong>
+                                            </div>
+                                            <button class="branch-access-state__action" type="button" *ngIf="editBranchIds.size > 0" (click)="clearEditBranches()">Ver todas</button>
+                                        </div>
+                                        <div class="branch-options">
+                                            <label class="branch-option" *ngFor="let b of branches" [class.branch-option--selected]="isEditBranchSelected(b.id)">
+                                                <input class="branch-option__input" type="checkbox" [checked]="isEditBranchSelected(b.id)" (change)="toggleEditBranch(b.id)" />
+                                                <span class="branch-option__check" aria-hidden="true"></span>
+                                                <span class="branch-option__copy">
+                                                    <strong>{{ b.name }}</strong>
+                                                    <small *ngIf="b.code || b.address">{{ branchDetail(b) }}</small>
+                                                </span>
+                                            </label>
+                                        </div>
+                                        <div class="branch-actions">
+                                            <button class="btn" type="button" [disabled]="savingBranches" (click)="saveUserBranches(user)">{{ savingBranches ? 'Guardando...' : 'Guardar' }}</button>
+                                            <button class="btn btn--ghost" type="button" (click)="cancelEditBranches()">Cancelar</button>
+                                        </div>
+                                    </ng-container>
                                 </div>
 
                                 <div class="user-card__footer">

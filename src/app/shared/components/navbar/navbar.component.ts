@@ -124,6 +124,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
   }
 
+  get hasAnyReportsPermission(): boolean {
+    const p = this.permissionCodes;
+    return [
+      p.reportsAudit, p.reportsSalesModel, p.reportsSalesComparison, p.reportsSalesTransport,
+      p.reportsSalesChannel, p.reportsSalesChannelBrand, p.reportsSalesBrand, p.reportsSalesRanking,
+      p.reportsDebtors, p.reportsCash
+    ].some(code => this.auth.hasPermission(code));
+  }
+
   @HostListener('document:keydown.escape')
   handleEscape(): void {
     this.closeSidebar();

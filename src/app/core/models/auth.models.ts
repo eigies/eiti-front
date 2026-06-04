@@ -31,4 +31,5 @@ export interface AuthResponse {
     profileName?: string | null;
     permissions: string[];
     assignedCashDrawerId?: string | null;
+    canViewAllBranches?: boolean;
 }

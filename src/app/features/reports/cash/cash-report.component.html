@@ -1,0 +1,72 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Reporteria / Caja</div>
+    <h1>Movimientos de caja por motivo</h1>
+    <p>Ingresos manuales, salidas, pases entre cajas y gastos registrados en el período.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div><span>Período</span></div>
+      <div class="panel__actions">
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data">Exportar XLSX</button>
+      </div>
+    </div>
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form">
+      <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
+      <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+      <div class="filter-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="loading-shell" *ngIf="loading"><div class="loading-shell__grid"><div class="loading-card" *ngFor="let _ of [1,2,3]"></div></div></div>
+
+  <ng-container *ngIf="!loading && data">
+    <section class="panel cash-block" *ngFor="let cat of data.categories">
+      <button
+        class="cash-head"
+        type="button"
+        [attr.aria-expanded]="!!expanded[cat.typeCode]"
+        (click)="toggle(cat.typeCode)">
+        <div class="cash-head__left">
+          <span class="cash-head__motivo">{{ cat.motivo }}</span>
+          <span class="cash-head__count">{{ cat.count }} movimiento(s)</span>
+        </div>
+        <div class="cash-head__right">
+          <strong class="cash-head__total">$ {{ money(cat.total) }}</strong>
+          <span class="cash-head__chev" [class.is-open]="expanded[cat.typeCode]">▾</span>
+        </div>
+      </button>
+
+      <div class="table-wrap" *ngIf="expanded[cat.typeCode] && cat.items.length > 0">
+        <table class="data-table data-table--cash data-table--sticky-first">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
+          <thead><tr><th>Fecha</th><th>Descripción</th><th>Usuario</th><th class="t-right">Monto</th></tr></thead>
+          <tbody>
+            <tr class="data-row" *ngFor="let it of cat.items">
+              <td class="dim">{{ formatDate(it.date) }}</td>
+              <td>{{ it.description }}</td>
+              <td class="dim">{{ it.userName || 'Sistema' }}</td>
+              <td class="t-right strong">$ {{ money(it.amount) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note" *ngIf="expanded[cat.typeCode] && cat.items.length === 0">Sin movimientos en este motivo para el período.</p>
+    </section>
+
+    <section class="panel">
+      <div class="cash-head">
+        <span class="cash-head__motivo">Total de movimientos</span>
+        <strong class="cash-head__total">$ {{ money(data.totalGeneral) }}</strong>
+      </div>
+    </section>
+  </ng-container>
+</div>

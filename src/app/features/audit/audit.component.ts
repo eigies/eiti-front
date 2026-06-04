@@ -82,6 +82,7 @@ const ACTION_LABELS: Record<string, string> = {
   OpenCashSessionCommand: 'Apertura de caja',
   CloseCashSessionCommand: 'Cierre de caja',
   CreateCashWithdrawalCommand: 'Retiro de caja',
+  CreateCashDepositCommand: 'Ingreso de caja',
   CreateCashTransferCommand: 'Transferencia de caja',
   CreateCashDrawerCommand: 'Caja creada',
   UpdateCashDrawerCommand: 'Caja editada',

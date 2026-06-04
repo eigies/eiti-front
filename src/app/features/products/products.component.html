@@ -435,7 +435,7 @@
           <div class="stock-hist__rows">
             <div class="sh-row" *ngFor="let movement of stockMovements">
               <div class="sh-row__left"><strong>{{ stockMovementLabel(movement.type) }}</strong><span>{{ movement.description || 'Sin descripcion' }}</span></div>
-              <div class="sh-row__right"><strong [class.sh-pos]="movement.type !== 3 && movement.type !== 5 && movement.quantity >= 0" [class.sh-neg]="movement.type === 5 || movement.quantity < 0" [class.sh-reserved]="movement.type === 3">{{ movement.type === 3 ? '+/-' : movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}</strong><span>{{ movement.createdAt | date:'dd/MM/yy HH:mm' }}</span></div>
+              <div class="sh-row__right"><strong [class.sh-pos]="movement.type !== 3 && movement.type !== 5 && movement.type !== 10 && movement.quantity >= 0" [class.sh-neg]="movement.type === 5 || movement.type === 10 || movement.quantity < 0" [class.sh-reserved]="movement.type === 3">{{ movement.type === 3 ? '+/-' : (movement.type === 5 || movement.type === 10) ? '-' : movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}</strong><span>{{ movement.createdAt | date:'dd/MM/yy HH:mm' }}</span></div>
             </div>
           </div>
         </div>

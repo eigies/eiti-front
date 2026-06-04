@@ -1079,3 +1079,174 @@ h2 {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+.branch-access-state {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .8rem;
+  padding: .72rem .8rem;
+  border: 1px solid color-mix(in srgb, var(--success) 28%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--success) 7%, var(--bg));
+}
+
+.branch-access-state--restricted {
+  border-color: color-mix(in srgb, var(--amber) 35%, var(--border));
+  background: color-mix(in srgb, var(--amber) 8%, var(--bg));
+}
+
+.branch-access-state__copy {
+  display: grid;
+  gap: .16rem;
+  min-width: 0;
+}
+
+.branch-access-state__copy span,
+.branch-access-state__action {
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.branch-access-state__copy span {
+  color: var(--success);
+}
+
+.branch-access-state--restricted .branch-access-state__copy span {
+  color: var(--amber);
+}
+
+.branch-access-state__copy strong {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
+.branch-access-state__action {
+  flex-shrink: 0;
+  padding: .44rem .58rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 32%, var(--border));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  color: var(--amber);
+  cursor: pointer;
+}
+
+.branch-access-state__action:hover {
+  background: color-mix(in srgb, var(--amber) 10%, var(--bg));
+}
+
+.branch-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+}
+
+.branch-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15rem minmax(0, 1fr);
+  align-items: center;
+  gap: .62rem;
+  min-height: 3.3rem;
+  padding: .62rem .7rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  cursor: pointer;
+  transition: transform .15s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.branch-option:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 5%, var(--bg));
+}
+
+.branch-option--selected {
+  border-color: color-mix(in srgb, var(--amber) 48%, var(--border));
+  background: color-mix(in srgb, var(--amber) 10%, var(--bg));
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+
+.branch-option__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.branch-option__check {
+  display: grid;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--bg-panel) 86%, var(--bg));
+}
+
+.branch-option--selected .branch-option__check {
+  border-color: var(--amber);
+  background: var(--amber);
+}
+
+.branch-option--selected .branch-option__check::after {
+  content: '';
+  width: .4rem;
+  height: .22rem;
+  border-left: 2px solid var(--bg);
+  border-bottom: 2px solid var(--bg);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.branch-option:has(.branch-option__input:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--amber) 62%, transparent);
+  outline-offset: 2px;
+}
+
+.branch-option__copy {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+
+.branch-option__copy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-option__copy small {
+  overflow: hidden;
+  color: var(--text-soft);
+  font-family: 'Crimson Pro', serif;
+  font-size: .78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-actions {
+  display: flex;
+  gap: .5rem;
+  margin-top: .5rem;
+}
+
+@media (max-width: 720px) {
+  .branch-options {
+    grid-template-columns: 1fr;
+  }
+
+  .branch-access-state {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

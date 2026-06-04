@@ -1,0 +1,68 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Reporteria / Ventas</div>
+    <h1>Comparativo entre fechas</h1>
+    <p>Compará dos períodos: ventas, facturación, costo, ganancia y margen, con su variación.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header"><div><span>Períodos</span><p>Definí el período A y el período B.</p></div></div>
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form">
+      <label class="field"><span>A · Desde</span><input class="control" type="date" formControlName="aFrom" [class.control--error]="isInvalid('aFrom')" /></label>
+      <label class="field"><span>A · Hasta</span><input class="control" type="date" formControlName="aTo" [class.control--error]="isInvalid('aTo')" /></label>
+      <label class="field"><span>B · Desde</span><input class="control" type="date" formControlName="bFrom" [class.control--error]="isInvalid('bFrom')" /></label>
+      <label class="field"><span>B · Hasta</span><input class="control" type="date" formControlName="bTo" [class.control--error]="isInvalid('bTo')" /></label>
+      <div class="filter-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Comparar</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel__header"><div><span>Resultado</span></div></div>
+
+    <div class="loading-shell" *ngIf="loading"><div class="loading-shell__grid"><div class="loading-card" *ngFor="let _ of [1,2,3,4]"></div></div></div>
+
+    <div class="table-wrap" *ngIf="!loading && totalsA && totalsB">
+      <table class="data-table data-table--comparison data-table--sticky-first">
+        <colgroup>
+          <col />
+          <col />
+          <col />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Métrica</th>
+            <th class="t-right">
+              <span class="column-heading">
+                <span>Período A</span>
+                <small>{{ rangeLabel('aFrom', 'aTo') }}</small>
+              </span>
+            </th>
+            <th class="t-right">
+              <span class="column-heading">
+                <span>Período B</span>
+                <small>{{ rangeLabel('bFrom', 'bTo') }}</small>
+              </span>
+            </th>
+            <th class="t-right">Variación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="data-row" *ngFor="let r of rows">
+            <td class="strong">{{ r.label }}</td>
+            <td class="t-right">{{ fmt(r.a, r.money) }}</td>
+            <td class="t-right">{{ fmt(r.b, r.money) }}</td>
+            <td class="t-right" [class.pos]="r.delta >= 0" [class.neg]="r.delta < 0">{{ r.delta >= 0 ? '+' : '' }}{{ r.delta }}{{ r.label === 'Margen %' ? ' pp' : '%' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && hasSearched && (!totalsA || !totalsB)">
+      <span class="empty-state__eyebrow">Sin datos</span>
+      <h2>No se pudo comparar.</h2>
+    </div>
+  </section>
+</div>

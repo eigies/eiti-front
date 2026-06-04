@@ -374,3 +374,560 @@
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+.panel--transfer {
+    padding: 0;
+    overflow: visible;
+    border-color: color-mix(in srgb, var(--amber) 20%, var(--border));
+}
+
+.transfer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--amber) 4%, transparent);
+    border-radius: 12px 12px 0 0;
+}
+
+.transfer-header__identity {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: .85rem;
+}
+
+.transfer-header__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--border));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--amber) 9%, var(--bg));
+    color: var(--amber);
+}
+
+.transfer-header__icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.transfer-header__kicker {
+    display: block;
+    margin-bottom: .22rem;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .6rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.transfer-header h2,
+.transfer-cargo__header h3 {
+    margin: 0;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.transfer-header h2 {
+    font-size: .98rem;
+}
+
+.transfer-header__status {
+    display: inline-flex;
+    align-items: center;
+    gap: .48rem;
+    flex: 0 0 auto;
+    padding: .44rem .62rem;
+    border: 1px solid color-mix(in srgb, var(--success) 24%, var(--border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--success) 6%, var(--bg));
+    color: color-mix(in srgb, var(--success) 72%, var(--text));
+    font-family: 'DM Mono', monospace;
+    font-size: .58rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.transfer-header__status i,
+.transfer-stop__meta i {
+    width: .38rem;
+    height: .38rem;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.transfer-form {
+    display: grid;
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.transfer-route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 4.5rem minmax(0, 1fr);
+    align-items: center;
+}
+
+.transfer-stop {
+    display: grid;
+    min-width: 0;
+    gap: .62rem;
+    padding: .95rem;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+}
+
+.transfer-stop--source {
+    border-radius: 10px 0 0 10px;
+    border-right-color: color-mix(in srgb, var(--amber) 20%, var(--border));
+}
+
+.transfer-stop--destination {
+    border-radius: 0 10px 10px 0;
+    border-left-color: color-mix(in srgb, var(--success) 20%, var(--border));
+}
+
+.transfer-stop__topline {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.transfer-stop__step {
+    display: grid;
+    place-items: center;
+    width: 1.45rem;
+    height: 1.45rem;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    font-size: .58rem;
+}
+
+.transfer-stop--destination .transfer-stop__step {
+    background: color-mix(in srgb, var(--success) 9%, transparent);
+    color: var(--success);
+}
+
+.transfer-field__label {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.transfer-stop__meta {
+    display: flex;
+    align-items: center;
+    gap: .42rem;
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: .6rem;
+}
+
+.transfer-stop--source .transfer-stop__meta {
+    color: color-mix(in srgb, var(--amber) 60%, var(--text-soft));
+}
+
+.transfer-stop--destination .transfer-stop__meta {
+    color: color-mix(in srgb, var(--success) 60%, var(--text-soft));
+}
+
+.transfer-stop__meta--loading i,
+.transfer-line__avail--loading {
+    animation: transfer-pulse .9s ease-in-out infinite alternate;
+}
+
+.transfer-route__connector {
+    display: grid;
+    grid-template-columns: 1fr 2rem 1fr;
+    align-items: center;
+    color: var(--amber);
+}
+
+.transfer-route__connector span {
+    height: 1px;
+    background: color-mix(in srgb, var(--amber) 42%, var(--border));
+}
+
+.transfer-route__connector svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: auto;
+}
+
+.transfer-note {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .62rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+
+.transfer-note__icon {
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-right: 1px solid var(--border);
+    color: var(--text-dim);
+}
+
+.transfer-note__icon svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.transfer-note__content {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+    gap: .1rem;
+}
+
+.transfer-note__input {
+    min-width: 0;
+    width: 100%;
+    padding: .18rem 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .78rem;
+}
+
+.transfer-note__input::placeholder {
+    color: var(--text-soft);
+}
+
+.transfer-note:focus-within {
+    border-color: color-mix(in srgb, var(--amber) 38%, var(--border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 8%, transparent);
+}
+
+.transfer-cargo {
+    display: grid;
+    gap: .8rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.transfer-cargo__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.transfer-cargo__header h3 {
+    font-size: .82rem;
+}
+
+.transfer-cargo__count {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .64rem;
+}
+
+.transfer-lines {
+    display: grid;
+    gap: .55rem;
+}
+
+.transfer-line {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7.5rem 7rem 2.5rem;
+    gap: .65rem;
+    align-items: center;
+    min-width: 0;
+    padding: .62rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.transfer-line:not(.transfer-line--head):hover {
+    border-color: color-mix(in srgb, var(--amber) 22%, var(--border));
+    background: color-mix(in srgb, var(--amber) 3%, var(--bg));
+}
+
+.transfer-line--head {
+    padding: 0 .62rem;
+    border: 0;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .58rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.transfer-line__index {
+    position: absolute;
+    left: -.55rem;
+    top: 50%;
+    width: 1.1rem;
+    height: 1.1rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--amber) 30%, var(--border));
+    border-radius: 4px;
+    background: var(--bg-panel);
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    font-size: .52rem;
+    transform: translateY(-50%);
+}
+
+.transfer-line__field {
+    display: block;
+    min-width: 0;
+}
+
+.transfer-line__mobile-label {
+    display: none;
+}
+
+.control--num {
+    min-height: 2.78rem;
+    text-align: right;
+}
+
+.transfer-line__stock {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: .28rem;
+    min-width: 0;
+    padding: .62rem .45rem;
+    border: 1px solid color-mix(in srgb, var(--success) 16%, var(--border));
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--success) 4%, var(--bg));
+}
+
+.transfer-line__avail {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .82rem;
+    font-weight: 600;
+}
+
+.transfer-line__stock small {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .52rem;
+}
+
+.btn--icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: var(--text-soft);
+}
+
+.btn--icon svg,
+.btn--add-product svg,
+.btn--transfer-submit svg,
+.transfer-actions__mark svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.btn--icon:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--danger) 32%, var(--border-2));
+    background: color-mix(in srgb, var(--danger) 6%, transparent);
+    color: var(--danger);
+}
+
+.btn--add-product {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: .52rem;
+    padding: .62rem .75rem;
+    border: 1px dashed color-mix(in srgb, var(--amber) 35%, var(--border-2));
+    background: transparent;
+    color: var(--amber);
+}
+
+.btn--add-product:hover:not(:disabled) {
+    border-style: solid;
+    background: color-mix(in srgb, var(--amber) 6%, transparent);
+}
+
+.transfer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.transfer-actions__summary {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+}
+
+.transfer-actions__summary > span:last-child {
+    display: grid;
+    gap: .12rem;
+    min-width: 0;
+}
+
+.transfer-actions__summary small,
+.transfer-actions__summary strong {
+    font-family: 'DM Mono', monospace;
+}
+
+.transfer-actions__summary small {
+    color: var(--text-dim);
+    font-size: .55rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.transfer-actions__summary strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: .7rem;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transfer-actions__mark {
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid color-mix(in srgb, var(--success) 26%, var(--border));
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--success) 7%, var(--bg));
+    color: var(--success);
+}
+
+.btn--transfer-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    min-width: 13rem;
+}
+
+@media (max-width: 800px) {
+    .transfer-route {
+        grid-template-columns: 1fr;
+    }
+
+    .transfer-stop--source,
+    .transfer-stop--destination {
+        border-radius: 8px;
+        border: 1px solid var(--border);
+    }
+
+    .transfer-route__connector {
+        grid-template-columns: 1fr 2rem 1fr;
+        justify-self: center;
+        width: 3.5rem;
+        padding: .35rem 0;
+        transform: rotate(90deg);
+    }
+
+    .transfer-line--head {
+        display: none;
+    }
+
+    .transfer-line {
+        grid-template-columns: minmax(0, 1fr) 6.5rem 2.5rem;
+        padding: .75rem;
+    }
+
+    .transfer-line__field--product {
+        grid-column: 1 / -1;
+    }
+
+    .transfer-line__field--quantity {
+        grid-column: 1;
+    }
+
+    .transfer-line__mobile-label {
+        display: block;
+        margin-bottom: .28rem;
+        color: var(--text-dim);
+        font-family: 'DM Mono', monospace;
+        font-size: .54rem;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+    }
+
+    .transfer-line__stock {
+        align-self: end;
+        min-height: 2.78rem;
+        box-sizing: border-box;
+    }
+
+    .transfer-line__stock .transfer-line__mobile-label {
+        display: none;
+    }
+
+    .btn--icon {
+        align-self: end;
+    }
+}
+
+@media (max-width: 580px) {
+    .transfer-header,
+    .transfer-cargo__header,
+    .transfer-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .transfer-header__status {
+        align-self: flex-start;
+    }
+
+    .transfer-form {
+        padding: .95rem;
+    }
+
+    .transfer-note {
+        align-items: flex-start;
+    }
+
+    .transfer-actions__summary {
+        display: none;
+    }
+
+    .btn--transfer-submit,
+    .btn--add-product {
+        width: 100%;
+    }
+}
+
+@keyframes transfer-pulse {
+    from { opacity: .38; }
+    to { opacity: 1; }
+}

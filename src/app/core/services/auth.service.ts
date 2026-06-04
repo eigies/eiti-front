@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { AuthResponse, ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest } from '../models/auth.models';
 import { OnboardingService } from './onboarding.service';
 import { UserResponse } from '../models/user.models';
+import { PermissionCodes } from '../models/permission.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -120,7 +121,10 @@ export class AuthService {
                     profileId: profile.profileId ?? current.profileId ?? null,
                     profileName: profile.profileName ?? current.profileName ?? null,
                     permissions: profile.permissions ?? current.permissions ?? [],
-                    assignedCashDrawerId: current.assignedCashDrawerId ?? null
+                    assignedCashDrawerId: current.assignedCashDrawerId ?? null,
+                    canViewAllBranches:
+                        (profile.permissions ?? []).includes(PermissionCodes.branchesViewAll) ||
+                        (profile.branchIds ?? []).length === 0
                 };
 
                 localStorage.setItem(this.USER_KEY, JSON.stringify(merged));

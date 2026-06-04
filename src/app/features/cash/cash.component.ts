@@ -28,6 +28,7 @@ type CashSessionView = {
     session: CashSessionResponse;
     expanded: boolean;
     salesIncome: number;
+    manualDeposits: number;
     withdrawals: number;
     expectedClosingAmount: number;
 };
@@ -184,6 +185,7 @@ type CashSessionView = {
           </div>
 
           <div *ngIf="auth.hasPermission(permissionCodes.cashWithdraw)" class="session-actions">
+            <button class="btn btn--deposit" type="button" (click)="openDepositModal()">Registrar ingreso</button>
             <button class="btn btn--ghost" type="button" (click)="openWithdrawModal()">Registrar extraccion</button>
             <button *ngIf="otherDrawers.length > 0" class="btn btn--transfer" type="button" (click)="openTransferModal()">&#8644; Transferir</button>
           </div>
@@ -194,6 +196,10 @@ type CashSessionView = {
             <div class="summary-item summary-item--sales">
               <span>Ventas</span>
               <strong>&#36;{{ currentSummary.salesIncome | number: '1.2-2' }}</strong>
+            </div>
+            <div class="summary-item summary-item--deposits">
+              <span>Ingresos</span>
+              <strong>&#36;{{ currentSummary.manualDeposits | number: '1.2-2' }}</strong>
             </div>
             <div class="summary-item summary-item--withdrawals">
               <span>Extracciones</span>
@@ -275,6 +281,7 @@ type CashSessionView = {
               <div class="history-session__metrics">
                 <span>Inicial: &#36;{{ item.session.openingAmount | number: '1.2-2' }}</span>
                 <span>Ventas: &#36;{{ item.salesIncome | number: '1.2-2' }}</span>
+                <span>Ingresos: &#36;{{ item.manualDeposits | number: '1.2-2' }}</span>
                 <span>Extracciones: &#36;{{ item.withdrawals | number: '1.2-2' }}</span>
                 <span>Esperado: &#36;{{ item.expectedClosingAmount | number: '1.2-2' }}</span>
               </div>
@@ -380,6 +387,33 @@ type CashSessionView = {
             <div class="modal__actions">
               <button class="btn btn--ghost" type="button" (click)="closeCloseConfirmModal()">Cancelar</button>
               <button class="btn btn--danger" type="submit" [disabled]="closeForm.invalid">Confirmar cierre</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div class="modal-backdrop" *ngIf="showDepositModal" (click)="closeDepositModal()">
+      <div class="modal modal--deposit" (click)="$event.stopPropagation()">
+        <div class="modal__head">
+          <span class="modal__title">Registrar ingreso de efectivo</span>
+          <button class="modal__close" type="button" (click)="closeDepositModal()">&#x2715;</button>
+        </div>
+        <div class="modal__body">
+          <p class="cash-movement-hint">Este monto entra físicamente en la caja y aumenta el efectivo esperado.</p>
+          <form [formGroup]="depositForm" (ngSubmit)="deposit()">
+            <label class="field">
+              <span>Monto</span>
+              <input class="control" type="number" min="0.01" step="0.01" placeholder="0.00" formControlName="amount" />
+            </label>
+            <label class="field">
+              <span>Origen / motivo</span>
+              <input class="control" type="text" placeholder="Ej. Retiro del banco" formControlName="description" />
+            </label>
+            <div class="modal__actions">
+              <button class="btn btn--ghost" type="button" (click)="closeDepositModal()">Cancelar</button>
+              <button class="btn btn--deposit" type="submit" [disabled]="depositForm.invalid">Confirmar ingreso</button>
             </div>
           </form>
         </div>
@@ -769,10 +803,10 @@ type CashSessionView = {
     .drawer-chip--active .drawer-chip__state{color:color-mix(in srgb,var(--amber) 72%, white 28%)}
     .stale-alert{padding:.78rem 1rem;border:1px solid color-mix(in srgb,var(--amber) 38%,var(--border-2));background:color-mix(in srgb,var(--amber) 8%,transparent);color:color-mix(in srgb,var(--amber) 85%,var(--text));font-family:'DM Mono',monospace;font-size:.74rem;border-radius:16px;letter-spacing:.04em}
     .session-card,.summary{display:grid;gap:1rem}
-    .session-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+    .session-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
     .session-actions .btn{width:100%}
     .session-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:.2rem}
-    .summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:.9rem}
+    .summary{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.9rem}
     .metric-inline,.summary-item{display:grid;gap:.25rem;padding:1rem 1rem .95rem;border:1px solid color-mix(in srgb,var(--border) 88%, transparent);border-radius:18px;background:linear-gradient(180deg,color-mix(in srgb,var(--bg-soft) 76%, transparent) 0%,color-mix(in srgb,var(--bg-panel) 88%, transparent) 100%)}
     .metric-inline{min-height:5.7rem;padding:1.15rem 1.1rem 1.05rem}
     .metric-inline__label{color:var(--text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
@@ -780,6 +814,7 @@ type CashSessionView = {
     .summary-item span{color:var(--text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
     .summary-item strong{font-weight:600;font-family:'Crimson Pro',serif;font-size:1.35rem;line-height:.95}
     .summary-item--sales strong{color:var(--success)}
+    .summary-item--deposits strong{color:#0f9f78}
     .summary-item--withdrawals strong{color:var(--danger)}
     .summary-item--cancellations strong{color:var(--danger)}
     .summary-item--balance strong{color:var(--text)}
@@ -795,7 +830,7 @@ type CashSessionView = {
     .history-session__headline span{display:inline-flex;align-items:center;min-height:2rem;padding:0 .7rem;border-radius:999px;border:1px solid color-mix(in srgb,var(--success) 24%, var(--border));background:color-mix(in srgb,var(--success) 8%, transparent);color:var(--success);text-transform:uppercase;letter-spacing:.12em;font-size:.68rem}
     .history-session__status--closed{color:var(--danger)!important}
     .history-session__status--closed{border-color:color-mix(in srgb,var(--danger) 24%, var(--border))!important;background:color-mix(in srgb,var(--danger) 8%, transparent)!important}
-    .history-session__metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.74rem}
+    .history-session__metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.74rem}
     .history-session__metrics span{padding:.75rem .8rem;border:1px solid color-mix(in srgb,var(--border) 82%, transparent);border-radius:14px;background:color-mix(in srgb,var(--bg) 42%, transparent)}
     .session-breakdown{padding:.45rem 0 .55rem;border-bottom:1px solid var(--border);margin-bottom:.75rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.72rem;display:flex;flex-wrap:wrap;align-items:center;gap:.15rem}
     .transfer-bank-breakdown{padding:.4rem 0 .5rem;margin-bottom:.5rem;color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.7rem;display:flex;flex-wrap:wrap;align-items:center;gap:.15rem;border-left:2px solid color-mix(in srgb,var(--amber) 40%,transparent);padding-left:.6rem}
@@ -816,6 +851,7 @@ type CashSessionView = {
     .badge--out{background:color-mix(in srgb,var(--danger) 16%, transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 35%, transparent)}
     .badge--type{background:color-mix(in srgb,var(--amber) 12%, transparent);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 30%, transparent)}
     .badge--type[data-type="CashWithdrawal"]{background:color-mix(in srgb,var(--danger) 12%, transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%, transparent)}
+    .badge--type[data-type="CashDeposit"]{background:color-mix(in srgb,var(--success) 12%, transparent);color:var(--success);border:1px solid color-mix(in srgb,var(--success) 30%, transparent)}
     .badge--type[data-type="OpeningBalance"]{background:color-mix(in srgb,var(--success) 12%, transparent);color:var(--success);border:1px solid color-mix(in srgb,var(--success) 30%, transparent)}
     .badge--type[data-type="ClosingBalance"]{background:color-mix(in srgb,var(--text-dim) 12%, transparent);color:var(--text-dim);border:1px solid color-mix(in srgb,var(--text-dim) 28%, transparent)}
     .badge--type[data-type="CashTransferOut"]{background:color-mix(in srgb,#6366f1 12%, transparent);color:#6366f1;border:1px solid color-mix(in srgb,#6366f1 30%, transparent)}
@@ -952,6 +988,8 @@ type CashSessionView = {
     .btn--transfer{background:color-mix(in srgb,#6366f1 8%, transparent);border:1px solid color-mix(in srgb,#6366f1 35%, var(--border-2));color:#6366f1;white-space:nowrap}
     .btn--transfer:hover:not(:disabled){background:color-mix(in srgb,#6366f1 14%, transparent);border-color:color-mix(in srgb,#6366f1 55%, var(--border-2));transform:translateY(-1px)}
     .btn--transfer-confirm{font-size:.72rem;letter-spacing:.12em}
+    .btn--deposit{background:color-mix(in srgb,var(--success) 8%, transparent);border:1px solid color-mix(in srgb,var(--success) 38%, var(--border-2));color:var(--success);white-space:nowrap}
+    .btn--deposit:hover:not(:disabled){background:color-mix(in srgb,var(--success) 14%, transparent);border-color:color-mix(in srgb,var(--success) 58%, var(--border-2));transform:translateY(-1px)}
     .modal-backdrop{position:fixed;inset:0;background:color-mix(in srgb,black 58%, transparent);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
     .modal{background:linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 96%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%);border:1px solid color-mix(in srgb,var(--amber) 14%, var(--border));border-radius:28px;width:100%;max-width:480px;box-shadow:inset 0 1px 0 color-mix(in srgb,white 10%, transparent),0 24px 64px rgba(0,0,0,.24)}
     .modal__head{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.25rem;border-bottom:1px solid var(--border)}
@@ -963,6 +1001,7 @@ type CashSessionView = {
     .modal__body .field{display:grid;gap:.4rem}
     .modal__body .field span{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase}
     .modal__body .control{margin:0}
+    .cash-movement-hint{margin:0 0 1rem;padding:.75rem .8rem;border-left:3px solid var(--success);background:color-mix(in srgb,var(--success) 7%, transparent);color:var(--text-soft);font-family:'DM Mono',monospace;font-size:.7rem;line-height:1.55}
     .modal__actions{display:flex;justify-content:flex-end;gap:.75rem;margin-top:.5rem}
     .close-confirm-row{display:flex;justify-content:space-between;align-items:center;padding:.6rem .85rem;background:color-mix(in srgb,var(--bg) 60%,transparent);border:1px solid var(--border);border-radius:3px}
     .close-confirm-row__label{color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase}
@@ -1083,9 +1122,11 @@ export class CashComponent implements OnInit {
     drawerForm: FormGroup;
     openForm: FormGroup;
     withdrawForm: FormGroup;
+    depositForm: FormGroup;
     closeForm: FormGroup;
     transferForm: FormGroup;
     showWithdrawModal = false;
+    showDepositModal = false;
     showTransferModal = false;
     showCloseConfirmModal = false;
     showPendingCloseSalesModal = false;
@@ -1131,6 +1172,7 @@ export class CashComponent implements OnInit {
         this.drawerForm = this.fb.group({ name: ['', Validators.required] });
         this.openForm = this.fb.group({ openingAmount: [0, [Validators.required, Validators.min(0)]], notes: [''] });
         this.withdrawForm = this.fb.group({ amount: [0, [Validators.required, Validators.min(0.01)]], description: ['', Validators.required] });
+        this.depositForm = this.fb.group({ amount: [0, [Validators.required, Validators.min(0.01)]], description: ['', Validators.required] });
         this.closeForm = this.fb.group({ actualClosingAmount: [0, [Validators.required, Validators.min(0)]], notes: [''] });
         this.transferForm = this.fb.group({ targetCashDrawerId: ['', Validators.required], amount: [0, [Validators.required, Validators.min(0.01)]], description: ['', Validators.required] });
     }
@@ -1298,6 +1340,26 @@ export class CashComponent implements OnInit {
         });
     }
 
+    deposit(): void {
+        if (!this.currentSession || this.depositForm.invalid) {
+            this.depositForm.markAllAsTouched();
+            return;
+        }
+
+        const { amount, description } = this.depositForm.getRawValue();
+        this.cashService.deposit(this.currentSession.id, Number(amount), description).subscribe({
+            next: session => {
+                this.currentSession = session;
+                this.currentSummary = this.toSummary(session);
+                this.loadHistory();
+                this.depositForm.reset({ amount: 0, description: '' });
+                this.showDepositModal = false;
+                this.toast.success('Ingreso registrado');
+            },
+            error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo registrar el ingreso')
+        });
+    }
+
     get closeDifference(): number {
         const actual = parseFloat(this.closeForm.get('actualClosingAmount')?.value ?? 0);
         const expected = this.currentSummary?.expectedClosingAmount ?? 0;
@@ -1360,6 +1422,16 @@ export class CashComponent implements OnInit {
     openWithdrawModal(): void {
         this.withdrawForm.reset({ amount: 0, description: '' });
         this.showWithdrawModal = true;
+    }
+
+    openDepositModal(): void {
+        this.depositForm.reset({ amount: 0, description: '' });
+        this.showDepositModal = true;
+    }
+
+    closeDepositModal(): void {
+        this.showDepositModal = false;
+        this.depositForm.reset({ amount: 0, description: '' });
     }
 
     closeWithdrawModal(): void {
@@ -1442,6 +1514,7 @@ export class CashComponent implements OnInit {
                 this.currentSummary = null;
                 this.openForm.reset({ openingAmount: closingAmount, notes: '' });
                 this.withdrawForm.reset({ amount: 0, description: '' });
+                this.depositForm.reset({ amount: 0, description: '' });
                 this.closeForm.reset({ actualClosingAmount: null, notes: '' });
                 this.loadHistory();
                 this.toast.success('Caja cerrada');
@@ -2009,10 +2082,12 @@ export class CashComponent implements OnInit {
                         + this.sumMovementsByType(session.movements, 'CuentaCorrienteIncome')
                         - this.sumMovementsByType(session.movements, 'SaleCancellation');
                     const withdrawals = this.sumMovementsByType(session.movements, 'CashWithdrawal');
+                    const manualDeposits = this.sumMovementsByType(session.movements, 'CashDeposit');
                     return {
                         session,
                         expanded: false,
                         salesIncome,
+                        manualDeposits,
                         withdrawals,
                         expectedClosingAmount: session.expectedClosingAmount
                     };
@@ -2036,6 +2111,10 @@ export class CashComponent implements OnInit {
             .filter(movement => movement.typeName === 'CashWithdrawal')
             .reduce((total, movement) => total + movement.amount, 0);
 
+        const manualDeposits = session.movements
+            .filter(movement => movement.typeName === 'CashDeposit')
+            .reduce((total, movement) => total + movement.amount, 0);
+
         const salesCancellations = session.movements
             .filter(movement => movement.typeName === 'SaleCancellation')
             .reduce((total, movement) => total + movement.amount, 0);
@@ -2044,6 +2123,7 @@ export class CashComponent implements OnInit {
             id: session.id,
             openingAmount: session.openingAmount,
             salesIncome,
+            manualDeposits,
             withdrawals,
             salesCancellations,
             expectedClosingAmount: session.expectedClosingAmount,
@@ -2082,6 +2162,7 @@ export class CashComponent implements OnInit {
         const map: Record<string, string> = {
             SaleIncome: 'Venta',
             CashWithdrawal: 'Extracción',
+            CashDeposit: 'Ingreso manual',
             OpeningBalance: 'Apertura',
             ClosingBalance: 'Cierre',
             CashTransferOut: 'Transferencia saliente',

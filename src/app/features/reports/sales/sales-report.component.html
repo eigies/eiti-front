@@ -1,0 +1,122 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">{{ meta.eyebrow }}</div>
+    <h1>{{ meta.title }}</h1>
+    <p>Análisis de ventas con facturación, costo, ganancia y margen en el período seleccionado.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div>
+        <span>Filtros</span>
+        <p>El rango de fechas es obligatorio. Los demás filtros son opcionales.</p>
+      </div>
+      <div class="panel__actions" *ngIf="isTransport">
+        <button class="btn btn--ghost btn--sm" type="button" [class.btn--primary]="transportMode === 'installer'" (click)="setTransportMode('installer')">Por instalador</button>
+        <button class="btn btn--ghost btn--sm" type="button" [class.btn--primary]="transportMode === 'vehicle'" (click)="setTransportMode('vehicle')">Por vehículo</button>
+      </div>
+    </div>
+
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form">
+      <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
+      <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+      <label class="field"><span>Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <label class="field"><span>Instalador</span>
+        <app-searchable-select formControlName="installerId" [options]="driverOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar instalador..."></app-searchable-select>
+      </label>
+      <label class="field"><span>Vehículo</span>
+        <app-searchable-select formControlName="vehicleId" [options]="vehicleOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar vehículo..."></app-searchable-select>
+      </label>
+      <label class="field"><span>Canal</span>
+        <app-searchable-select formControlName="channel" [options]="channelOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar canal..."></app-searchable-select>
+      </label>
+      <label class="field"><span>Envío</span>
+        <app-searchable-select formControlName="deliveryMode" [options]="deliveryOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+      <div class="filter-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
+        <button class="btn btn--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div>
+        <span>Resultados</span>
+        <p *ngIf="data">{{ data.rows.length }} fila(s)</p>
+      </div>
+      <div class="panel__actions">
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.rows.length === 0">Exportar XLSX</button>
+        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="!data || data.rows.length === 0">Exportar PDF</button>
+      </div>
+    </div>
+
+    <div class="loading-shell" *ngIf="loading">
+      <div class="loading-shell__grid"><div class="loading-card" *ngFor="let _ of [1,2,3,4]"></div></div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && hasSearched && data && data.rows.length === 0">
+      <span class="empty-state__eyebrow">Sin resultados</span>
+      <h2>No hay ventas con esos filtros.</h2>
+      <p>Probá ampliar el rango de fechas o quitar filtros.</p>
+    </div>
+
+    <div class="table-wrap" *ngIf="!loading && data && data.rows.length > 0">
+      <table
+        class="data-table data-table--sales data-table--sticky-first"
+        [class.data-table--with-secondary]="isChannelBrand">
+        <colgroup>
+          <col class="col--dimension" />
+          <col *ngIf="isChannelBrand" class="col--secondary" />
+          <col class="col--count" />
+          <col class="col--count" />
+          <col class="col--money" />
+          <col class="col--money" />
+          <col class="col--money" />
+          <col class="col--percent" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>{{ dimensionHeader }}</th>
+            <th *ngIf="isChannelBrand">Marca</th>
+            <th class="t-right">Ventas</th>
+            <th class="t-right">Unidades</th>
+            <th class="t-right">Facturación</th>
+            <th class="t-right">Costo</th>
+            <th class="t-right">Ganancia</th>
+            <th class="t-right">Margen %</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="data-row" *ngFor="let r of data.rows; trackBy: trackByKey">
+            <td class="strong">{{ r.label }}</td>
+            <td *ngIf="isChannelBrand" class="dim">{{ r.subLabel }}</td>
+            <td class="t-right">{{ r.salesCount }}</td>
+            <td class="t-right">{{ r.units }}</td>
+            <td class="t-right">$ {{ money(r.revenue) }}</td>
+            <td class="t-right dim">$ {{ money(r.cost) }}</td>
+            <td class="t-right" [class.pos]="r.profit >= 0" [class.neg]="r.profit < 0">$ {{ money(r.profit) }}</td>
+            <td class="t-right">{{ r.marginPct }}%</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td>TOTAL</td>
+            <td *ngIf="isChannelBrand"></td>
+            <td class="t-right">{{ data.totals.salesCount }}</td>
+            <td class="t-right">{{ data.totals.units }}</td>
+            <td class="t-right">$ {{ money(data.totals.revenue) }}</td>
+            <td class="t-right">$ {{ money(data.totals.cost) }}</td>
+            <td class="t-right">$ {{ money(data.totals.profit) }}</td>
+            <td class="t-right">{{ data.totals.marginPct }}%</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <p class="note" *ngIf="data && data.rows.length > 0">La rentabilidad usa el costo guardado en la venta; las ventas previas a esta función usan el costo actual del producto.</p>
+  </section>
+</div>

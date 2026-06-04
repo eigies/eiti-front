@@ -24,6 +24,33 @@ export interface AdjustStockRequest {
     description?: string | null;
 }
 
+export interface TransferStockItemRequest {
+    productId: string;
+    quantity: number;
+}
+
+export interface TransferStockRequest {
+    sourceBranchId: string;
+    destinationBranchId: string;
+    items: TransferStockItemRequest[];
+    description?: string | null;
+}
+
+export interface TransferStockResultItem {
+    productId: string;
+    code: string;
+    name: string;
+    quantity: number;
+    sourceOnHandQuantity: number;
+    sourceAvailableQuantity: number;
+}
+
+export interface TransferStockResponse {
+    sourceBranchId: string;
+    destinationBranchId: string;
+    items: TransferStockResultItem[];
+}
+
 export interface StockMovementResponse {
     id: string;
     type: number;

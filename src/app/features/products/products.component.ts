@@ -908,6 +908,12 @@ export class ProductsComponent implements OnInit {
       case 3: return 'Reserva';
       case 4: return 'Liberacion';
       case 5: return 'Salida';
+      case 6: return 'Canje (ingreso)';
+      case 7: return 'Devolucion de venta';
+      case 8: return 'Ingreso por compra';
+      case 9: return 'Devolucion de compra';
+      case 10: return 'Transferencia (salida)';
+      case 11: return 'Transferencia (entrada)';
       default: return 'Movimiento';
     }
   }
