@@ -7,6 +7,7 @@ import { CustomerService } from '../../../core/services/customer.service';
 import { StockService } from '../../../core/services/stock.service';
 import { SaleService } from '../../../core/services/sale.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PermissionCodes } from '../../../core/models/permission.models';
 import { ToastService } from '../../../shared/services/toast.service';
 import { BranchResponse } from '../../../core/models/branch.models';
 import { CustomerSearchItem } from '../../../core/models/customer.models';
@@ -18,6 +19,7 @@ interface DraftItem {
   stock: BranchProductStockResponse;
   quantity: number;
   discountPercent: number;
+  unitPriceOverride?: number;
   total: number;
 }
 
@@ -249,13 +251,38 @@ export class SalesCcComponent implements OnInit {
     this.draftItems = this.draftItems.filter(item => item.stock.productId !== productId);
   }
 
+  get canOverridePrice(): boolean {
+    return this.auth.hasPermission(PermissionCodes.salesPriceOverride);
+  }
+
+  effectiveUnitPrice(item: DraftItem): number {
+    return item.unitPriceOverride ?? item.stock.publicPrice ?? item.stock.price ?? 0;
+  }
+
+  private recalcItem(item: DraftItem): void {
+    const unitPrice = this.effectiveUnitPrice(item);
+    item.total = Math.round(item.quantity * unitPrice * (1 - item.discountPercent / 100) * 100) / 100;
+  }
+
+  setItemPrice(productId: string, rawValue: string): void {
+    const item = this.draftItems.find(i => i.stock.productId === productId);
+    if (!item || !this.canOverridePrice) return;
+    const trimmed = rawValue.trim();
+    if (trimmed === '') {
+      item.unitPriceOverride = undefined;
+    } else {
+      const parsed = Number(trimmed);
+      item.unitPriceOverride = Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : undefined;
+    }
+    this.recalcItem(item);
+  }
+
   setItemDiscount(productId: string, rawValue: string): void {
     const item = this.draftItems.find(i => i.stock.productId === productId);
     if (!item) return;
     const parsed = Number(rawValue);
     item.discountPercent = Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : 0;
-    const unitPrice = item.stock.publicPrice ?? item.stock.price ?? 0;
-    item.total = Math.round(item.quantity * unitPrice * (1 - item.discountPercent / 100) * 100) / 100;
+    this.recalcItem(item);
   }
 
   setGeneralDiscount(rawValue: string): void {
@@ -296,6 +323,7 @@ export class SalesCcComponent implements OnInit {
     const details: CreateSaleDetailRequest[] = this.draftItems.map(item => ({
       productId: item.stock.productId,
       quantity: item.quantity,
+      unitPrice: this.canOverridePrice ? item.unitPriceOverride : undefined,
       discountPercent: item.discountPercent || undefined
     }));
 
@@ -348,17 +376,18 @@ export class SalesCcComponent implements OnInit {
       );
       return false;
     }
-    const unitPrice = stock.publicPrice ?? stock.price ?? 0;
     if (existing) {
       existing.quantity = nextQuantity;
-      existing.total = existing.quantity * unitPrice;
+      this.recalcItem(existing);
     } else {
-      this.draftItems.unshift({
+      const item: DraftItem = {
         stock,
         quantity: Math.floor(quantity),
         discountPercent: 0,
-        total: unitPrice * Math.floor(quantity)
-      });
+        total: 0
+      };
+      this.recalcItem(item);
+      this.draftItems.unshift(item);
     }
     return true;
   }

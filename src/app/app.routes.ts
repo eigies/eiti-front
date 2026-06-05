@@ -187,6 +187,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/cash/cash-report.component').then(m => m.CashReportComponent)
     },
     {
+        path: 'reportes/stock',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsStock },
+        loadComponent: () => import('./features/reports/stock/stock-matrix.component').then(m => m.StockMatrixComponent)
+    },
+    {
         path: 'profile',
         canActivate: [authGuard],
         loadComponent: () =>

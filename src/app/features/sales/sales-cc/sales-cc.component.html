@@ -67,7 +67,13 @@
           <tr *ngFor="let item of draftItems">
             <td>{{ item.stock.brand }} / {{ item.stock.name }}</td>
             <td>{{ item.quantity }}</td>
-            <td>{{ (item.stock.publicPrice ?? item.stock.price) | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>
+              <input *ngIf="canOverridePrice" class="control control--compact control--price" type="number" min="0" step="0.01"
+                     [value]="effectiveUnitPrice(item)"
+                     (input)="setItemPrice(item.stock.productId, $any($event.target).value)"
+                     [class.is-overridden]="item.unitPriceOverride != null" />
+              <span *ngIf="!canOverridePrice">{{ (item.stock.publicPrice ?? item.stock.price) | currency:'USD':'symbol':'1.2-2' }}</span>
+            </td>
             <td>
               <input class="control control--compact control--discount" type="number" min="0" max="100" step="1"
                      [value]="item.discountPercent"

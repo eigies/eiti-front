@@ -28,6 +28,9 @@ export interface ProductResponse {
     totalOnHandQuantity: number;
     totalReservedQuantity: number;
     totalAvailableQuantity: number;
+    companyOnHandQuantity: number;
+    companyReservedQuantity: number;
+    companyAvailableQuantity: number;
     createdAt: string;
     updatedAt?: string | null;
 }

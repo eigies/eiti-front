@@ -1,3 +1,22 @@
+export interface StockMatrixBranch {
+    id: string;
+    name: string;
+}
+
+export interface StockMatrixRow {
+    productId: string;
+    code: string;
+    brand: string;
+    name: string;
+    available: number[];
+    total: number;
+}
+
+export interface StockMatrixResponse {
+    branches: StockMatrixBranch[];
+    rows: StockMatrixRow[];
+}
+
 export interface SalesReportRow {
     key: string;
     label: string;

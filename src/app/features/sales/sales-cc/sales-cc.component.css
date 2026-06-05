@@ -531,3 +531,6 @@ h1 {
         align-items: stretch;
     }
 }
+
+.control--price { width: 7rem; text-align: right; }
+.control--price.is-overridden { border-color: var(--amber); color: var(--amber); font-weight: 600; }

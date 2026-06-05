@@ -6,7 +6,8 @@ import {
     CashMovementsReportResponse,
     CustomerDebtorsResponse,
     SalesReportFilters,
-    SalesReportResponse
+    SalesReportResponse,
+    StockMatrixResponse
 } from '../models/report.models';
 
 @Injectable({ providedIn: 'root' })
@@ -35,5 +36,9 @@ export class ReportService {
     cashMovements(dateFrom: string, dateTo: string): Observable<CashMovementsReportResponse> {
         const params = new URLSearchParams({ dateFrom, dateTo });
         return this.http.get<CashMovementsReportResponse>(`${this.base}/cash/movements?${params.toString()}`);
+    }
+
+    stockMatrix(): Observable<StockMatrixResponse> {
+        return this.http.get<StockMatrixResponse>(`${this.base}/stock-matrix`);
     }
 }

@@ -8,7 +8,11 @@ import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
 import { StockService } from '../../core/services/stock.service';
-import { BranchProductStockResponse, StockMovementResponse } from '../../core/models/stock.models';
+import { BranchProductStockResponse, StockMovementResponse, TransferDetailResponse } from '../../core/models/stock.models';
+import { SaleService } from '../../core/services/sale.service';
+import { SaleByIdResponse } from '../../core/models/sale.models';
+import { PurchaseService } from '../../core/services/purchase.service';
+import { PurchaseDetailResponse } from '../../core/models/purchase.models';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingStatusResponse } from '../../core/models/onboarding.models';
 import { OnboardingBannerComponent } from '../../shared/components/onboarding-banner/onboarding-banner.component';
@@ -97,6 +101,12 @@ export class ProductsComponent implements OnInit {
   selectedStockBranchId = '';
   selectedBranchStock: BranchProductStockResponse | null = null;
   stockMovements: StockMovementResponse[] = [];
+  salePopupSale: SaleByIdResponse | null = null;
+  salePopupLoading = false;
+  purchasePopup: PurchaseDetailResponse | null = null;
+  purchasePopupLoading = false;
+  transferPopup: TransferDetailResponse | null = null;
+  transferPopupLoading = false;
   compactMode = true;
   sortColumn: string | null = null;
   sortDir: 'asc' | 'desc' = 'desc';
@@ -112,6 +122,8 @@ export class ProductsComponent implements OnInit {
     private onboardingService: OnboardingService,
     private route: ActivatedRoute,
     private router: Router,
+    private saleService: SaleService,
+    private purchaseService: PurchaseService,
     public auth: AuthService
   ) {
     this.createForm = this.buildForm();
@@ -917,6 +929,43 @@ export class ProductsComponent implements OnInit {
       default: return 'Movimiento';
     }
   }
+
+  isClickableMovement(movement: StockMovementResponse): boolean {
+    return !!movement.referenceId &&
+      (movement.referenceType === 'Sale' || movement.referenceType === 'Purchase' || movement.referenceType === 'Transfer');
+  }
+
+  openMovement(movement: StockMovementResponse): void {
+    if (!movement.referenceId) {
+      return;
+    }
+    if (movement.referenceType === 'Sale') {
+      this.salePopupLoading = true;
+      this.salePopupSale = null;
+      this.saleService.getSaleById(movement.referenceId).subscribe({
+        next: sale => { this.salePopupSale = sale; this.salePopupLoading = false; },
+        error: () => { this.salePopupLoading = false; this.toast.error('No se pudo cargar el detalle de la venta'); }
+      });
+    } else if (movement.referenceType === 'Purchase') {
+      this.purchasePopupLoading = true;
+      this.purchasePopup = null;
+      this.purchaseService.getPurchaseById(movement.referenceId).subscribe({
+        next: p => { this.purchasePopup = p; this.purchasePopupLoading = false; },
+        error: () => { this.purchasePopupLoading = false; this.toast.error('No se pudo cargar el detalle de la compra'); }
+      });
+    } else if (movement.referenceType === 'Transfer') {
+      this.transferPopupLoading = true;
+      this.transferPopup = null;
+      this.stockService.getTransferDetail(movement.referenceId).subscribe({
+        next: t => { this.transferPopup = t; this.transferPopupLoading = false; },
+        error: () => { this.transferPopupLoading = false; this.toast.error('No se pudo cargar el detalle del traspaso'); }
+      });
+    }
+  }
+
+  closeSalePopup(): void { this.salePopupSale = null; this.salePopupLoading = false; }
+  closePurchasePopup(): void { this.purchasePopup = null; this.purchasePopupLoading = false; }
+  closeTransferPopup(): void { this.transferPopup = null; this.transferPopupLoading = false; }
 
   acceptOnboardingStep(): void {
     const step = this.currentOnboardingStep;

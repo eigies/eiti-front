@@ -1,0 +1,142 @@
+<div class="page">
+  <header class="hero">
+    <div class="hero__copy">
+      <div class="eyebrow">Reporteria / Stock</div>
+      <h1>Stock por sucursal</h1>
+      <p>Lectura cruzada de disponibilidad por producto y sucursal, con totales para detectar concentracion, faltantes y cobertura operativa.</p>
+    </div>
+    <div class="hero__ledger" *ngIf="data">
+      <span>Vista actual</span>
+      <strong>{{ filteredRows.length }}</strong>
+      <small>productos visibles</small>
+    </div>
+  </header>
+
+  <section class="sm-overview" *ngIf="data">
+    <article class="sm-kpi sm-kpi--primary">
+      <span class="sm-kpi__label">Unidades disponibles</span>
+      <strong>{{ datasetGrandTotal | number: '1.0-0' }}</strong>
+      <small>Total general del inventario visible</small>
+    </article>
+    <article class="sm-kpi">
+      <span class="sm-kpi__label">Productos con stock</span>
+      <strong>{{ activeProductCount | number: '1.0-0' }}</strong>
+      <small>de {{ productCount | number: '1.0-0' }} productos cargados</small>
+    </article>
+    <article class="sm-kpi">
+      <span class="sm-kpi__label">Sucursales</span>
+      <strong>{{ branchCount | number: '1.0-0' }}</strong>
+      <small>columnas operativas del reporte</small>
+    </article>
+    <article class="sm-kpi sm-kpi--empty">
+      <span class="sm-kpi__label">Sin disponibilidad</span>
+      <strong>{{ emptyProductCount | number: '1.0-0' }}</strong>
+      <small>productos en cero total</small>
+    </article>
+  </section>
+
+  <section class="panel panel--matrix">
+    <div class="panel__header sm-report-head">
+      <div>
+        <span>Matriz de stock</span>
+        <p *ngIf="data">{{ filteredRows.length }} producto(s) visibles de {{ productCount }} &middot; {{ branchCount }} sucursal(es)</p>
+      </div>
+      <div class="panel__actions sm-actions">
+        <div class="sm-actions__filters">
+          <label class="sm-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="m20 20-3.5-3.5"></path>
+            </svg>
+            <input type="text" placeholder="Buscar producto, codigo o marca" [(ngModel)]="search" />
+          </label>
+          <label class="sm-toggle toggle-check" [class.sm-toggle--active]="hideEmpty">
+            <input type="checkbox" [(ngModel)]="hideEmpty" />
+            <span class="toggle-check__track"></span>
+            <span class="toggle-check__text">{{ hideEmpty ? 'Sin stock ocultos' : 'Mostrar sin stock' }}</span>
+          </label>
+        </div>
+        <div class="sm-actions__exports">
+          <button class="btn btn--ghost btn--sm sm-action-btn" type="button" (click)="load()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 0 1-15.5 6.2"></path>
+              <path d="M3 12A9 9 0 0 1 18.5 5.8"></path>
+              <path d="M18 2v4h4"></path>
+              <path d="M6 22v-4H2"></path>
+            </svg>
+            Actualizar
+          </button>
+          <button class="btn btn--ghost btn--export sm-action-btn" type="button" (click)="exportExcel()" [disabled]="!data || filteredRows.length === 0">XLSX</button>
+          <button class="btn btn--ghost btn--pdf sm-action-btn" type="button" (click)="exportPdf()" [disabled]="!data || filteredRows.length === 0">PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sm-filter-note" *ngIf="data && hasActiveFilters">
+      <span>Filtro activo</span>
+      <strong>{{ filteredRows.length }} resultado(s)</strong>
+      <small>Los totales de la tabla respetan la vista filtrada.</small>
+    </div>
+
+    <div class="loading-shell" *ngIf="loading">
+      <div class="loading-shell__grid">
+        <div class="loading-card" *ngFor="let _ of [1,2,3,4]"></div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && data && filteredRows.length === 0">
+      <span class="empty-state__eyebrow">Sin resultados</span>
+      <h2>No hay productos para mostrar.</h2>
+      <p>Revisa la busqueda o desactiva el filtro de productos sin stock.</p>
+    </div>
+
+    <div class="table-wrap" *ngIf="!loading && data && filteredRows.length > 0">
+      <table class="data-table data-table--stock data-table--sticky-first">
+        <colgroup>
+          <col class="sm-col-product" />
+          <col class="sm-col-branch" *ngFor="let b of data.branches" />
+          <col class="sm-col-total" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th class="t-right sm-branch-head" *ngFor="let b of data.branches; let i = index">
+              <span>{{ b.name }}</span>
+              <small>{{ branchTotal(i) | number: '1.0-0' }} u.</small>
+            </th>
+            <th class="t-right sm-total-head">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="data-row" *ngFor="let r of filteredRows">
+            <td class="sm-product-cell">
+              <span class="sm-code">{{ r.code }}</span>
+              <strong>{{ r.name }}</strong>
+              <small>{{ r.brand || 'Sin marca' }}</small>
+            </td>
+            <td class="t-right sm-stock-cell" *ngFor="let b of data.branches; let i = index">
+              <span [class]="stockCellClass(r.available[i])">{{ r.available[i] || 0 }}</span>
+            </td>
+            <td class="t-right sm-row-total">
+              <span>{{ r.total | number: '1.0-0' }}</span>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td>Total vista</td>
+            <td class="t-right" *ngFor="let b of data.branches; let i = index">{{ branchTotal(i) | number: '1.0-0' }}</td>
+            <td class="t-right">{{ grandTotal | number: '1.0-0' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="sm-legend" *ngIf="!loading && data && filteredRows.length > 0">
+      <span><i class="sm-legend__dot sm-legend__dot--zero"></i>Sin stock</span>
+      <span><i class="sm-legend__dot sm-legend__dot--low"></i>Bajo</span>
+      <span><i class="sm-legend__dot sm-legend__dot--ok"></i>Disponible</span>
+      <span><i class="sm-legend__dot sm-legend__dot--high"></i>Concentrado</span>
+    </div>
+  </section>
+</div>

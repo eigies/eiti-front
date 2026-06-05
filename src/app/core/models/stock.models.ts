@@ -51,6 +51,24 @@ export interface TransferStockResponse {
     items: TransferStockResultItem[];
 }
 
+export interface TransferDetailItem {
+    code: string;
+    brand: string;
+    name: string;
+    quantity: number;
+}
+
+export interface TransferDetailResponse {
+    referenceId: string;
+    date: string;
+    fromBranchId?: string | null;
+    fromBranchName?: string | null;
+    toBranchId?: string | null;
+    toBranchName?: string | null;
+    description?: string | null;
+    items: TransferDetailItem[];
+}
+
 export interface StockMovementResponse {
     id: string;
     type: number;
@@ -60,4 +78,5 @@ export interface StockMovementResponse {
     referenceId?: string | null;
     description?: string | null;
     createdAt: string;
+    referenceCode?: string | null;
 }

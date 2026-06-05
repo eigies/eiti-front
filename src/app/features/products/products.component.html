@@ -333,7 +333,12 @@
           <div class="detail-row" *ngIf="product.description"><span class="detail-row__key">Descripcion</span><span class="detail-row__val detail-row__val--desc">{{ product.description }}</span></div>
         </div>
         <div class="detail-section">
-          <div class="detail-section__label">Stock global</div>
+          <div class="detail-section__head">
+            <div class="detail-section__label">Stock global</div>
+            <span class="stock-company-chip" *ngIf="product.companyAvailableQuantity !== product.totalAvailableQuantity">
+              Global empresa: {{ product.companyAvailableQuantity }} disp.
+            </span>
+          </div>
           <div class="stock-nums">
             <div class="stock-num"><span class="f__l">Stock</span><strong>{{ product.totalOnHandQuantity }}</strong></div>
             <div class="stock-num"><span class="f__l">Reservado</span><strong>{{ product.totalReservedQuantity }}</strong></div>
@@ -433,8 +438,11 @@
         <div class="stock-hist" *ngIf="stockMovements.length > 0">
           <div class="stock-hist__label">Movimientos</div>
           <div class="stock-hist__rows">
-            <div class="sh-row" *ngFor="let movement of stockMovements">
-              <div class="sh-row__left"><strong>{{ stockMovementLabel(movement.type) }}</strong><span>{{ movement.description || 'Sin descripcion' }}</span></div>
+            <div class="sh-row" [class.sh-row--clickable]="isClickableMovement(movement)" *ngFor="let movement of stockMovements" (click)="openMovement(movement)">
+              <div class="sh-row__left">
+                <strong>{{ stockMovementLabel(movement.type) }}<span class="sh-ref" *ngIf="movement.referenceCode"> · {{ movement.referenceCode }}</span></strong>
+                <span>{{ movement.description || 'Sin descripcion' }}<span class="sh-ref-hint" *ngIf="isClickableMovement(movement)"> · {{ movement.referenceType === 'Purchase' ? 'ver compra' : movement.referenceType === 'Transfer' ? 'ver traspaso' : 'ver venta' }}</span></span>
+              </div>
               <div class="sh-row__right"><strong [class.sh-pos]="movement.type !== 3 && movement.type !== 5 && movement.type !== 10 && movement.quantity >= 0" [class.sh-neg]="movement.type === 5 || movement.type === 10 || movement.quantity < 0" [class.sh-reserved]="movement.type === 3">{{ movement.type === 3 ? '+/-' : (movement.type === 5 || movement.type === 10) ? '-' : movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}</strong><span>{{ movement.createdAt | date:'dd/MM/yy HH:mm' }}</span></div>
             </div>
           </div>
@@ -460,4 +468,123 @@
       </div>
     </section>
   </section>
+
+  <div class="sale-popup-backdrop" *ngIf="salePopupLoading || salePopupSale" (click)="closeSalePopup()">
+    <div class="sale-popup" (click)="$event.stopPropagation()">
+      <div class="sale-popup__head">
+        <span class="sale-popup__title">Detalle de venta</span>
+        <button class="sale-popup__close" type="button" (click)="closeSalePopup()">&times;</button>
+      </div>
+      <div class="sale-popup__loading" *ngIf="salePopupLoading">Cargando venta...</div>
+      <ng-container *ngIf="!salePopupLoading && salePopupSale as sale">
+        <div class="sale-popup__identity">
+          <div class="sale-popup__identity-block">
+            <span class="sale-popup__eyebrow">Venta</span>
+            <strong class="sale-popup__code">{{ sale.code || '—' }}</strong>
+          </div>
+          <span class="sale-popup__status-wrap sale-popup__identity-block">
+            <span class="sale-popup__status-label">Estado</span>
+            <span class="sale-popup__status">{{ sale.saleStatus }}</span>
+          </span>
+        </div>
+        <div class="sale-popup__meta">
+          <div><span class="f__l">Fecha</span><strong>{{ sale.createdAt | date:'dd/MM/yy HH:mm' }}</strong></div>
+          <div><span class="f__l">Cliente</span><strong>{{ sale.customerFullName || 'Consumidor final' }}</strong></div>
+        </div>
+        <div class="sale-popup__items">
+          <div class="sale-popup__item sale-popup__item--head"><span>Producto</span><span class="t-right">Cant</span><span class="t-right">Importe</span></div>
+          <div class="sale-popup__item" *ngFor="let d of sale.details">
+            <span>{{ d.productBrand }} {{ d.productName }}</span>
+            <span class="t-right">{{ d.quantity }}</span>
+            <span class="t-right">&#36; {{ d.totalAmount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="sale-popup__totals">
+          <div><span class="f__l">Total</span><strong>&#36; {{ sale.totalAmount | number:'1.2-2' }}</strong></div>
+          <div *ngIf="sale.pendingAmount > 0"><span class="f__l">Pendiente</span><strong class="sh-neg">&#36; {{ sale.pendingAmount | number:'1.2-2' }}</strong></div>
+        </div>
+        <div class="sale-popup__pays" *ngIf="sale.payments.length > 0">
+          <div class="sale-popup__pays-label">Pagos</div>
+          <div class="sale-popup__pay" *ngFor="let p of sale.payments">
+            <span>{{ p.paymentMethod }}<span *ngIf="p.reference"> · {{ p.reference }}</span></span>
+            <span class="t-right">&#36; {{ p.amount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="sale-popup-backdrop" *ngIf="purchasePopupLoading || purchasePopup" (click)="closePurchasePopup()">
+    <div class="sale-popup" (click)="$event.stopPropagation()">
+      <div class="sale-popup__head">
+        <span class="sale-popup__title">Detalle de compra</span>
+        <button class="sale-popup__close" type="button" (click)="closePurchasePopup()">&times;</button>
+      </div>
+      <div class="sale-popup__loading" *ngIf="purchasePopupLoading">Cargando compra...</div>
+      <ng-container *ngIf="!purchasePopupLoading && purchasePopup as pur">
+        <div class="sale-popup__identity">
+          <div class="sale-popup__identity-block">
+            <span class="sale-popup__eyebrow">Compra</span>
+            <strong class="sale-popup__code">{{ pur.code || '—' }}</strong>
+          </div>
+          <span class="sale-popup__status-wrap sale-popup__identity-block">
+            <span class="sale-popup__status-label">Estado</span>
+            <span class="sale-popup__status">{{ pur.statusName }}</span>
+          </span>
+        </div>
+        <div class="sale-popup__meta">
+          <div><span class="f__l">Fecha</span><strong>{{ pur.createdAt | date:'dd/MM/yy HH:mm' }}</strong></div>
+          <div><span class="f__l">Proveedor</span><strong>{{ pur.supplierName || 'Sin proveedor' }}</strong></div>
+          <div *ngIf="pur.invoiceNumber"><span class="f__l">Factura</span><strong>{{ pur.invoiceNumber }}</strong></div>
+        </div>
+        <div class="sale-popup__items">
+          <div class="sale-popup__item sale-popup__item--head"><span>Producto</span><span class="t-right">Cant</span><span class="t-right">Importe</span></div>
+          <div class="sale-popup__item" *ngFor="let d of pur.details">
+            <span>{{ d.productName }}</span>
+            <span class="t-right">{{ d.quantity }}</span>
+            <span class="t-right">&#36; {{ d.totalAmount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="sale-popup__totals">
+          <div><span class="f__l">Total</span><strong>&#36; {{ pur.grandTotal | number:'1.2-2' }}</strong></div>
+          <div *ngIf="pur.pendingAmount > 0"><span class="f__l">Pendiente</span><strong class="sh-neg">&#36; {{ pur.pendingAmount | number:'1.2-2' }}</strong></div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="sale-popup-backdrop" *ngIf="transferPopupLoading || transferPopup" (click)="closeTransferPopup()">
+    <div class="sale-popup" (click)="$event.stopPropagation()">
+      <div class="sale-popup__head">
+        <span class="sale-popup__title">Detalle de traspaso</span>
+        <button class="sale-popup__close" type="button" (click)="closeTransferPopup()">&times;</button>
+      </div>
+      <div class="sale-popup__loading" *ngIf="transferPopupLoading">Cargando traspaso...</div>
+      <ng-container *ngIf="!transferPopupLoading && transferPopup as tr">
+        <div class="sale-popup__identity">
+          <div class="sale-popup__identity-block">
+            <span class="sale-popup__eyebrow">Traspaso</span>
+            <strong class="sale-popup__code">{{ tr.fromBranchName || '—' }} → {{ tr.toBranchName || '—' }}</strong>
+          </div>
+          <span class="sale-popup__status-wrap sale-popup__identity-block">
+            <span class="sale-popup__status-label">Estado</span>
+            <span class="sale-popup__status">Stock transferido</span>
+          </span>
+        </div>
+        <div class="sale-popup__meta">
+          <div><span class="f__l">Origen</span><strong>{{ tr.fromBranchName || '—' }}</strong></div>
+          <div><span class="f__l">Destino</span><strong>{{ tr.toBranchName || '—' }}</strong></div>
+          <div><span class="f__l">Fecha</span><strong>{{ tr.date | date:'dd/MM/yy HH:mm' }}</strong></div>
+        </div>
+        <div class="sale-popup__items">
+          <div class="sale-popup__item sale-popup__item--head"><span>Producto</span><span class="t-right">Cant</span><span></span></div>
+          <div class="sale-popup__item" *ngFor="let it of tr.items">
+            <span><span class="sh-ref">{{ it.code }}</span> {{ it.brand }} {{ it.name }}</span>
+            <span class="t-right">{{ it.quantity }}</span>
+            <span></span>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
 </div>
