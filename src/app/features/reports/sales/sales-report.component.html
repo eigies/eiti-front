@@ -118,5 +118,6 @@
     </div>
 
     <p class="note" *ngIf="data && data.rows.length > 0">La rentabilidad usa el costo guardado en la venta; las ventas previas a esta función usan el costo actual del producto.</p>
+    <p class="note" *ngIf="data && data.rows.length > 0">VENTAS = tickets distintos. Una venta que incluye varios modelos se cuenta en cada modelo, por eso la suma de la columna puede ser mayor que el total de ventas.</p>
   </section>
 </div>
