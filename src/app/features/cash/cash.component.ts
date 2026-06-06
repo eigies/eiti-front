@@ -504,7 +504,7 @@ type CashSessionView = {
             </label>
             <div class="modal__actions">
               <button class="btn btn--ghost" type="button" (click)="closeTransferModal()">Cancelar</button>
-              <button class="btn btn--transfer btn--transfer-confirm" type="submit" [disabled]="transferForm.invalid">Confirmar transferencia</button>
+              <button class="btn btn--transfer btn--transfer-confirm" type="submit" [disabled]="transferForm.invalid || submittingTransfer">Confirmar transferencia</button>
             </div>
           </form>
         </div>
@@ -1125,6 +1125,7 @@ export class CashComponent implements OnInit {
     depositForm: FormGroup;
     closeForm: FormGroup;
     transferForm: FormGroup;
+    submittingTransfer = false;
     showWithdrawModal = false;
     showDepositModal = false;
     showTransferModal = false;
@@ -1467,16 +1468,23 @@ export class CashComponent implements OnInit {
             return;
         }
 
+        if (this.submittingTransfer) return;
+        this.submittingTransfer = true;
+
         const { targetCashDrawerId, amount, description } = this.transferForm.getRawValue();
         this.cashService.transfer(this.selectedDrawerId, targetCashDrawerId, Number(amount), description).subscribe({
             next: () => {
+                this.submittingTransfer = false;
                 this.showTransferModal = false;
                 this.transferForm.reset({ targetCashDrawerId: '', amount: 0, description: '' });
                 this.loadCurrentSession();
                 this.loadHistory();
                 this.toast.success('Transferencia registrada');
             },
-            error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo registrar la transferencia')
+            error: err => {
+                this.submittingTransfer = false;
+                this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo registrar la transferencia');
+            }
         });
     }
 
