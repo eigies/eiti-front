@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AdjustStockRequest, BranchProductStockResponse, StockMovementResponse, TransferDetailResponse, TransferStockRequest, TransferStockResponse } from '../models/stock.models';
+import { AdjustStockRequest, BranchProductStockResponse, ProductReservationsResponse, StockMovementResponse, TransferDetailResponse, TransferStockRequest, TransferStockResponse } from '../models/stock.models';
 
 @Injectable({ providedIn: 'root' })
 export class StockService {
@@ -32,5 +32,12 @@ export class StockService {
 
     getTransferDetail(referenceId: string): Observable<TransferDetailResponse> {
         return this.http.get<TransferDetailResponse>(`${this.base}/transfer/${referenceId}`);
+    }
+
+    getProductReservations(productId: string, branchId?: string): Observable<ProductReservationsResponse> {
+        const params = branchId
+            ? `?productId=${productId}&branchId=${branchId}`
+            : `?productId=${productId}`;
+        return this.http.get<ProductReservationsResponse>(`${this.base}/reservations${params}`);
     }
 }

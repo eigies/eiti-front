@@ -80,3 +80,22 @@ export interface StockMovementResponse {
     createdAt: string;
     referenceCode?: string | null;
 }
+
+export interface ProductReservationItem {
+    saleId: string;
+    saleCode?: string | null;
+    branchId: string;
+    branchName: string;
+    customerName: string;
+    isCuentaCorriente: boolean;
+    quantity: number;
+    pendingAmount: number;
+    createdAt: string;
+}
+
+export interface ProductReservationsResponse {
+    productId: string;
+    branchId?: string | null;
+    totalReserved: number;
+    items: ProductReservationItem[];
+}

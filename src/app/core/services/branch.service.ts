@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { BranchResponse, CreateBranchRequest } from '../models/branch.models';
+import { BranchResponse, CreateBranchRequest, TransferTargetResponse } from '../models/branch.models';
 
 @Injectable({ providedIn: 'root' })
 export class BranchService {
@@ -12,6 +12,10 @@ export class BranchService {
 
     listBranches(): Observable<BranchResponse[]> {
         return this.http.get<BranchResponse[]>(this.base);
+    }
+
+    listTransferTargets(): Observable<TransferTargetResponse[]> {
+        return this.http.get<TransferTargetResponse[]>(`${this.base}/transfer-targets`);
     }
 
     createBranch(request: CreateBranchRequest): Observable<BranchResponse> {

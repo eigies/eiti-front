@@ -14,3 +14,8 @@ export interface CreateBranchRequest {
     code?: string | null;
     address?: string | null;
 }
+
+export interface TransferTargetResponse {
+    id: string;
+    name: string;
+}

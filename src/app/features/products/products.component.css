@@ -1208,6 +1208,19 @@
 .stock-num strong { font-family: 'DM Mono', monospace; font-size: 1.1rem; color: var(--text); }
 .stock-num--hi strong { color: var(--amber); }
 
+.stock-num--clickable { cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.stock-num--clickable:hover {
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--border));
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+}
+.stock-num__hint { font-size: .62rem; letter-spacing: .05em; text-transform: uppercase; color: var(--amber); }
+
+.resv-item { cursor: pointer; transition: background .15s ease; border-radius: 6px; }
+.resv-item:hover { background: color-mix(in srgb, var(--amber) 7%, transparent); }
+.resv-item__main { display: grid; gap: .12rem; min-width: 0; }
+.resv-item__cust { color: var(--text); font-size: .8rem; }
+.resv-item__br { color: var(--text-dim, #b4a99a); font-size: .68rem; }
+
 .fs { margin: 0; padding: 0; border: none; min-width: 0; }
 .fs:disabled { opacity: 0.5; filter: saturate(0.6); }
 

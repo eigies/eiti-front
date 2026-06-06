@@ -341,7 +341,10 @@
           </div>
           <div class="stock-nums">
             <div class="stock-num"><span class="f__l">Stock</span><strong>{{ product.totalOnHandQuantity }}</strong></div>
-            <div class="stock-num"><span class="f__l">Reservado</span><strong>{{ product.totalReservedQuantity }}</strong></div>
+            <div class="stock-num" [class.stock-num--clickable]="product.totalReservedQuantity > 0" (click)="product.totalReservedQuantity > 0 && openReservations(undefined, 'Todas las sucursales')">
+              <span class="f__l">Reservado</span><strong>{{ product.totalReservedQuantity }}</strong>
+              <span class="stock-num__hint" *ngIf="product.totalReservedQuantity > 0">ver detalle</span>
+            </div>
             <div class="stock-num stock-num--hi"><span class="f__l">Disponible</span><strong>{{ product.totalAvailableQuantity }}</strong></div>
           </div>
         </div>
@@ -416,7 +419,10 @@
         </div>
         <div class="stock-nums" *ngIf="selectedBranchStock">
           <div class="stock-num"><span class="f__l">Stock</span><strong>{{ selectedBranchStock.onHandQuantity }}</strong></div>
-          <div class="stock-num"><span class="f__l">Reservado</span><strong>{{ selectedBranchStock.reservedQuantity }}</strong></div>
+          <div class="stock-num" [class.stock-num--clickable]="selectedBranchStock.reservedQuantity > 0" (click)="selectedBranchStock.reservedQuantity > 0 && openReservations(selectedStockBranchId, selectedStockBranchName)">
+            <span class="f__l">Reservado</span><strong>{{ selectedBranchStock.reservedQuantity }}</strong>
+            <span class="stock-num__hint" *ngIf="selectedBranchStock.reservedQuantity > 0">ver detalle</span>
+          </div>
           <div class="stock-num stock-num--hi"><span class="f__l">Disponible</span><strong>{{ selectedBranchStock.availableQuantity }}</strong></div>
         </div>
         <div class="stock-hint" *ngIf="!canManageStock">
@@ -584,6 +590,35 @@
             <span></span>
           </div>
         </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="sale-popup-backdrop" *ngIf="reservationsPopupLoading || reservationsPopup" (click)="closeReservations()">
+    <div class="sale-popup" (click)="$event.stopPropagation()">
+      <div class="sale-popup__head">
+        <span class="sale-popup__title">Stock reservado</span>
+        <button class="sale-popup__close" type="button" (click)="closeReservations()">&times;</button>
+      </div>
+      <div class="sale-popup__loading" *ngIf="reservationsPopupLoading">Cargando reservas...</div>
+      <ng-container *ngIf="!reservationsPopupLoading && reservationsPopup as res">
+        <div class="sale-popup__meta">
+          <div><span class="f__l">Alcance</span><strong>{{ reservationsPopupScope }}</strong></div>
+          <div><span class="f__l">Total reservado</span><strong>{{ res.totalReserved }}</strong></div>
+        </div>
+        <div class="sale-popup__items" *ngIf="res.items.length > 0">
+          <div class="sale-popup__item sale-popup__item--head"><span>Venta / Cliente</span><span class="t-right">Cant</span><span class="t-right">Saldo</span></div>
+          <div class="sale-popup__item resv-item" *ngFor="let it of res.items" (click)="openSaleFromReservation(it.saleId)">
+            <span class="resv-item__main">
+              <strong class="sh-ref">{{ it.saleCode || '—' }}</strong>
+              <span class="resv-item__cust">{{ it.customerName }}</span>
+              <span class="resv-item__br">{{ it.branchName }} · {{ it.createdAt | date:'dd/MM/yy' }}<span *ngIf="!it.isCuentaCorriente"> · venta pendiente</span></span>
+            </span>
+            <span class="t-right">{{ it.quantity }}</span>
+            <span class="t-right">&#36; {{ it.pendingAmount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="sale-popup__loading" *ngIf="res.items.length === 0">No hay reservas activas para este alcance.</div>
       </ng-container>
     </div>
   </div>

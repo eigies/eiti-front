@@ -8,7 +8,7 @@ import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
 import { StockService } from '../../core/services/stock.service';
-import { BranchProductStockResponse, StockMovementResponse, TransferDetailResponse } from '../../core/models/stock.models';
+import { BranchProductStockResponse, ProductReservationsResponse, StockMovementResponse, TransferDetailResponse } from '../../core/models/stock.models';
 import { SaleService } from '../../core/services/sale.service';
 import { SaleByIdResponse } from '../../core/models/sale.models';
 import { PurchaseService } from '../../core/services/purchase.service';
@@ -107,6 +107,9 @@ export class ProductsComponent implements OnInit {
   purchasePopupLoading = false;
   transferPopup: TransferDetailResponse | null = null;
   transferPopupLoading = false;
+  reservationsPopup: ProductReservationsResponse | null = null;
+  reservationsPopupLoading = false;
+  reservationsPopupScope = '';
   compactMode = true;
   sortColumn: string | null = null;
   sortDir: 'asc' | 'desc' = 'desc';
@@ -966,6 +969,36 @@ export class ProductsComponent implements OnInit {
   closeSalePopup(): void { this.salePopupSale = null; this.salePopupLoading = false; }
   closePurchasePopup(): void { this.purchasePopup = null; this.purchasePopupLoading = false; }
   closeTransferPopup(): void { this.transferPopup = null; this.transferPopupLoading = false; }
+
+  get selectedStockBranchName(): string {
+    const match = this.branches.find(b => b.id === this.selectedStockBranchId);
+    return match?.name || 'Sucursal seleccionada';
+  }
+
+  openReservations(branchId: string | undefined, scopeLabel: string): void {
+    if (!this.selectedProduct) {
+      return;
+    }
+    this.reservationsPopupScope = scopeLabel;
+    this.reservationsPopupLoading = true;
+    this.reservationsPopup = null;
+    this.stockService.getProductReservations(this.selectedProduct.id, branchId).subscribe({
+      next: res => { this.reservationsPopup = res; this.reservationsPopupLoading = false; },
+      error: () => { this.reservationsPopupLoading = false; this.toast.error('No se pudieron cargar las reservas'); }
+    });
+  }
+
+  closeReservations(): void { this.reservationsPopup = null; this.reservationsPopupLoading = false; }
+
+  openSaleFromReservation(saleId: string): void {
+    this.closeReservations();
+    this.salePopupLoading = true;
+    this.salePopupSale = null;
+    this.saleService.getSaleById(saleId).subscribe({
+      next: sale => { this.salePopupSale = sale; this.salePopupLoading = false; },
+      error: () => { this.salePopupLoading = false; this.toast.error('No se pudo cargar el detalle de la venta'); }
+    });
+  }
 
   acceptOnboardingStep(): void {
     const step = this.currentOnboardingStep;

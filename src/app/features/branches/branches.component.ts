@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { BranchResponse } from '../../core/models/branch.models';
+import { BranchResponse, TransferTargetResponse } from '../../core/models/branch.models';
 import { BranchService } from '../../core/services/branch.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
@@ -40,6 +40,7 @@ export class BranchesComponent implements OnInit {
   onboardingStatus: OnboardingStatusResponse | null = null;
 
   products: ProductResponse[] = [];
+  transferTargets: TransferTargetResponse[] = [];
   transferStockLoading = false;
   private sourceAvailableById = new Map<string, number>();
 
@@ -79,6 +80,7 @@ export class BranchesComponent implements OnInit {
 
     if (this.canTransferStock) {
       this.loadProducts();
+      this.loadTransferTargets();
       this.transferForm.get('sourceBranchId')?.valueChanges
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(() => this.loadSourceAvailability());
@@ -104,10 +106,12 @@ export class BranchesComponent implements OnInit {
   }
 
   get transferDestinationOptions(): SearchableSelectOption[] {
+    // Destino = todas las sucursales de la empresa (modelo "push"): enviar stock no requiere
+    // tener asignada la sucursal destino ni otorga visibilidad de sus datos. Excluye el origen.
     const sourceId = this.transferForm.get('sourceBranchId')?.value;
-    return this.branches
-      .filter(item => item.branch.id !== sourceId)
-      .map(item => ({ value: item.branch.id, label: item.branch.name }));
+    return this.transferTargets
+      .filter(target => target.id !== sourceId)
+      .map(target => ({ value: target.id, label: target.name }));
   }
 
   // Opciones de producto por línea: excluye los productos ya elegidos en otras líneas.
@@ -152,6 +156,13 @@ export class BranchesComponent implements OnInit {
     this.productService.listProducts().subscribe({
       next: products => this.products = products,
       error: () => this.products = []
+    });
+  }
+
+  private loadTransferTargets(): void {
+    this.branchService.listTransferTargets().subscribe({
+      next: targets => this.transferTargets = targets,
+      error: () => this.transferTargets = []
     });
   }
 
