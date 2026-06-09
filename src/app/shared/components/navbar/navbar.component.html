@@ -124,6 +124,14 @@
         <span>Productos</span>
       </a>
 
+      <a *ngIf="auth.hasPermission(permissionCodes.categoriesManage)" class="sidebar__link" routerLink="/product-categories" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+          <line x1="7" y1="7" x2="7.01" y2="7"/>
+        </svg>
+        <span>Categorías</span>
+      </a>
+
       <div *ngIf="auth.hasPermission(permissionCodes.salesAccess)" class="sidebar__group">
         <button class="sidebar__link sidebar__link--parent"
                 type="button"
@@ -314,6 +322,11 @@
           <line x1="9" y1="11" x2="13" y2="11"/>
         </svg>
         <span>Auditoria</span>
+      </a>
+
+      <a *ngIf="auth.hasPermission(permissionCodes.reportsSalesDailyControl)" class="sidebar__link" routerLink="/reportes/ventas/control-diario" routerLinkActive="is-active">
+        <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M8 13h3M8 17h8"/></svg>
+        <span>Control diario de ventas</span>
       </a>
 
       <a *ngIf="auth.hasPermission(permissionCodes.reportsSalesModel)" class="sidebar__link" routerLink="/reportes/ventas/modelo" routerLinkActive="is-active">

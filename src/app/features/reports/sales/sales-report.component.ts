@@ -10,8 +10,10 @@ import { ReportService } from '../../../core/services/report.service';
 import { CustomerService } from '../../../core/services/customer.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
+import { ProductCategoryService } from '../../../core/services/product-category.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { SalesReportResponse, SALE_CHANNELS } from '../../../core/models/report.models';
+import { ProductCategoryResponse } from '../../../core/models/product-category.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 interface ReportMeta { title: string; eyebrow: string; }
@@ -45,6 +47,7 @@ export class SalesReportComponent implements OnInit {
   customers: { id: string; label: string }[] = [];
   drivers: { id: string; label: string }[] = [];
   vehicles: { id: string; label: string }[] = [];
+  categories: ProductCategoryResponse[] = [];
 
   readonly channels = SALE_CHANNELS;
   readonly deliveryModes = [
@@ -60,6 +63,7 @@ export class SalesReportComponent implements OnInit {
     private readonly customerService: CustomerService,
     private readonly employeeService: EmployeeService,
     private readonly vehicleService: VehicleService,
+    private readonly productCategoryService: ProductCategoryService,
     private readonly toast: ToastService
   ) {
     const today = this.toIso(new Date());
@@ -71,7 +75,8 @@ export class SalesReportComponent implements OnInit {
       installerId: [null],
       vehicleId: [null],
       channel: [null],
-      deliveryMode: ['all']
+      deliveryMode: ['all'],
+      categoryId: [null]
     });
   }
 
@@ -104,6 +109,7 @@ export class SalesReportComponent implements OnInit {
   get vehicleOptions(): SearchableSelectOption[] { return this.vehicles.map(v => ({ value: v.id, label: v.label })); }
   get channelOptions(): SearchableSelectOption[] { return this.channels.map(c => ({ value: c.value, label: c.label })); }
   get deliveryOptions(): SearchableSelectOption[] { return this.deliveryModes.map(d => ({ value: d.value, label: d.label })); }
+  get categoryOptions(): SearchableSelectOption[] { return this.categories.map(c => ({ value: c.id, label: c.name })); }
 
   isInvalid(field: string): boolean {
     const c = this.filterForm.get(field);
@@ -120,11 +126,13 @@ export class SalesReportComponent implements OnInit {
     forkJoin({
       customers: this.customerService.listCustomers().pipe(catchError(() => of([]))),
       drivers: this.employeeService.listDriverEmployees().pipe(catchError(() => of([]))),
-      vehicles: this.vehicleService.listVehicles().pipe(catchError(() => of([])))
-    }).subscribe(({ customers, drivers, vehicles }) => {
+      vehicles: this.vehicleService.listVehicles().pipe(catchError(() => of([]))),
+      categories: this.productCategoryService.list().pipe(catchError(() => of([])))
+    }).subscribe(({ customers, drivers, vehicles, categories }) => {
       this.customers = customers.map(c => ({ id: c.id, label: c.fullName }));
       this.drivers = drivers.map(d => ({ id: d.id, label: d.fullName }));
       this.vehicles = vehicles.map(v => ({ id: v.id, label: v.model ? `${v.plate} · ${v.model}` : v.plate }));
+      this.categories = categories;
     });
   }
 
@@ -150,7 +158,8 @@ export class SalesReportComponent implements OnInit {
       installerId: v.installerId || null,
       vehicleId: v.vehicleId || null,
       channel: v.channel ?? null,
-      deliveryMode: v.deliveryMode || 'all'
+      deliveryMode: v.deliveryMode || 'all',
+      categoryId: v.categoryId || null
     }).subscribe({
       next: res => { this.data = res; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => {
@@ -163,7 +172,7 @@ export class SalesReportComponent implements OnInit {
   clearFilters(): void {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    this.filterForm.reset({ dateFrom: firstOfMonth, dateTo: today, customerId: null, installerId: null, vehicleId: null, channel: null, deliveryMode: 'all' });
+    this.filterForm.reset({ dateFrom: firstOfMonth, dateTo: today, customerId: null, installerId: null, vehicleId: null, channel: null, deliveryMode: 'all', categoryId: null });
     this.search();
   }
 

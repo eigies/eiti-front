@@ -129,7 +129,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return [
       p.reportsAudit, p.reportsSalesModel, p.reportsSalesComparison, p.reportsSalesTransport,
       p.reportsSalesChannel, p.reportsSalesChannelBrand, p.reportsSalesBrand, p.reportsSalesRanking,
-      p.reportsDebtors, p.reportsCash
+      p.reportsSalesDailyControl, p.reportsDebtors, p.reportsCash, p.reportsStock
     ].some(code => this.auth.hasPermission(code));
   }
 

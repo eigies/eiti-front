@@ -7,6 +7,8 @@ import { ImportProductRowRequest, ImportProductsResponse, ProductResponse, produ
 import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
+import { ProductCategoryService } from '../../core/services/product-category.service';
+import { ProductCategoryResponse } from '../../core/models/product-category.models';
 import { StockService } from '../../core/services/stock.service';
 import { BranchProductStockResponse, ProductReservationsResponse, StockMovementResponse, TransferDetailResponse } from '../../core/models/stock.models';
 import { SaleService } from '../../core/services/sale.service';
@@ -19,6 +21,7 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { forkJoin } from 'rxjs';
 import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
@@ -29,6 +32,7 @@ type ProductImportColumn =
   | 'sku'
   | 'brand'
   | 'name'
+  | 'categoryName'
   | 'description'
   | 'publicPrice'
   | 'costPrice'
@@ -45,6 +49,7 @@ const PRODUCT_IMPORT_HEADERS: ProductImportColumn[] = [
   'sku',
   'brand',
   'name',
+  'categoryName',
   'description',
   'publicPrice',
   'costPrice',
@@ -76,6 +81,7 @@ export class ProductsComponent implements OnInit {
   selectedBulkProductIds = new Set<string>();
   products: ProductResponse[] = [];
   branches: BranchResponse[] = [];
+  productCategories: ProductCategoryResponse[] = [];
   readonly pageSizeOptions = [10, 25, 50];
   loading = false;
   creating = false;
@@ -94,6 +100,7 @@ export class ProductsComponent implements OnInit {
   filterCode = '';
   filterSku = '';
   filterProduct = '';
+  filterCategory = '';
   filterNoCost = false;
   costPriceAlertDismissed = false;
   selectedProduct: ProductResponse | null = null;
@@ -127,7 +134,9 @@ export class ProductsComponent implements OnInit {
     private router: Router,
     private saleService: SaleService,
     private purchaseService: PurchaseService,
-    public auth: AuthService
+    public auth: AuthService,
+    private confirmation: ConfirmationService,
+    private productCategoryService: ProductCategoryService
   ) {
     this.createForm = this.buildForm();
     this.editForm = this.buildForm();
@@ -152,6 +161,14 @@ export class ProductsComponent implements OnInit {
     this.refreshOnboarding();
     this.loadBranches();
     this.loadProducts();
+    this.loadCategories();
+  }
+
+  private loadCategories(): void {
+    this.productCategoryService.list().subscribe({
+      next: categories => this.productCategories = categories,
+      error: () => this.productCategories = []
+    });
   }
 
   get showProductOnboarding(): boolean {
@@ -249,6 +266,10 @@ export class ProductsComponent implements OnInit {
 
   get brandSelectOptions(): SearchableSelectOption[] {
     return this.brandOptions.map(brand => ({ value: brand, label: brand }));
+  }
+
+  get categorySelectOptions(): SearchableSelectOption[] {
+    return this.productCategories.map(category => ({ value: category.id, label: category.name }));
   }
 
   get pageSizeSelectOptions(): SearchableSelectOption[] {
@@ -366,7 +387,7 @@ export class ProductsComponent implements OnInit {
     this.creating = true;
     this.productService.createProduct(this.toProductRequest(this.createForm)).subscribe({
       next: (product) => {
-        this.createForm.reset({ code: '', sku: '', brand: '', name: '', description: '', publicPrice: 0, price: 0, costPrice: 0, unitPrice: null, marginPercent: 0, noDeliverySurcharge: null });
+        this.createForm.reset({ code: '', sku: '', brand: '', name: '', description: '', publicPrice: 0, price: 0, costPrice: 0, unitPrice: null, marginPercent: 0, noDeliverySurcharge: null, category: null });
         this.createForm.patchValue({ allowsManualSaleValue: false }, { emitEvent: false });
         this.updatePriceValidators(this.createForm);
         this.createPriceMode = 'public';
@@ -384,15 +405,15 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  openEditor(product: ProductResponse): void {
-    if (!this.canLeaveBulkEdit()) {
+  async openEditor(product: ProductResponse): Promise<void> {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
     this.router.navigate(['/products', product.id]);
   }
 
-  openDelete(product: ProductResponse): void {
-    if (!this.canLeaveBulkEdit()) {
+  async openDelete(product: ProductResponse): Promise<void> {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
     this.selectedProduct = product;
@@ -400,8 +421,8 @@ export class ProductsComponent implements OnInit {
     this.deleteConfirmOpen = true;
   }
 
-  openStock(product: ProductResponse): void {
-    if (!this.canLeaveBulkEdit()) {
+  async openStock(product: ProductResponse): Promise<void> {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
     this.selectedProduct = product;
@@ -415,15 +436,15 @@ export class ProductsComponent implements OnInit {
     this.compactMode = !this.compactMode;
   }
 
-  goToList(): void {
-    if (!this.canLeaveBulkEdit()) {
+  async goToList(): Promise<void> {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
     this.router.navigate(['/products']);
   }
 
-  goToCreate(): void {
-    if (!this.canLeaveBulkEdit()) {
+  async goToCreate(): Promise<void> {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
     this.router.navigate(['/products/new']);
@@ -431,12 +452,14 @@ export class ProductsComponent implements OnInit {
 
   downloadImportTemplate(): void {
     const branchNames = this.branches.map(b => b.name);
+    const categoryNames = this.productCategories.map(c => c.name);
     const dataRows: ProductImportRow[] = this.products.length > 0
       ? this.products.map(product => ({
           code: product.code,
           sku: product.sku,
           brand: product.brand,
           name: product.name,
+          categoryName: product.categoryName ?? null,
           description: product.description ?? null,
           publicPrice: product.publicPrice ?? product.price,
           costPrice: product.costPrice ?? 0,
@@ -447,7 +470,7 @@ export class ProductsComponent implements OnInit {
           initialStock: null
         }))
       : [{
-          code: '', sku: '', brand: '', name: '', description: null,
+          code: '', sku: '', brand: '', name: '', categoryName: null, description: null,
           publicPrice: null, costPrice: 0, unitPrice: null,
           allowsManualValueInSale: false, noDeliverySurcharge: null,
           branchName: null, initialStock: null
@@ -458,6 +481,8 @@ export class ProductsComponent implements OnInit {
     // Hidden helper sheet with branch names for the dropdown formula
     const branchSheet = wb.addWorksheet('_Sucursales', { state: 'veryHidden' });
     branchNames.forEach((name, i) => { branchSheet.getCell(i + 1, 1).value = name; });
+    const categorySheet = wb.addWorksheet('_Categorias', { state: 'veryHidden' });
+    categoryNames.forEach((name, i) => { categorySheet.getCell(i + 1, 1).value = name; });
 
     const ws = wb.addWorksheet('Productos');
 
@@ -468,7 +493,7 @@ export class ProductsComponent implements OnInit {
 
     // Column widths
     const widths: Record<string, number> = {
-      code: 14, sku: 14, brand: 18, name: 28, description: 30,
+      code: 14, sku: 14, brand: 18, name: 28, categoryName: 22, description: 30,
       publicPrice: 14, costPrice: 12, unitPrice: 12,
       allowsManualValueInSale: 22, noDeliverySurcharge: 20,
       branchName: 22, initialStock: 14
@@ -497,6 +522,20 @@ export class ProductsComponent implements OnInit {
       }
     }
 
+    const categoryColIdx = PRODUCT_IMPORT_HEADERS.indexOf('categoryName') + 1;
+    if (categoryNames.length > 0) {
+      for (let r = 2; r <= dataRows.length + 1; r++) {
+        ws.getCell(r, categoryColIdx).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [`_Categorias!$A$1:$A$${categoryNames.length}`],
+          showErrorMessage: true,
+          errorTitle: 'Categoría inválida',
+          error: 'Seleccioná una categoría de la lista.'
+        };
+      }
+    }
+
     wb.xlsx.writeBuffer().then((buffer: ArrayBuffer) => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
@@ -508,8 +547,8 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  openImportPicker(): void {
-    if (!this.canLeaveBulkEdit() || this.importInProgress) {
+  async openImportPicker(): Promise<void> {
+    if (this.importInProgress || !(await this.canLeaveBulkEdit())) {
       return;
     }
 
@@ -569,33 +608,35 @@ export class ProductsComponent implements OnInit {
     reader.readAsArrayBuffer(file);
   }
 
-  goToProduct(product: ProductResponse): void {
-    if (this.bulkEditMode || !this.canLeaveBulkEdit()) {
+  async goToProduct(product: ProductResponse): Promise<void> {
+    if (this.bulkEditMode || !(await this.canLeaveBulkEdit())) {
       return;
     }
     this.router.navigate(['/products', product.id]);
   }
 
-  setFilter(field: 'brand' | 'code' | 'sku' | 'product', value: string): void {
-    if (!this.canLeaveBulkEdit()) {
+  async setFilter(field: 'brand' | 'code' | 'sku' | 'product' | 'category', value: string): Promise<void> {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
     if (field === 'brand') this.filterBrand = value;
     if (field === 'code') this.filterCode = value;
     if (field === 'sku') this.filterSku = value;
     if (field === 'product') this.filterProduct = value;
+    if (field === 'category') this.filterCategory = value;
     this.currentPage = 1;
     this.selectedBulkProductIds.clear();
   }
 
-  clearFilters(): void {
-    if (!this.canLeaveBulkEdit()) {
+  async clearFilters(): Promise<void> {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
     this.filterBrand = '';
     this.filterCode = '';
     this.filterSku = '';
     this.filterProduct = '';
+    this.filterCategory = '';
     this.filterNoCost = false;
     this.currentPage = 1;
     this.selectedBulkProductIds.clear();
@@ -717,12 +758,12 @@ export class ProductsComponent implements OnInit {
     return product.id;
   }
 
-  goToPage(page: number): void {
+  async goToPage(page: number): Promise<void> {
     if (page < 1 || page > this.totalPages || page === this.currentPage) {
       return;
     }
 
-    if (!this.canLeaveBulkEdit()) {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
 
@@ -730,14 +771,14 @@ export class ProductsComponent implements OnInit {
     this.loadProducts();
   }
 
-  changePageSize(rawPageSize: string): void {
+  async changePageSize(rawPageSize: string): Promise<void> {
     const parsedPageSize = Number(rawPageSize);
 
     if (!Number.isFinite(parsedPageSize) || parsedPageSize <= 0 || parsedPageSize === this.pageSize) {
       return;
     }
 
-    if (!this.canLeaveBulkEdit()) {
+    if (!(await this.canLeaveBulkEdit())) {
       return;
     }
 
@@ -768,9 +809,12 @@ export class ProductsComponent implements OnInit {
     }
   }
 
-  cancelBulkEdit(force = false): void {
-    if (!force && this.hasPendingBulkChanges() && !window.confirm('Hay cambios sin guardar en la grilla. Si continuas, se perderan.')) {
-      return;
+  async cancelBulkEdit(force = false): Promise<void> {
+    if (!force && this.hasPendingBulkChanges()) {
+      const confirmed = await this.confirmDiscardBulkChanges('Si continuas, se perderan los cambios realizados en la grilla.');
+      if (!confirmed) {
+        return;
+      }
     }
 
     this.bulkEditMode = false;
@@ -893,6 +937,9 @@ export class ProductsComponent implements OnInit {
     const base = this.normalizeBulkRequest(snapshot) as Record<string, unknown>;
     if (field === 'allowsManualSaleValue') {
       return current['allowsManualSaleValue'] !== base['allowsManualSaleValue'];
+    }
+    if (field === 'category') {
+      return current['categoryId'] !== base['categoryId'];
     }
     return current[field] !== base[field];
   }
@@ -1035,14 +1082,16 @@ export class ProductsComponent implements OnInit {
     const code = this.filterCode.trim().toLowerCase();
     const sku = this.filterSku.trim().toLowerCase();
     const productQuery = this.filterProduct.trim().toLowerCase();
+    const categoryId = this.filterCategory;
 
     return this.products.filter(product => {
       const matchesBrand = !brand || product.brand.toLowerCase() === brand;
       const matchesCode = !code || product.code.toLowerCase().includes(code);
       const matchesSku = !sku || product.sku.toLowerCase().includes(sku);
       const matchesProduct = !productQuery || product.name.toLowerCase().includes(productQuery);
+      const matchesCategory = !categoryId || product.categoryId === categoryId;
       const matchesNoCost = !this.filterNoCost || (!product.costPrice || product.costPrice === 0);
-      return matchesBrand && matchesCode && matchesSku && matchesProduct && matchesNoCost;
+      return matchesBrand && matchesCode && matchesSku && matchesProduct && matchesCategory && matchesNoCost;
     });
   }
 
@@ -1097,7 +1146,8 @@ export class ProductsComponent implements OnInit {
       unitPrice: product.unitPrice ?? null,
       marginPercent: this.calculateMarginPercent(product.publicPrice ?? product.price, product.costPrice ?? 0),
       allowsManualSaleValue: productAllowsManualSaleValue(product),
-      noDeliverySurcharge: product.noDeliverySurcharge ?? null
+      noDeliverySurcharge: product.noDeliverySurcharge ?? null,
+      category: product.categoryId ?? null
     });
     this.updatePriceValidators(this.editForm);
   }
@@ -1134,7 +1184,8 @@ export class ProductsComponent implements OnInit {
       unitPrice: product.unitPrice ?? null,
       marginPercent: this.calculateMarginPercent(product.publicPrice ?? product.price, product.costPrice ?? 0),
       allowsManualSaleValue: productAllowsManualSaleValue(product),
-      noDeliverySurcharge: product.noDeliverySurcharge ?? null
+      noDeliverySurcharge: product.noDeliverySurcharge ?? null,
+      category: product.categoryId ?? null
     };
   }
 
@@ -1142,7 +1193,7 @@ export class ProductsComponent implements OnInit {
     return this.bulkEditMode && this.modifiedBulkProductIds.size > 0;
   }
 
-  private canLeaveBulkEdit(): boolean {
+  private async canLeaveBulkEdit(): Promise<boolean> {
     if (!this.bulkEditMode) {
       return true;
     }
@@ -1152,12 +1203,24 @@ export class ProductsComponent implements OnInit {
       return true;
     }
 
-    const shouldLeave = window.confirm('Hay cambios sin guardar en la grilla. Si sales del modo edicion, se perderan.');
+    const shouldLeave = await this.confirmDiscardBulkChanges('Si sales del modo edicion, se perderan los cambios realizados en la grilla.');
     if (shouldLeave) {
       this.cancelBulkEdit(true);
     }
 
     return shouldLeave;
+  }
+
+  private confirmDiscardBulkChanges(detail: string): Promise<boolean> {
+    return this.confirmation.confirm({
+      eyebrow: 'Edicion masiva',
+      title: 'Hay cambios sin guardar',
+      message: 'Todavia hay productos modificados que no fueron guardados.',
+      detail,
+      confirmLabel: 'Descartar cambios',
+      cancelLabel: 'Seguir editando',
+      tone: 'warning'
+    });
   }
 
   private refreshBulkProductState(productId: string): void {
@@ -1190,7 +1253,8 @@ export class ProductsComponent implements OnInit {
       costPrice: Number(request.costPrice ?? 0),
       unitPrice: request.unitPrice == null ? null : Number(request.unitPrice),
       allowsManualValueInSale: Boolean(request.allowsManualValueInSale),
-      noDeliverySurcharge: request.noDeliverySurcharge == null ? null : Number(request.noDeliverySurcharge)
+      noDeliverySurcharge: request.noDeliverySurcharge == null ? null : Number(request.noDeliverySurcharge),
+      categoryId: request.categoryId ?? null
     };
   }
 
@@ -1208,7 +1272,8 @@ export class ProductsComponent implements OnInit {
       && left.costPrice === right.costPrice
       && left.unitPrice === right.unitPrice
       && left.allowsManualValueInSale === right.allowsManualValueInSale
-      && left.noDeliverySurcharge === right.noDeliverySurcharge;
+      && left.noDeliverySurcharge === right.noDeliverySurcharge
+      && left.categoryId === right.categoryId;
   }
 
   private parseImportRows(source: string | ArrayBuffer | null): ImportProductRowRequest[] {
@@ -1228,7 +1293,9 @@ export class ProductsComponent implements OnInit {
       defval: null
     });
     const normalizedHeaders = (headerRows[0] ?? []).map(header => String(header ?? '').trim());
-    const missingHeaders = PRODUCT_IMPORT_HEADERS.filter(header => !normalizedHeaders.includes(header));
+    const missingHeaders = PRODUCT_IMPORT_HEADERS.filter(
+      header => header !== 'categoryName' && !normalizedHeaders.includes(header)
+    );
     if (missingHeaders.length > 0) {
       throw new Error(`Faltan columnas obligatorias en el template: ${missingHeaders.join(', ')}.`);
     }
@@ -1263,6 +1330,7 @@ export class ProductsComponent implements OnInit {
       sku,
       brand,
       name,
+      categoryName: this.readOptionalImportText(row, 'categoryName'),
       description: this.readOptionalImportText(row, 'description'),
       publicPrice,
       costPrice,
@@ -1353,7 +1421,8 @@ export class ProductsComponent implements OnInit {
       unitPrice: [null, [Validators.min(0)]],
       marginPercent: [0],
       allowsManualSaleValue: [false],
-      noDeliverySurcharge: [null, [Validators.min(0)]]
+      noDeliverySurcharge: [null, [Validators.min(0)]],
+      category: [null]
     });
 
     this.updatePriceValidators(form);
@@ -1405,7 +1474,8 @@ export class ProductsComponent implements OnInit {
       costPrice: Number(raw.costPrice ?? 0),
       unitPrice: raw.unitPrice === null || raw.unitPrice === '' ? null : Number(raw.unitPrice),
       allowsManualValueInSale: allowsManualSaleValue,
-      noDeliverySurcharge: raw.noDeliverySurcharge === null || raw.noDeliverySurcharge === '' ? null : Number(raw.noDeliverySurcharge)
+      noDeliverySurcharge: raw.noDeliverySurcharge === null || raw.noDeliverySurcharge === '' ? null : Number(raw.noDeliverySurcharge),
+      categoryId: raw.category ? String(raw.category) : null
     };
   }
 

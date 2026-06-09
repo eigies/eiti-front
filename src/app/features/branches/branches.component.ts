@@ -15,6 +15,7 @@ import { ProductService } from '../../core/services/product.service';
 import { StockService } from '../../core/services/stock.service';
 import { ProductResponse } from '../../core/models/product.models';
 import { PermissionCodes } from '../../core/models/permission.models';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
 
 type BranchView = {
   branch: BranchResponse;
@@ -42,6 +43,7 @@ export class BranchesComponent implements OnInit {
   products: ProductResponse[] = [];
   transferTargets: TransferTargetResponse[] = [];
   transferStockLoading = false;
+  deletingBranchId: string | null = null;
   private sourceAvailableById = new Map<string, number>();
 
   private readonly destroyRef = inject(DestroyRef);
@@ -54,7 +56,8 @@ export class BranchesComponent implements OnInit {
     private readonly router: Router,
     private readonly auth: AuthService,
     private readonly productService: ProductService,
-    private readonly stockService: StockService
+    private readonly stockService: StockService,
+    private readonly confirmation: ConfirmationService
   ) {
     this.createForm = this.fb.group({
       name: ['', Validators.required],
@@ -95,6 +98,10 @@ export class BranchesComponent implements OnInit {
 
   get canViewFinancials(): boolean {
     return this.auth.hasPermission(PermissionCodes.dashboardViewFinancials);
+  }
+
+  get canManageBranches(): boolean {
+    return this.auth.hasPermission(PermissionCodes.branchesManage);
   }
 
   get transferItems(): FormArray {
@@ -326,6 +333,37 @@ export class BranchesComponent implements OnInit {
     }
 
     this.editingBranch = null;
+  }
+
+  async deleteBranch(branch: BranchResponse): Promise<void> {
+    if (this.deletingBranchId) {
+      return;
+    }
+
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Estructura de la empresa',
+      title: 'Eliminar sucursal',
+      message: `Vas a eliminar la sucursal "${branch.name}".`,
+      detail: 'Esta accion no se puede deshacer.',
+      confirmLabel: 'Eliminar sucursal',
+      tone: 'danger'
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingBranchId = branch.id;
+    this.branchService.deleteBranch(branch.id).subscribe({
+      next: () => {
+        this.deletingBranchId = null;
+        this.toast.success('Sucursal eliminada');
+        this.loadBranches();
+      },
+      error: err => {
+        this.deletingBranchId = null;
+        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo eliminar la sucursal');
+      }
+    });
   }
 
   toggleBranch(branchId: string, forceExpand?: boolean): void {

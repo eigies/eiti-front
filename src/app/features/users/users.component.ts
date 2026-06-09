@@ -12,6 +12,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
 
 @Component({
   selector: 'app-users',
@@ -71,7 +72,8 @@ export class UsersComponent implements OnInit {
     private readonly accessProfileService: AccessProfileService,
     private readonly toast: ToastService,
     private readonly auth: AuthService,
-    private readonly branchService: BranchService
+    private readonly branchService: BranchService,
+    private readonly confirmation: ConfirmationService
   ) { }
 
   ngOnInit(): void {
@@ -387,8 +389,16 @@ export class UsersComponent implements OnInit {
     });
   }
 
-  deleteProfile(profile: AccessProfileResponse): void {
-    if (!window.confirm(`Se eliminara el perfil "${profile.name}".`)) {
+  async deleteProfile(profile: AccessProfileResponse): Promise<void> {
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Administracion de acceso',
+      title: 'Eliminar perfil',
+      message: `Se eliminara el perfil "${profile.name}".`,
+      detail: 'Los usuarios no podran volver a ser asignados a este perfil.',
+      confirmLabel: 'Eliminar perfil',
+      tone: 'danger'
+    });
+    if (!confirmed) {
       return;
     }
 

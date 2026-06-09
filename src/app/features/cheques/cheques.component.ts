@@ -15,6 +15,7 @@ import {
 } from '../../core/models/cheque.models';
 import { BankResponse } from '../../core/models/bank.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
 
 @Component({
   selector: 'app-cheques',
@@ -86,7 +87,8 @@ export class ChequesComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly chequeService: ChequeService,
     private readonly bankService: BankService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly confirmation: ConfirmationService
   ) {
     this.filterForm = this.fb.group({
       estado: [null],
@@ -157,9 +159,18 @@ export class ChequesComponent implements OnInit {
     return map[status] ?? 'btn--ghost';
   }
 
-  changeStatus(newStatus: number): void {
+  async changeStatus(newStatus: number): Promise<void> {
     if (!this.detailCheque || this.updatingStatus) return;
-    if (!confirm(`Cambiar estado a "${this.statusLabels[newStatus]}"?`)) return;
+    const nextStatus = this.statusLabels[newStatus];
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Gestion de cheques',
+      title: 'Cambiar estado',
+      message: `El cheque pasara al estado "${nextStatus}".`,
+      detail: 'Confirma que el movimiento coincide con la situacion real del cheque.',
+      confirmLabel: `Marcar ${nextStatus}`,
+      tone: newStatus === ChequeStatus.Rechazado || newStatus === ChequeStatus.Anulado ? 'danger' : 'warning'
+    });
+    if (!confirmed) return;
     this.updatingStatus = true;
     this.chequeService.updateChequeStatus(this.detailCheque.id, newStatus).subscribe({
       next: updated => {

@@ -20,6 +20,7 @@ import {
 import { SalePaymentInlineComponent } from '../../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { PermissionCodes } from '../../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
 
 interface PaymentGroup {
   groupId: string | null;
@@ -64,7 +65,8 @@ export class SalesCcPaymentsComponent implements OnInit {
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly fb: FormBuilder
+    private readonly fb: FormBuilder,
+    private readonly confirmation: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -259,8 +261,16 @@ export class SalesCcPaymentsComponent implements OnInit {
     });
   }
 
-  requestCancel(group: PaymentGroup): void {
-    if (!confirm('Anular este pago? Esta accion no se puede deshacer.')) return;
+  async requestCancel(group: PaymentGroup): Promise<void> {
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Cuenta corriente',
+      title: 'Anular pago',
+      message: 'El pago dejara de computarse en el saldo de esta venta.',
+      detail: 'Esta accion no se puede deshacer.',
+      confirmLabel: 'Anular pago',
+      tone: 'danger'
+    });
+    if (!confirmed) return;
 
     const paymentId = group.payments[0].id;
     if (group.groupId) {
@@ -289,8 +299,17 @@ export class SalesCcPaymentsComponent implements OnInit {
     return this.cancellingPaymentId === group.payments[0]?.id;
   }
 
-  cancelSale(): void {
-    if (!this.sale || !confirm('¿Anular esta venta? Esta acción no se puede deshacer.')) return;
+  async cancelSale(): Promise<void> {
+    if (!this.sale) return;
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Cuenta corriente',
+      title: 'Anular venta',
+      message: `Vas a anular la venta ${this.sale.code || 'seleccionada'}.`,
+      detail: 'Esta accion no se puede deshacer.',
+      confirmLabel: 'Anular venta',
+      tone: 'danger'
+    });
+    if (!confirmed) return;
     this.cancellingSale = true;
     this.saleService.cancelSale(this.saleId).subscribe({
       next: () => {

@@ -5,9 +5,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { RouterModule } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { CustomerService } from '../../core/services/customer.service';
-import { CustomerResponse } from '../../core/models/customer.models';
+import { CreateCustomerRequest, CustomerResponse } from '../../core/models/customer.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
+import { PermissionCodes } from '../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
 
 @Component({
   selector: 'app-customers',
@@ -20,6 +23,8 @@ export class CustomersComponent implements OnInit {
   form: FormGroup;
   customers: CustomerResponse[] = [];
   creating = false;
+  editingId: string | null = null;
+  deletingId: string | null = null;
   readonly documentTypes = [
     { value: 1, label: 'DNI' },
     { value: 2, label: 'Pasaporte' },
@@ -36,7 +41,9 @@ export class CustomersComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private customerService: CustomerService,
-    private toast: ToastService
+    private toast: ToastService,
+    private auth: AuthService,
+    private confirmation: ConfirmationService
   ) {
     this.form = this.fb.group({
       firstName: ['', Validators.required],
@@ -62,16 +69,106 @@ export class CustomersComponent implements OnInit {
     this.loadCustomers();
   }
 
+  get canDeleteCustomers(): boolean {
+    return this.auth.hasPermission(PermissionCodes.customersDelete);
+  }
+
+  get isEditing(): boolean {
+    return this.editingId !== null;
+  }
+
   isInvalid(field: string): boolean {
     const c = this.form.get(field);
     return !!(c && c.invalid && (c.dirty || c.touched));
   }
 
-  create(): void {
+  submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.creating = true;
+    const payload = this.buildPayload();
+    const wasEditing = this.editingId !== null;
+    const request$ = wasEditing
+      ? this.customerService.updateCustomer({ ...payload, id: this.editingId! })
+      : this.customerService.createCustomer(payload);
+
+    request$.subscribe({
+      next: (c) => {
+        this.creating = false;
+        this.resetForm();
+        this.toast.success(wasEditing
+          ? `Cliente "${c.name}" actualizado correctamente`
+          : `Cliente "${c.name}" creado correctamente`);
+        this.loadCustomers();
+      },
+      error: (err) => {
+        this.creating = false;
+        this.toast.error(this.resolveCustomerErrorMessage(err, wasEditing ? 'Error al actualizar el cliente' : 'Error al crear el cliente'));
+      }
+    });
+  }
+
+  beginEdit(customer: CustomerResponse): void {
+    this.customerService.getCustomerById(customer.id).subscribe({
+      next: (c) => {
+        this.editingId = c.id;
+        this.form.reset({
+          firstName: c.firstName || '',
+          lastName: c.lastName || '',
+          email: c.email || '',
+          phone: c.phone || '',
+          documentType: c.documentType ?? 1,
+          documentNumber: c.documentNumber || '',
+          taxId: c.taxId || '',
+          street: c.address?.street || '',
+          streetNumber: c.address?.streetNumber || '',
+          postalCode: c.address?.postalCode || '',
+          city: c.address?.city || '',
+          stateOrProvince: c.address?.stateOrProvince || '',
+          country: c.address?.country || 'Argentina',
+          floor: c.address?.floor || '',
+          apartment: c.address?.apartment || '',
+          reference: c.address?.reference || ''
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      error: (err) => this.toast.error(this.resolveCustomerErrorMessage(err, 'No se pudo cargar el cliente para editar'))
+    });
+  }
+
+  cancelEdit(): void {
+    this.resetForm();
+  }
+
+  async deleteCustomer(customer: CustomerResponse): Promise<void> {
+    if (this.deletingId) { return; }
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Base de clientes',
+      title: 'Eliminar cliente',
+      message: `Vas a eliminar al cliente "${customer.name}".`,
+      detail: 'Esta accion no se puede deshacer.',
+      confirmLabel: 'Eliminar cliente',
+      tone: 'danger'
+    });
+    if (!confirmed) { return; }
+
+    this.deletingId = customer.id;
+    this.customerService.deleteCustomer(customer.id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        if (this.editingId === customer.id) { this.resetForm(); }
+        this.toast.success('Cliente eliminado');
+        this.loadCustomers();
+      },
+      error: (err) => {
+        this.deletingId = null;
+        this.toast.error(this.resolveCustomerErrorMessage(err, 'No se pudo eliminar el cliente'));
+      }
+    });
+  }
+
+  private buildPayload(): CreateCustomerRequest {
     const raw = this.form.getRawValue();
-    this.customerService.createCustomer({
+    return {
       name: `${raw.firstName} ${raw.lastName}`.trim(),
       firstName: String(raw.firstName || ''),
       lastName: String(raw.lastName || ''),
@@ -91,36 +188,28 @@ export class CustomersComponent implements OnInit {
         apartment: this.nullIfEmpty(raw.apartment),
         reference: this.nullIfEmpty(raw.reference)
       }
-    }).subscribe({
-      next: (c) => {
-        this.customers.unshift(c);
-        this.form.reset({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          documentType: 1,
-          documentNumber: '',
-          taxId: '',
-          street: '',
-          streetNumber: '',
-          postalCode: '',
-          city: '',
-          stateOrProvince: '',
-          country: 'Argentina',
-          floor: '',
-          apartment: '',
-          reference: ''
-        });
-        this.toast.success(`Cliente "${c.name}" creado correctamente`);
-        this.creating = false;
-        this.loadCustomers();
-      },
-      error: (err) => {
-        const msg = this.resolveCustomerErrorMessage(err, 'Error al crear el cliente');
-        this.toast.error(msg);
-        this.creating = false;
-      }
+    };
+  }
+
+  private resetForm(): void {
+    this.editingId = null;
+    this.form.reset({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      documentType: 1,
+      documentNumber: '',
+      taxId: '',
+      street: '',
+      streetNumber: '',
+      postalCode: '',
+      city: '',
+      stateOrProvince: '',
+      country: 'Argentina',
+      floor: '',
+      apartment: '',
+      reference: ''
     });
   }
 

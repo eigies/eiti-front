@@ -8,10 +8,10 @@
         <section class="panel panel--form">
             <div class="panel__head">
                 <span class="panel__icon">+</span>
-                <span class="panel__title">Alta de cliente</span>
+                <span class="panel__title">{{ isEditing ? 'Editar cliente' : 'Alta de cliente' }}</span>
             </div>
 
-            <form class="customer-form" [formGroup]="form" (ngSubmit)="create()" novalidate>
+            <form class="customer-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <section class="form-section">
                     <div class="form-section__head">
                         <h2>Identidad</h2>
@@ -120,9 +120,10 @@
                 </section>
 
                 <div class="form-actions">
+                    <button class="btn-ghost" type="button" *ngIf="isEditing" (click)="cancelEdit()">Cancelar</button>
                     <button class="btn-primary" type="submit" [disabled]="creating">
-                        <span *ngIf="!creating">Crear cliente -></span>
-                        <span *ngIf="creating">Creando...</span>
+                        <span *ngIf="!creating">{{ isEditing ? 'Guardar cambios ->' : 'Crear cliente ->' }}</span>
+                        <span *ngIf="creating">{{ isEditing ? 'Guardando...' : 'Creando...' }}</span>
                     </button>
                 </div>
             </form>
@@ -141,16 +142,22 @@
             </div>
 
             <div class="customer-grid" *ngIf="customers.length > 0">
-                <a class="customer-card" *ngFor="let c of customers; let i = index" [style.animation-delay]="i * 0.04 + 's'"
-                    routerLink="/customers/{{ c.id }}">
+                <div class="customer-card" *ngFor="let c of customers; let i = index" [style.animation-delay]="i * 0.04 + 's'">
                     <div class="customer-card__avatar">{{ c.name.charAt(0).toUpperCase() }}</div>
                     <div class="customer-card__body">
                         <span class="customer-card__name">{{ c.name }}</span>
                         <span class="customer-card__email">{{ c.email }}</span>
                         <span class="customer-card__address">{{ formatAddress(c) }}</span>
                     </div>
-                    <span class="customer-card__arrow">Ver</span>
-                </a>
+                    <div class="customer-card__actions">
+                        <a class="customer-card__action" routerLink="/customers/{{ c.id }}">Ver</a>
+                        <button class="customer-card__action" type="button" (click)="beginEdit(c)">Editar</button>
+                        <button class="customer-card__action customer-card__action--danger" type="button"
+                            *ngIf="canDeleteCustomers" (click)="deleteCustomer(c)" [disabled]="deletingId === c.id">
+                            {{ deletingId === c.id ? '...' : 'Eliminar' }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
     </div>

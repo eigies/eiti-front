@@ -183,7 +183,7 @@
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(10rem, 0.9fr) repeat(3, minmax(10rem, 1fr)) auto;
+  grid-template-columns: repeat(5, minmax(9rem, 1fr)) auto;
   gap: 0.85rem;
   align-items: end;
   padding: 1.1rem 1.25rem;
@@ -1036,6 +1036,27 @@
   color: color-mix(in srgb, var(--amber) 80%, var(--text));
 }
 
+.category-badge {
+  display: inline-flex;
+  max-width: 12rem;
+  overflow: hidden;
+  padding: 0.18rem 0.48rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border-2));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 4%, transparent);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-badge--empty {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text-mute);
+}
+
 .tbl-toggle { display: grid; gap: 0.28rem; cursor: pointer; }
 .tbl-toggle input { accent-color: var(--amber); }
 .tbl-toggle__text { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
@@ -1258,6 +1279,10 @@
 .sh-reserved { color: var(--amber); }       /* Reservado → naranja/amber */
 
 /* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+  .filters { grid-template-columns: repeat(3, minmax(10rem, 1fr)); }
+}
+
 @media (max-width: 860px) {
   .pf__row--2, .pf__row--3, .pf__row--4 { grid-template-columns: 1fr; }
   .filters,

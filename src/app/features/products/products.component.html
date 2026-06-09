@@ -55,6 +55,7 @@
             <label class="f"><span class="f__l">Nombre</span><input class="f__i" type="text" formControlName="name" /></label>
           </div>
           <label class="f"><span class="f__l">Descripcion</span><textarea class="f__i f__i--area" formControlName="description"></textarea></label>
+          <label class="f"><span class="f__l">Categoría</span><app-searchable-select formControlName="category" [options]="categorySelectOptions" [allowClear]="true" clearLabel="Sin categoría" [clearValue]="null" placeholder="Sin categoría" searchPlaceholder="Buscar categoría..."></app-searchable-select></label>
         </div>
 
         <div class="pf__section">
@@ -124,6 +125,7 @@
       <label class="f"><span class="f__l">Codigo</span><input class="f__i" type="text" [ngModel]="filterCode" (ngModelChange)="setFilter('code', $event)" [ngModelOptions]="{standalone:true}" /></label>
       <label class="f"><span class="f__l">SKU</span><input class="f__i" type="text" [ngModel]="filterSku" (ngModelChange)="setFilter('sku', $event)" [ngModelOptions]="{standalone:true}" /></label>
       <label class="f"><span class="f__l">Producto</span><input class="f__i" type="text" [ngModel]="filterProduct" (ngModelChange)="setFilter('product', $event)" [ngModelOptions]="{standalone:true}" /></label>
+      <label class="f"><span class="f__l">Categoría</span><app-searchable-select [ngModel]="filterCategory" (ngModelChange)="setFilter('category', $event)" [ngModelOptions]="{standalone:true}" [options]="categorySelectOptions" [allowClear]="true" clearLabel="Todas" clearValue="" placeholder="Todas" searchPlaceholder="Buscar categoría..."></app-searchable-select></label>
       <button class="btn btn--ghost btn--sm" type="button" (click)="clearFilters()">Limpiar</button>
     </div>
 
@@ -227,6 +229,7 @@
               <th>Tipo</th>
               <th class="tbl-th--amber tbl-th--sort" (click)="setSort('brand')">Marca <span class="sort-ind" [class.sort-ind--on]="sortColumn==='brand'">{{ sortColumn==='brand' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
               <th class="tbl-th--sort tbl-th--primary" (click)="setSort('name')">Producto <span class="sort-ind" [class.sort-ind--on]="sortColumn==='name'">{{ sortColumn==='name' ? (sortDir==='desc' ? '↓' : '↑') : '↕' }}</span></th>
+              <th class="tbl-th--sort" (click)="setSort('categoryName')">Categoría</th>
               <th *ngIf="showHiddenColumns" class="tbl-th--sort" (click)="setSort('description')">Descripcion</th>
               <th class="tbl-th--r tbl-th--sort tbl-th--focus" (click)="setSort('publicPrice')">Precio pub.</th>
               <th class="tbl-th--r tbl-th--sort" *ngIf="canViewCostPrice" (click)="setSort('costPrice')">Costo</th>
@@ -270,6 +273,12 @@
               <td class="td--name td--primary" data-label="Producto" [class.cell-ch]="isBulkFieldChanged(product.id,'name')" [class.cell-inv]="isBulkFieldInvalid(product.id,'name')">
                 <ng-container *ngIf="isBulkRowEditable(product.id); else readName"><input class="ti" type="text" formControlName="name" (click)="$event.stopPropagation()" /></ng-container>
                 <ng-template #readName>{{ product.name }}</ng-template>
+              </td>
+              <td data-label="Categoría" [class.cell-ch]="isBulkFieldChanged(product.id,'category')">
+                <ng-container *ngIf="isBulkRowEditable(product.id); else readCategory">
+                  <app-searchable-select formControlName="category" [options]="categorySelectOptions" [allowClear]="true" clearLabel="Sin categoría" [clearValue]="null" placeholder="Sin categoría" searchPlaceholder="Buscar categoría..." [compact]="true" (click)="$event.stopPropagation()"></app-searchable-select>
+                </ng-container>
+                <ng-template #readCategory><span class="category-badge" [class.category-badge--empty]="!product.categoryName">{{ product.categoryName || 'Sin categoría' }}</span></ng-template>
               </td>
               <td *ngIf="showHiddenColumns" class="td--desc" data-label="Descripcion" [class.cell-ch]="isBulkFieldChanged(product.id,'description')" [class.cell-inv]="isBulkFieldInvalid(product.id,'description')">
                 <ng-container *ngIf="isBulkRowEditable(product.id); else readDesc"><textarea class="ti ti--area" formControlName="description" (click)="$event.stopPropagation()"></textarea></ng-container>
@@ -330,6 +339,7 @@
           <div class="detail-row"><span class="detail-row__key">SKU</span><span class="detail-row__val">{{ product.sku }}</span></div>
           <div class="detail-row"><span class="detail-row__key">Marca</span><span class="detail-row__val">{{ product.brand }}</span></div>
           <div class="detail-row"><span class="detail-row__key">Nombre</span><span class="detail-row__val">{{ product.name }}</span></div>
+          <div class="detail-row"><span class="detail-row__key">Categoría</span><span class="detail-row__val">{{ product.categoryName || 'Sin categoría' }}</span></div>
           <div class="detail-row" *ngIf="product.description"><span class="detail-row__key">Descripcion</span><span class="detail-row__val detail-row__val--desc">{{ product.description }}</span></div>
         </div>
         <div class="detail-section">
@@ -367,6 +377,7 @@
             <label class="f"><span class="f__l">Nombre</span><input class="f__i" type="text" formControlName="name" /></label>
           </div>
           <label class="f"><span class="f__l">Descripcion</span><textarea class="f__i f__i--area" formControlName="description"></textarea></label>
+          <label class="f"><span class="f__l">Categoría</span><app-searchable-select formControlName="category" [options]="categorySelectOptions" [allowClear]="true" clearLabel="Sin categoría" [clearValue]="null" placeholder="Sin categoría" searchPlaceholder="Buscar categoría..."></app-searchable-select></label>
           <div class="pf__row pf__row--2">
             <div class="f">
               <span class="f__l">Modo de precio</span>

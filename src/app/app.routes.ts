@@ -133,6 +133,12 @@ export const routes: Routes = [
             import('./features/audit/audit.component').then(m => m.AuditComponent)
     },
     {
+        path: 'reportes/ventas/control-diario',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesDailyControl },
+        loadComponent: () => import('./features/reports/daily-sales-control/daily-sales-control.component').then(m => m.DailySalesControlComponent)
+    },
+    {
         path: 'reportes/ventas/modelo',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesModel, tipo: 'product' },
@@ -210,6 +216,13 @@ export const routes: Routes = [
         data: { permission: PermissionCodes.suppliersManage },
         loadComponent: () =>
             import('./features/suppliers/suppliers.component').then(m => m.SuppliersComponent)
+    },
+    {
+        path: 'product-categories',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.categoriesManage },
+        loadComponent: () =>
+            import('./features/product-categories/product-categories.component').then(m => m.ProductCategoriesComponent)
     },
     {
         path: 'purchases',

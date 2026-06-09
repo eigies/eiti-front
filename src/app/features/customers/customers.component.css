@@ -226,6 +226,36 @@ textarea.field__input {
 
 .form-actions {
     margin-top: .25rem;
+    display: flex;
+    gap: .6rem;
+    align-items: stretch;
+}
+
+.form-actions .btn-primary {
+    width: auto;
+    flex: 1;
+}
+
+.btn-ghost {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: .78rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-2);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+
+.btn-ghost:hover {
+    border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
+    color: var(--text);
+    background: color-mix(in srgb, var(--amber) 6%, transparent);
 }
 
 .btn-primary {
@@ -370,6 +400,52 @@ textarea.field__input {
 
 .customer-card:hover .customer-card__arrow {
     color: var(--amber);
+}
+
+.customer-card__actions {
+    display: grid;
+    gap: .35rem;
+    justify-items: stretch;
+}
+
+.customer-card__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: .34rem .6rem;
+    border-radius: 7px;
+    border: 1px solid var(--border-2);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .6rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+
+.customer-card__action:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
+    color: var(--amber);
+    background: color-mix(in srgb, var(--amber) 6%, transparent);
+}
+
+.customer-card__action--danger {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+}
+
+.customer-card__action--danger:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--danger) 48%, transparent);
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.customer-card__action:disabled {
+    opacity: .55;
+    cursor: not-allowed;
 }
 
 @media (max-width: 1180px) {

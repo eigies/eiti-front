@@ -32,6 +32,9 @@
       <label class="field"><span>Canal</span>
         <app-searchable-select formControlName="channel" [options]="channelOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar canal..."></app-searchable-select>
       </label>
+      <label class="field"><span>Categoría</span>
+        <app-searchable-select formControlName="categoryId" [options]="categoryOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas" searchPlaceholder="Buscar categoría..."></app-searchable-select>
+      </label>
       <label class="field"><span>Envío</span>
         <app-searchable-select formControlName="deliveryMode" [options]="deliveryOptions" placeholder="Todas"></app-searchable-select>
       </label>

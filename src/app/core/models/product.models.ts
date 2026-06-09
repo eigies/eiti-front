@@ -10,6 +10,7 @@ export interface CreateProductRequest {
     unitPrice?: number | null;
     allowsManualValueInSale: boolean;
     noDeliverySurcharge?: number | null;
+    categoryId?: string | null;
 }
 
 export interface ProductResponse {
@@ -25,6 +26,8 @@ export interface ProductResponse {
     unitPrice?: number | null;
     allowsManualValueInSale: boolean;
     noDeliverySurcharge?: number | null;
+    categoryId?: string | null;
+    categoryName?: string | null;
     totalOnHandQuantity: number;
     totalReservedQuantity: number;
     totalAvailableQuantity: number;
@@ -55,6 +58,7 @@ export interface UpdateProductRequest {
     unitPrice?: number | null;
     allowsManualValueInSale: boolean;
     noDeliverySurcharge?: number | null;
+    categoryId?: string | null;
 }
 
 export interface ImportProductRowRequest {
@@ -70,6 +74,7 @@ export interface ImportProductRowRequest {
     noDeliverySurcharge?: number | null;
     branchName?: string | null;
     initialStock?: number | null;
+    categoryName?: string | null;
 }
 
 export type ImportProductRowAction = 'created' | 'updated' | 'error';

@@ -1,0 +1,44 @@
+<ng-container *ngIf="state$ | async as dialog">
+  <div class="confirmation-backdrop" (click)="confirmation.cancel()" aria-hidden="true"></div>
+
+  <section
+    class="confirmation-shell"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="confirmation-title"
+    aria-describedby="confirmation-message">
+    <div class="confirmation-card" [class]="'confirmation-card confirmation-card--' + dialog.tone">
+      <div class="confirmation-card__signal" aria-hidden="true">
+        <svg *ngIf="dialog.tone === 'danger'" viewBox="0 0 24 24" fill="none">
+          <path d="M12 8v5M12 17h.01M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/>
+        </svg>
+        <svg *ngIf="dialog.tone !== 'danger'" viewBox="0 0 24 24" fill="none">
+          <path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/>
+        </svg>
+      </div>
+
+      <div class="confirmation-card__content">
+        <span class="confirmation-card__eyebrow">{{ dialog.eyebrow }}</span>
+        <h2 id="confirmation-title">{{ dialog.title }}</h2>
+        <p id="confirmation-message">{{ dialog.message }}</p>
+        <div class="confirmation-card__detail" *ngIf="dialog.detail">
+          <span class="confirmation-card__detail-mark" aria-hidden="true"></span>
+          <span>{{ dialog.detail }}</span>
+        </div>
+      </div>
+
+      <div class="confirmation-card__actions">
+        <button #cancelButton class="confirmation-button confirmation-button--ghost" type="button" (click)="confirmation.cancel()">
+          {{ dialog.cancelLabel }}
+        </button>
+        <button
+          class="confirmation-button confirmation-button--primary"
+          [class.confirmation-button--danger]="dialog.tone === 'danger'"
+          type="button"
+          (click)="confirmation.accept()">
+          {{ dialog.confirmLabel }}
+        </button>
+      </div>
+    </div>
+  </section>
+</ng-container>

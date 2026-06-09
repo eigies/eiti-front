@@ -1,0 +1,160 @@
+.daily-hero {
+  background:
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--amber) 18%, transparent), transparent 26%),
+    linear-gradient(140deg, color-mix(in srgb, var(--bg-panel) 88%, transparent), color-mix(in srgb, var(--bg) 96%, transparent));
+}
+
+.daily-filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.daily-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .8rem;
+  margin-bottom: 1rem;
+}
+
+.daily-metric {
+  min-width: 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--bg-panel) 94%, transparent), color-mix(in srgb, var(--bg) 98%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+}
+
+.daily-metric span,
+.daily-metric small {
+  display: block;
+  color: var(--text-soft);
+  font-family: 'DM Mono', monospace;
+}
+
+.daily-metric span {
+  font-size: .64rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.daily-metric strong {
+  display: block;
+  margin: .25rem 0;
+  color: var(--text);
+  font-family: 'Crimson Pro', serif;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.daily-metric small {
+  font-size: .66rem;
+}
+
+.daily-metric--money {
+  border-color: color-mix(in srgb, var(--amber) 28%, var(--border));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--amber) 8%, var(--bg-panel)), color-mix(in srgb, var(--bg) 98%, transparent));
+}
+
+.data-table--daily {
+  min-width: 64rem;
+  table-layout: fixed;
+}
+
+.data-table--daily th:nth-child(1) { width: 12%; }
+.data-table--daily th:nth-child(2) { width: 15%; }
+.data-table--daily th:nth-child(3) { width: 20%; }
+.data-table--daily th:nth-child(4) { width: 16%; }
+.data-table--daily th:nth-child(5) { width: 15%; }
+.data-table--daily th:nth-child(6) { width: 10%; }
+.data-table--daily th:nth-child(7) { width: 12%; }
+
+.data-table--daily td {
+  vertical-align: top;
+}
+
+.data-table--daily :is(th, td):nth-child(6),
+.data-table--daily :is(th, td):nth-child(7) {
+  padding-inline: .65rem;
+}
+
+.data-table--daily td:nth-child(7) {
+  font-size: .74rem;
+}
+
+.daily-stack,
+.daily-list,
+.daily-list > div {
+  display: grid;
+  gap: .18rem;
+}
+
+.daily-stack span,
+.daily-list span,
+.daily-list small {
+  color: var(--text-soft);
+  font-size: .7rem;
+}
+
+.daily-list {
+  gap: .55rem;
+}
+
+.daily-list > div + div {
+  padding-top: .5rem;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 86%, transparent);
+}
+
+.daily-empty {
+  color: var(--text-soft);
+  font-size: .72rem;
+}
+
+.daily-status {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  justify-content: center;
+  padding: .34rem .55rem;
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--bg-panel) 90%, transparent);
+  font-size: .64rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+.daily-status--paid {
+  border-color: color-mix(in srgb, var(--success) 30%, var(--border));
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 7%, transparent);
+}
+
+.daily-status--pending {
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--border));
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+}
+
+.daily-status--cancelled {
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+}
+
+@media (max-width: 1080px) {
+  .daily-filters,
+  .daily-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .daily-filters,
+  .daily-metrics {
+    grid-template-columns: 1fr;
+  }
+}

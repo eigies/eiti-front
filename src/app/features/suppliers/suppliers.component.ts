@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { SupplierService } from '../../core/services/supplier.service';
 import { SupplierListItem, UpdateSupplierRequest } from '../../core/models/supplier.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
 
 @Component({
   selector: 'app-suppliers',
@@ -28,7 +29,8 @@ export class SuppliersComponent implements OnInit {
     private readonly supplierService: SupplierService,
     private readonly toast: ToastService,
     private readonly fb: FormBuilder,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly confirmation: ConfirmationService
   ) {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -125,8 +127,16 @@ export class SuppliersComponent implements OnInit {
     }
   }
 
-  confirmDeactivate(supplier: SupplierListItem): void {
-    if (!confirm(`¿Desactivar al proveedor "${supplier.name}"? Podrá ser reactivado por un administrador.`)) return;
+  async confirmDeactivate(supplier: SupplierListItem): Promise<void> {
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Gestion de proveedores',
+      title: 'Desactivar proveedor',
+      message: `Vas a desactivar al proveedor "${supplier.name}".`,
+      detail: 'Podra ser reactivado mas adelante por un administrador.',
+      confirmLabel: 'Desactivar',
+      tone: 'warning'
+    });
+    if (!confirmed) return;
     this.deactivating = supplier.id;
     this.supplierService.deactivateSupplier(supplier.id).subscribe({
       next: () => {

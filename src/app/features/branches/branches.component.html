@@ -11,7 +11,7 @@
         [actionLabel]="isOnboardingFocusLocked ? 'Entendido' : ''" (action)="acceptOnboardingStep()">
     </app-onboarding-banner>
 
-    <section class="panel">
+    <section class="panel" *ngIf="canManageBranches">
         <div class="panel__header"><span>Nueva sucursal</span></div>
         <form class="inline-form" [formGroup]="createForm" (ngSubmit)="createBranch()">
             <div class="inline-form__fields">
@@ -75,8 +75,12 @@
                         </div>
                     </div>
 
-                    <div class="branch-card__actions">
+                    <div class="branch-card__actions" *ngIf="canManageBranches">
                         <button class="btn btn--ghost" type="button" (click)="beginEdit(item.branch)">Editar</button>
+                        <button class="btn btn--danger" type="button" (click)="deleteBranch(item.branch)"
+                            [disabled]="deletingBranchId === item.branch.id">
+                            {{ deletingBranchId === item.branch.id ? 'Eliminando...' : 'Eliminar' }}
+                        </button>
                     </div>
                 </div>
             </article>

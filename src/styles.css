@@ -80,6 +80,10 @@ body {
   background-size: 200px 200px;
 }
 
+body.confirmation-dialog-open {
+  overflow: hidden;
+}
+
 a { color: inherit; }
 
 input, button, textarea, select {

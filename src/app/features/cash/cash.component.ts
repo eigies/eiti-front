@@ -860,6 +860,7 @@ type CashSessionView = {
     .badge--type[data-type="CuentaCorrienteIncome"]{background:color-mix(in srgb,#14b8a6 12%, transparent);color:#14b8a6;border:1px solid color-mix(in srgb,#14b8a6 30%, transparent)}
     .badge--type[data-type="CuentaCorrienteCancellation"]{background:color-mix(in srgb,#f97316 12%, transparent);color:#f97316;border:1px solid color-mix(in srgb,#f97316 30%, transparent)}
     .badge--type[data-type="PurchaseExpense"]{background:color-mix(in srgb,#a855f7 12%, transparent);color:#a855f7;border:1px solid color-mix(in srgb,#a855f7 30%, transparent)}
+    .badge--type[data-type="PurchasePaymentCancellation"]{background:color-mix(in srgb,var(--success) 12%, transparent);color:var(--success);border:1px solid color-mix(in srgb,var(--success) 30%, transparent)}
     .history-table__row--clickable{cursor:pointer}.history-table__row--clickable:hover{background:color-mix(in srgb,#14b8a6 8%, transparent)}.history-table__row--clickable[data-type-purchase]:hover{background:color-mix(in srgb,#a855f7 8%, transparent)}
     .sale-code-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--amber);letter-spacing:.04em}
     .username-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim);letter-spacing:.04em}
@@ -2182,6 +2183,7 @@ export class CashComponent implements OnInit {
             TransferIncome: 'Venta',
             CardIncome: 'Venta',
             PurchaseExpense: 'Proveedores',
+            PurchasePaymentCancellation: 'Anulación pago compra',
         };
         return map[typeName] ?? typeName;
     }

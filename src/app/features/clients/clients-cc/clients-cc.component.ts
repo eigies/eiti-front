@@ -15,6 +15,7 @@ import {
   CcPaymentResponse
 } from '../../../core/models/sale.models';
 import { SALE_PAYMENT_METHODS, SalePaymentMethodOption } from '../../../core/models/sale-payment.models';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
 
 interface PaymentGroup {
   groupId: string | null;
@@ -61,7 +62,8 @@ export class ClientsCcComponent {
     private readonly saleService: SaleService,
     readonly auth: AuthService,
     private readonly toast: ToastService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly confirmation: ConfirmationService
   ) {}
 
   // ── Customer search ──────────────────────────────────────
@@ -469,9 +471,17 @@ export class ClientsCcComponent {
     doc.save(`venta-cc-${sale.code ?? sale.createdAt.slice(0, 10)}.pdf`);
   }
 
-  cancelSale(sale: CcSaleListItem, event: Event): void {
+  async cancelSale(sale: CcSaleListItem, event: Event): Promise<void> {
     event.stopPropagation();
-    if (!confirm(`¿Anular la venta ${sale.code ?? ''}? Esta acción no se puede deshacer.`)) return;
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Cuenta corriente',
+      title: 'Anular venta',
+      message: `Vas a anular la venta ${sale.code || 'seleccionada'}.`,
+      detail: 'Esta accion no se puede deshacer.',
+      confirmLabel: 'Anular venta',
+      tone: 'danger'
+    });
+    if (!confirmed) return;
     this.cancellingSaleId = sale.id;
     this.saleService.cancelSale(sale.id).subscribe({
       next: () => {

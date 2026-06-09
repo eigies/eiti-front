@@ -6,6 +6,7 @@ import { PurchaseService } from '../../core/services/purchase.service';
 import { AddPurchasePaymentRequest, PurchaseDetailResponse, PurchasePayment, PurchasePaymentMethod, PurchaseStatus } from '../../core/models/purchase.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
 
 const PAYMENT_METHOD_LABELS: Record<number, string> = {
   [PurchasePaymentMethod.Cash]: 'Efectivo',
@@ -50,7 +51,8 @@ export class PurchaseDetailComponent implements OnInit {
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly confirmation: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -109,8 +111,17 @@ export class PurchaseDetailComponent implements OnInit {
     return PAYMENT_METHOD_LABELS[method] ?? 'Otro';
   }
 
-  cancelPurchase(): void {
-    if (!this.purchase || !confirm('¿Cancelar esta compra? Esta acción no se puede deshacer.')) return;
+  async cancelPurchase(): Promise<void> {
+    if (!this.purchase) return;
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Compra a proveedor',
+      title: 'Cancelar compra',
+      message: `Vas a cancelar la compra ${this.purchase.code || 'seleccionada'}.`,
+      detail: 'Esta accion no se puede deshacer.',
+      confirmLabel: 'Cancelar compra',
+      tone: 'danger'
+    });
+    if (!confirmed) return;
     this.cancelling = true;
     this.purchaseService.cancelPurchase(this.purchaseId).subscribe({
       next: () => {
@@ -162,8 +173,16 @@ export class PurchaseDetailComponent implements OnInit {
     });
   }
 
-  cancelPayment(payment: PurchasePayment): void {
-    if (!confirm('¿Anular este pago? Esta acción no se puede deshacer.')) return;
+  async cancelPayment(payment: PurchasePayment): Promise<void> {
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Compra a proveedor',
+      title: 'Anular pago',
+      message: `Se anulara el pago de $${this.formatCurrency(payment.amount)}.`,
+      detail: 'Esta accion no se puede deshacer.',
+      confirmLabel: 'Anular pago',
+      tone: 'danger'
+    });
+    if (!confirmed) return;
     this.cancellingPaymentId = payment.id;
     this.purchaseService.cancelPayment(this.purchaseId, payment.id).subscribe({
       next: () => {

@@ -25,6 +25,15 @@ interface DashboardAlert {
   compareValue?: string;
 }
 
+interface ProductRankingItem {
+  productId: string;
+  name: string;
+  brand: string;
+  units: number;
+  salesCount: number;
+  sharePct: number;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -38,7 +47,7 @@ export class DashboardComponent implements OnInit {
   loading = true;
   selectedDayKey: string | null = null;
   selectedStatusKey: 'paid' | 'pending' | 'cancelled' | null = null;
-  chartMetric: 'count' | 'amount' = 'count';
+  chartMetric: 'count' | 'amount' | 'products' = 'count';
 
   constructor(
     public auth: AuthService,
@@ -247,6 +256,86 @@ export class DashboardComponent implements OnInit {
     return this.selectedDayKey ? 'Lectura del dia filtrado' : 'Lectura del mes en curso';
   }
 
+  get chartTitle(): string {
+    return this.chartMetric === 'products'
+      ? 'Productos vendidos'
+      : 'Ritmo comercial · últimos 7 días';
+  }
+
+  get chartSubtitle(): string {
+    if (this.chartMetric === 'products') {
+      return this.selectedDayKey
+        ? `Ranking del ${this.selectedDayLabel} · solo ventas pagadas`
+        : 'Ranking del mes · solo ventas pagadas';
+    }
+
+    return this.chartMetric === 'count'
+      ? 'Cantidad de ventas por día'
+      : 'Facturación cobrada por día';
+  }
+
+  get productSalesScope(): SaleResponse[] {
+    const base = this.selectedDayKey ? this.salesForDay(this.selectedDayKey) : this.sales;
+    return base.filter(sale => sale.idSaleStatus === 2);
+  }
+
+  get productRanking(): ProductRankingItem[] {
+    const products = new Map<string, {
+      productId: string;
+      name: string;
+      brand: string;
+      units: number;
+      saleIds: Set<string>;
+    }>();
+
+    for (const sale of this.productSalesScope) {
+      for (const detail of sale.details ?? []) {
+        const current = products.get(detail.productId) ?? {
+          productId: detail.productId,
+          name: detail.productName || 'Producto',
+          brand: detail.productBrand || 'Sin marca',
+          units: 0,
+          saleIds: new Set<string>()
+        };
+
+        current.units += detail.quantity;
+        current.saleIds.add(sale.id);
+        products.set(detail.productId, current);
+      }
+    }
+
+    const maxUnits = Math.max(...[...products.values()].map(product => product.units), 1);
+
+    return [...products.values()]
+      .sort((left, right) => right.units - left.units || left.name.localeCompare(right.name))
+      .slice(0, 5)
+      .map(product => ({
+        productId: product.productId,
+        name: product.name,
+        brand: product.brand,
+        units: product.units,
+        salesCount: product.saleIds.size,
+        sharePct: Math.max(Math.round((product.units / maxUnits) * 100), 6)
+      }));
+  }
+
+  get totalSoldUnits(): number {
+    return this.productSalesScope.reduce(
+      (total, sale) => total + (sale.details ?? []).reduce((subtotal, detail) => subtotal + detail.quantity, 0),
+      0
+    );
+  }
+
+  get distinctSoldProducts(): number {
+    const productIds = new Set<string>();
+    for (const sale of this.productSalesScope) {
+      for (const detail of sale.details ?? []) {
+        productIds.add(detail.productId);
+      }
+    }
+    return productIds.size;
+  }
+
   get operationalAlerts(): DashboardAlert[] {
     const alerts: DashboardAlert[] = [];
     const showMoney = this.canViewFinancials;
@@ -322,7 +411,7 @@ export class DashboardComponent implements OnInit {
     this.selectedStatusKey = this.selectedStatusKey === statusKey ? null : statusKey;
   }
 
-  setChartMetric(metric: 'count' | 'amount'): void {
+  setChartMetric(metric: 'count' | 'amount' | 'products'): void {
     if (metric === 'amount' && !this.canViewFinancials) {
       return;
     }

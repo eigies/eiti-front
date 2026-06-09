@@ -31,4 +31,8 @@ export class CustomerService {
         const url = q ? `${this.base}/search?query=${encodeURIComponent(q)}` : this.base;
         return this.http.get<CustomerSearchItem[]>(url);
     }
+
+    deleteCustomer(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.base}/${id}`);
+    }
 }

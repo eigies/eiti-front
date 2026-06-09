@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
     CashMovementsReportResponse,
     CustomerDebtorsResponse,
+    DailySalesControlResponse,
     SalesReportFilters,
     SalesReportResponse,
     StockMatrixResponse
@@ -26,6 +27,7 @@ export class ReportService {
         if (filters.vehicleId) params.set('vehicleId', filters.vehicleId);
         if (filters.channel != null) params.set('channel', String(filters.channel));
         if (filters.deliveryMode && filters.deliveryMode !== 'all') params.set('deliveryMode', filters.deliveryMode);
+        if (filters.categoryId) params.set('categoryId', filters.categoryId);
         return this.http.get<SalesReportResponse>(`${this.base}/sales?${params.toString()}`);
     }
 
@@ -40,5 +42,10 @@ export class ReportService {
 
     stockMatrix(): Observable<StockMatrixResponse> {
         return this.http.get<StockMatrixResponse>(`${this.base}/stock-matrix`);
+    }
+
+    dailySalesControl(dateFrom: string, dateTo: string, status = 0): Observable<DailySalesControlResponse> {
+        const params = new URLSearchParams({ dateFrom, dateTo, status: String(status) });
+        return this.http.get<DailySalesControlResponse>(`${this.base}/sales/daily-control?${params.toString()}`);
     }
 }

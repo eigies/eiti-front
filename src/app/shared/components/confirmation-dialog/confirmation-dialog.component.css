@@ -1,0 +1,243 @@
+:host {
+  position: relative;
+  z-index: 1000;
+}
+
+.confirmation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--amber) 7%, transparent), transparent 34%),
+    color-mix(in srgb, var(--overlay) 92%, #000 8%);
+  backdrop-filter: blur(8px) saturate(.8);
+  animation: confirmation-fade-in .16s ease-out both;
+}
+
+.confirmation-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  pointer-events: none;
+}
+
+.confirmation-card {
+  --confirmation-accent: var(--amber);
+  --confirmation-accent-soft: var(--amber-dim);
+  position: relative;
+  width: min(100%, 510px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--confirmation-accent) 28%, var(--border));
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--confirmation-accent) 8%, transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, #fff 5%, transparent), transparent 24%),
+    color-mix(in srgb, var(--bg-panel) 97%, transparent);
+  box-shadow:
+    0 35px 90px rgba(0, 0, 0, .42),
+    0 0 0 1px color-mix(in srgb, #fff 4%, transparent) inset;
+  pointer-events: auto;
+  animation: confirmation-card-in .22s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.confirmation-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, var(--confirmation-accent) 25%, var(--confirmation-accent) 75%, transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--confirmation-accent) 45%, transparent);
+}
+
+.confirmation-card--danger {
+  --confirmation-accent: var(--danger);
+  --confirmation-accent-soft: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.confirmation-card--neutral {
+  --confirmation-accent: color-mix(in srgb, var(--text-dim) 72%, var(--amber));
+  --confirmation-accent-soft: color-mix(in srgb, var(--text-dim) 10%, transparent);
+}
+
+.confirmation-card__signal {
+  position: absolute;
+  top: 1.35rem;
+  right: 1.35rem;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--confirmation-accent) 28%, var(--border));
+  border-radius: 14px;
+  color: var(--confirmation-accent);
+  background: var(--confirmation-accent-soft);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--confirmation-accent) 9%, transparent);
+}
+
+.confirmation-card__signal svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.confirmation-card__content {
+  display: grid;
+  gap: .8rem;
+  padding: 1.6rem 5.6rem 1.35rem 1.65rem;
+}
+
+.confirmation-card__eyebrow {
+  color: var(--confirmation-accent);
+  font-family: 'DM Mono', monospace;
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.confirmation-card h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.55rem, 4vw, 2rem);
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.confirmation-card p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.confirmation-card__detail {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  margin-top: .2rem;
+  padding: .78rem .9rem;
+  border: 1px solid color-mix(in srgb, var(--confirmation-accent) 16%, var(--border));
+  border-radius: 12px;
+  color: color-mix(in srgb, var(--text) 74%, var(--text-dim));
+  background: color-mix(in srgb, var(--confirmation-accent-soft) 68%, transparent);
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  line-height: 1.5;
+}
+
+.confirmation-card__detail-mark {
+  flex: 0 0 auto;
+  width: .45rem;
+  height: .45rem;
+  margin-top: .27rem;
+  border-radius: 50%;
+  background: var(--confirmation-accent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--confirmation-accent) 10%, transparent);
+}
+
+.confirmation-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: .75rem;
+  padding: 1rem 1.65rem 1.45rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--bg) 26%, transparent);
+}
+
+.confirmation-button {
+  min-height: 2.8rem;
+  padding: .75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .035em;
+  cursor: pointer;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.confirmation-button:hover {
+  transform: translateY(-1px);
+}
+
+.confirmation-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--confirmation-accent) 75%, #fff);
+  outline-offset: 3px;
+}
+
+.confirmation-button--ghost {
+  border-color: var(--border-2);
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--bg-panel) 72%, transparent);
+}
+
+.confirmation-button--ghost:hover {
+  border-color: color-mix(in srgb, var(--text-dim) 42%, var(--border-2));
+  color: var(--text);
+}
+
+.confirmation-button--primary {
+  border-color: color-mix(in srgb, var(--confirmation-accent) 80%, #fff 20%);
+  color: #171109;
+  background: var(--confirmation-accent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--confirmation-accent) 22%, transparent);
+}
+
+.confirmation-button--danger {
+  color: #fff;
+}
+
+@keyframes confirmation-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes confirmation-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 520px) {
+  .confirmation-shell {
+    align-items: end;
+    padding: .75rem;
+  }
+
+  .confirmation-card {
+    border-radius: 18px;
+  }
+
+  .confirmation-card__content {
+    padding: 1.4rem 4.8rem 1.2rem 1.35rem;
+  }
+
+  .confirmation-card__signal {
+    top: 1.15rem;
+    right: 1.15rem;
+    width: 2.7rem;
+    height: 2.7rem;
+  }
+
+  .confirmation-card__actions {
+    grid-template-columns: 1fr;
+    padding: .9rem 1.35rem 1.25rem;
+  }
+
+  .confirmation-button--primary {
+    grid-row: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmation-backdrop,
+  .confirmation-card {
+    animation: none;
+  }
+}

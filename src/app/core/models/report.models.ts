@@ -54,6 +54,7 @@ export interface SalesReportFilters {
     vehicleId?: string | null;
     channel?: number | null;
     deliveryMode?: 'all' | 'with' | 'without' | null;
+    categoryId?: string | null;
 }
 
 export interface CustomerDebtorRow {
@@ -91,6 +92,61 @@ export interface CashMovementCategory {
 export interface CashMovementsReportResponse {
     categories: CashMovementCategory[];
     totalGeneral: number;
+}
+
+export interface DailySalesProductItem {
+    productId: string;
+    code: string;
+    brand: string;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    totalAmount: number;
+}
+
+export interface DailySalesPaymentItem {
+    methodCode: number;
+    method: string;
+    amount: number;
+    reference: string | null;
+}
+
+export interface DailySalesTradeInItem {
+    productId: string;
+    code: string;
+    brand: string;
+    name: string;
+    quantity: number;
+    amount: number;
+}
+
+export interface DailySalesControlRow {
+    saleId: string;
+    code: string | null;
+    createdAt: string;
+    branchId: string;
+    branchName: string;
+    customerId: string | null;
+    customerName: string;
+    statusCode: number;
+    status: string;
+    isCuentaCorriente: boolean;
+    totalAmount: number;
+    products: DailySalesProductItem[];
+    payments: DailySalesPaymentItem[];
+    tradeIns: DailySalesTradeInItem[];
+}
+
+export interface DailySalesControlTotals {
+    salesCount: number;
+    unitsSold: number;
+    salesWithTradeIn: number;
+    totalAmount: number;
+}
+
+export interface DailySalesControlResponse {
+    rows: DailySalesControlRow[];
+    totals: DailySalesControlTotals;
 }
 
 export const SALE_CHANNELS: { value: number; label: string }[] = [

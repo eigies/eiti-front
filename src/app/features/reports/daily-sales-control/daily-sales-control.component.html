@@ -1,0 +1,160 @@
+<div class="page">
+  <header class="hero daily-hero">
+    <div class="eyebrow">Reportería / Ventas</div>
+    <h1>Control diario de ventas</h1>
+    <p>Revisión operativa de comprobantes, baterías vendidas, referencias de pago y productos recibidos en canje.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div>
+        <span>Filtros</span>
+        <p>El reporte abre con las ventas activas del día.</p>
+      </div>
+      <div class="panel__actions">
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="filteredRows.length === 0">Exportar XLSX</button>
+        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="filteredRows.length === 0">Exportar PDF</button>
+      </div>
+    </div>
+
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form daily-filters">
+      <label class="field">
+        <span>Desde *</span>
+        <input class="control" type="date" formControlName="dateFrom" />
+      </label>
+      <label class="field">
+        <span>Hasta *</span>
+        <input class="control" type="date" formControlName="dateTo" />
+      </label>
+      <label class="field">
+        <span>Estado</span>
+        <select class="control" formControlName="status">
+          <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Buscar en resultados</span>
+        <input class="control" type="search" formControlName="search" placeholder="Comprobante, cliente, batería..." />
+      </label>
+      <div class="filter-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
+        <button class="btn btn--ghost" type="button" (click)="clearFilters()">Hoy</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="loading-shell" *ngIf="loading">
+    <div class="loading-shell__grid">
+      <div class="loading-card" *ngFor="let _ of [1, 2, 3, 4]"></div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading && data">
+    <section class="daily-metrics">
+      <article class="daily-metric">
+        <span>Ventas</span>
+        <strong>{{ data.totals.salesCount }}</strong>
+        <small>en el filtro aplicado</small>
+      </article>
+      <article class="daily-metric">
+        <span>Baterías</span>
+        <strong>{{ data.totals.unitsSold }}</strong>
+        <small>unidades vendidas</small>
+      </article>
+      <article class="daily-metric">
+        <span>Con canje</span>
+        <strong>{{ data.totals.salesWithTradeIn }}</strong>
+        <small>con producto recibido</small>
+      </article>
+      <article class="daily-metric daily-metric--money">
+        <span>Total</span>
+        <strong>$ {{ money(data.totals.totalAmount) }}</strong>
+        <small>importe del período</small>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel__header">
+        <div>
+          <span>Detalle</span>
+          <p>{{ filteredRows.length }} de {{ data.rows.length }} venta(s) visibles.</p>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="hasSearched && filteredRows.length === 0">
+        <span class="empty-state__eyebrow">Sin resultados</span>
+        <h2>No hay ventas para esos filtros.</h2>
+        <p>Probá otra fecha, estado o término de búsqueda.</p>
+      </div>
+
+      <div class="table-wrap" *ngIf="filteredRows.length > 0">
+        <table class="data-table data-table--daily data-table--sticky-first">
+          <thead>
+            <tr>
+              <th>Venta</th>
+              <th>Sucursal / cliente</th>
+              <th>Batería vendida</th>
+              <th>Pago / referencia</th>
+              <th>Canje</th>
+              <th>Estado</th>
+              <th class="t-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="data-row" *ngFor="let row of filteredRows; trackBy: trackBySaleId">
+              <td>
+                <div class="daily-stack">
+                  <strong>{{ row.code || row.saleId.slice(0, 8) }}</strong>
+                  <span>{{ formatTime(row.createdAt) }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="daily-stack">
+                  <strong>{{ row.branchName }}</strong>
+                  <span>{{ row.customerName }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="daily-list">
+                  <div *ngFor="let product of row.products">
+                    <strong>{{ product.quantity }}x {{ product.code }}</strong>
+                    <span>{{ product.brand }} {{ product.name }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="daily-list" *ngIf="row.payments.length > 0; else noPayments">
+                  <div *ngFor="let payment of row.payments">
+                    <strong>{{ paymentMethodLabel(payment) }}</strong>
+                    <span *ngIf="payment.reference">Ref. {{ payment.reference }}</span>
+                    <span *ngIf="!payment.reference">Sin referencia</span>
+                  </div>
+                </div>
+                <ng-template #noPayments><span class="daily-empty">Sin pago registrado</span></ng-template>
+              </td>
+              <td>
+                <div class="daily-list" *ngIf="row.tradeIns.length > 0; else noTradeIn">
+                  <div *ngFor="let tradeIn of row.tradeIns">
+                    <strong>{{ tradeIn.quantity }}x {{ tradeIn.code }}</strong>
+                    <span>{{ tradeIn.brand }} {{ tradeIn.name }}</span>
+                    <small>$ {{ money(tradeIn.amount) }}</small>
+                  </div>
+                </div>
+                <ng-template #noTradeIn><span class="daily-empty">Sin canje</span></ng-template>
+              </td>
+              <td>
+                <span class="daily-status"
+                  [class.daily-status--paid]="row.statusCode === 2"
+                  [class.daily-status--pending]="row.statusCode === 1"
+                  [class.daily-status--cancelled]="row.statusCode === 3">
+                  {{ statusLabel(row) }}
+                </span>
+              </td>
+              <td class="t-right strong">$ {{ money(row.totalAmount) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>

@@ -121,17 +121,18 @@
       <article class="data-panel data-panel--chart">
         <div class="data-panel__head">
           <div class="data-panel__title-group">
-            <span class="data-panel__title">Ritmo comercial · últimos 7 días</span>
-            <span class="data-panel__sub">{{ chartMetric === 'count' ? 'Cantidad de ventas por día' : 'Facturación cobrada por día' }}</span>
+            <span class="data-panel__title">{{ chartTitle }}</span>
+            <span class="data-panel__sub">{{ chartSubtitle }}</span>
           </div>
 
-          <div class="panel-toggle" *ngIf="canViewFinancials">
-            <button type="button" class="panel-toggle__item" [class.panel-toggle__item--active]="chartMetric === 'count'" (click)="setChartMetric('count')">Cantidad</button>
-            <button type="button" class="panel-toggle__item" [class.panel-toggle__item--active]="chartMetric === 'amount'" (click)="setChartMetric('amount')">Monto</button>
+          <div class="panel-toggle" role="tablist" aria-label="Vista del panel comercial">
+            <button role="tab" type="button" class="panel-toggle__item" [attr.aria-selected]="chartMetric === 'count'" [class.panel-toggle__item--active]="chartMetric === 'count'" (click)="setChartMetric('count')">Cantidad</button>
+            <button *ngIf="canViewFinancials" role="tab" type="button" class="panel-toggle__item" [attr.aria-selected]="chartMetric === 'amount'" [class.panel-toggle__item--active]="chartMetric === 'amount'" (click)="setChartMetric('amount')">Monto</button>
+            <button role="tab" type="button" class="panel-toggle__item" [attr.aria-selected]="chartMetric === 'products'" [class.panel-toggle__item--active]="chartMetric === 'products'" (click)="setChartMetric('products')">Productos</button>
           </div>
         </div>
 
-        <div class="bar-chart" *ngIf="activeSales.length > 0; else emptyChart">
+        <div class="bar-chart" *ngIf="chartMetric !== 'products' && activeSales.length > 0">
           <button class="bar-col"
             *ngFor="let bar of last7DaysBars; let i = index"
             [style.--delay]="(i * 0.06) + 's'"
@@ -150,9 +151,52 @@
           </button>
         </div>
 
-        <ng-template #emptyChart>
-          <div class="data-empty">Sin ventas activas este mes</div>
-        </ng-template>
+        <div class="data-empty" *ngIf="chartMetric !== 'products' && activeSales.length === 0">Sin ventas activas este mes</div>
+
+        <div class="product-performance" *ngIf="chartMetric === 'products' && totalSoldUnits > 0">
+          <div class="product-performance__summary">
+            <div class="product-summary product-summary--primary">
+              <span>Unidades vendidas</span>
+              <strong>{{ totalSoldUnits }}</strong>
+            </div>
+            <div class="product-summary">
+              <span>Productos distintos</span>
+              <strong>{{ distinctSoldProducts }}</strong>
+            </div>
+            <div class="product-summary product-summary--scope">
+              <span>Periodo</span>
+              <strong>{{ selectedDayKey ? selectedDayLabel : 'Mes en curso' }}</strong>
+            </div>
+          </div>
+
+          <div class="product-ranking">
+            <div class="product-ranking__head">
+              <span>Top 5 por unidades</span>
+              <span>Cantidad</span>
+            </div>
+
+            <article class="product-rank" *ngFor="let product of productRanking; let i = index">
+              <span class="product-rank__position">{{ (i + 1).toString().padStart(2, '0') }}</span>
+              <div class="product-rank__body">
+                <div class="product-rank__copy">
+                  <div>
+                    <span class="product-rank__brand">{{ product.brand }}</span>
+                    <strong>{{ product.name }}</strong>
+                  </div>
+                  <span>{{ product.salesCount }} venta{{ product.salesCount === 1 ? '' : 's' }}</span>
+                </div>
+                <div class="product-rank__track">
+                  <span [style.width.%]="product.sharePct"></span>
+                </div>
+              </div>
+              <strong class="product-rank__units">{{ product.units }}</strong>
+            </article>
+          </div>
+        </div>
+
+        <div class="data-empty" *ngIf="chartMetric === 'products' && totalSoldUnits === 0">
+          Sin productos vendidos en el periodo seleccionado
+        </div>
       </article>
 
       <div class="side-stack">
