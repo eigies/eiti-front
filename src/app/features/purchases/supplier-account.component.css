@@ -1,0 +1,411 @@
+.supplier-account-page {
+  max-width: 1480px;
+}
+
+.account-header {
+  align-items: flex-end;
+}
+
+.account-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .65rem;
+  flex-wrap: wrap;
+}
+
+.account-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.summary-card--credit {
+  border-color: color-mix(in srgb, #3b82f6 28%, var(--border));
+}
+
+.summary-card--credit .summary-value {
+  color: color-mix(in srgb, #3b82f6 82%, var(--text));
+}
+
+.summary-card small {
+  color: var(--text-dim);
+}
+
+.btn-secondary,
+.head-action,
+.composer-close {
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  min-height: 42px;
+  padding: .68rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border-2));
+  border-radius: 8px;
+  color: color-mix(in srgb, var(--amber) 84%, var(--text));
+  background: color-mix(in srgb, var(--amber) 7%, var(--bg));
+  font-size: .68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  transition: transform .15s, border-color .15s, background .15s;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--amber) 58%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 12%, var(--bg));
+}
+
+.payment-composer {
+  position: relative;
+  z-index: 4;
+  margin-bottom: .9rem;
+  border-color: color-mix(in srgb, var(--amber) 32%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--amber) 8%, var(--bg-panel)), var(--bg-panel) 58%),
+    var(--bg-panel);
+  animation: composer-in .24s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.payment-composer__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.payment-composer__head p,
+.ledger-head p {
+  margin: .28rem 0 0;
+  color: var(--text-dim);
+  font-family: 'Crimson Pro', serif;
+  font-size: .9rem;
+}
+
+.composer-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  font-size: 1.05rem;
+}
+
+.composer-close:hover {
+  border-color: color-mix(in srgb, var(--amber) 40%, var(--border-2));
+  color: var(--amber);
+}
+
+.supplier-payment-form {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: .75rem;
+  align-items: end;
+}
+
+.supplier-payment-form .field--method {
+  grid-column: 1 / 4;
+}
+
+.supplier-payment-form .field--amount {
+  grid-column: 4 / 6;
+}
+
+.supplier-payment-form .field--date {
+  grid-column: 6 / 9;
+}
+
+.supplier-payment-form .field--reference {
+  grid-column: 1 / 7;
+}
+
+.supplier-payment-form .field--notes {
+  grid-column: 7 / 13;
+}
+
+.supplier-payment-form .payment-submit {
+  grid-column: 9 / 13;
+  grid-row: 1;
+}
+
+.supplier-payment-form--cheque {
+  align-items: start;
+}
+
+.supplier-payment-form--cheque .field--method {
+  grid-column: 1 / 4;
+  grid-row: 1;
+}
+
+.supplier-payment-form--cheque .field--cheque {
+  grid-column: 4 / 10;
+  grid-row: 1;
+}
+
+.supplier-payment-form--cheque .field--date {
+  grid-column: 10 / 13;
+  grid-row: 1;
+}
+
+.supplier-payment-form--cheque .field--amount {
+  grid-column: 1 / 4;
+  grid-row: 2;
+}
+
+.supplier-payment-form--cheque .field--reference {
+  grid-column: 4 / 8;
+  grid-row: 2;
+}
+
+.supplier-payment-form--cheque .field--notes {
+  grid-column: 8 / 11;
+  grid-row: 2;
+}
+
+.supplier-payment-form--cheque .payment-submit {
+  grid-column: 11 / 13;
+  grid-row: 2;
+  align-self: end;
+}
+
+.payment-submit {
+  width: 100%;
+}
+
+.account-ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .9rem;
+  align-items: stretch;
+}
+
+.ledger-card {
+  min-width: 0;
+  min-height: 26rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.ledger-head {
+  min-height: 48px;
+  flex: 0 0 auto;
+}
+
+.ledger-head > div {
+  min-width: 0;
+}
+
+.head-action {
+  min-height: 34px;
+  flex: 0 0 auto;
+  padding: .4rem .68rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border-2));
+  border-radius: 8px;
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+  font-size: .62rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  transition: transform .15s, background .15s;
+}
+
+.head-action:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--amber) 13%, transparent);
+}
+
+.head-action--payment {
+  color: var(--bg);
+  border-color: transparent;
+  background: var(--amber);
+}
+
+.head-action--payment:hover {
+  background: color-mix(in srgb, var(--amber) 85%, white);
+}
+
+.ledger-card .table-shell {
+  flex: 1 1 auto;
+}
+
+.ledger-table {
+  min-width: 600px;
+  table-layout: fixed;
+}
+
+.ledger-table th:nth-child(1) { width: 22%; }
+.ledger-table th:nth-child(2) { width: 30%; }
+.ledger-table th:nth-child(3) { width: 18%; }
+.ledger-table th:nth-child(4) { width: 17%; }
+.ledger-table th:nth-child(5) { width: 13%; }
+
+.movement-code,
+.movement-date {
+  display: block;
+}
+
+.movement-code {
+  overflow: hidden;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .74rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.movement-date {
+  margin-top: .18rem;
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+}
+
+.movement-description {
+  overflow: hidden;
+  color: var(--text-dim);
+  font-family: 'Crimson Pro', serif;
+  font-size: .86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-clickable {
+  cursor: pointer;
+}
+
+.row-clickable:hover {
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
+}
+
+.cell-arrow {
+  color: var(--amber);
+  font-family: 'DM Mono', monospace;
+  font-size: .64rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row--cancelled {
+  opacity: .52;
+}
+
+.row--cancelled .cell-amount {
+  text-decoration: line-through;
+}
+
+.ledger-empty {
+  display: grid;
+  place-items: center;
+  min-height: 15rem;
+  padding: 1rem;
+  border: 1px dashed color-mix(in srgb, var(--border-2) 80%, transparent);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.chip--warning {
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+  color: var(--amber);
+}
+
+.chip--success {
+  background: color-mix(in srgb, #22c55e 16%, transparent);
+  color: #16a34a;
+}
+
+.chip--muted {
+  background: color-mix(in srgb, var(--text-dim) 16%, transparent);
+  color: var(--text-dim);
+}
+
+@keyframes composer-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1180px) {
+  .account-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-ledger-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ledger-card {
+    min-height: auto;
+  }
+
+  .supplier-payment-form,
+  .supplier-payment-form--cheque {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .supplier-payment-form > *,
+  .supplier-payment-form--cheque > * {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .supplier-payment-form .field--reference,
+  .supplier-payment-form .field--notes,
+  .supplier-payment-form .payment-submit,
+  .supplier-payment-form--cheque .field--cheque,
+  .supplier-payment-form--cheque .field--reference,
+  .supplier-payment-form--cheque .field--notes,
+  .supplier-payment-form--cheque .payment-submit {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .account-header {
+    align-items: stretch;
+  }
+
+  .account-header__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .account-summary,
+  .supplier-payment-form,
+  .supplier-payment-form--cheque {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-payment-form > *,
+  .supplier-payment-form--cheque > *,
+  .supplier-payment-form .field--reference,
+  .supplier-payment-form .field--notes,
+  .supplier-payment-form .payment-submit,
+  .supplier-payment-form--cheque .field--cheque,
+  .supplier-payment-form--cheque .field--reference,
+  .supplier-payment-form--cheque .field--notes,
+  .supplier-payment-form--cheque .payment-submit {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .payment-composer__head,
+  .ledger-head {
+    align-items: flex-start;
+  }
+
+  .ledger-table {
+    min-width: 560px;
+  }
+
+  .cell-arrow span {
+    display: none;
+  }
+}

@@ -233,13 +233,14 @@
         </div>
       </div>
 
-      <div class="modal-cta" *ngIf="modalRemaining > 0">
+      <div class="modal-cta" *ngIf="modalSale.idSaleStatus !== 3">
         <div class="modal-cta__copy">
           <span class="modal-cta__eyebrow">Accion principal</span>
-          <strong>Hay saldo pendiente por gestionar</strong>
+          <strong *ngIf="modalRemaining > 0">Hay saldo pendiente por gestionar</strong>
+          <strong *ngIf="modalRemaining <= 0">Venta paga · podes anular pagos si fuera necesario</strong>
         </div>
         <button class="btn" type="button" (click)="navigateToPayments(modalSale.id)">
-          Ir a gestion de pagos
+          {{ modalRemaining > 0 ? 'Ir a gestion de pagos' : 'Gestionar pagos' }}
         </button>
       </div>
 

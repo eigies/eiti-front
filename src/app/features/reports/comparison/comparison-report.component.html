@@ -12,6 +12,11 @@
       <label class="field"><span>A · Hasta</span><input class="control" type="date" formControlName="aTo" [class.control--error]="isInvalid('aTo')" /></label>
       <label class="field"><span>B · Desde</span><input class="control" type="date" formControlName="bFrom" [class.control--error]="isInvalid('bFrom')" /></label>
       <label class="field"><span>B · Hasta</span><input class="control" type="date" formControlName="bTo" [class.control--error]="isInvalid('bTo')" /></label>
+      <label class="field"><span>Tipo de venta</span>
+        <select class="control" formControlName="saleType">
+          <option *ngFor="let t of saleTypes" [value]="t.value">{{ t.label }}</option>
+        </select>
+      </label>
       <div class="filter-form__actions">
         <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Comparar</button>
       </div>

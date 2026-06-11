@@ -17,30 +17,66 @@
       </div>
     </div>
 
-    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form">
-      <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
-      <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
-      <label class="field"><span>Cliente</span>
-        <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
-      </label>
-      <label class="field"><span>Instalador</span>
-        <app-searchable-select formControlName="installerId" [options]="driverOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar instalador..."></app-searchable-select>
-      </label>
-      <label class="field"><span>Vehículo</span>
-        <app-searchable-select formControlName="vehicleId" [options]="vehicleOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar vehículo..."></app-searchable-select>
-      </label>
-      <label class="field"><span>Canal</span>
-        <app-searchable-select formControlName="channel" [options]="channelOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar canal..."></app-searchable-select>
-      </label>
-      <label class="field"><span>Categoría</span>
-        <app-searchable-select formControlName="categoryId" [options]="categoryOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas" searchPlaceholder="Buscar categoría..."></app-searchable-select>
-      </label>
-      <label class="field"><span>Envío</span>
-        <app-searchable-select formControlName="deliveryMode" [options]="deliveryOptions" placeholder="Todas"></app-searchable-select>
-      </label>
-      <div class="filter-form__actions">
-        <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
-        <button class="btn btn--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form filter-form--collapsible">
+      <div class="filter-form__primary">
+        <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
+        <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+
+        <button
+          class="btn btn--filters"
+          type="button"
+          [class.is-open]="advancedFiltersOpen"
+          [attr.aria-expanded]="advancedFiltersOpen"
+          aria-controls="sales-advanced-filters"
+          (click)="toggleAdvancedFilters()">
+          <svg class="btn--filters__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16M7 12h10M10 18h4"></path>
+          </svg>
+          <span>{{ advancedFiltersOpen ? 'Ocultar filtros' : 'Más filtros' }}</span>
+          <span class="filter-count" *ngIf="activeOptionalFiltersCount > 0">{{ activeOptionalFiltersCount }}</span>
+          <span class="filter-chevron" aria-hidden="true"></span>
+        </button>
+
+        <div class="filter-form__actions">
+          <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
+          <button class="btn btn--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="filter-form__advanced" id="sales-advanced-filters" *ngIf="advancedFiltersOpen">
+        <div class="advanced-filters__head">
+          <div>
+            <span>Filtros adicionales</span>
+            <p>Combiná uno o más criterios para refinar el resultado.</p>
+          </div>
+          <span class="advanced-filters__status" *ngIf="activeOptionalFiltersCount > 0">
+            {{ activeOptionalFiltersCount }} activo{{ activeOptionalFiltersCount === 1 ? '' : 's' }}
+          </span>
+        </div>
+
+        <div class="advanced-filters__grid">
+          <label class="field"><span>Cliente</span>
+            <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Instalador</span>
+            <app-searchable-select formControlName="installerId" [options]="driverOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar instalador..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Vehículo</span>
+            <app-searchable-select formControlName="vehicleId" [options]="vehicleOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar vehículo..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Canal</span>
+            <app-searchable-select formControlName="channel" [options]="channelOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar canal..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Categoría</span>
+            <app-searchable-select formControlName="categoryId" [options]="categoryOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas" searchPlaceholder="Buscar categoría..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Envío</span>
+            <app-searchable-select formControlName="deliveryMode" [options]="deliveryOptions" placeholder="Todas"></app-searchable-select>
+          </label>
+          <label class="field"><span>Tipo de venta</span>
+            <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Todas"></app-searchable-select>
+          </label>
+        </div>
       </div>
     </form>
   </section>

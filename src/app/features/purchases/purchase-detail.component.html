@@ -6,8 +6,8 @@
   <ng-container *ngIf="!loading && purchase">
     <div class="page__header">
       <div class="header-main">
-        <a class="back-link back-link--strong" routerLink="/purchases">&larr; Volver al listado</a>
-        <div class="page__eyebrow">_ COMPRAS</div>
+        <a class="back-link back-link--strong" (click)="backToAccount()">&larr; Volver a la cuenta</a>
+        <div class="page__eyebrow">_ COMPRAS / {{ purchase.code }}</div>
         <div class="header-row">
           <h1 class="page__title">
             {{ purchase.supplierName || 'Sin proveedor' }}
@@ -60,65 +60,9 @@
         <strong class="summary-value">${{ formatCurrency(purchase.pendingAmount) }}</strong>
         <small *ngIf="purchase.status === PurchaseStatus.Paid && purchase.paidAt">Pagada el {{ formatDate(purchase.paidAt) }}</small>
       </div>
-      <div class="summary-card summary-card--paid" *ngIf="(purchase.supplierCreditBalance ?? 0) > 0">
-        <span class="summary-label">Saldo a favor (proveedor)</span>
-        <strong class="summary-value">${{ formatCurrency(purchase.supplierCreditBalance ?? 0) }}</strong>
-        <small>Disponible para futuras compras</small>
-      </div>
     </div>
 
-    <div class="section-card section-card--payment" *ngIf="purchase.status === PurchaseStatus.Active">
-      <div class="section-head section-head--inline">
-        <div>
-          <span class="section-label">Registrar pago</span>
-          <p class="section-hint">Carga rapida para actualizar el saldo de esta compra.</p>
-        </div>
-      </div>
-
-      <div class="add-payment-form">
-        <div class="field field--method">
-          <label class="field__label">Metodo</label>
-          <app-searchable-select
-            [(ngModel)]="newPaymentMethod"
-            [ngModelOptions]="{ standalone: true }"
-            [options]="paymentMethodOptions"
-            placeholder="Metodo"
-            searchPlaceholder="Buscar metodo..."
-            [compact]="true">
-          </app-searchable-select>
-        </div>
-
-        <div class="field">
-          <label class="field__label">Monto</label>
-          <input class="field__input" type="number" min="0" step="0.01" [(ngModel)]="newPaymentAmount" />
-        </div>
-
-        <div class="field">
-          <label class="field__label">Fecha</label>
-          <input class="field__input" type="date" [(ngModel)]="newPaymentDate" />
-        </div>
-
-        <div class="field">
-          <label class="field__label">Referencia</label>
-          <input class="field__input" type="text" placeholder="Nro. transferencia" [(ngModel)]="newPaymentReference" />
-        </div>
-
-        <div class="field field--notes">
-          <label class="field__label">Notas</label>
-          <input class="field__input" type="text" placeholder="Observaciones" [(ngModel)]="newPaymentNotes" />
-        </div>
-
-        <button
-          class="btn-primary"
-          type="button"
-          [disabled]="addingPayment || newPaymentAmount <= 0"
-          (click)="submitPayment()">
-          {{ addingPayment ? 'Registrando...' : 'Registrar pago' }}
-        </button>
-      </div>
-    </div>
-
-    <div class="content-grid">
+    <div class="content-grid content-grid--single">
       <div class="section-card">
         <div class="section-head">
           <span class="section-label">Productos</span>
@@ -143,47 +87,7 @@
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div class="section-card">
-        <div class="section-head">
-          <span class="section-label">Historial de pagos</span>
-        </div>
-
-        <div class="empty-payments" *ngIf="activePayments.length === 0">
-          No se registraron pagos aun.
-        </div>
-
-        <div class="table-shell" *ngIf="activePayments.length > 0">
-          <table class="payments-table">
-            <thead>
-              <tr>
-                <th>Metodo</th>
-                <th>Fecha</th>
-                <th class="col-num">Monto</th>
-                <th>Referencia</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of activePayments">
-                <td class="cell-mono">{{ paymentMethodLabel(p.method) }}</td>
-                <td class="cell-mono">{{ formatDate(p.date) }}</td>
-                <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
-                <td class="cell-ref">{{ p.reference || '-' }}</td>
-                <td class="col-remove">
-                  <button
-                    class="btn-cancel-payment"
-                    type="button"
-                    [disabled]="cancellingPaymentId === p.id"
-                    (click)="cancelPayment(p)">
-                    {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p class="section-hint">Los pagos se gestionan desde la cuenta del proveedor (no por compra).</p>
       </div>
     </div>
   </ng-container>

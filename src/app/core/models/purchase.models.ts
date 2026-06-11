@@ -44,6 +44,8 @@ export interface PurchasePayment {
   notes: string | null;
   date: string;
   createdAt: string;
+  chequeId?: string | null;
+  chequeNumero?: string | null;
 }
 
 export interface PurchaseDetailResponse {
@@ -72,51 +74,20 @@ export interface PurchaseDetailResponse {
   supplierCreditBalance?: number;
 }
 
-export interface AddPurchasePaymentResult {
-  purchaseId: string;
-  status: PurchaseStatus;
-  statusName: string;
-  totalAmount: number;
-  taxAmount: number;
-  grandTotal: number;
-  totalPaid: number;
-  pendingAmount: number;
-  paymentId: string;
-  excess: number;
-  supplierCreditBalance: number;
-}
-
 export interface CreatePurchaseDetailRequest {
   productId: string;
   quantity: number;
   unitCost: number;
 }
 
-export interface CreatePurchasePaymentRequest {
-  method: number;
-  amount: number;
-  date: string;
-  reference: string | null;
-  notes: string | null;
-}
-
 export interface CreatePurchaseRequest {
   branchId: string;
-  supplierId: string | null;
+  supplierId: string;
   invoiceNumber: string | null;
   notes: string | null;
   ivaPct: number | null;
   ingresosBrutosPct: number | null;
   details: CreatePurchaseDetailRequest[];
-  payments: CreatePurchasePaymentRequest[];
-}
-
-export interface AddPurchasePaymentRequest {
-  method: number;
-  amount: number;
-  date: string;
-  reference: string | null;
-  notes: string | null;
 }
 
 export interface PurchaseListResponse {

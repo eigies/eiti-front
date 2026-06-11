@@ -3,12 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  AddPurchasePaymentRequest,
-  AddPurchasePaymentResult,
   CreatePurchaseRequest,
   PurchaseDetailResponse,
   PurchaseListResponse
 } from '../models/purchase.models';
+import { CarteraChequeOption } from '../models/cheque.models';
 
 @Injectable({ providedIn: 'root' })
 export class PurchaseService {
@@ -48,11 +47,7 @@ export class PurchaseService {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
 
-  addPayment(purchaseId: string, req: AddPurchasePaymentRequest): Observable<AddPurchasePaymentResult> {
-    return this.http.post<AddPurchasePaymentResult>(`${this.base}/${purchaseId}/payments`, req);
-  }
-
-  cancelPayment(purchaseId: string, paymentId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/${purchaseId}/payments/${paymentId}`);
+  listCarteraCheques(): Observable<CarteraChequeOption[]> {
+    return this.http.get<CarteraChequeOption[]>(`${this.base}/cartera-cheques`);
   }
 }

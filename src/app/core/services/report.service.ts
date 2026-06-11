@@ -28,6 +28,7 @@ export class ReportService {
         if (filters.channel != null) params.set('channel', String(filters.channel));
         if (filters.deliveryMode && filters.deliveryMode !== 'all') params.set('deliveryMode', filters.deliveryMode);
         if (filters.categoryId) params.set('categoryId', filters.categoryId);
+        if (filters.saleType && filters.saleType !== 'all') params.set('saleType', filters.saleType);
         return this.http.get<SalesReportResponse>(`${this.base}/sales?${params.toString()}`);
     }
 

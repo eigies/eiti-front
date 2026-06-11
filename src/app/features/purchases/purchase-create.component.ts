@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PurchaseService } from '../../core/services/purchase.service';
 import { SupplierService } from '../../core/services/supplier.service';
 import { ProductService } from '../../core/services/product.service';
 import { BranchService } from '../../core/services/branch.service';
-import { CreatePurchaseDetailRequest, CreatePurchasePaymentRequest, CreatePurchaseRequest } from '../../core/models/purchase.models';
+import { CreatePurchaseDetailRequest, CreatePurchaseRequest } from '../../core/models/purchase.models';
 import { SupplierListItem } from '../../core/models/supplier.models';
 import { ProductResponse } from '../../core/models/product.models';
 import { BranchResponse } from '../../core/models/branch.models';
@@ -19,21 +19,6 @@ interface DraftDetail {
   quantity: number;
   unitCost: number;
 }
-
-interface DraftPayment {
-  method: number;
-  amount: number;
-  date: string;
-  reference: string;
-  notes: string;
-}
-
-const PAYMENT_METHODS = [
-  { value: 1, label: 'Efectivo' },
-  { value: 2, label: 'Transferencia' },
-  { value: 3, label: 'Cheque' },
-  { value: 4, label: 'Otro' }
-];
 
 @Component({
   selector: 'app-purchase-create',
@@ -52,14 +37,11 @@ export class PurchaseCreateComponent implements OnInit {
   headerForm: FormGroup;
 
   details: DraftDetail[] = [];
-  payments: DraftPayment[] = [];
 
   // Product search
   productSearch = '';
   productSearchResults: ProductResponse[] = [];
   showProductResults = false;
-
-  readonly paymentMethods = PAYMENT_METHODS;
 
   get branchOptions(): SearchableSelectOption[] {
     return this.branches.map(branch => ({
@@ -83,13 +65,6 @@ export class PurchaseCreateComponent implements OnInit {
     }));
   }
 
-  get paymentMethodOptions(): SearchableSelectOption[] {
-    return this.paymentMethods.map(method => ({
-      value: method.value,
-      label: method.label
-    }));
-  }
-
   constructor(
     private readonly purchaseService: PurchaseService,
     private readonly supplierService: SupplierService,
@@ -97,12 +72,13 @@ export class PurchaseCreateComponent implements OnInit {
     private readonly branchService: BranchService,
     private readonly toast: ToastService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly fb: FormBuilder,
     private readonly cdr: ChangeDetectorRef
   ) {
     this.headerForm = this.fb.group({
       branchId: ['', Validators.required],
-      supplierId: [''],
+      supplierId: ['', Validators.required],
       invoiceNumber: [''],
       notes: [''],
       ivaPct: [''],
@@ -111,6 +87,10 @@ export class PurchaseCreateComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const preSupplierId = this.route.snapshot.queryParamMap.get('supplierId');
+    if (preSupplierId) {
+      this.headerForm.patchValue({ supplierId: preSupplierId });
+    }
     this.supplierService.listSuppliers(undefined, true).subscribe({
       next: s => { this.suppliers = s; this.cdr.markForCheck(); }
     });
@@ -171,36 +151,12 @@ export class PurchaseCreateComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  addPayment(): void {
-    this.payments.push({
-      method: 1,
-      amount: 0,
-      date: this.todayIso(),
-      reference: '',
-      notes: ''
-    });
-    this.cdr.markForCheck();
-  }
-
-  removePayment(index: number): void {
-    this.payments.splice(index, 1);
-    this.cdr.markForCheck();
-  }
-
   get totalAmount(): number {
     return this.details.reduce((s, d) => s + d.quantity * d.unitCost, 0);
   }
 
-  get totalPaid(): number {
-    return this.payments.reduce((s, p) => s + Number(p.amount), 0);
-  }
-
   get grandTotal(): number {
     return this.totalAmount + (this.ivaAmount ?? 0) + (this.iibbAmount ?? 0);
-  }
-
-  get pendingAmount(): number {
-    return Math.max(0, this.grandTotal - this.totalPaid);
   }
 
   get ivaAmount(): number | null {
@@ -219,7 +175,11 @@ export class PurchaseCreateComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.headerForm.invalid) { this.headerForm.markAllAsTouched(); return; }
+    if (this.headerForm.invalid) {
+      this.headerForm.markAllAsTouched();
+      this.toast.error('Seleccioná sucursal y proveedor');
+      return;
+    }
     if (this.details.length === 0) { this.toast.error('Agregue al menos un producto'); return; }
 
     this.submitting = true;
@@ -231,25 +191,14 @@ export class PurchaseCreateComponent implements OnInit {
       unitCost: d.unitCost
     }));
 
-    const paymentReqs: CreatePurchasePaymentRequest[] = this.payments
-      .filter(p => Number(p.amount) > 0)
-      .map(p => ({
-        method: p.method,
-        amount: Number(p.amount),
-        date: p.date,
-        reference: p.reference.trim() || null,
-        notes: p.notes.trim() || null
-      }));
-
     const req: CreatePurchaseRequest = {
       branchId: raw.branchId,
-      supplierId: raw.supplierId || null,
+      supplierId: raw.supplierId,
       invoiceNumber: raw.invoiceNumber.trim() || null,
       notes: raw.notes.trim() || null,
       ivaPct: raw.ivaPct ? +raw.ivaPct : null,
       ingresosBrutosPct: raw.ingresosBrutosPct != null && raw.ingresosBrutosPct !== '' ? +raw.ingresosBrutosPct : null,
-      details: detailReqs,
-      payments: paymentReqs
+      details: detailReqs
     };
 
     this.purchaseService.createPurchase(req).subscribe({
@@ -261,7 +210,7 @@ export class PurchaseCreateComponent implements OnInit {
         } else {
           this.toast.success('Compra registrada correctamente');
         }
-        this.router.navigate(['/purchases', res.id]);
+        this.router.navigate(['/purchases/supplier', res.supplierId]);
       },
       error: (err: { error?: { detail?: string } }) => {
         this.toast.error(err?.error?.detail || 'Error al registrar la compra');
@@ -269,10 +218,6 @@ export class PurchaseCreateComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
-  }
-
-  private todayIso(): string {
-    return new Date().toISOString().slice(0, 10);
   }
 
   formatCurrency(value: number): string {

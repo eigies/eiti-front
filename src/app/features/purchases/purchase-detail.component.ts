@@ -1,25 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PurchaseService } from '../../core/services/purchase.service';
-import { AddPurchasePaymentRequest, PurchaseDetailResponse, PurchasePayment, PurchasePaymentMethod, PurchaseStatus } from '../../core/models/purchase.models';
+import { PurchaseDetailResponse, PurchaseStatus } from '../../core/models/purchase.models';
 import { ToastService } from '../../shared/services/toast.service';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
-
-const PAYMENT_METHOD_LABELS: Record<number, string> = {
-  [PurchasePaymentMethod.Cash]: 'Efectivo',
-  [PurchasePaymentMethod.BankTransfer]: 'Transferencia',
-  [PurchasePaymentMethod.Check]: 'Cheque',
-  [PurchasePaymentMethod.Other]: 'Otro',
-  [PurchasePaymentMethod.SupplierCredit]: 'Saldo a favor'
-};
 
 @Component({
   selector: 'app-purchase-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent],
+  imports: [CommonModule, RouterModule],
   templateUrl: './purchase-detail.component.html',
   styleUrls: ['./purchase-detail.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -28,23 +18,8 @@ export class PurchaseDetailComponent implements OnInit {
   purchase: PurchaseDetailResponse | null = null;
   loading = true;
   cancelling = false;
-  addingPayment = false;
-  cancellingPaymentId: string | null = null;
-
-  // Add payment form fields
-  newPaymentMethod = 1;
-  newPaymentAmount = 0;
-  newPaymentDate = '';
-  newPaymentReference = '';
-  newPaymentNotes = '';
 
   readonly PurchaseStatus = PurchaseStatus;
-  readonly paymentMethods = [
-    { value: 1, label: 'Efectivo' },
-    { value: 2, label: 'Transferencia' },
-    { value: 3, label: 'Cheque' },
-    { value: 4, label: 'Otro' }
-  ];
 
   constructor(
     private readonly purchaseService: PurchaseService,
@@ -56,7 +31,6 @@ export class PurchaseDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.newPaymentDate = this.todayIso();
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.load(id);
   }
@@ -64,29 +38,21 @@ export class PurchaseDetailComponent implements OnInit {
   private load(id: string): void {
     this.loading = true;
     this.purchaseService.getPurchaseById(id).subscribe({
-      next: p => {
-        this.purchase = p;
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.toast.error('No se pudo cargar la compra');
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
+      next: p => { this.purchase = p; this.loading = false; this.cdr.markForCheck(); },
+      error: () => { this.toast.error('No se pudo cargar la compra'); this.loading = false; this.cdr.markForCheck(); }
     });
-  }
-
-  get activePayments(): PurchasePayment[] {
-    return (this.purchase?.payments ?? []).filter(p => p.status === 1);
   }
 
   get purchaseId(): string {
     return this.purchase?.id ?? '';
   }
 
-  get paymentMethodOptions(): SearchableSelectOption[] {
-    return this.paymentMethods.map(method => ({ value: method.value, label: method.label }));
+  backToAccount(): void {
+    if (this.purchase?.supplierId) {
+      this.router.navigate(['/purchases/supplier', this.purchase.supplierId]);
+    } else {
+      this.router.navigate(['/purchases']);
+    }
   }
 
   statusLabel(status: PurchaseStatus): string {
@@ -107,10 +73,6 @@ export class PurchaseDetailComponent implements OnInit {
     }
   }
 
-  paymentMethodLabel(method: number): string {
-    return PAYMENT_METHOD_LABELS[method] ?? 'Otro';
-  }
-
   async cancelPurchase(): Promise<void> {
     if (!this.purchase) return;
     const confirmed = await this.confirmation.confirm({
@@ -124,75 +86,10 @@ export class PurchaseDetailComponent implements OnInit {
     if (!confirmed) return;
     this.cancelling = true;
     this.purchaseService.cancelPurchase(this.purchaseId).subscribe({
-      next: () => {
-        this.toast.success('Compra cancelada');
-        this.router.navigate(['/purchases']);
-      },
+      next: () => { this.toast.success('Compra cancelada'); this.backToAccount(); },
       error: (err: { error?: { detail?: string } }) => {
         this.toast.error(err?.error?.detail || 'Error al cancelar la compra');
         this.cancelling = false;
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  submitPayment(): void {
-    if (this.newPaymentAmount <= 0) { this.toast.error('El monto debe ser mayor a 0'); return; }
-    if (!this.newPaymentDate) { this.toast.error('Indicá la fecha del pago'); return; }
-
-    this.addingPayment = true;
-    const req: AddPurchasePaymentRequest = {
-      method: this.newPaymentMethod,
-      amount: this.newPaymentAmount,
-      date: this.newPaymentDate,
-      reference: this.newPaymentReference.trim() || null,
-      notes: this.newPaymentNotes.trim() || null
-    };
-
-    this.purchaseService.addPayment(this.purchaseId, req).subscribe({
-      next: res => {
-        this.addingPayment = false;
-        this.newPaymentAmount = 0;
-        this.newPaymentReference = '';
-        this.newPaymentNotes = '';
-        this.newPaymentDate = this.todayIso();
-        if (res?.excess && res.excess > 0) {
-          const added = res.excess.toLocaleString('es-AR', { minimumFractionDigits: 2 });
-          const balance = (res.supplierCreditBalance ?? 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
-          this.toast.success(`Se acreditaron $${added} como saldo a favor del proveedor. Nuevo saldo: $${balance}`);
-        } else {
-          this.toast.success('Pago registrado');
-        }
-        this.load(this.purchaseId);
-      },
-      error: (err: { error?: { detail?: string } }) => {
-        this.toast.error(err?.error?.detail || 'Error al registrar el pago');
-        this.addingPayment = false;
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  async cancelPayment(payment: PurchasePayment): Promise<void> {
-    const confirmed = await this.confirmation.confirm({
-      eyebrow: 'Compra a proveedor',
-      title: 'Anular pago',
-      message: `Se anulara el pago de $${this.formatCurrency(payment.amount)}.`,
-      detail: 'Esta accion no se puede deshacer.',
-      confirmLabel: 'Anular pago',
-      tone: 'danger'
-    });
-    if (!confirmed) return;
-    this.cancellingPaymentId = payment.id;
-    this.purchaseService.cancelPayment(this.purchaseId, payment.id).subscribe({
-      next: () => {
-        this.toast.success('Pago anulado');
-        this.cancellingPaymentId = null;
-        this.load(this.purchaseId);
-      },
-      error: (err: { error?: { detail?: string } }) => {
-        this.toast.error(err?.error?.detail || 'Error al anular el pago');
-        this.cancellingPaymentId = null;
         this.cdr.markForCheck();
       }
     });
@@ -204,9 +101,5 @@ export class PurchaseDetailComponent implements OnInit {
 
   formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  }
-
-  private todayIso(): string {
-    return new Date().toISOString().slice(0, 10);
   }
 }

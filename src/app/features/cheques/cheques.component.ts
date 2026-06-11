@@ -45,7 +45,8 @@ export class ChequesComponent implements OnInit {
     ChequeStatus.Depositado,
     ChequeStatus.Acreditado,
     ChequeStatus.Rechazado,
-    ChequeStatus.Anulado
+    ChequeStatus.Anulado,
+    ChequeStatus.Entregado
   ];
 
   get statusOptions(): SearchableSelectOption[] {
@@ -190,7 +191,7 @@ export class ChequesComponent implements OnInit {
   statusLabel(estado: number): string { return this.statusLabels[estado] ?? estado.toString(); }
   statusClass(estado: number): string { return this.statusBadge[estado] ?? 'badge'; }
   isUrgent(cheque: Pick<ChequeListItem, 'estado' | 'fechaVencimiento'>): boolean {
-    if (cheque.estado === ChequeStatus.Acreditado || cheque.estado === ChequeStatus.Rechazado || cheque.estado === ChequeStatus.Anulado) {
+    if (cheque.estado === ChequeStatus.Acreditado || cheque.estado === ChequeStatus.Rechazado || cheque.estado === ChequeStatus.Anulado || cheque.estado === ChequeStatus.Entregado) {
       return false;
     }
 

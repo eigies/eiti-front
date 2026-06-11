@@ -1753,7 +1753,8 @@ saveChannelPopup(): void {
         })),
         tradeIns: (sale.tradeIns ?? []).map(t => ({ productId: t.productId, quantity: t.quantity, amount: t.amount })),
         details: sale.details.map(d => ({ productId: d.productId, quantity: d.quantity, unitPrice: d.unitPrice })),
-        noDeliverySurchargeTotal: null,
+        noDeliverySurchargeTotal: sale.noDeliverySurchargeTotal ?? null,
+        deliveryAddress: sale.deliveryAddress ?? null,
         sourceChannel: newChannel
     };
     this.saleService.updateSale(sale.id, request).subscribe({

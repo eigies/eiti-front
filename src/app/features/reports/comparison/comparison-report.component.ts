@@ -35,9 +35,16 @@ export class ComparisonReportComponent {
       aFrom: [firstPrev, Validators.required],
       aTo: [lastPrev, Validators.required],
       bFrom: [firstThis, Validators.required],
-      bTo: [today, Validators.required]
+      bTo: [today, Validators.required],
+      saleType: ['all']
     });
   }
+
+  readonly saleTypes = [
+    { value: 'all', label: 'Todas' },
+    { value: 'wholesale', label: 'Mayorista (CC)' },
+    { value: 'retail', label: 'Minorista' }
+  ];
 
   isInvalid(field: string): boolean {
     const c = this.filterForm.get(field);
@@ -64,9 +71,10 @@ export class ComparisonReportComponent {
 
     this.loading = true;
     this.hasSearched = true;
+    const saleType = v.saleType || 'all';
     forkJoin({
-      a: this.reportService.salesReport({ dateFrom: v.aFrom, dateTo: v.aTo, groupBy: 'total' }),
-      b: this.reportService.salesReport({ dateFrom: v.bFrom, dateTo: v.bTo, groupBy: 'total' })
+      a: this.reportService.salesReport({ dateFrom: v.aFrom, dateTo: v.aTo, groupBy: 'total', saleType }),
+      b: this.reportService.salesReport({ dateFrom: v.bFrom, dateTo: v.bTo, groupBy: 'total', saleType })
     }).subscribe({
       next: ({ a, b }) => { this.totalsA = a.totals; this.totalsB = b.totals; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => { this.loading = false; this.toast.error(err?.error?.detail || 'No se pudo generar el comparativo.'); }

@@ -55,6 +55,7 @@ export interface SalesReportFilters {
     channel?: number | null;
     deliveryMode?: 'all' | 'with' | 'without' | null;
     categoryId?: string | null;
+    saleType?: 'all' | 'wholesale' | 'retail' | null;
 }
 
 export interface CustomerDebtorRow {

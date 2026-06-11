@@ -184,10 +184,10 @@ type CashSessionView = {
             </div>
           </div>
 
-          <div *ngIf="auth.hasPermission(permissionCodes.cashWithdraw)" class="session-actions">
-            <button class="btn btn--deposit" type="button" (click)="openDepositModal()">Registrar ingreso</button>
-            <button class="btn btn--ghost" type="button" (click)="openWithdrawModal()">Registrar extraccion</button>
-            <button *ngIf="otherDrawers.length > 0" class="btn btn--transfer" type="button" (click)="openTransferModal()">&#8644; Transferir</button>
+          <div *ngIf="auth.hasPermission(permissionCodes.cashWithdraw) || auth.hasPermission(permissionCodes.cashIncome)" class="session-actions">
+            <button *ngIf="auth.hasPermission(permissionCodes.cashIncome)" class="btn btn--deposit" type="button" (click)="openDepositModal()">Registrar ingreso</button>
+            <button *ngIf="auth.hasPermission(permissionCodes.cashWithdraw)" class="btn btn--ghost" type="button" (click)="openWithdrawModal()">Registrar extraccion</button>
+            <button *ngIf="auth.hasPermission(permissionCodes.cashWithdraw) && otherDrawers.length > 0" class="btn btn--transfer" type="button" (click)="openTransferModal()">&#8644; Transferir</button>
           </div>
 
           <button *ngIf="auth.hasPermission(permissionCodes.cashClose)" class="btn btn--danger" type="button" (click)="startCloseSessionFlow()" [disabled]="checkingPendingCloseSales">Cerrar caja</button>

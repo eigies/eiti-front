@@ -3,7 +3,8 @@ export enum ChequeStatus {
   Depositado = 2,
   Acreditado = 3,
   Rechazado = 4,
-  Anulado = 5
+  Anulado = 5,
+  Entregado = 6
 }
 
 export interface ChequeListItem {
@@ -45,12 +46,14 @@ export interface ChequeFilters {
   fechaVencTo?: string | null;
 }
 
+// Entregado se alcanza solo al endosar el cheque a un proveedor (pago de compra), no desde el cambio manual de estado.
 export const CHEQUE_TRANSITIONS: Record<number, number[]> = {
   [ChequeStatus.EnCartera]: [ChequeStatus.Depositado, ChequeStatus.Anulado],
   [ChequeStatus.Depositado]: [ChequeStatus.Acreditado, ChequeStatus.Rechazado, ChequeStatus.Anulado],
   [ChequeStatus.Acreditado]: [],
   [ChequeStatus.Rechazado]: [],
-  [ChequeStatus.Anulado]: []
+  [ChequeStatus.Anulado]: [],
+  [ChequeStatus.Entregado]: []
 };
 
 export const CHEQUE_STATUS_LABELS: Record<number, string> = {
@@ -58,7 +61,8 @@ export const CHEQUE_STATUS_LABELS: Record<number, string> = {
   [ChequeStatus.Depositado]: 'Depositado',
   [ChequeStatus.Acreditado]: 'Acreditado',
   [ChequeStatus.Rechazado]: 'Rechazado',
-  [ChequeStatus.Anulado]: 'Anulado'
+  [ChequeStatus.Anulado]: 'Anulado',
+  [ChequeStatus.Entregado]: 'Entregado'
 };
 
 export const CHEQUE_STATUS_BADGE: Record<number, string> = {
@@ -66,5 +70,18 @@ export const CHEQUE_STATUS_BADGE: Record<number, string> = {
   [ChequeStatus.Depositado]: 'badge badge--amber',
   [ChequeStatus.Acreditado]: 'badge badge--in',
   [ChequeStatus.Rechazado]: 'badge badge--out',
-  [ChequeStatus.Anulado]: 'badge badge--muted'
+  [ChequeStatus.Anulado]: 'badge badge--muted',
+  [ChequeStatus.Entregado]: 'badge badge--in'
 };
+
+// Cheque en cartera disponible para pagar una compra (endoso a proveedor).
+export interface CarteraChequeOption {
+  id: string;
+  numero: string;
+  titular: string;
+  cuitDni: string;
+  monto: number;
+  bankId: number;
+  bankName: string;
+  fechaVencimiento: string;
+}

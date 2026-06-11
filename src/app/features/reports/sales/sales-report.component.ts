@@ -39,6 +39,7 @@ export class SalesReportComponent implements OnInit {
   filterForm: FormGroup;
   baseTipo = 'product';
   transportMode: 'installer' | 'vehicle' = 'installer';
+  advancedFiltersOpen = false;
 
   loading = false;
   hasSearched = false;
@@ -54,6 +55,11 @@ export class SalesReportComponent implements OnInit {
     { value: 'all', label: 'Todas' },
     { value: 'with', label: 'Con envio' },
     { value: 'without', label: 'Sin envio' }
+  ];
+  readonly saleTypes = [
+    { value: 'all', label: 'Todas' },
+    { value: 'wholesale', label: 'Mayorista (CC)' },
+    { value: 'retail', label: 'Minorista' }
   ];
 
   constructor(
@@ -76,7 +82,8 @@ export class SalesReportComponent implements OnInit {
       vehicleId: [null],
       channel: [null],
       deliveryMode: ['all'],
-      categoryId: [null]
+      categoryId: [null],
+      saleType: ['all']
     });
   }
 
@@ -109,7 +116,20 @@ export class SalesReportComponent implements OnInit {
   get vehicleOptions(): SearchableSelectOption[] { return this.vehicles.map(v => ({ value: v.id, label: v.label })); }
   get channelOptions(): SearchableSelectOption[] { return this.channels.map(c => ({ value: c.value, label: c.label })); }
   get deliveryOptions(): SearchableSelectOption[] { return this.deliveryModes.map(d => ({ value: d.value, label: d.label })); }
+  get saleTypeOptions(): SearchableSelectOption[] { return this.saleTypes.map(t => ({ value: t.value, label: t.label })); }
   get categoryOptions(): SearchableSelectOption[] { return this.categories.map(c => ({ value: c.id, label: c.name })); }
+  get activeOptionalFiltersCount(): number {
+    const value = this.filterForm.value;
+    return [
+      value.customerId,
+      value.installerId,
+      value.vehicleId,
+      value.channel,
+      value.categoryId,
+      value.deliveryMode && value.deliveryMode !== 'all',
+      value.saleType && value.saleType !== 'all'
+    ].filter(Boolean).length;
+  }
 
   isInvalid(field: string): boolean {
     const c = this.filterForm.get(field);
@@ -120,6 +140,10 @@ export class SalesReportComponent implements OnInit {
     if (this.transportMode === mode) return;
     this.transportMode = mode;
     this.search();
+  }
+
+  toggleAdvancedFilters(): void {
+    this.advancedFiltersOpen = !this.advancedFiltersOpen;
   }
 
   private loadLookups(): void {
@@ -159,7 +183,8 @@ export class SalesReportComponent implements OnInit {
       vehicleId: v.vehicleId || null,
       channel: v.channel ?? null,
       deliveryMode: v.deliveryMode || 'all',
-      categoryId: v.categoryId || null
+      categoryId: v.categoryId || null,
+      saleType: v.saleType || 'all'
     }).subscribe({
       next: res => { this.data = res; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => {
@@ -172,7 +197,8 @@ export class SalesReportComponent implements OnInit {
   clearFilters(): void {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    this.filterForm.reset({ dateFrom: firstOfMonth, dateTo: today, customerId: null, installerId: null, vehicleId: null, channel: null, deliveryMode: 'all', categoryId: null });
+    this.filterForm.reset({ dateFrom: firstOfMonth, dateTo: today, customerId: null, installerId: null, vehicleId: null, channel: null, deliveryMode: 'all', categoryId: null, saleType: 'all' });
+    this.advancedFiltersOpen = false;
     this.search();
   }
 

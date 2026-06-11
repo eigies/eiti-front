@@ -239,6 +239,13 @@ export const routes: Routes = [
             import('./features/purchases/purchase-create.component').then(m => m.PurchaseCreateComponent)
     },
     {
+        path: 'purchases/supplier/:supplierId',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.purchasesAccess },
+        loadComponent: () =>
+            import('./features/purchases/supplier-account.component').then(m => m.SupplierAccountComponent)
+    },
+    {
         path: 'purchases/:id',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.purchasesAccess },

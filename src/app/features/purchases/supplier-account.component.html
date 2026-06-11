@@ -1,0 +1,198 @@
+<div class="page supplier-account-page">
+  <div class="loading-state" *ngIf="loading"><span>Cargando cuenta...</span></div>
+
+  <ng-container *ngIf="!loading && account">
+    <div class="page__header account-header">
+      <div class="header-main">
+        <a class="back-link back-link--strong" routerLink="/purchases">&larr; Volver a proveedores</a>
+        <div class="page__eyebrow">_ COMPRAS / CUENTA DE PROVEEDOR</div>
+        <h1 class="page__title">{{ account.supplierName }}</h1>
+        <div class="meta-row">
+          <span class="meta-item" *ngIf="account.phone">Tel: {{ account.phone }}</span>
+          <span class="meta-item" *ngIf="account.email">{{ account.email }}</span>
+        </div>
+      </div>
+
+      <div class="account-header__actions">
+        <button class="btn-secondary" type="button" (click)="addCompra()">+ Agregar compra</button>
+        <button class="btn-primary" type="button" (click)="togglePaymentForm()">
+          {{ showPaymentForm ? 'Cerrar pago' : '+ Registrar pago' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-grid account-summary">
+      <div class="summary-card">
+        <span class="summary-label">Deuda total</span>
+        <strong class="summary-value">${{ formatCurrency(account.deudaTotal) }}</strong>
+        <small>{{ compras.length }} compra{{ compras.length === 1 ? '' : 's' }} registrada{{ compras.length === 1 ? '' : 's' }}</small>
+      </div>
+      <div class="summary-card summary-card--paid">
+        <span class="summary-label">Pagado</span>
+        <strong class="summary-value">${{ formatCurrency(account.pagadoTotal) }}</strong>
+        <small>{{ pagos.length }} pago{{ pagos.length === 1 ? '' : 's' }} registrado{{ pagos.length === 1 ? '' : 's' }}</small>
+      </div>
+      <div class="summary-card summary-card--pending">
+        <span class="summary-label">Saldo pendiente</span>
+        <strong class="summary-value">${{ formatCurrency(account.saldoPendiente) }}</strong>
+        <small>Importe pendiente de cancelación</small>
+      </div>
+      <div class="summary-card summary-card--credit">
+        <span class="summary-label">Saldo a favor</span>
+        <strong class="summary-value">${{ formatCurrency(account.saldoAFavor) }}</strong>
+        <small>Disponible para próximas compras</small>
+      </div>
+    </div>
+
+    <section class="section-card payment-composer" *ngIf="showPaymentForm">
+      <div class="payment-composer__head">
+        <div>
+          <span class="section-label">Registrar pago</span>
+          <p>Ingresá el pago general del proveedor. El sistema lo imputará sobre su cuenta.</p>
+        </div>
+        <button class="composer-close" type="button" aria-label="Cerrar formulario de pago" (click)="togglePaymentForm()">×</button>
+      </div>
+
+      <div class="supplier-payment-form" [class.supplier-payment-form--cheque]="isChequeMethod">
+        <div class="field field--method">
+          <label class="field__label">Método</label>
+          <app-searchable-select
+            [ngModel]="newMethod"
+            (ngModelChange)="onMethodChange($event)"
+            [ngModelOptions]="{ standalone: true }"
+            [options]="methodOptions"
+            placeholder="Método"
+            [compact]="true">
+          </app-searchable-select>
+        </div>
+
+        <div class="field field--cheque" *ngIf="isChequeMethod">
+          <label class="field__label">Cheque en cartera</label>
+          <app-searchable-select
+            [ngModel]="newChequeId"
+            (ngModelChange)="onChequeSelected($event)"
+            [ngModelOptions]="{ standalone: true }"
+            [options]="chequeOptions"
+            [placeholder]="carteraLoading ? 'Cargando...' : 'Seleccionar cheque'"
+            searchPlaceholder="Buscar cheque...">
+          </app-searchable-select>
+          <small class="field__hint" *ngIf="!carteraLoading && carteraCheques.length === 0">No hay cheques disponibles en cartera.</small>
+          <small class="field__hint" *ngIf="newChequeId">Se aplicará el valor completo del cheque.</small>
+        </div>
+
+        <div class="field field--amount">
+          <label class="field__label">Monto</label>
+          <input class="field__input" type="number" min="0" step="0.01" [(ngModel)]="newAmount" [readonly]="isChequeMethod" [class.field__input--locked]="isChequeMethod" />
+        </div>
+
+        <div class="field field--date">
+          <label class="field__label">Fecha</label>
+          <input class="field__input" type="date" [(ngModel)]="newDate" />
+        </div>
+
+        <div class="field field--reference">
+          <label class="field__label">Referencia</label>
+          <input class="field__input" type="text" [(ngModel)]="newReference" placeholder="Transferencia, recibo..." />
+        </div>
+
+        <div class="field field--notes">
+          <label class="field__label">Notas</label>
+          <input class="field__input" type="text" [(ngModel)]="newNotes" placeholder="Observaciones opcionales" />
+        </div>
+
+        <button class="btn-primary payment-submit" type="button" [disabled]="!canSubmitPayment" (click)="submitPayment()">
+          {{ addingPayment ? 'Registrando...' : 'Registrar pago' }}
+        </button>
+      </div>
+    </section>
+
+    <div class="account-ledger-grid">
+      <section class="section-card ledger-card">
+        <div class="section-head ledger-head">
+          <div>
+            <span class="section-label">Compras</span>
+            <p>{{ compras.length }} movimiento{{ compras.length === 1 ? '' : 's' }} de compra</p>
+          </div>
+          <button class="head-action" type="button" (click)="addCompra()">Nueva compra</button>
+        </div>
+
+        <div class="empty-payments ledger-empty" *ngIf="compras.length === 0">No hay compras registradas.</div>
+
+        <div class="table-shell" *ngIf="compras.length > 0">
+          <table class="payments-table ledger-table ledger-table--purchases">
+            <thead>
+              <tr>
+                <th>Compra</th>
+                <th>Detalle</th>
+                <th class="col-num">Monto</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="row-clickable" *ngFor="let c of compras" (click)="goToCompra(c.id)">
+                <td>
+                  <strong class="movement-code">{{ c.code }}</strong>
+                  <small class="movement-date">{{ formatDate(c.date) }}</small>
+                </td>
+                <td class="movement-description">{{ c.description }}</td>
+                <td class="col-num cell-amount">${{ formatCurrency(c.amount) }}</td>
+                <td><span class="chip" [ngClass]="statusChipClass(c)">{{ statusLabel(c) }}</span></td>
+                <td class="cell-arrow"><span>Abrir</span> &rarr;</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section-card ledger-card">
+        <div class="section-head ledger-head">
+          <div>
+            <span class="section-label">Pagos</span>
+            <p>{{ pagos.length }} movimiento{{ pagos.length === 1 ? '' : 's' }} de pago</p>
+          </div>
+          <button class="head-action head-action--payment" type="button" (click)="togglePaymentForm()">
+            {{ showPaymentForm ? 'Cerrar' : 'Registrar pago' }}
+          </button>
+        </div>
+
+        <div class="empty-payments ledger-empty" *ngIf="pagos.length === 0">No hay pagos registrados.</div>
+
+        <div class="table-shell" *ngIf="pagos.length > 0">
+          <table class="payments-table ledger-table ledger-table--payments">
+            <thead>
+              <tr>
+                <th>Pago</th>
+                <th>Detalle</th>
+                <th class="col-num">Monto</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of pagos" [class.row--cancelled]="!isActiveMovement(p)">
+                <td>
+                  <strong class="movement-code">{{ p.method }}</strong>
+                  <small class="movement-date">{{ formatDate(p.date) }}</small>
+                </td>
+                <td class="movement-description">{{ p.description }}</td>
+                <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
+                <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>
+                <td class="col-remove">
+                  <button
+                    *ngIf="isActiveMovement(p)"
+                    class="btn-cancel-payment"
+                    type="button"
+                    [disabled]="cancellingPaymentId === p.id"
+                    (click)="cancelPayment(p)">
+                    {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+</div>

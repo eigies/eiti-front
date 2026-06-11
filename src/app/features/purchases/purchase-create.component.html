@@ -152,51 +152,8 @@
           </div>
         </div>
 
-        <div class="section-card section-card--payments">
-          <div class="section-card__head">
-            <div>
-              <span class="section-label">Pagos</span>
-              <span class="section-subcopy">Carga uno o varios pagos sin perder el saldo de vista.</span>
-            </div>
-            <button class="btn-add" type="button" (click)="addPayment()">+ Agregar pago</button>
-          </div>
-
-          <div class="payment-empty" *ngIf="payments.length === 0">
-            La compra quedara pendiente de pago. Podes agregar pagos ahora o mas adelante.
-          </div>
-
-          <div class="payment-line" *ngFor="let p of payments; let i = index">
-            <div class="payment-line__head">
-              <span>Pago {{ i + 1 }}</span>
-              <button class="btn-remove-payment" type="button" (click)="removePayment(i)" title="Quitar">x</button>
-            </div>
-
-            <div class="payment-line__fields">
-              <div class="field">
-                <label class="field__label">Metodo</label>
-                <app-searchable-select
-                  [(ngModel)]="p.method"
-                  [ngModelOptions]="{ standalone: true }"
-                  [options]="paymentMethodOptions"
-                  placeholder="Metodo"
-                  searchPlaceholder="Buscar metodo..."
-                  [compact]="true">
-                </app-searchable-select>
-              </div>
-              <div class="field">
-                <label class="field__label">Monto</label>
-                <input class="field__input" type="number" min="0" step="0.01" [(ngModel)]="p.amount" [ngModelOptions]="{ standalone: true }" />
-              </div>
-              <div class="field">
-                <label class="field__label">Fecha</label>
-                <input class="field__input" type="date" [(ngModel)]="p.date" [ngModelOptions]="{ standalone: true }" />
-              </div>
-              <div class="field field--wide">
-                <label class="field__label">Referencia</label>
-                <input class="field__input" type="text" placeholder="Nro. transferencia, cheque..." [(ngModel)]="p.reference" [ngModelOptions]="{ standalone: true }" />
-              </div>
-            </div>
-          </div>
+        <div class="section-card">
+          <p class="section-subcopy">Los pagos se registran desde la cuenta del proveedor, no en el alta de la compra.</p>
         </div>
       </div>
 
@@ -213,14 +170,6 @@
         <div class="summary-row summary-row--tax" *ngIf="iibbAmount !== null">
           <span class="summary-label">IIBB {{ headerForm.get('ingresosBrutosPct')?.value }}%</span>
           <span class="summary-value summary-value--tax">${{ formatCurrency(iibbAmount!) }}</span>
-        </div>
-        <div class="summary-row">
-          <span class="summary-label">Total pagado</span>
-          <span class="summary-value summary-value--paid">${{ formatCurrency(totalPaid) }}</span>
-        </div>
-        <div class="summary-row summary-row--pending">
-          <span class="summary-label">Saldo pendiente</span>
-          <span class="summary-value summary-value--pending">${{ formatCurrency(pendingAmount) }}</span>
         </div>
         <div class="summary-row summary-row--credit" *ngIf="selectedSupplierCredit > 0">
           <span class="summary-label">Saldo a favor</span>
