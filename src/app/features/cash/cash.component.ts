@@ -2225,6 +2225,18 @@ export class CashComponent implements OnInit {
             const refId = movement.referenceId ? String(movement.referenceId) : null;
             const saleCode = movement.saleCode ?? null;
             const username = movement.createdByUsername ?? null;
+
+            // Pago de cuenta corriente que llegó por transferencia/tarjeta: reutiliza los tipos
+            // TransferIncome/CardIncome pero pertenece a una cuenta corriente (referenceType =
+            // CuentaCorriente). Se renderiza como fila de CC (clickable -> popup CC, etiqueta
+            // "Cuenta Corriente") en vez de mezclarlo con la logica de venta directa, cuyo
+            // salesBySaleId nunca contiene ventas CC (listSales las excluye).
+            if (movement.referenceType === 'CuentaCorriente'
+                && (movement.typeName === 'TransferIncome' || movement.typeName === 'CardIncome')) {
+                rows.push({ occurredAt: movement.occurredAt, typeName: 'CuentaCorrienteIncome', directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null });
+                continue;
+            }
+
             const isSaleIncome = (movement.typeName === 'SaleIncome' || movement.typeName === 'TransferIncome' || movement.typeName === 'CardIncome') && movement.referenceId;
 
             if (isSaleIncome) {
