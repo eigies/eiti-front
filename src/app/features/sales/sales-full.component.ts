@@ -67,6 +67,7 @@ export class SalesFullComponent implements OnInit {
   paymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
   whatsAppEnabled = false;
   showDrawerOverrideConfirm = false;
+  showNoCashSessionModal = false;
   pendingOverrideDrawerId: string | null = null;
   readonly documentTypes = [{ value: 1, label: 'DNI' }, { value: 2, label: 'Pasaporte' }, { value: 3, label: 'LE' }, { value: 4, label: 'LC' }, { value: 5, label: 'Otro' }];
   readonly searchForm = this.fb.group({ query: [''] });
@@ -291,7 +292,15 @@ export class SalesFullComponent implements OnInit {
         const transport = this.transportForm.getRawValue();
         this.saleService.createTransport(sale.id, { driverEmployeeId: String(transport.driverEmployeeId || ''), vehicleId: String(transport.vehicleId || ''), notes: this.nullIfEmpty(transport.notes) }).subscribe({ next: () => this.finish(), error: err => { this.saving = false; this.toast.error(err?.error?.detail || err?.error?.message || 'La venta se creo, pero no se pudo asignar el envio'); } });
       },
-      error: err => { this.saving = false; this.toast.error(this.resolveSaleCustomerErrorMessage(err, customerId, 'No se pudo crear la venta')); }
+      error: err => {
+        this.saving = false;
+        const code = (err as { error?: { errorCode?: string } })?.error?.errorCode ?? '';
+        if (code.endsWith('CashDrawerRequired') || code.endsWith('CashSessionRequired')) {
+          this.showNoCashSessionModal = true;
+          return;
+        }
+        this.toast.error(this.resolveSaleCustomerErrorMessage(err, customerId, 'No se pudo crear la venta'));
+      }
     });
   }
 

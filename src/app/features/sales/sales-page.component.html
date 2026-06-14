@@ -950,3 +950,31 @@
   </div>
 </section>
 
+<div class="modal-backdrop" *ngIf="showNoCashSessionModal" (click)="showNoCashSessionModal = false"></div>
+<section class="modal-panel" *ngIf="showNoCashSessionModal">
+  <div class="modal-panel__card modal-panel__card--confirm modal-panel__card--stale-session" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head modal-panel__head--stale-session">
+      <div class="stale-session__headcopy">
+        <span class="stale-session__eyebrow">Caja</span>
+        <strong>Sin caja disponible</strong>
+      </div>
+      <button class="modal-panel__close" type="button" (click)="showNoCashSessionModal = false">x</button>
+    </div>
+    <div class="stale-session">
+      <div class="stale-session__alert">
+        <span class="stale-session__icon" aria-hidden="true">!</span>
+        <div class="stale-session__alertcopy">
+          <span class="stale-session__badge">Cobro bloqueado</span>
+          <p class="stale-session__copy">No tenes una caja con sesion abierta para registrar el cobro. Pedi que te asignen una caja o abri una sesion antes de cobrar.</p>
+        </div>
+      </div>
+      <div class="stale-session__note">
+        <span>Necesitas una caja abierta para cobrar por efectivo, transferencia o tarjeta.</span>
+      </div>
+    </div>
+    <div class="modal-panel__actions modal-panel__actions--stale-session">
+      <button class="btn" type="button" (click)="showNoCashSessionModal = false">Entendido</button>
+    </div>
+  </div>
+</section>
+

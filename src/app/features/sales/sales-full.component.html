@@ -367,3 +367,18 @@
     </div>
   </div>
 </section>
+
+<div class="modal-backdrop" *ngIf="showNoCashSessionModal" (click)="showNoCashSessionModal = false"></div>
+<section class="modal-panel" *ngIf="showNoCashSessionModal">
+  <div class="modal-panel__card" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>Sin caja disponible</strong>
+      <button class="modal-panel__close" type="button" (click)="showNoCashSessionModal = false">x</button>
+    </div>
+    <p style="margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--text-dim);">No tenes una caja con sesion abierta para registrar el cobro. Pedi que te asignen una caja o abri una sesion antes de cobrar.</p>
+    <p style="margin: 0 0 1.25rem; font-size: 0.8rem; color: var(--text-dim);">Necesitas una caja abierta para cobrar por efectivo, transferencia o tarjeta.</p>
+    <div class="modal-panel__actions">
+      <button class="btn" type="button" (click)="showNoCashSessionModal = false">Entendido</button>
+    </div>
+  </div>
+</section>

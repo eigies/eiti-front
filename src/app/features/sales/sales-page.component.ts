@@ -90,6 +90,7 @@ export class SalesPageComponent implements OnInit {
     saving = false;
     savingEdit = false;
     showStaleCashSessionModal = false;
+    showNoCashSessionModal = false;
     deletingSaleId: string | null = null;
     cancelingSaleId: string | null = null;
     quickPayingSaleId: string | null = null;
@@ -640,13 +641,27 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
     },
     error: err => {
         this.saving = false;
-        if (err?.error?.errorCode === 'Sales.Create.CashSessionFromPreviousDay') {
-            this.showStaleCashSessionModal = true;
-        } else {
-            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear la venta');
-        }
+        this.handleSaleChargeError(err, 'No se pudo crear la venta');
     }
 });
+    }
+
+    // Centraliza el manejo de errores de caja al cobrar una venta (crear/editar/cobro rapido):
+    // - sesion del dia anterior -> modal de sesion vieja
+    // - sin cajon resuelto / sin sesion abierta -> modal "sin caja disponible"
+    // - resto -> toast con el detalle del backend
+    private handleSaleChargeError(err: unknown, fallbackMessage: string): void {
+        const error = (err as { error?: { errorCode?: string; detail?: string; message?: string } })?.error;
+        const code = error?.errorCode ?? '';
+        if (code.endsWith('CashSessionFromPreviousDay')) {
+            this.showStaleCashSessionModal = true;
+            return;
+        }
+        if (code.endsWith('CashDrawerRequired') || code.endsWith('CashSessionRequired')) {
+            this.showNoCashSessionModal = true;
+            return;
+        }
+        this.toast.error(error?.detail || error?.message || fallbackMessage);
     }
 
 loadSales(): void {
@@ -762,8 +777,8 @@ this.saleService.updateSale(this.editingSale.id, this.buildRequest(this.editMeta
         this.loadSales();
     },
     error: err => {
-        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo actualizar la venta');
         this.savingEdit = false;
+        this.handleSaleChargeError(err, 'No se pudo actualizar la venta');
     }
 });
     }
@@ -837,7 +852,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                     },
                     error: err => {
                         this.quickPayingSaleId = null;
-                        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cobrar la venta');
+                        this.handleSaleChargeError(err, 'No se pudo cobrar la venta');
                     }
                 });
         }
