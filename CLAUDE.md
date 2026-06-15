@@ -2,6 +2,23 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Deploy & Git Flow (Cloud)
+
+**Producción — todo en la nube (IIS jubilado):**
+- **Front:** Vercel → https://eiticloud.com (+ www)
+- **API + DB:** Railway → https://api.eiticloud.com · PostgreSQL
+- **Email:** Resend (`no-reply@eiticloud.com`)
+
+**Ramas:**
+- `main` → producción (release con tag `vX.Y.Z`).
+- `develop` → integración / base diaria.
+- `feature/<nombre>` → sale de `develop`; merge a `develop` al terminar.
+
+**Flujo:** `feature/* → develop → (OK) → main → tag vX.Y.Z → deploy`.
+
+**Deploy:** `vercel deploy --prod` (o git integration `main`→prod si se conecta el repo en Vercel).
+**Importante:** el build de prod usa `environment.ts` (`apiUrl = https://api.eiticloud.com/api`); `environment.development.ts` apunta a la API local (`http://localhost:5133/api`).
+
 ## Commands
 
 ```bash
@@ -20,7 +37,7 @@ npx ng test --include='**/auth.service.spec.ts'
 
 **Angular 16 SPA** using standalone components (no NgModules). Point-of-sale and business operations interface consuming the `eiti.Api` backend.
 
-- **API endpoints:** `/api` in production, `http://localhost:5133/api` in development (see `src/environments/`)
+- **API endpoints:** `https://api.eiticloud.com/api` in production, `http://localhost:5133/api` in development (see `src/environments/`)
 - **Auth:** JWT stored in `localStorage` under `eiti_token` / `eiti_user`. The `authInterceptor` attaches `Authorization: Bearer <token>` to all requests and handles 401/429 responses.
 - **Guards:** `authGuard` (authentication + onboarding check), `permissionGuard` (permission-string based, e.g. `sales.access`, `cash.access`, `users.manage`)
 - **State:** No NgRx/Redux. State lives in RxJS `BehaviorSubject`s inside services, persisted to `localStorage` where needed.
