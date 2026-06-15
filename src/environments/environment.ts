@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://eiti-api-production.up.railway.app/api'
+  apiUrl: 'https://api.eiticloud.com/api'
 };
