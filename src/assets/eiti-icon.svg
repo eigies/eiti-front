@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <style>
+    .fg { fill: #F59E0B; }
+    @media (prefers-color-scheme: light) { .fg { fill: #B56D00; } }
+  </style>
+  <text class="fg" x="256" y="232" text-anchor="middle" dominant-baseline="central"
+        font-family="'JetBrains Mono','SFMono-Regular','Consolas','Courier New',monospace"
+        font-size="420" font-weight="800" letter-spacing="-12">ei</text>
+  <rect class="fg" x="300" y="398" width="170" height="44" rx="10" opacity="0.55"/>
+</svg>

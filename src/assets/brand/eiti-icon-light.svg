@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#F4EFE4"/>
+  <rect x="6" y="6" width="500" height="500" rx="106" fill="none" stroke="#C8BDA6" stroke-width="6"/>
+  <circle cx="256" cy="256" r="210" fill="#B56D00" opacity="0.05"/>
+  <text x="256" y="342" text-anchor="middle"
+        font-family="'JetBrains Mono','SFMono-Regular','Consolas','Courier New',monospace"
+        font-size="250" font-weight="800" letter-spacing="4">
+    <tspan fill="#B56D00">ei</tspan><tspan fill="#B56D00" opacity="0.55">_</tspan>
+  </text>
+</svg>

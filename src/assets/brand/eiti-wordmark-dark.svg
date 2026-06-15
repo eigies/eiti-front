@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" width="960" height="340">
+  <rect width="960" height="340" rx="40" fill="#0A0A0F"/>
+  <rect x="2" y="2" width="956" height="336" rx="38" fill="none" stroke="#2A2A35" stroke-width="3"/>
+  <text x="480" y="195" text-anchor="middle"
+        font-family="'JetBrains Mono','SFMono-Regular','Consolas','Courier New',monospace"
+        font-size="160" font-weight="800" letter-spacing="18">
+    <tspan fill="#F59E0B">EITI</tspan><tspan fill="#F59E0B" opacity="0.55">_</tspan>
+  </text>
+  <text x="480" y="266" text-anchor="middle"
+        font-family="'JetBrains Mono','SFMono-Regular','Consolas','Courier New',monospace"
+        font-size="44" font-weight="500" letter-spacing="26" fill="#E8E0D0" opacity="0.72">cloud</text>
+</svg>
