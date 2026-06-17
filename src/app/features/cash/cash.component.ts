@@ -2087,9 +2087,7 @@ export class CashComponent implements OnInit {
         this.cashService.listHistory(this.selectedDrawerId, this.historyFrom || undefined, this.historyTo || undefined).subscribe({
             next: sessions => {
                 this.historySessions = sessions.map(session => {
-                    const salesIncome = this.sumMovementsByType(session.movements, 'SaleIncome')
-                        + this.sumMovementsByType(session.movements, 'CuentaCorrienteIncome')
-                        - this.sumMovementsByType(session.movements, 'SaleCancellation');
+                    const salesIncome = this.netSalesMovements(session.movements);
                     const withdrawals = this.sumMovementsByType(session.movements, 'CashWithdrawal');
                     const manualDeposits = this.sumMovementsByType(session.movements, 'CashDeposit');
                     return {
@@ -2112,9 +2110,7 @@ export class CashComponent implements OnInit {
     }
 
     private toSummary(session: CashSessionResponse): CashSessionSummaryResponse {
-        const salesIncome = session.movements
-            .filter(movement => movement.typeName === 'SaleIncome' || movement.typeName === 'CuentaCorrienteIncome')
-            .reduce((total, movement) => total + movement.amount, 0);
+        const salesIncome = this.netSalesMovements(session.movements);
 
         const withdrawals = session.movements
             .filter(movement => movement.typeName === 'CashWithdrawal')
@@ -2125,7 +2121,7 @@ export class CashComponent implements OnInit {
             .reduce((total, movement) => total + movement.amount, 0);
 
         const salesCancellations = session.movements
-            .filter(movement => movement.typeName === 'SaleCancellation')
+            .filter(movement => movement.typeName === 'SaleCancellation' || movement.typeName === 'CuentaCorrienteCancellation')
             .reduce((total, movement) => total + movement.amount, 0);
 
         return {
@@ -2145,6 +2141,21 @@ export class CashComponent implements OnInit {
         return movements
             .filter(movement => movement.typeName === typeName)
             .reduce((total, movement) => total + movement.amount, 0);
+    }
+
+    private netSalesMovements(movements: CashSessionMovementResponse[]): number {
+        return movements
+            .filter(movement =>
+                movement.typeName === 'SaleIncome'
+                || movement.typeName === 'TransferIncome'
+                || movement.typeName === 'CardIncome'
+                || movement.typeName === 'CuentaCorrienteIncome'
+                || movement.typeName === 'SaleCancellation'
+                || movement.typeName === 'CuentaCorrienteCancellation')
+            .reduce((total, movement) =>
+                total + ((movement.typeName === 'SaleCancellation' || movement.typeName === 'CuentaCorrienteCancellation')
+                    ? -movement.amount
+                    : movement.amount), 0);
     }
 
     translateDescription(description: string | null | undefined): string {
@@ -2198,8 +2209,11 @@ export class CashComponent implements OnInit {
     }
 
     movementPaymentMethod(movement: CashSessionMovementResponse): string {
-        if (movement.typeName === 'CuentaCorrienteCancellation') {
-            return 'Cuenta Corriente';
+        if (movement.paymentMethod) {
+            if (movement.typeName === 'PurchaseExpense' || movement.typeName === 'PurchasePaymentCancellation') {
+                return this.purchasePaymentMethodLabel(movement.paymentMethod);
+            }
+            return SALE_PAYMENT_METHODS.find(method => method.id === Number(movement.paymentMethod))?.label ?? 'Otros';
         }
 
         if (movement.typeName === 'PurchaseExpense') {
@@ -2278,7 +2292,7 @@ export class CashComponent implements OnInit {
 
             const effectiveDirection = movement.typeName === 'PurchaseExpense' ? 'Out' : movement.directionName;
             const effectiveDescription = movement.typeName === 'PurchaseExpense' ? 'Compra proveedor' : movement.description;
-            rows.push({ occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: effectiveDirection, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: effectiveDescription, referenceId: refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null });
+            rows.push({ occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: effectiveDirection, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: effectiveDescription, referenceId: movement.referenceType === 'SupplierPayment' ? null : refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null });
         }
 
         return rows;
@@ -2428,7 +2442,7 @@ export class CashComponent implements OnInit {
 
     computePaymentBreakdown(session: CashSessionResponse): PaymentMethodBreakdownItem[] {
         return [...(session.paymentBreakdown ?? [])]
-            .filter(item => Number(item.amount) > 0)
+            .filter(item => Number(item.amount) !== 0 || Number(item.surchargeAmount ?? 0) !== 0)
             .sort((a, b) => Number(a.method) - Number(b.method));
     }
 

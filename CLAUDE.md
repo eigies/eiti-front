@@ -5,7 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Deploy & Git Flow (Cloud)
 
 **Producción — todo en la nube (IIS jubilado):**
-- **Front:** Vercel → https://eiticloud.com (+ www)
+- **App (ESTE repo):** Vercel → https://app.eiticloud.com — proyecto `eiti-front`. El sistema (login/uso diario) vive acá.
+- **Landing (marketing):** Vercel → https://eiticloud.com (+ www) — proyecto `eiti-landing`, **repo aparte** (`C:/eiti-landing`, Next.js 14 + Framer Motion). El dominio pelado es la landing, NO la app.
 - **API + DB:** Railway → https://api.eiticloud.com · PostgreSQL
 - **Email:** Resend (`no-reply@eiticloud.com`)
 
@@ -16,8 +17,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Flujo:** `feature/* → develop → (OK) → main → tag vX.Y.Z → deploy`.
 
-**Deploy:** `vercel deploy --prod` (o git integration `main`→prod si se conecta el repo en Vercel).
-**Importante:** el build de prod usa `environment.ts` (`apiUrl = https://api.eiticloud.com/api`); `environment.development.ts` apunta a la API local (`http://localhost:5133/api`).
+**Deploy:** `vercel deploy --prod --scope agustin-testa-s-projects1` (este dir está linkeado al proyecto `eiti-front` → `app.eiticloud.com`). La landing se deploya aparte desde `C:/eiti-landing`. Si sumás un dominio/subdominio nuevo a la app, agregá su origen a `Cors__AllowedOrigins__N` en Railway o el navegador lo bloquea.
+**Importante:** el build de prod usa `environment.ts` (`apiUrl = https://api.eiticloud.com/api`); `environment.development.ts` apunta a la API local (`http://localhost:5133/api`). La app corre en `app.eiticloud.com` pero sigue llamando a `api.eiticloud.com` (el subdominio propio de la app no cambia la URL de la API).
 
 ## Commands
 

@@ -24,6 +24,9 @@ export interface CashSessionMovementResponse {
     saleCode?: string | null;
     createdByUsername?: string | null;
     originalCashSessionId?: string | null;
+    paymentMethod?: number | null;
+    saleCcPaymentId?: string | null;
+    supplierPaymentId?: string | null;
 }
 
 export interface CashSessionResponse {
