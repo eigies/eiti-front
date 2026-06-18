@@ -8,6 +8,14 @@ export interface SupplierAccountListItem {
   saldoAFavor: number;
 }
 
+// Detalle de a qué factura se imputó parte de un pago y por cuánto.
+export interface SupplierPaymentImputacion {
+  purchaseId: string;
+  code: string;                 // COMP-XXXX
+  invoiceNumber: string | null; // Nº de factura del proveedor
+  amount: number;
+}
+
 export interface SupplierAccountMovement {
   type: 'compra' | 'pago';
   id: string;
@@ -20,6 +28,8 @@ export interface SupplierAccountMovement {
   statusName: string;
   method: string | null;
   chequeNumero: string | null;
+  imputaciones: SupplierPaymentImputacion[] | null; // facturas que cubrió este pago
+  sobrante: number | null;                          // excedente del pago a saldo a favor
 }
 
 export interface SupplierAccount {
@@ -50,4 +60,5 @@ export interface AddSupplierPaymentResult {
   appliedToPurchases: number;
   creditAdded: number;
   supplierCreditBalance: number;
+  imputaciones: SupplierPaymentImputacion[];
 }

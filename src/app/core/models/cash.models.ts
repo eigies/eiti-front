@@ -27,6 +27,7 @@ export interface CashSessionMovementResponse {
     paymentMethod?: number | null;
     saleCcPaymentId?: string | null;
     supplierPaymentId?: string | null;
+    customerPaymentId?: string | null;
 }
 
 export interface CashSessionResponse {

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SupplierAccountService } from '../../core/services/supplier-account.service';
 import { PurchaseService } from '../../core/services/purchase.service';
-import { SupplierAccount, SupplierAccountMovement, AddSupplierPaymentRequest } from '../../core/models/supplier-account.models';
+import { SupplierAccount, SupplierAccountMovement, AddSupplierPaymentRequest, SupplierPaymentImputacion } from '../../core/models/supplier-account.models';
 import { CarteraChequeOption } from '../../core/models/cheque.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
@@ -29,6 +29,7 @@ export class SupplierAccountComponent implements OnInit {
   showPaymentForm = false;
   addingPayment = false;
   cancellingPaymentId: string | null = null;
+  expandedPaymentId: string | null = null;
   newMethod = 1;
   newAmount = 0;
   newDate = '';
@@ -153,7 +154,12 @@ export class SupplierAccountComponent implements OnInit {
       next: res => {
         this.addingPayment = false;
         this.showPaymentForm = false;
-        if (res?.creditAdded && res.creditAdded > 0) {
+        const imputadas = (res?.imputaciones ?? [])
+          .map(i => `${i.code} $${this.formatCurrency(i.amount)}`)
+          .join(', ');
+        if (imputadas) {
+          this.toast.success(`Pago registrado. Imputado a: ${imputadas}`);
+        } else if (res?.creditAdded && res.creditAdded > 0) {
           const added = res.creditAdded.toLocaleString('es-AR', { minimumFractionDigits: 2 });
           const balance = (res.supplierCreditBalance ?? 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
           this.toast.success(`Pago registrado. Saldo a favor: +$${added} (total $${balance})`);
@@ -171,11 +177,15 @@ export class SupplierAccountComponent implements OnInit {
   }
 
   async cancelPayment(m: SupplierAccountMovement): Promise<void> {
+    const facturas = (m.imputaciones ?? []).map(i => i.code).join(', ');
+    const detail = facturas
+      ? `Vuelven a pendiente: ${facturas}. Se revierte caja/cheque.`
+      : 'Las compras imputadas vuelven a pendiente y se revierte caja/cheque.';
     const confirmed = await this.confirmation.confirm({
       eyebrow: 'Cuenta de proveedor',
       title: 'Anular pago',
       message: `Se anulará el pago de $${this.formatCurrency(m.amount)}.`,
-      detail: 'Las compras imputadas vuelven a pendiente y se revierte caja/cheque.',
+      detail,
       confirmLabel: 'Anular pago',
       tone: 'danger'
     });
@@ -189,6 +199,25 @@ export class SupplierAccountComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  // ── Desglose pago → facturas (A) ───────────────────────────
+  togglePaymentDetail(m: SupplierAccountMovement): void {
+    if (!this.hasImputaciones(m)) return;
+    this.expandedPaymentId = this.expandedPaymentId === m.id ? null : m.id;
+    this.cdr.markForCheck();
+  }
+
+  isExpanded(m: SupplierAccountMovement): boolean {
+    return this.expandedPaymentId === m.id;
+  }
+
+  hasImputaciones(m: SupplierAccountMovement): boolean {
+    return (m.imputaciones?.length ?? 0) > 0 || (m.sobrante ?? 0) > 0;
+  }
+
+  facturaLabel(i: SupplierPaymentImputacion): string {
+    return i.invoiceNumber ? `Factura ${i.invoiceNumber} (${i.code})` : i.code;
   }
 
   private resetPaymentForm(): void {

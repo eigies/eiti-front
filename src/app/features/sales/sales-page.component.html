@@ -585,7 +585,7 @@
                   <img src="assets/whatsapp-color-svgrepo-com.svg" alt="" />
                 </span>
               </button>
-              <a *ngIf="sale.isCuentaCorriente" [routerLink]="['/sales-cc', sale.id, 'payments']" class="btn btn--ghost btn--sm btn--cc" (click)="$event.stopPropagation()">Pagos CC</a>
+              <a *ngIf="sale.isCuentaCorriente && sale.customerId" [routerLink]="['/clients-cc/customer', sale.customerId]" class="btn btn--ghost btn--sm btn--cc" (click)="$event.stopPropagation()">Cuenta CC</a>
             </div>
             <div class="sale-card__action-main">
               <button class="btn btn--ghost btn--sm btn--danger btn--cancel" type="button" *ngIf="(sale.idSaleStatus === 1 || sale.idSaleStatus === 2) && auth.hasPermission(permissionCodes.salesDelete)" [disabled]="cancelingSaleId === sale.id" (click)="requestCancelSale(sale); $event.stopPropagation()">{{ cancelingSaleId === sale.id ? 'Cancelando...' : 'Anular' }}</button>

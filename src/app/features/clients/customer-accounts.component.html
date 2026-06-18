@@ -1,0 +1,62 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <div class="page__eyebrow">_ VENTAS / CUENTA CORRIENTE</div>
+      <h1 class="page__title">Cuentas de clientes</h1>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="filters-bar">
+    <label class="filter-field filter-field--wide">
+      <span class="filter-label">Cliente</span>
+      <input class="filter-input" type="text" [(ngModel)]="search" (keyup.enter)="applySearch()" placeholder="Buscar cliente..." />
+    </label>
+    <div class="filter-actions">
+      <button class="btn-filter" type="button" (click)="applySearch()">Filtrar</button>
+      <button class="btn-ghost-sm" type="button" (click)="clearSearch()">Limpiar</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <span>Cargando clientes...</span>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="empty-state" *ngIf="filteredAccounts.length === 0">
+      <span class="empty-state__icon">o</span>
+      <span>No hay clientes para los filtros seleccionados</span>
+    </div>
+
+    <div class="table-wrap" *ngIf="filteredAccounts.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Teléfono</th>
+            <th class="col-num">Saldo a favor</th>
+            <th class="col-num">Saldo pendiente</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            class="row-clickable"
+            *ngFor="let a of filteredAccounts"
+            (click)="openAccount(a.customerId)">
+            <td class="cell-name">{{ a.name }}</td>
+            <td class="cell-mono">{{ a.phone || '—' }}</td>
+            <td class="cell-num cell-paid">${{ formatCurrency(a.saldoAFavor) }}</td>
+            <td class="cell-num" [class.cell-pending]="a.saldoPendiente > 0">${{ formatCurrency(a.saldoPendiente) }}</td>
+            <td class="cell-arrow">Abrir &rarr;</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="pagination">
+        <span class="pagination__info">{{ filteredAccounts.length }} clientes &middot; {{ conDeuda }} con saldo pendiente</span>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -16,6 +16,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SaleService } from '../../core/services/sale.service';
 import { SaleByIdResponse, SaleResponse } from '../../core/models/sale.models';
+import { CustomerAccount, CustomerAccountMovement, CustomerPaymentImputacion, CustomerPaymentLink } from '../../core/models/customer-account.models';
+import { CustomerAccountService } from '../../core/services/customer-account.service';
 import { PurchaseService } from '../../core/services/purchase.service';
 import { PurchaseDetailResponse } from '../../core/models/purchase.models';
 import { SALE_PAYMENT_METHODS, paymentMethodSummary } from '../../core/models/sale-payment.models';
@@ -31,6 +33,21 @@ type CashSessionView = {
     manualDeposits: number;
     withdrawals: number;
     expectedClosingAmount: number;
+};
+
+type CashDisplayRow = {
+    occurredAt: string;
+    typeName: string;
+    directionName: string;
+    amount: number;
+    paymentMethodLabel: string;
+    description: string | null | undefined;
+    referenceType?: string | null;
+    referenceId: string | null;
+    saleCode: string | null;
+    username: string | null;
+    originalCashSessionId?: string | null;
+    customerPaymentId?: string | null;
 };
 
 @Component({
@@ -218,7 +235,7 @@ type CashSessionView = {
           <div class="session-breakdown" *ngIf="currentSession?.paymentBreakdown?.length">
             <span *ngFor="let bd of currentSession!.paymentBreakdown; let last = last">
               <span class="session-breakdown__label">{{ bd.methodName }}</span>
-              <strong class="session-breakdown__amount">&#36;{{ (bd.amount + (bd.surchargeAmount ?? 0)) | number: '1.2-2' }}</strong>
+              <strong class="session-breakdown__amount" [class.session-breakdown__amount--negative]="(bd.amount + (bd.surchargeAmount ?? 0)) < 0">&#36;{{ (bd.amount + (bd.surchargeAmount ?? 0)) | number: '1.2-2' }}</strong>
               <span class="session-breakdown__sep" *ngIf="!last"> | </span>
             </span>
           </div>
@@ -291,7 +308,7 @@ type CashSessionView = {
               <div class="session-breakdown" *ngIf="computePaymentBreakdown(item.session).length > 0">
                 <span *ngFor="let bd of computePaymentBreakdown(item.session); let last = last">
                   <span class="session-breakdown__label">{{ bd.methodName }}</span>
-                  <strong class="session-breakdown__amount">&#36;{{ (bd.amount + (bd.surchargeAmount ?? 0)) | number: '1.2-2' }}</strong>
+                  <strong class="session-breakdown__amount" [class.session-breakdown__amount--negative]="(bd.amount + (bd.surchargeAmount ?? 0)) < 0">&#36;{{ (bd.amount + (bd.surchargeAmount ?? 0)) | number: '1.2-2' }}</strong>
                   <span class="session-breakdown__sep" *ngIf="!last"> | </span>
                 </span>
               </div>
@@ -337,8 +354,8 @@ type CashSessionView = {
                   </thead>
                   <tbody>
                     <tr *ngFor="let row of getDisplayRows(item.session)"
-                      [class.history-table__row--clickable]="(row.typeName === 'CuentaCorrienteIncome' || row.typeName === 'SaleCancellation' || row.typeName === 'PurchaseExpense') && row.referenceId"
-                      (click)="row.typeName === 'CuentaCorrienteIncome' && row.referenceId ? openCcPopup(row.referenceId) : row.typeName === 'SaleCancellation' && row.referenceId ? openCancelDetailPopup(row) : row.typeName === 'PurchaseExpense' && row.referenceId ? openPurchasePopup(row.referenceId) : null">
+                      [class.history-table__row--clickable]="isLinkedMovement(row)"
+                      (click)="openLinkedMovement(row)">
                       <td>{{ row.occurredAt | date: 'short' }}</td>
                       <td><span class="badge badge--type" [attr.data-type]="row.typeName">{{ translateType(row.typeName) }}</span></td>
                       <td><span class="badge" [class.badge--in]="row.directionName === 'In'" [class.badge--out]="row.directionName === 'Out'">{{ translateDirection(row.directionName) }}</span></td>
@@ -577,6 +594,77 @@ type CashSessionView = {
                   </div>
                   <span class="cc-popup-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</span>
                   <span class="badge" [class.badge--in]="p.status === 1" [class.badge--out]="p.status !== 1">{{ p.status === 1 ? 'Activo' : 'Anulado' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Customer Payment Popup -->
+    <div class="modal-backdrop" *ngIf="customerPaymentPopupId" (click)="closeCustomerPaymentPopup()">
+      <div class="modal modal--cc-popup" (click)="$event.stopPropagation()">
+        <div class="modal__head modal__head--cc-popup">
+          <div class="cc-popup-head">
+            <span class="cc-popup-head__eyebrow">Movimiento vinculado</span>
+            <span class="modal__title">Detalle cobro cuenta corriente</span>
+          </div>
+          <button class="modal__close" type="button" (click)="closeCustomerPaymentPopup()">&#x2715;</button>
+        </div>
+        <div class="modal__body modal__body--cc-popup" *ngIf="customerPaymentPopupLoading">
+          <div class="cc-popup-loading">
+            <span class="cc-popup-loading__dot" aria-hidden="true"></span>
+            <p>Cargando detalle del cobro…</p>
+          </div>
+        </div>
+        <ng-container *ngIf="!customerPaymentPopupLoading && customerPaymentPopupLink as payment">
+          <div class="cc-popup-body">
+            <div class="cc-popup-hero">
+              <div class="cc-popup-header__row">
+                <span class="cc-popup-header__code">{{ customerPaymentPopupAccount?.customerName || 'Cliente' }}</span>
+                <span class="badge" [class.badge--in]="payment.status === 1" [class.badge--out]="payment.status !== 1">
+                  {{ payment.status === 1 ? 'Activo' : 'Anulado' }}
+                </span>
+              </div>
+              <div class="cc-popup-header__meta">
+                <span>{{ payment.date | date:'dd/MM/yyyy' }}</span>
+                <span>{{ paymentMethodLabel(payment.method) }}</span>
+                <span *ngIf="customerPaymentPopupAccount?.phone">{{ customerPaymentPopupAccount?.phone }}</span>
+              </div>
+              <p class="cc-popup-hero__copy">Cobro registrado sobre la cuenta corriente del cliente.</p>
+            </div>
+
+            <div class="cc-popup-totals">
+              <div class="cc-popup-totals__card cc-popup-totals__card--paid">
+                <span class="cc-popup-totals__label">Cobro</span>
+                <strong>&#36;{{ payment.amount | number:'1.2-2' }}</strong>
+              </div>
+              <div class="cc-popup-totals__card">
+                <span class="cc-popup-totals__label">Imputado</span>
+                <strong>&#36;{{ customerPaymentPopupImputed | number:'1.2-2' }}</strong>
+              </div>
+              <div class="cc-popup-totals__card cc-popup-totals__card--pending">
+                <span class="cc-popup-totals__label">Saldo a favor</span>
+                <strong>&#36;{{ customerPaymentPopupCredit | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+
+            <div class="cc-popup-payments">
+              <div class="cc-popup-payments__head">
+                <div>
+                  <span class="cc-popup-payments__title">Ventas vinculadas</span>
+                  <strong>{{ customerPaymentPopupImputaciones.length }} venta{{ customerPaymentPopupImputaciones.length === 1 ? '' : 's' }}</strong>
+                </div>
+              </div>
+              <div *ngIf="customerPaymentPopupImputaciones.length === 0" class="cc-popup-payments__empty">Sin ventas imputadas. El cobro quedó como saldo a favor.</div>
+              <div *ngFor="let item of customerPaymentPopupImputaciones" class="cc-popup-payment">
+                <div class="cc-popup-payment__row">
+                  <div class="cc-popup-payment__copy">
+                    <span class="cc-popup-payment__date">Venta vinculada</span>
+                    <span class="cc-popup-payment__method">{{ item.code || 'S/N' }}</span>
+                  </div>
+                  <span class="cc-popup-payment__amount">&#36;{{ item.amount | number:'1.2-2' }}</span>
                 </div>
               </div>
             </div>
@@ -838,6 +926,7 @@ type CashSessionView = {
     .transfer-bank-breakdown__note{font-style:italic;text-transform:none;letter-spacing:0;opacity:.7}
     .session-breakdown__label{color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;font-size:.65rem}
     .session-breakdown__amount{color:var(--success);font-weight:600;margin-left:.3rem}
+    .session-breakdown__amount--negative{color:var(--danger)}
     .session-breakdown__sep{color:var(--border-2);margin:0 .2rem}
     .history-session__body{padding:0 1rem 1rem}
     .history-session__toolbar{display:flex;justify-content:space-between;gap:1rem;align-items:center;color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;margin-bottom:.85rem;padding:0 0 .85rem;border-bottom:1px solid color-mix(in srgb,var(--border) 78%, transparent)}
@@ -1147,7 +1236,12 @@ export class CashComponent implements OnInit {
     ccPopupSaleId: string | null = null;
     ccPopupPayments: import('../../core/models/sale.models').CcPaymentResponse[] = [];
     ccPopupLoading = false;
-    cancelDetailPopupRow: { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null } | null = null;
+    customerPaymentPopupId: string | null = null;
+    customerPaymentPopupLink: CustomerPaymentLink | null = null;
+    customerPaymentPopupAccount: CustomerAccount | null = null;
+    customerPaymentPopupMovement: CustomerAccountMovement | null = null;
+    customerPaymentPopupLoading = false;
+    cancelDetailPopupRow: CashDisplayRow | null = null;
     purchasePopupId: string | null = null;
     purchasePopupData: PurchaseDetailResponse | null = null;
     purchasePopupLoading = false;
@@ -1164,6 +1258,7 @@ export class CashComponent implements OnInit {
         private branchService: BranchService,
         private cashService: CashService,
         private saleService: SaleService,
+        private customerAccountService: CustomerAccountService,
         private bankService: BankService,
         private purchaseService: PurchaseService,
         private toast: ToastService,
@@ -2146,14 +2241,13 @@ export class CashComponent implements OnInit {
     private netSalesMovements(movements: CashSessionMovementResponse[]): number {
         return movements
             .filter(movement =>
-                movement.typeName === 'SaleIncome'
-                || movement.typeName === 'TransferIncome'
-                || movement.typeName === 'CardIncome'
-                || movement.typeName === 'CuentaCorrienteIncome'
-                || movement.typeName === 'SaleCancellation'
-                || movement.typeName === 'CuentaCorrienteCancellation')
+                movement.referenceType === 'Sale'
+                && (movement.typeName === 'SaleIncome'
+                    || movement.typeName === 'TransferIncome'
+                    || movement.typeName === 'CardIncome'
+                    || movement.typeName === 'SaleCancellation'))
             .reduce((total, movement) =>
-                total + ((movement.typeName === 'SaleCancellation' || movement.typeName === 'CuentaCorrienteCancellation')
+                total + (movement.typeName === 'SaleCancellation'
                     ? -movement.amount
                     : movement.amount), 0);
     }
@@ -2231,9 +2325,9 @@ export class CashComponent implements OnInit {
         return this.salePaymentMethodsBySaleId.get(movement.referenceId) || 'Cargando...';
     }
 
-    getDisplayRows(session: CashSessionResponse): { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null }[] {
+    getDisplayRows(session: CashSessionResponse): CashDisplayRow[] {
         const seenSaleIncomeIds = new Set<string>();
-        const rows: { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null }[] = [];
+        const rows: CashDisplayRow[] = [];
 
         for (const movement of session.movements) {
             const refId = movement.referenceId ? String(movement.referenceId) : null;
@@ -2245,9 +2339,9 @@ export class CashComponent implements OnInit {
             // CuentaCorriente). Se renderiza como fila de CC (clickable -> popup CC, etiqueta
             // "Cuenta Corriente") en vez de mezclarlo con la logica de venta directa, cuyo
             // salesBySaleId nunca contiene ventas CC (listSales las excluye).
-            if (movement.referenceType === 'CuentaCorriente'
-                && (movement.typeName === 'TransferIncome' || movement.typeName === 'CardIncome')) {
-                rows.push({ occurredAt: movement.occurredAt, typeName: 'CuentaCorrienteIncome', directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null });
+            if ((movement.referenceType === 'CuentaCorriente' || movement.referenceType === 'CustomerPayment')
+                && (movement.typeName === 'CuentaCorrienteIncome' || movement.typeName === 'TransferIncome' || movement.typeName === 'CardIncome')) {
+                rows.push({ occurredAt: movement.occurredAt, typeName: 'CuentaCorrienteIncome', directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceType: movement.referenceType ?? null, referenceId: refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null, customerPaymentId: movement.customerPaymentId ?? null });
                 continue;
             }
 
@@ -2283,16 +2377,16 @@ export class CashComponent implements OnInit {
                             ? `Canje: $${Number(t.amount).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
                             : 'Canje')
                     ];
-                    rows.push({ occurredAt: movement.occurredAt, typeName: 'SaleIncome', directionName: 'In', amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceId: refId, saleCode, username });
+                    rows.push({ occurredAt: movement.occurredAt, typeName: 'SaleIncome', directionName: 'In', amount: totalAmount, paymentMethodLabel: parts.join(' | '), description: movement.description, referenceType: movement.referenceType ?? null, referenceId: refId, saleCode, username });
                     continue;
                 }
-                rows.push({ occurredAt: movement.occurredAt, typeName: 'SaleIncome', directionName: 'In', amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceId: refId, saleCode, username });
+                rows.push({ occurredAt: movement.occurredAt, typeName: 'SaleIncome', directionName: 'In', amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceType: movement.referenceType ?? null, referenceId: refId, saleCode, username });
                 continue;
             }
 
             const effectiveDirection = movement.typeName === 'PurchaseExpense' ? 'Out' : movement.directionName;
             const effectiveDescription = movement.typeName === 'PurchaseExpense' ? 'Compra proveedor' : movement.description;
-            rows.push({ occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: effectiveDirection, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: effectiveDescription, referenceId: movement.referenceType === 'SupplierPayment' ? null : refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null });
+            rows.push({ occurredAt: movement.occurredAt, typeName: movement.typeName, directionName: effectiveDirection, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: effectiveDescription, referenceType: movement.referenceType ?? null, referenceId: movement.referenceType === 'SupplierPayment' ? null : refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null, customerPaymentId: movement.customerPaymentId ?? null });
         }
 
         return rows;
@@ -2550,6 +2644,90 @@ export class CashComponent implements OnInit {
         this.onboardingService.acceptStep('InitialCashOpen');
     }
 
+    isLinkedMovement(row: CashDisplayRow): boolean {
+        return (row.typeName === 'CuentaCorrienteIncome' && !!row.referenceId)
+            || (row.typeName === 'SaleCancellation' && !!row.referenceId)
+            || (row.typeName === 'PurchaseExpense' && !!row.referenceId);
+    }
+
+    openLinkedMovement(row: CashDisplayRow): void {
+        if (!this.isLinkedMovement(row)) {
+            return;
+        }
+
+        if (row.typeName === 'CuentaCorrienteIncome' && row.referenceId) {
+            if (row.referenceType === 'CustomerPayment') {
+                this.openCustomerPaymentLink(row.customerPaymentId ?? row.referenceId);
+                return;
+            }
+
+            this.openCcPopup(row.referenceId);
+            return;
+        }
+
+        if (row.typeName === 'SaleCancellation' && row.referenceId) {
+            this.openCancelDetailPopup(row);
+            return;
+        }
+
+        if (row.typeName === 'PurchaseExpense' && row.referenceId) {
+            this.openPurchasePopup(row.referenceId);
+        }
+    }
+
+    openCustomerPaymentLink(paymentId: string): void {
+        this.customerPaymentPopupId = paymentId;
+        this.customerPaymentPopupLink = null;
+        this.customerPaymentPopupAccount = null;
+        this.customerPaymentPopupMovement = null;
+        this.customerPaymentPopupLoading = true;
+
+        this.customerAccountService.getPaymentLink(paymentId).subscribe({
+            next: link => {
+                this.customerPaymentPopupLink = link;
+                this.customerAccountService.getAccount(link.customerId).subscribe({
+                    next: account => {
+                        this.customerPaymentPopupAccount = account;
+                        this.customerPaymentPopupMovement = account.movements.find(m => m.type === 'cobro' && m.id === paymentId) ?? null;
+                        this.customerPaymentPopupLoading = false;
+                    },
+                    error: () => {
+                        this.customerPaymentPopupLoading = false;
+                        this.toast.error('No se pudo cargar el detalle del cliente');
+                    }
+                });
+            },
+            error: () => {
+                this.closeCustomerPaymentPopup();
+                this.toast.error('No se pudo abrir el cobro vinculado');
+            }
+        });
+    }
+
+    closeCustomerPaymentPopup(): void {
+        this.customerPaymentPopupId = null;
+        this.customerPaymentPopupLink = null;
+        this.customerPaymentPopupAccount = null;
+        this.customerPaymentPopupMovement = null;
+        this.customerPaymentPopupLoading = false;
+    }
+
+    get customerPaymentPopupImputaciones(): CustomerPaymentImputacion[] {
+        return this.customerPaymentPopupMovement?.imputaciones ?? [];
+    }
+
+    get customerPaymentPopupImputed(): number {
+        return this.customerPaymentPopupImputaciones.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    }
+
+    get customerPaymentPopupCredit(): number {
+        if (this.customerPaymentPopupMovement?.sobrante != null) {
+            return Math.max(0, Number(this.customerPaymentPopupMovement.sobrante));
+        }
+
+        return Math.max(0, Number(this.customerPaymentPopupLink?.amount ?? 0) - this.customerPaymentPopupImputed);
+    }
+
     openCcPopup(saleId: string): void {
         this.ccPopupSaleId = saleId;
         this.ccPopupPayments = [];
@@ -2562,7 +2740,7 @@ export class CashComponent implements OnInit {
 
     closeCcPopup(): void { this.ccPopupSaleId = null; this.ccPopupPayments = []; }
 
-    openCancelDetailPopup(row: { occurredAt: string; typeName: string; directionName: string; amount: number; paymentMethodLabel: string; description: string | null | undefined; referenceId: string | null; saleCode: string | null; username: string | null; originalCashSessionId?: string | null }): void {
+    openCancelDetailPopup(row: CashDisplayRow): void {
         this.cancelDetailPopupRow = row;
     }
 

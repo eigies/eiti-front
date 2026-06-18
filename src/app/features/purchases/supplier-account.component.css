@@ -326,6 +326,141 @@
   color: var(--text-dim);
 }
 
+/* ── Desglose pago → facturas (imputaciones) ─────────────── */
+.imputaciones-toggle {
+  display: inline-block;
+  margin-left: .5rem;
+  padding: .08rem .42rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 32%, var(--border-2));
+  border-radius: 6px;
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+
+.imputaciones-toggle:hover {
+  border-color: color-mix(in srgb, var(--amber) 55%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+
+.imputaciones-row td {
+  padding: 0 .42rem .72rem;
+}
+
+.imputaciones-panel {
+  display: grid;
+  gap: .62rem;
+  padding: .82rem .92rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 26%, var(--border));
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--amber) 9%, transparent), transparent 44%),
+    color-mix(in srgb, var(--bg-panel) 86%, var(--bg));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--amber) 62%, transparent);
+  animation: composer-in .18s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.imputaciones-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.imputaciones-panel__title {
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.imputaciones-panel__header strong {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.imputaciones-list {
+  display: grid;
+  gap: .46rem;
+}
+
+.imputacion-card {
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .72rem;
+  min-height: 2.55rem;
+  padding: .58rem .72rem;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 74%, transparent);
+}
+
+.imputacion-card__rail {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 68%, transparent);
+}
+
+.imputacion-card__copy {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+
+.imputacion-card__label {
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .55rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.imputacion-factura {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.imputacion-amount {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.imputacion-card--sobrante {
+  border-color: color-mix(in srgb, #3b82f6 24%, var(--border));
+  background: color-mix(in srgb, #3b82f6 7%, var(--bg));
+}
+
+.imputacion-card--sobrante .imputacion-card__rail {
+  background: color-mix(in srgb, #3b82f6 74%, transparent);
+}
+
+.imputacion-card--sobrante .imputacion-factura,
+.imputacion-card--sobrante .imputacion-amount {
+  color: color-mix(in srgb, #3b82f6 78%, var(--text));
+}
+
 @keyframes composer-in {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }

@@ -170,25 +170,67 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let p of pagos" [class.row--cancelled]="!isActiveMovement(p)">
-                <td>
-                  <strong class="movement-code">{{ p.method }}</strong>
-                  <small class="movement-date">{{ formatDate(p.date) }}</small>
-                </td>
-                <td class="movement-description">{{ p.description }}</td>
-                <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
-                <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>
-                <td class="col-remove">
-                  <button
-                    *ngIf="isActiveMovement(p)"
-                    class="btn-cancel-payment"
-                    type="button"
-                    [disabled]="cancellingPaymentId === p.id"
-                    (click)="cancelPayment(p)">
-                    {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
-                  </button>
-                </td>
-              </tr>
+              <ng-container *ngFor="let p of pagos">
+                <tr
+                  [class.row--cancelled]="!isActiveMovement(p)"
+                  [class.row-clickable]="hasImputaciones(p)"
+                  (click)="togglePaymentDetail(p)">
+                  <td>
+                    <strong class="movement-code">{{ p.method }}</strong>
+                    <small class="movement-date">{{ formatDate(p.date) }}</small>
+                  </td>
+                  <td class="movement-description">
+                    {{ p.description }}
+                    <button
+                      *ngIf="hasImputaciones(p)"
+                      type="button"
+                      class="imputaciones-toggle"
+                      (click)="$event.stopPropagation(); togglePaymentDetail(p)">
+                      {{ isExpanded(p) ? 'Ocultar facturas ▴' : 'Ver facturas ▾' }}
+                    </button>
+                  </td>
+                  <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
+                  <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>
+                  <td class="col-remove">
+                    <button
+                      *ngIf="isActiveMovement(p)"
+                      class="btn-cancel-payment"
+                      type="button"
+                      [disabled]="cancellingPaymentId === p.id"
+                      (click)="$event.stopPropagation(); cancelPayment(p)">
+                      {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
+                    </button>
+                  </td>
+                </tr>
+                <tr class="imputaciones-row" *ngIf="isExpanded(p)">
+                  <td colspan="5">
+                    <div class="imputaciones-panel">
+                      <div class="imputaciones-panel__header">
+                        <span class="imputaciones-panel__title">Relacion del movimiento</span>
+                        <strong>{{ (p.imputaciones?.length ?? 0) }} compra{{ (p.imputaciones?.length ?? 0) === 1 ? '' : 's' }} vinculada{{ (p.imputaciones?.length ?? 0) === 1 ? '' : 's' }}</strong>
+                      </div>
+                      <div class="imputaciones-list">
+                        <div class="imputacion-card" *ngFor="let i of p.imputaciones">
+                          <span class="imputacion-card__rail" aria-hidden="true"></span>
+                          <div class="imputacion-card__copy">
+                            <span class="imputacion-card__label">Compra aplicada</span>
+                            <span class="imputacion-factura">{{ facturaLabel(i) }}</span>
+                          </div>
+                          <span class="imputacion-amount">${{ formatCurrency(i.amount) }}</span>
+                        </div>
+                        <div class="imputacion-card imputacion-card--sobrante" *ngIf="(p.sobrante ?? 0) > 0">
+                          <span class="imputacion-card__rail" aria-hidden="true"></span>
+                          <div class="imputacion-card__copy">
+                            <span class="imputacion-card__label">Credito disponible</span>
+                            <span class="imputacion-factura">Sobrante a favor con proveedor</span>
+                          </div>
+                          <span class="imputacion-amount">${{ formatCurrency(p.sobrante ?? 0) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
             </tbody>
           </table>
         </div>

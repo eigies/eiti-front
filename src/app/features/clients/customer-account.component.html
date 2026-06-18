@@ -1,0 +1,360 @@
+<div class="page customer-account-page">
+  <div class="loading-state" *ngIf="loading"><span>Cargando cuenta...</span></div>
+
+  <ng-container *ngIf="!loading && account">
+    <div class="page__header account-header">
+      <div class="header-main">
+        <a class="back-link back-link--strong" routerLink="/clients-cc">&larr; Volver a clientes</a>
+        <div class="page__eyebrow">_ VENTAS / CUENTA CORRIENTE</div>
+        <h1 class="page__title">{{ account.customerName }}</h1>
+        <div class="meta-row">
+          <span class="meta-item" *ngIf="account.phone">Tel: {{ account.phone }}</span>
+          <span class="meta-item" *ngIf="account.email">{{ account.email }}</span>
+        </div>
+      </div>
+
+      <div class="account-header__actions">
+        <button class="btn-primary" type="button" *ngIf="auth.hasPermission(permissionCodes.salesPay)" (click)="togglePaymentForm()">
+          {{ showPaymentForm ? 'Cerrar cobro' : '+ Registrar cobro' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-grid account-summary">
+      <div class="summary-card">
+        <span class="summary-label">Deuda total</span>
+        <strong class="summary-value">${{ formatCurrency(account.deudaTotal) }}</strong>
+        <small>{{ ventas.length }} venta{{ ventas.length === 1 ? '' : 's' }} registrada{{ ventas.length === 1 ? '' : 's' }}</small>
+      </div>
+      <div class="summary-card summary-card--paid">
+        <span class="summary-label">Cobrado</span>
+        <strong class="summary-value">${{ formatCurrency(account.cobradoTotal) }}</strong>
+        <small>{{ cobros.length }} cobro{{ cobros.length === 1 ? '' : 's' }} registrado{{ cobros.length === 1 ? '' : 's' }}</small>
+      </div>
+      <div class="summary-card summary-card--pending">
+        <span class="summary-label">Saldo pendiente</span>
+        <strong class="summary-value">${{ formatCurrency(account.saldoPendiente) }}</strong>
+        <small>Importe pendiente de cobro</small>
+      </div>
+      <div class="summary-card summary-card--credit">
+        <span class="summary-label">Saldo a favor</span>
+        <strong class="summary-value">${{ formatCurrency(account.saldoAFavor) }}</strong>
+        <small>Disponible para próximas ventas</small>
+      </div>
+    </div>
+
+    <section class="section-card payment-composer" *ngIf="showPaymentForm">
+      <div class="payment-composer__head">
+        <div>
+          <span class="section-label">Registrar cobro</span>
+          <p>Ingresá el cobro general del cliente. El sistema lo imputará sobre su cuenta.</p>
+        </div>
+        <button class="composer-close" type="button" aria-label="Cerrar formulario de cobro" (click)="togglePaymentForm()">×</button>
+      </div>
+
+      <div class="customer-payment-form" [class.customer-payment-form--cheque]="isChequeMethod">
+        <div class="field field--method">
+          <label class="field__label">Método</label>
+          <app-searchable-select
+            [ngModel]="newMethod"
+            (ngModelChange)="onMethodChange($event)"
+            [ngModelOptions]="{ standalone: true }"
+            [options]="methodOptions"
+            placeholder="Método"
+            [compact]="true">
+          </app-searchable-select>
+        </div>
+
+        <div class="field field--amount">
+          <label class="field__label">Monto</label>
+          <input class="field__input" type="number" min="0" step="0.01" [ngModel]="newAmount" (ngModelChange)="onAmountChange($event)" [ngModelOptions]="{ standalone: true }" />
+        </div>
+
+        <div class="field field--date">
+          <label class="field__label">Fecha</label>
+          <input class="field__input" type="date" [(ngModel)]="newDate" [ngModelOptions]="{ standalone: true }" />
+        </div>
+
+        <div class="field field--reference">
+          <label class="field__label">Referencia</label>
+          <input class="field__input" type="text" [(ngModel)]="newReference" [ngModelOptions]="{ standalone: true }" placeholder="Transferencia, recibo..." />
+        </div>
+
+        <div class="field field--notes">
+          <label class="field__label">Notas</label>
+          <input class="field__input" type="text" [(ngModel)]="newNotes" [ngModelOptions]="{ standalone: true }" placeholder="Observaciones opcionales" />
+        </div>
+
+        <!-- Tarjeta: banco + cuotas -->
+        <ng-container *ngIf="isCardMethod">
+          <div class="field field--card-bank">
+            <label class="field__label">Banco / tarjeta</label>
+            <app-searchable-select
+              [ngModel]="newCardBankId"
+              (ngModelChange)="onCardBankChange($event)"
+              [ngModelOptions]="{ standalone: true }"
+              [options]="bankOptions"
+              placeholder="Seleccionar banco"
+              searchPlaceholder="Buscar banco...">
+            </app-searchable-select>
+          </div>
+          <div class="field field--card-cuotas">
+            <label class="field__label">Cuotas</label>
+            <app-searchable-select
+              [ngModel]="newCardCuotas"
+              (ngModelChange)="onCardCuotasChange($event)"
+              [ngModelOptions]="{ standalone: true }"
+              [options]="cuotasOptions"
+              [placeholder]="newCardBankId ? 'Seleccionar cuotas' : 'Elegí banco primero'"
+              [compact]="true">
+            </app-searchable-select>
+            <small class="field__hint" *ngIf="(cardSurchargePct ?? 0) > 0">Recargo {{ cardSurchargePct }}% · +${{ formatCurrency(cardSurchargeAmt) }}</small>
+          </div>
+        </ng-container>
+
+        <!-- Cheque recibido del cliente -->
+        <div class="field--cheque-block" *ngIf="isChequeMethod">
+          <span class="cheque-block__title">Cheque recibido del cliente</span>
+          <div class="cheque-grid">
+            <div class="field">
+              <label class="field__label">Banco</label>
+              <app-searchable-select
+                [(ngModel)]="newCheque.bankId"
+                [ngModelOptions]="{ standalone: true }"
+                [options]="chequeBankOptions"
+                placeholder="Banco del cheque"
+                searchPlaceholder="Buscar banco...">
+              </app-searchable-select>
+            </div>
+            <div class="field">
+              <label class="field__label">Número</label>
+              <input class="field__input" type="text" [(ngModel)]="newCheque.numero" [ngModelOptions]="{ standalone: true }" placeholder="Nº cheque" />
+            </div>
+            <div class="field">
+              <label class="field__label">Titular</label>
+              <input class="field__input" type="text" [(ngModel)]="newCheque.titular" [ngModelOptions]="{ standalone: true }" placeholder="Titular del cheque" />
+            </div>
+            <div class="field">
+              <label class="field__label">CUIT / DNI</label>
+              <input class="field__input" type="text" [(ngModel)]="newCheque.cuitDni" [ngModelOptions]="{ standalone: true }" placeholder="CUIT o DNI" />
+            </div>
+            <div class="field">
+              <label class="field__label">Emisión</label>
+              <input class="field__input" type="date" [(ngModel)]="newCheque.fechaEmision" [ngModelOptions]="{ standalone: true }" />
+            </div>
+            <div class="field">
+              <label class="field__label">Vencimiento</label>
+              <input class="field__input" type="date" [(ngModel)]="newCheque.fechaVencimiento" [ngModelOptions]="{ standalone: true }" />
+            </div>
+          </div>
+          <small class="field__hint">El monto del cheque toma el monto del cobro (${{ formatCurrency(newAmount) }}).</small>
+        </div>
+
+        <button class="btn-primary payment-submit" type="button" [disabled]="!canSubmitPayment" (click)="submitPayment()">
+          {{ addingPayment ? 'Registrando...' : 'Registrar cobro' }}
+        </button>
+      </div>
+    </section>
+
+    <div class="account-ledger-grid">
+      <section class="section-card ledger-card">
+        <div class="section-head ledger-head">
+          <div>
+            <span class="section-label">Ventas</span>
+            <p>{{ ventas.length }} movimiento{{ ventas.length === 1 ? '' : 's' }} de venta</p>
+          </div>
+        </div>
+
+        <div class="empty-payments ledger-empty" *ngIf="ventas.length === 0">No hay ventas registradas.</div>
+
+        <div class="table-shell" *ngIf="ventas.length > 0">
+          <table class="payments-table ledger-table ledger-table--sales">
+            <thead>
+              <tr>
+                <th>Venta</th>
+                <th>Detalle</th>
+                <th class="col-num">Monto</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let v of ventas" class="row-clickable" [class.row--cancelled]="v.status === 3" (click)="openDetalle(v)">
+                <td>
+                  <strong class="movement-code">{{ v.code }}</strong>
+                  <small class="movement-date">{{ formatDate(v.date) }}</small>
+                </td>
+                <td class="movement-description">{{ v.description }}</td>
+                <td class="col-num cell-amount">${{ formatCurrency(v.amount) }}</td>
+                <td><span class="chip" [ngClass]="statusChipClass(v)">{{ statusLabel(v) }}</span></td>
+                <td class="cell-arrow"><span>Ver</span> &rarr;</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section-card ledger-card">
+        <div class="section-head ledger-head">
+          <div>
+            <span class="section-label">Cobros</span>
+            <p>{{ cobros.length }} movimiento{{ cobros.length === 1 ? '' : 's' }} de cobro</p>
+          </div>
+          <button class="head-action head-action--payment" type="button" *ngIf="auth.hasPermission(permissionCodes.salesPay)" (click)="togglePaymentForm()">
+            {{ showPaymentForm ? 'Cerrar' : 'Registrar cobro' }}
+          </button>
+        </div>
+
+        <div class="empty-payments ledger-empty" *ngIf="cobros.length === 0">No hay cobros registrados.</div>
+
+        <div class="table-shell" *ngIf="cobros.length > 0">
+          <table class="payments-table ledger-table ledger-table--payments">
+            <thead>
+              <tr>
+                <th>Cobro</th>
+                <th>Detalle</th>
+                <th class="col-num">Monto</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let p of cobros">
+                <tr
+                  [class.row--cancelled]="!isActiveMovement(p)"
+                  [class.row-clickable]="hasImputaciones(p)"
+                  (click)="togglePaymentDetail(p)">
+                  <td>
+                    <strong class="movement-code">{{ p.method }}</strong>
+                    <small class="movement-date">{{ formatDate(p.date) }}</small>
+                  </td>
+                  <td class="movement-description">
+                    {{ p.description }}
+                    <button
+                      *ngIf="hasImputaciones(p)"
+                      type="button"
+                      class="imputaciones-toggle"
+                      (click)="$event.stopPropagation(); togglePaymentDetail(p)">
+                      {{ isExpanded(p) ? 'Ocultar ventas ▴' : 'Ver ventas ▾' }}
+                    </button>
+                  </td>
+                  <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
+                  <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>
+                  <td class="col-remove">
+                    <button
+                      *ngIf="isActiveMovement(p) && auth.hasPermission(permissionCodes.salesPay)"
+                      class="btn-cancel-payment"
+                      type="button"
+                      [disabled]="cancellingPaymentId === p.id"
+                      (click)="$event.stopPropagation(); cancelPayment(p)">
+                      {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
+                    </button>
+                  </td>
+                </tr>
+                <tr class="imputaciones-row" *ngIf="isExpanded(p)">
+                  <td colspan="5">
+                    <div class="imputaciones-panel">
+                      <div class="imputaciones-panel__header">
+                        <span class="imputaciones-panel__title">Relacion del movimiento</span>
+                        <strong>{{ (p.imputaciones?.length ?? 0) }} venta{{ (p.imputaciones?.length ?? 0) === 1 ? '' : 's' }} vinculada{{ (p.imputaciones?.length ?? 0) === 1 ? '' : 's' }}</strong>
+                      </div>
+                      <div class="imputaciones-list">
+                        <div class="imputacion-card" *ngFor="let i of p.imputaciones">
+                          <span class="imputacion-card__rail" aria-hidden="true"></span>
+                          <div class="imputacion-card__copy">
+                            <span class="imputacion-card__label">Venta aplicada</span>
+                            <span class="imputacion-factura">{{ ventaLabel(i) }}</span>
+                          </div>
+                          <span class="imputacion-amount">${{ formatCurrency(i.amount) }}</span>
+                        </div>
+                        <div class="imputacion-card imputacion-card--sobrante" *ngIf="(p.sobrante ?? 0) > 0">
+                          <span class="imputacion-card__rail" aria-hidden="true"></span>
+                          <div class="imputacion-card__copy">
+                            <span class="imputacion-card__label">Saldo disponible</span>
+                            <span class="imputacion-factura">Sobrante a favor del cliente</span>
+                          </div>
+                          <span class="imputacion-amount">${{ formatCurrency(p.sobrante ?? 0) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+</div>
+
+<!-- Detalle de venta (read-only) -->
+<div class="modal-backdrop" *ngIf="detalleModalOpen" (click)="closeDetalle()"></div>
+<div class="modal-panel" *ngIf="detalleModalOpen">
+  <div class="modal-card modal-card--detalle" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-head__copy">
+        <p class="eyebrow">Detalle de venta</p>
+        <h2 *ngIf="detalleModalSale">{{ detalleModalSale.code || 'S/N' }} · {{ detalleModalSale.customerFullName }}</h2>
+        <h2 *ngIf="!detalleModalSale && detalleLoading">Cargando...</h2>
+      </div>
+      <button class="modal-close" type="button" (click)="closeDetalle()">×</button>
+    </div>
+
+    <div *ngIf="detalleLoading" class="hint">Cargando...</div>
+
+    <ng-container *ngIf="!detalleLoading && detalleModalSale as sale">
+      <div class="detalle-header">
+        <div class="detalle-header__row">
+          <span class="detalle-header__code">{{ sale.code || 'S/N' }}</span>
+          <span class="badge" [ngClass]="detalleStatusClass">{{ detalleStatusLabel }}</span>
+        </div>
+        <div class="detalle-header__meta">
+          <span>{{ sale.customerFullName || 'Sin cliente' }}</span>
+          <span>{{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+
+      <div class="detalle-section">
+        <div class="detalle-section__title">Productos</div>
+        <table class="detalle-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-right">Cant.</th>
+              <th class="text-right">Unitario</th>
+              <th class="text-right" *ngIf="detalleHasDiscount">Desc.</th>
+              <th class="text-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of sale.details">
+              <td>{{ d.productBrand }} / {{ d.productName }}</td>
+              <td class="text-right">{{ d.quantity }}</td>
+              <td class="text-right">${{ d.unitPrice | number:'1.2-2' }}</td>
+              <td class="text-right" *ngIf="detalleHasDiscount">
+                <span *ngIf="d.discountPercent > 0">{{ d.discountPercent }}%</span>
+              </td>
+              <td class="text-right">${{ d.totalAmount | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detalle-totals">
+        <div class="detalle-totals__row" *ngIf="sale.generalDiscountPercent && sale.generalDiscountPercent > 0">
+          <span>Subtotal</span>
+          <span>${{ sale.originalTotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--discount" *ngIf="sale.generalDiscountPercent && sale.generalDiscountPercent > 0">
+          <span>Descuento general ({{ sale.generalDiscountPercent }}%)</span>
+          <span>-${{ ((sale.originalTotal ?? sale.totalAmount) - sale.totalAmount) | number:'1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--total">
+          <span>Total</span>
+          <span>${{ sale.totalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

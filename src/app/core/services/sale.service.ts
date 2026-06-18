@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AddCcPaymentGroupRequest, AddCcPaymentGroupResponse, AddCcPaymentRequest, CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, SaleByIdResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
+import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, SaleByIdResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -97,20 +97,8 @@ export class SaleService {
         return this.http.get<CcPaymentResponse[]>(`${this.base}/${saleId}/cc-payments`);
     }
 
-    addCcPayment(saleId: string, request: AddCcPaymentRequest): Observable<CcPaymentResponse> {
-        return this.http.post<CcPaymentResponse>(`${this.base}/${saleId}/cc-payments`, request);
-    }
-
-    cancelCcPayment(saleId: string, paymentId: string): Observable<void> {
-        return this.http.post<void>(`${this.base}/${saleId}/cc-payments/${paymentId}/cancel`, {});
-    }
-
     listCcSales(customerId?: string): Observable<CcSaleListItem[]> {
         const params = customerId ? `?customerId=${customerId}` : '';
         return this.http.get<CcSaleListItem[]>(`${this.base}/cc${params}`);
-    }
-
-    addCcPaymentGroup(saleId: string, request: AddCcPaymentGroupRequest): Observable<AddCcPaymentGroupResponse> {
-        return this.http.post<AddCcPaymentGroupResponse>(`${this.base}/${saleId}/cc-payment-group`, request);
     }
 }

@@ -84,11 +84,18 @@ export const routes: Routes = [
             import('./features/sales/sales-cc/sales-cc.component').then(m => m.SalesCcComponent)
     },
     {
-        path: 'sales-cc/:id/payments',
+        path: 'clients-cc',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.salesAccess },
         loadComponent: () =>
-            import('./features/sales/sales-cc-payments/sales-cc-payments.component').then(m => m.SalesCcPaymentsComponent)
+            import('./features/clients/customer-accounts.component').then(m => m.CustomerAccountsComponent)
+    },
+    {
+        path: 'clients-cc/customer/:customerId',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.salesAccess },
+        loadComponent: () =>
+            import('./features/clients/customer-account.component').then(m => m.CustomerAccountComponent)
     },
     {
         path: 'cash',
@@ -252,13 +259,7 @@ export const routes: Routes = [
         loadComponent: () =>
             import('./features/purchases/purchase-detail.component').then(m => m.PurchaseDetailComponent)
     },
-    {
-        path: 'clients/cc',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.salesAccess },
-        loadComponent: () =>
-            import('./features/clients/clients-cc/clients-cc.component').then(m => m.ClientsCcComponent)
-    },
+    { path: 'clients/cc', redirectTo: 'clients-cc', pathMatch: 'full' },
     {
         path: 'customers/:id',
         canActivate: [authGuard],
