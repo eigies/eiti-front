@@ -298,7 +298,10 @@
         <h2 *ngIf="detalleModalSale">{{ detalleModalSale.code || 'S/N' }} · {{ detalleModalSale.customerFullName }}</h2>
         <h2 *ngIf="!detalleModalSale && detalleLoading">Cargando...</h2>
       </div>
-      <button class="modal-close" type="button" (click)="closeDetalle()">×</button>
+      <div class="modal-head__actions">
+        <button class="detalle-remito-btn" type="button" *ngIf="detalleModalSale" (click)="descargarRemitoTraslado()">↓ Remito sin precios</button>
+        <button class="modal-close" type="button" (click)="closeDetalle()">×</button>
+      </div>
     </div>
 
     <div *ngIf="detalleLoading" class="hint">Cargando...</div>

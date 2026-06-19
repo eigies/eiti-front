@@ -4,8 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CustomerAccountService } from '../../core/services/customer-account.service';
 import { BankService } from '../../core/services/bank.service';
+import { BranchService } from '../../core/services/branch.service';
 import { SaleService } from '../../core/services/sale.service';
 import { AuthService } from '../../core/services/auth.service';
+import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import {
   CustomerAccount,
   CustomerAccountMovement,
@@ -61,6 +63,7 @@ export class CustomerAccountComponent implements OnInit {
   newCheque: AddCustomerPaymentCheque = this.emptyCheque();
 
   banks: BankResponse[] = [];
+  branches: { id: string; name: string }[] = [];
 
   readonly paymentMethods = [
     { value: 1, label: 'Efectivo' },
@@ -73,7 +76,9 @@ export class CustomerAccountComponent implements OnInit {
   constructor(
     private readonly customerAccountService: CustomerAccountService,
     private readonly bankService: BankService,
+    private readonly branchService: BranchService,
     private readonly saleService: SaleService,
+    private readonly remitoPdf: RemitoPdfService,
     readonly auth: AuthService,
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
@@ -87,6 +92,10 @@ export class CustomerAccountComponent implements OnInit {
     this.bankService.listBanks(true).subscribe({
       next: banks => { this.banks = banks; this.cdr.markForCheck(); },
       error: () => {} // non-blocking — el cobro funciona sin datos de banco
+    });
+    this.branchService.listBranches().subscribe({
+      next: branches => { this.branches = branches.map(b => ({ id: b.id, name: b.name })); this.cdr.markForCheck(); },
+      error: () => {} // non-blocking — el remito sale igual con sucursal genérica
     });
     this.load();
   }
@@ -312,6 +321,40 @@ export class CustomerAccountComponent implements OnInit {
   closeDetalle(): void {
     this.detalleModalOpen = false;
     this.detalleModalSale = null;
+  }
+
+  // Remito de traslado (sin importes) desde el detalle de la venta CC.
+  async descargarRemitoTraslado(): Promise<void> {
+    const sale = this.detalleModalSale;
+    if (!sale) return;
+    if (!sale.details?.length) {
+      this.toast.error('La venta no tiene items para el remito.');
+      return;
+    }
+    await this.remitoPdf.generate(
+      {
+        id: sale.id,
+        code: sale.code ?? null,
+        createdAt: sale.createdAt,
+        customerFullName: sale.customerFullName,
+        customerDocument: sale.customerDocument,
+        customerTaxId: sale.customerTaxId,
+        hasDelivery: sale.hasDelivery,
+        totalAmount: sale.totalAmount,
+        details: sale.details.map(d => ({
+          productBrand: d.productBrand,
+          productName: d.productName,
+          quantity: d.quantity,
+          unitPrice: d.unitPrice,
+          totalAmount: d.totalAmount
+        }))
+      },
+      {
+        branchName: this.branches.find(b => b.id === sale.branchId)?.name ?? 'Sucursal',
+        statusLabel: this.detalleStatusLabel
+      },
+      false
+    );
   }
 
   get detalleHasDiscount(): boolean {

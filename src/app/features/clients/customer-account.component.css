@@ -1512,3 +1512,31 @@
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Botón remito sin precios en el detalle de venta CC */
+.modal-head__actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-shrink: 0;
+}
+
+.detalle-remito-btn {
+  padding: .4rem .7rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border-2));
+  border-radius: 8px;
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+
+.detalle-remito-btn:hover {
+  border-color: color-mix(in srgb, var(--amber) 58%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+}
