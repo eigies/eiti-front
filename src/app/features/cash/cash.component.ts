@@ -25,6 +25,7 @@ import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import { forkJoin } from 'rxjs';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { PdfBrandingService } from '../../shared/services/pdf-branding.service';
 
 type CashSessionView = {
     session: CashSessionResponse;
@@ -1264,6 +1265,7 @@ export class CashComponent implements OnInit {
         private toast: ToastService,
         private onboardingService: OnboardingService,
         private router: Router,
+        private pdfBranding: PdfBrandingService,
         public auth: AuthService
     ) {
         this.drawerForm = this.fb.group({ name: ['', Validators.required] });
@@ -1769,8 +1771,9 @@ export class CashComponent implements OnInit {
         this.exportSessionsPdf(`cash-history-${suffix}.pdf`, 'Historial de caja', this.historySessions.map(item => item.session), overrides);
     }
 
-    private exportSessionsPdf(fileName: string, title: string, sessions: CashSessionResponse[], expectedOverrides?: Map<string, number>): void {
+    private async exportSessionsPdf(fileName: string, title: string, sessions: CashSessionResponse[], expectedOverrides?: Map<string, number>): Promise<void> {
         const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
+        const branding = await this.pdfBranding.prepare();
         const margin = 10;
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
@@ -1788,22 +1791,15 @@ export class CashComponent implements OnInit {
         };
 
         const drawDocumentHeader = (continuation = false): void => {
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(15);
-            doc.setTextColor(28, 28, 28);
-            doc.text(continuation ? `${title} / Continuacion` : title, margin, y);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8.6);
-            doc.setTextColor(108, 108, 108);
-            doc.text(`Emitido: ${new Date().toLocaleString('es-AR')}`, pageWidth - margin, y - .2, { align: 'right' });
-            y += 3.5;
-
-            doc.setFontSize(8);
-            doc.setTextColor(132, 132, 132);
-            doc.text('Caja / Sesiones / Movimientos', margin, y + 1.5);
-            y += 4.5;
-
+            this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
+            y = this.pdfBranding.drawHeader(doc, branding, {
+                title,
+                subtitle: 'Caja / Sesiones / Movimientos',
+                continuation,
+                margin,
+                y: 12,
+                pageWidth
+            });
             doc.setFillColor(244, 239, 229);
             doc.setDrawColor(221, 206, 180);
             doc.roundedRect(margin, y, pageWidth - margin * 2, 8, 2, 2, 'FD');

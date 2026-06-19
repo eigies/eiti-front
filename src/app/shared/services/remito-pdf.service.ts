@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { jsPDF } from 'jspdf';
+import { PdfBrandingService } from './pdf-branding.service';
 
 // Datos mínimos que el remito necesita de una venta (compatible con SaleResponse y SaleByIdResponse).
 export interface RemitoSaleDetail {
@@ -33,8 +34,11 @@ export interface RemitoContext {
 // sin precios (oculta columnas Unitario/Subtotal, caja TOTAL y la info de pago/cobrado).
 @Injectable({ providedIn: 'root' })
 export class RemitoPdfService {
-  generate(sale: RemitoSale, ctx: RemitoContext, incluirImportes: boolean): void {
+  constructor(private readonly brandingService: PdfBrandingService) {}
+
+  async generate(sale: RemitoSale, ctx: RemitoContext, incluirImportes: boolean): Promise<void> {
     const doc = new jsPDF({ format: 'a4', unit: 'mm' });
+    const branding = await this.brandingService.prepare();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 14;
@@ -56,22 +60,18 @@ export class RemitoPdfService {
 
     let y = margin;
 
-    const drawDocumentHeader = (): void => {
-      doc.setDrawColor(35, 35, 35);
-      doc.setFillColor(248, 248, 248);
-      doc.roundedRect(margin, y, contentWidth, 20, 2, 2, 'FD');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(15);
-      doc.setTextColor(20, 20, 20);
-      doc.text(docTitle, margin + 4, y + 8);
-      doc.setFontSize(10);
-      doc.text(`Nro. ${nro}`, margin + 4, y + 14);
+    const drawDocumentHeader = (continuation = false): void => {
+      this.brandingService.drawWatermark(doc, branding, pageWidth, pageHeight);
+      y = this.brandingService.drawHeader(doc, branding, {
+        title: continuation ? `${docTitle} / Continuacion` : docTitle,
+        subtitle: `Nro. ${nro} · Fecha venta: ${formatDate(sale.createdAt)}`,
+        margin,
+        y,
+        pageWidth
+      });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(90, 90, 90);
-      doc.text(`Emitido: ${formatDate(new Date().toISOString())}`, pageWidth - margin - 4, y + 8, { align: 'right' });
-      doc.text(`Fecha venta: ${formatDate(sale.createdAt)}`, pageWidth - margin - 4, y + 14, { align: 'right' });
-      y += 25;
     };
 
     const drawMetaBlock = (): void => {
@@ -154,6 +154,7 @@ export class RemitoPdfService {
       if (continuation) {
         doc.addPage();
         y = margin;
+        drawDocumentHeader(true);
       }
       drawItemsHeader(continuation);
     };
@@ -196,6 +197,7 @@ export class RemitoPdfService {
       if (y + 24 > printableBottom) {
         doc.addPage();
         y = margin;
+        drawDocumentHeader(true);
       }
       const summaryWidth = 72;
       const summaryX = pageWidth - margin - summaryWidth;
@@ -213,17 +215,7 @@ export class RemitoPdfService {
     const footerText = incluirImportes
       ? 'Documento para control interno de venta'
       : 'Remito de traslado - sin valor fiscal';
-    const pageCount = doc.getNumberOfPages();
-    for (let page = 1; page <= pageCount; page += 1) {
-      doc.setPage(page);
-      doc.setDrawColor(205, 205, 205);
-      doc.line(margin, pageHeight - 13, pageWidth - margin, pageHeight - 13);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(120, 120, 120);
-      doc.text(footerText, margin, pageHeight - 8);
-      doc.text(`Pagina ${page} de ${pageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
-    }
+    this.brandingService.drawFooter(doc, pageWidth, pageHeight, margin, footerText);
 
     const prefix = incluirImportes ? 'venta' : 'remito-traslado';
     doc.save(`${prefix}-${sale.createdAt.slice(0, 10)}.pdf`);

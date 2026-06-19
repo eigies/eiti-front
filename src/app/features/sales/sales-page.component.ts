@@ -1172,15 +1172,16 @@ exportRemitoTraslado(sale: SaleResponse): void {
     this.generateRemito(sale, false);
     }
 
-private generateRemito(sale: SaleResponse, incluirImportes: boolean): void {
+private async generateRemito(sale: SaleResponse, incluirImportes: boolean): Promise<void> {
     if (sale.details.length === 0) {
         this.toast.error('La venta no tiene items para exportar.');
         return;
     }
-    this.remitoPdf.generate(
+
+    await this.remitoPdf.generate(
         {
             id: sale.id,
-            code: null,
+            code: sale.code ?? null,
             createdAt: sale.createdAt,
             customerFullName: sale.customerFullName,
             customerDocument: sale.customerDocument,

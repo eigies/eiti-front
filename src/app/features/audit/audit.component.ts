@@ -15,6 +15,7 @@ import { ToastService } from '../../shared/services/toast.service';
 import { AuditLogItem } from '../../core/models/audit.models';
 import { UserResponse } from '../../core/models/user.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { PdfBrandingService } from '../../shared/services/pdf-branding.service';
 
 interface PayloadRow {
   label: string;
@@ -145,7 +146,8 @@ export class AuditComponent implements OnInit {
     private readonly customerService: CustomerService,
     private readonly supplierService: SupplierService,
     private readonly branchService: BranchService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly pdfBranding: PdfBrandingService
   ) {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -488,13 +490,14 @@ export class AuditComponent implements OnInit {
     XLSX.writeFile(workbook, this.exportFileName('xlsx'), { compression: true });
   }
 
-  exportPdf(): void {
+  async exportPdf(): Promise<void> {
     if (this.items.length === 0) {
       this.toast.error('No hay registros para exportar.');
       return;
     }
 
     const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
+    const branding = await this.pdfBranding.prepare();
     const margin = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -512,22 +515,15 @@ export class AuditComponent implements OnInit {
     };
 
     const drawDocumentHeader = (continuation = false): void => {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(15);
-      doc.setTextColor(28, 28, 28);
-      doc.text(continuation ? `${title} / Continuacion` : title, margin, y);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.6);
-      doc.setTextColor(108, 108, 108);
-      doc.text(`Emitido: ${new Date().toLocaleString('es-AR')}`, pageWidth - margin, y - .2, { align: 'right' });
-      y += 3.5;
-
-      doc.setFontSize(8);
-      doc.setTextColor(132, 132, 132);
-      doc.text('Reporteria / Auditoria', margin, y + 1.5);
-      y += 4.5;
-
+      this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
+      y = this.pdfBranding.drawHeader(doc, branding, {
+        title,
+        subtitle: `Reporteria / Auditoria - ${f.dateFrom} a ${f.dateTo}`,
+        continuation,
+        margin,
+        y: 12,
+        pageWidth
+      });
       doc.setFillColor(244, 239, 229);
       doc.setDrawColor(221, 206, 180);
       doc.roundedRect(margin, y, pageWidth - margin * 2, 8, 2, 2, 'FD');

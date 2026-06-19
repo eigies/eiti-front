@@ -1,164 +1,195 @@
-﻿<div class="page">
-    <div class="page__header">
-        <div class="page__eyebrow">_ CLIENTES</div>
-        <h1 class="page__title">Gestion de clientes</h1>
-    </div>
+<div class="page">
+    <header class="page__header">
+        <div>
+            <div class="page__eyebrow">_ CLIENTES</div>
+            <h1 class="page__title">Gestion de clientes</h1>
+        </div>
+        <button class="btn-primary btn-primary--header" type="button" (click)="openCreatePanel()">Nuevo cliente -></button>
+    </header>
 
-    <div class="layout">
-        <section class="panel panel--form">
-            <div class="panel__head">
-                <span class="panel__icon">+</span>
-                <span class="panel__title">{{ isEditing ? 'Editar cliente' : 'Alta de cliente' }}</span>
-            </div>
+    <section class="command-bar">
+        <div class="search-box">
+            <span class="search-box__label">Buscar cliente</span>
+            <input class="control" type="search"
+                   placeholder="Nombre, email, telefono, documento o CUIT"
+                   [value]="searchTerm"
+                   (input)="searchTerm = $any($event.target).value" />
+        </div>
+        <div class="command-stats">
+            <span>Visibles <strong>{{ filteredCustomers.length }}</strong></span>
+            <span>Total <strong>{{ customers.length }}</strong></span>
+        </div>
+    </section>
 
-            <form class="customer-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-                <section class="form-section">
-                    <div class="form-section__head">
-                        <h2>Identidad</h2>
-                        <p>Datos basicos del cliente</p>
-                    </div>
-                    <div class="form-grid form-grid--2">
-                        <div class="field" [class.field--error]="isInvalid('firstName')">
-                            <label class="field__label">Nombre</label>
-                            <input class="field__input" type="text" formControlName="firstName" placeholder="Juan" />
-                            <span class="field__error" *ngIf="isInvalid('firstName')">Requerido</span>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('lastName')">
-                            <label class="field__label">Apellido</label>
-                            <input class="field__input" type="text" formControlName="lastName" placeholder="Perez" />
-                            <span class="field__error" *ngIf="isInvalid('lastName')">Requerido</span>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('email')">
-                            <label class="field__label">Email</label>
-                            <input class="field__input" type="email" formControlName="email" placeholder="juan@empresa.com" />
-                            <span class="field__error" *ngIf="isInvalid('email')">Email invalido</span>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('phone')">
-                            <label class="field__label">Telefono</label>
-                            <input class="field__input" type="text" formControlName="phone" placeholder="+54 11 1234 5678" />
-                            <span class="field__error" *ngIf="isInvalid('phone')">Requerido</span>
-                        </div>
-                    </div>
-                </section>
+    <section class="panel panel--list">
+        <div class="panel__head">
+            <span class="panel__icon">*</span>
+            <span class="panel__title">Clientes de tu empresa</span>
+            <span class="panel__count">{{ filteredCustomers.length }}</span>
+        </div>
 
-                <section class="form-section">
-                    <div class="form-section__head">
-                        <h2>Documentacion</h2>
-                        <p>Documento y datos fiscales</p>
-                    </div>
-                    <div class="form-grid form-grid--3">
-                        <div class="field" [class.field--error]="isInvalid('documentType')">
-                            <label class="field__label">Tipo de documento</label>
-                            <app-searchable-select
-                                formControlName="documentType"
-                                [options]="documentTypeOptions"
-                                placeholder="Tipo de documento"
-                                searchPlaceholder="Buscar tipo...">
-                            </app-searchable-select>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('documentNumber')">
-                            <label class="field__label">Numero de documento</label>
-                            <input class="field__input" type="text" formControlName="documentNumber" placeholder="30111222" />
-                            <span class="field__error" *ngIf="isInvalid('documentNumber')">Requerido</span>
-                        </div>
-                        <div class="field">
-                            <label class="field__label">CUIT</label>
-                            <input class="field__input" type="text" formControlName="taxId" placeholder="20-30111222-9" />
-                        </div>
-                    </div>
-                </section>
+        <div class="empty-state" *ngIf="customers.length === 0">
+            <span class="empty-state__icon">+</span>
+            <strong>No hay clientes cargados</strong>
+            <span>Crealos desde el boton superior para empezar a operar.</span>
+        </div>
 
-                <section class="form-section">
-                    <div class="form-section__head">
-                        <h2>Domicilio</h2>
-                        <p>Direccion principal para facturacion y envios</p>
-                    </div>
-                    <div class="form-grid form-grid--4">
-                        <div class="field field--span-2" [class.field--error]="isInvalid('street')">
-                            <label class="field__label">Calle</label>
-                            <input class="field__input" type="text" formControlName="street" placeholder="Av. Siempre Viva" />
-                            <span class="field__error" *ngIf="isInvalid('street')">Requerido</span>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('streetNumber')">
-                            <label class="field__label">Numero</label>
-                            <input class="field__input" type="text" formControlName="streetNumber" placeholder="742" />
-                            <span class="field__error" *ngIf="isInvalid('streetNumber')">Requerido</span>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('postalCode')">
-                            <label class="field__label">Codigo postal</label>
-                            <input class="field__input" type="text" formControlName="postalCode" placeholder="1000" />
-                            <span class="field__error" *ngIf="isInvalid('postalCode')">Requerido</span>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('city')">
-                            <label class="field__label">Localidad</label>
-                            <input class="field__input" type="text" formControlName="city" placeholder="Buenos Aires" />
-                            <span class="field__error" *ngIf="isInvalid('city')">Requerido</span>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('stateOrProvince')">
-                            <label class="field__label">Provincia</label>
-                            <input class="field__input" type="text" formControlName="stateOrProvince" placeholder="Buenos Aires" />
-                            <span class="field__error" *ngIf="isInvalid('stateOrProvince')">Requerido</span>
-                        </div>
-                        <div class="field" [class.field--error]="isInvalid('country')">
-                            <label class="field__label">Pais</label>
-                            <input class="field__input" type="text" formControlName="country" placeholder="Argentina" />
-                            <span class="field__error" *ngIf="isInvalid('country')">Requerido</span>
-                        </div>
-                        <div class="field">
-                            <label class="field__label">Piso</label>
-                            <input class="field__input" type="text" formControlName="floor" placeholder="3" />
-                        </div>
-                        <div class="field">
-                            <label class="field__label">Depto</label>
-                            <input class="field__input" type="text" formControlName="apartment" placeholder="B" />
-                        </div>
-                        <div class="field field--span-2">
-                            <label class="field__label">Referencia</label>
-                            <input class="field__input" type="text" formControlName="reference" placeholder="Porton negro" />
-                        </div>
-                    </div>
-                </section>
+        <div class="empty-state" *ngIf="customers.length > 0 && filteredCustomers.length === 0">
+            <span class="empty-state__icon">?</span>
+            <strong>Sin resultados</strong>
+            <span>Ningun cliente coincide con la busqueda actual.</span>
+        </div>
 
-                <div class="form-actions">
-                    <button class="btn-ghost" type="button" *ngIf="isEditing" (click)="cancelEdit()">Cancelar</button>
-                    <button class="btn-primary" type="submit" [disabled]="creating">
-                        <span *ngIf="!creating">{{ isEditing ? 'Guardar cambios ->' : 'Crear cliente ->' }}</span>
-                        <span *ngIf="creating">{{ isEditing ? 'Guardando...' : 'Creando...' }}</span>
+        <div class="customer-list" *ngIf="filteredCustomers.length > 0">
+            <article class="customer-row" *ngFor="let c of filteredCustomers; let i = index" [style.animation-delay]="i * 0.025 + 's'">
+                <div class="customer-row__avatar">{{ customerInitial(c) }}</div>
+                <div class="customer-row__main">
+                    <span class="customer-row__name">{{ c.fullName || c.name }}</span>
+                    <span class="customer-row__contact">{{ c.email || 'Sin email' }} <span class="dot">/</span> {{ c.phone || 'Sin telefono' }}</span>
+                    <span class="customer-row__address">{{ formatAddress(c) }}</span>
+                </div>
+                <div class="customer-row__meta">
+                    <span class="meta-label">Documento</span>
+                    <span class="meta-value">{{ formatDocument(c) }}</span>
+                </div>
+                <div class="customer-row__actions">
+                    <a class="row-action" routerLink="/customers/{{ c.id }}">Ver</a>
+                    <a class="row-action row-action--cc" [routerLink]="['/clients-cc/customer', c.id]">CC</a>
+                    <button class="row-action" type="button" (click)="beginEdit(c)">Editar</button>
+                    <button class="row-action row-action--danger" type="button"
+                        *ngIf="canDeleteCustomers" (click)="deleteCustomer(c)" [disabled]="deletingId === c.id">
+                        {{ deletingId === c.id ? '...' : 'Eliminar' }}
                     </button>
                 </div>
-            </form>
-        </section>
+            </article>
+        </div>
+    </section>
 
-        <section class="panel panel--list">
-            <div class="panel__head">
-                <span class="panel__icon">*</span>
-                <span class="panel__title">Clientes de tu empresa</span>
-                <span class="panel__count">{{ customers.length }}</span>
+    <div class="drawer-backdrop" [class.drawer-backdrop--closing]="formPanelClosing" *ngIf="formPanelOpen" (click)="cancelEdit()"></div>
+    <aside class="customer-drawer" [class.customer-drawer--closing]="formPanelClosing" *ngIf="formPanelOpen" aria-label="Formulario de cliente">
+        <div class="drawer__head">
+            <div>
+                <span class="drawer__eyebrow">{{ isEditing ? 'Edicion' : 'Alta' }}</span>
+                <h2>{{ isEditing ? 'Editar cliente' : 'Nuevo cliente' }}</h2>
             </div>
+            <button class="drawer__close" type="button" (click)="cancelEdit()" aria-label="Cerrar">x</button>
+        </div>
 
-            <div class="empty-state" *ngIf="customers.length === 0">
-                <span class="empty-state__icon">o</span>
-                <span>No hay clientes cargados para tu empresa</span>
-            </div>
-
-            <div class="customer-grid" *ngIf="customers.length > 0">
-                <div class="customer-card" *ngFor="let c of customers; let i = index" [style.animation-delay]="i * 0.04 + 's'">
-                    <div class="customer-card__avatar">{{ c.name.charAt(0).toUpperCase() }}</div>
-                    <div class="customer-card__body">
-                        <span class="customer-card__name">{{ c.name }}</span>
-                        <span class="customer-card__email">{{ c.email }}</span>
-                        <span class="customer-card__address">{{ formatAddress(c) }}</span>
+        <form class="customer-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <section class="form-section">
+                <div class="form-section__head">
+                    <h3>Identidad</h3>
+                    <p>Datos basicos del cliente</p>
+                </div>
+                <div class="form-grid form-grid--2">
+                    <div class="field" [class.field--error]="isInvalid('firstName')">
+                        <label class="field__label">Nombre</label>
+                        <input class="field__input" type="text" formControlName="firstName" placeholder="Juan" />
+                        <span class="field__error" *ngIf="isInvalid('firstName')">Requerido</span>
                     </div>
-                    <div class="customer-card__actions">
-                        <a class="customer-card__action" routerLink="/customers/{{ c.id }}">Ver</a>
-                        <button class="customer-card__action" type="button" (click)="beginEdit(c)">Editar</button>
-                        <button class="customer-card__action customer-card__action--danger" type="button"
-                            *ngIf="canDeleteCustomers" (click)="deleteCustomer(c)" [disabled]="deletingId === c.id">
-                            {{ deletingId === c.id ? '...' : 'Eliminar' }}
-                        </button>
+                    <div class="field" [class.field--error]="isInvalid('lastName')">
+                        <label class="field__label">Apellido</label>
+                        <input class="field__input" type="text" formControlName="lastName" placeholder="Perez" />
+                        <span class="field__error" *ngIf="isInvalid('lastName')">Requerido</span>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('email')">
+                        <label class="field__label">Email</label>
+                        <input class="field__input" type="email" formControlName="email" placeholder="juan@empresa.com" />
+                        <span class="field__error" *ngIf="isInvalid('email')">Email invalido</span>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('phone')">
+                        <label class="field__label">Telefono</label>
+                        <input class="field__input" type="text" formControlName="phone" placeholder="+54 11 1234 5678" />
+                        <span class="field__error" *ngIf="isInvalid('phone')">Requerido</span>
                     </div>
                 </div>
+            </section>
+
+            <section class="form-section">
+                <div class="form-section__head">
+                    <h3>Documentacion</h3>
+                    <p>Documento y datos fiscales</p>
+                </div>
+                <div class="form-grid form-grid--3">
+                    <div class="field" [class.field--error]="isInvalid('documentType')">
+                        <label class="field__label">Tipo de documento</label>
+                        <app-searchable-select
+                            formControlName="documentType"
+                            [options]="documentTypeOptions"
+                            placeholder="Tipo de documento"
+                            searchPlaceholder="Buscar tipo...">
+                        </app-searchable-select>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('documentNumber')">
+                        <label class="field__label">Numero de documento</label>
+                        <input class="field__input" type="text" formControlName="documentNumber" placeholder="30111222" />
+                        <span class="field__error" *ngIf="isInvalid('documentNumber')">Requerido</span>
+                    </div>
+                    <div class="field">
+                        <label class="field__label">CUIT</label>
+                        <input class="field__input" type="text" formControlName="taxId" placeholder="20-30111222-9" />
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <div class="form-section__head">
+                    <h3>Domicilio</h3>
+                    <p>Direccion principal para facturacion y envios</p>
+                </div>
+                <div class="form-grid form-grid--4">
+                    <div class="field field--span-2" [class.field--error]="isInvalid('street')">
+                        <label class="field__label">Calle</label>
+                        <input class="field__input" type="text" formControlName="street" placeholder="Av. Siempre Viva" />
+                        <span class="field__error" *ngIf="isInvalid('street')">Requerido</span>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('streetNumber')">
+                        <label class="field__label">Numero</label>
+                        <input class="field__input" type="text" formControlName="streetNumber" placeholder="742" />
+                        <span class="field__error" *ngIf="isInvalid('streetNumber')">Requerido</span>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('postalCode')">
+                        <label class="field__label">Codigo postal</label>
+                        <input class="field__input" type="text" formControlName="postalCode" placeholder="1000" />
+                        <span class="field__error" *ngIf="isInvalid('postalCode')">Requerido</span>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('city')">
+                        <label class="field__label">Localidad</label>
+                        <input class="field__input" type="text" formControlName="city" placeholder="Buenos Aires" />
+                        <span class="field__error" *ngIf="isInvalid('city')">Requerido</span>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('stateOrProvince')">
+                        <label class="field__label">Provincia</label>
+                        <input class="field__input" type="text" formControlName="stateOrProvince" placeholder="Buenos Aires" />
+                        <span class="field__error" *ngIf="isInvalid('stateOrProvince')">Requerido</span>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('country')">
+                        <label class="field__label">Pais</label>
+                        <input class="field__input" type="text" formControlName="country" placeholder="Argentina" />
+                        <span class="field__error" *ngIf="isInvalid('country')">Requerido</span>
+                    </div>
+                    <div class="field">
+                        <label class="field__label">Piso</label>
+                        <input class="field__input" type="text" formControlName="floor" placeholder="3" />
+                    </div>
+                    <div class="field">
+                        <label class="field__label">Depto</label>
+                        <input class="field__input" type="text" formControlName="apartment" placeholder="B" />
+                    </div>
+                    <div class="field field--span-2">
+                        <label class="field__label">Referencia</label>
+                        <input class="field__input" type="text" formControlName="reference" placeholder="Porton negro" />
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button class="btn-ghost" type="button" (click)="cancelEdit()">Cancelar</button>
+                <button class="btn-primary" type="submit" [disabled]="creating">
+                    <span *ngIf="!creating">{{ isEditing ? 'Guardar cambios ->' : 'Crear cliente ->' }}</span>
+                    <span *ngIf="creating">{{ isEditing ? 'Guardando...' : 'Creando...' }}</span>
+                </button>
             </div>
-        </section>
-    </div>
+        </form>
+    </aside>
 </div>

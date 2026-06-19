@@ -17,6 +17,7 @@ export class CompanyComponent implements OnInit {
   company: CompanyResponse | null = null;
   loading = false;
   saving = false;
+  readonly maxPdfImageBytes = 700_000;
 
   constructor(
     private fb: FormBuilder,
@@ -28,7 +29,9 @@ export class CompanyComponent implements OnInit {
       primaryDomain: ['', [Validators.required, Validators.maxLength(255)]],
       whatsAppEnabled: [false],
       whatsAppPhoneNumber: [''],
-      defaultNoDeliverySurcharge: [null, [Validators.min(0)]]
+      defaultNoDeliverySurcharge: [null, [Validators.min(0)]],
+      pdfLogoUrl: [''],
+      pdfWatermarkUrl: ['']
     });
   }
 
@@ -60,7 +63,9 @@ export class CompanyComponent implements OnInit {
       primaryDomain: String(this.form.get('primaryDomain')?.value || ''),
       isWhatsAppEnabled: Boolean(this.form.get('whatsAppEnabled')?.value),
       whatsAppSenderPhone: this.nullIfEmpty(this.form.get('whatsAppPhoneNumber')?.value),
-      defaultNoDeliverySurcharge: rawSurcharge === null || rawSurcharge === '' ? null : Number(rawSurcharge)
+      defaultNoDeliverySurcharge: rawSurcharge === null || rawSurcharge === '' ? null : Number(rawSurcharge),
+      pdfLogoUrl: this.nullIfEmpty(this.form.get('pdfLogoUrl')?.value),
+      pdfWatermarkUrl: this.nullIfEmpty(this.form.get('pdfWatermarkUrl')?.value)
     }).subscribe({
       next: (company) => {
         this.company = company;
@@ -96,13 +101,51 @@ export class CompanyComponent implements OnInit {
     return value && value.trim().length > 0 ? value.trim() : null;
   }
 
+  imagePreview(field: 'pdfLogoUrl' | 'pdfWatermarkUrl'): string | null {
+    return this.nullIfEmpty(this.form.get(field)?.value);
+  }
+
+  clearImage(field: 'pdfLogoUrl' | 'pdfWatermarkUrl'): void {
+    this.form.get(field)?.setValue('');
+    this.form.get(field)?.markAsDirty();
+  }
+
+  onImageSelected(field: 'pdfLogoUrl' | 'pdfWatermarkUrl', event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.toast.error('Selecciona una imagen PNG o JPG.');
+      return;
+    }
+
+    if (file.size > this.maxPdfImageBytes) {
+      this.toast.error('La imagen debe pesar menos de 700 KB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.form.get(field)?.setValue(String(reader.result || ''));
+      this.form.get(field)?.markAsDirty();
+    };
+    reader.onerror = () => this.toast.error('No se pudo leer la imagen.');
+    reader.readAsDataURL(file);
+  }
+
   private mapCompanyToForm(company: CompanyResponse) {
     return {
       name: company.name,
       primaryDomain: company.primaryDomain,
       whatsAppEnabled: Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled),
       whatsAppPhoneNumber: company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? '',
-      defaultNoDeliverySurcharge: company.defaultNoDeliverySurcharge ?? null
+      defaultNoDeliverySurcharge: company.defaultNoDeliverySurcharge ?? null,
+      pdfLogoUrl: company.pdfLogoUrl ?? '',
+      pdfWatermarkUrl: company.pdfWatermarkUrl ?? ''
     };
   }
 }

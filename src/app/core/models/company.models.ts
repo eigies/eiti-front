@@ -7,6 +7,8 @@ export interface CompanyResponse {
     whatsAppEnabled?: boolean | null;
     whatsAppPhoneNumber?: string | null;
     defaultNoDeliverySurcharge?: number | null;
+    pdfLogoUrl?: string | null;
+    pdfWatermarkUrl?: string | null;
     createdAt: string;
 }
 
@@ -18,4 +20,6 @@ export interface UpdateCompanyRequest {
     whatsAppEnabled?: boolean | null;
     whatsAppPhoneNumber?: string | null;
     defaultNoDeliverySurcharge?: number | null;
+    pdfLogoUrl?: string | null;
+    pdfWatermarkUrl?: string | null;
 }

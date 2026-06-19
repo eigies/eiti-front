@@ -381,6 +381,12 @@ export class ProductsComponent implements OnInit {
   create(): void {
     if (this.createForm.invalid) {
       this.createForm.markAllAsTouched();
+      const publicPriceInvalid = this.createForm.get('publicPrice')?.invalid;
+      if (publicPriceInvalid && this.createPriceMode === 'margin') {
+        this.toast.error('Ingresá el precio de costo: en modo Margen el precio público se calcula a partir del costo.');
+      } else {
+        this.toast.error('Revisa los campos marcados: faltan datos para crear el producto.');
+      }
       return;
     }
 

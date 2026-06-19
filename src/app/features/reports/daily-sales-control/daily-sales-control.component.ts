@@ -12,6 +12,7 @@ import {
 } from '../../../core/models/report.models';
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 
 @Component({
   selector: 'app-daily-sales-control',
@@ -36,7 +37,8 @@ export class DailySalesControlComponent implements OnInit {
   constructor(
     private readonly fb: FormBuilder,
     private readonly reportService: ReportService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly pdfBranding: PdfBrandingService
   ) {
     const today = this.toIso(new Date());
     this.filterForm = this.fb.group({
@@ -193,7 +195,7 @@ export class DailySalesControlComponent implements OnInit {
     );
   }
 
-  exportPdf(): void {
+  async exportPdf(): Promise<void> {
     const rows = this.filteredRows;
     if (rows.length === 0) {
       this.toast.error('No hay ventas para exportar.');
@@ -201,25 +203,25 @@ export class DailySalesControlComponent implements OnInit {
     }
 
     const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
+    const branding = await this.pdfBranding.prepare();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 9;
     const widths = [17, 25, 25, 35, 57, 48, 51, 21];
     const headers = ['Hora', 'Comprobante', 'Sucursal', 'Cliente', 'Batería vendida', 'Pago / referencia', 'Canje', 'Total'];
-    let y = 14;
+    let y = 12;
 
-    const drawHeader = (): void => {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.setTextColor(28, 28, 28);
-      doc.text('Control diario de ventas', margin, y);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(105, 105, 105);
+    const drawHeader = (continuation = false): void => {
       const value = this.filterForm.value;
-      doc.text(`${value.dateFrom} a ${value.dateTo} · ${rows.length} venta(s)`, margin, y + 5);
-      doc.text(`Emitido: ${new Date().toLocaleString('es-AR')}`, pageWidth - margin, y, { align: 'right' });
-      y += 10;
+      this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
+      y = this.pdfBranding.drawHeader(doc, branding, {
+        title: 'Control diario de ventas',
+        subtitle: `${value.dateFrom} a ${value.dateTo} - ${rows.length} venta(s)`,
+        continuation,
+        margin,
+        y: 12,
+        pageWidth
+      });
 
       doc.setFillColor(235, 232, 225);
       doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
@@ -253,8 +255,7 @@ export class DailySalesControlComponent implements OnInit {
 
       if (y + rowHeight > pageHeight - 12) {
         doc.addPage();
-        y = 14;
-        drawHeader();
+        drawHeader(true);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(6.6);
       }
@@ -274,6 +275,7 @@ export class DailySalesControlComponent implements OnInit {
     });
 
     const value = this.filterForm.value;
+    this.pdfBranding.drawFooter(doc, pageWidth, pageHeight, margin, 'Control diario de ventas');
     doc.save(`control_ventas_${value.dateFrom}_${value.dateTo}.pdf`);
   }
 

@@ -87,6 +87,52 @@
                 </div>
             </div>
 
+            <div class="config-card config-card--delay-4 config-card--wide">
+                <div class="config-card__head">
+                    <span class="config-card__num">04</span>
+                    <div class="config-card__meta">
+                        <span class="config-card__eyebrow">PDF</span>
+                        <h2 class="config-card__title">Identidad documental</h2>
+                    </div>
+                </div>
+                <div class="config-card__body">
+                    <p class="config-card__desc">Logo principal y marca de agua para remitos y reportes.</p>
+                    <div class="pdf-brand-grid">
+                        <div class="pdf-brand-field">
+                            <label class="field__label">Logo empresa</label>
+                            <div class="pdf-preview">
+                                <img *ngIf="imagePreview('pdfLogoUrl')" [src]="imagePreview('pdfLogoUrl')!" alt="Logo empresa" />
+                                <span *ngIf="!imagePreview('pdfLogoUrl')">Sin logo</span>
+                            </div>
+                            <input class="field__input" type="text" formControlName="pdfLogoUrl" placeholder="URL o data:image..." />
+                            <div class="pdf-brand-actions">
+                                <label class="btn-file">
+                                    Cargar imagen
+                                    <input type="file" accept="image/png,image/jpeg,image/jpg" (change)="onImageSelected('pdfLogoUrl', $event)" />
+                                </label>
+                                <button class="btn-inline" type="button" (click)="clearImage('pdfLogoUrl')">Quitar</button>
+                            </div>
+                        </div>
+
+                        <div class="pdf-brand-field">
+                            <label class="field__label">Marca de agua</label>
+                            <div class="pdf-preview pdf-preview--watermark">
+                                <img *ngIf="imagePreview('pdfWatermarkUrl')" [src]="imagePreview('pdfWatermarkUrl')!" alt="Marca de agua" />
+                                <span *ngIf="!imagePreview('pdfWatermarkUrl')">Texto automatico</span>
+                            </div>
+                            <input class="field__input" type="text" formControlName="pdfWatermarkUrl" placeholder="URL o data:image..." />
+                            <div class="pdf-brand-actions">
+                                <label class="btn-file">
+                                    Cargar imagen
+                                    <input type="file" accept="image/png,image/jpeg,image/jpg" (change)="onImageSelected('pdfWatermarkUrl', $event)" />
+                                </label>
+                                <button class="btn-inline" type="button" (click)="clearImage('pdfWatermarkUrl')">Quitar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <footer class="config-footer">

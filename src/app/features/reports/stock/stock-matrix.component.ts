@@ -6,6 +6,7 @@ import { jsPDF } from 'jspdf';
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { StockMatrixResponse, StockMatrixRow } from '../../../core/models/report.models';
+import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 
 @Component({
   selector: 'app-stock-matrix-report',
@@ -20,7 +21,11 @@ export class StockMatrixComponent implements OnInit {
   search = '';
   hideEmpty = false;
 
-  constructor(private readonly reportService: ReportService, private readonly toast: ToastService) {}
+  constructor(
+    private readonly reportService: ReportService,
+    private readonly toast: ToastService,
+    private readonly pdfBranding: PdfBrandingService
+  ) {}
 
   ngOnInit(): void { this.load(); }
 
@@ -112,26 +117,31 @@ export class StockMatrixComponent implements OnInit {
     XLSX.writeFile(wb, `stock_por_sucursal_${new Date().toLocaleDateString('en-CA')}.xlsx`, { compression: true });
   }
 
-  exportPdf(): void {
+  async exportPdf(): Promise<void> {
     const rows = this.filteredRows;
     if (!this.data || rows.length === 0) { this.toast.error('No hay datos para exportar.'); return; }
     const branches = this.data.branches;
 
     const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
+    const branding = await this.pdfBranding.prepare();
     const margin = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const usable = pageWidth - margin * 2;
-    let y = 16;
+    let y = 12;
+    const drawDocumentHeader = (continuation = false): void => {
+      this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
+      y = this.pdfBranding.drawHeader(doc, branding, {
+        title: 'Stock por sucursal',
+        subtitle: `${rows.length} producto(s) - ${branches.length} sucursal(es) - Disponible`,
+        continuation,
+        margin,
+        y: 12,
+        pageWidth
+      });
+    };
+    drawDocumentHeader();
 
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(28, 28, 28);
-    doc.text('Stock por sucursal', margin, y);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.6); doc.setTextColor(108, 108, 108);
-    doc.text(`Emitido: ${new Date().toLocaleString('es-AR')}`, pageWidth - margin, y - .2, { align: 'right' });
-    y += 5;
-    doc.setFontSize(8.5); doc.setTextColor(90, 90, 90);
-    doc.text(`${rows.length} producto(s) · ${branches.length} sucursal(es) · Disponible`, margin, y);
-    y += 7;
 
     const prodW = Math.min(90, usable * 0.34);
     const totalW = 20;
@@ -158,7 +168,7 @@ export class StockMatrixComponent implements OnInit {
 
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(35, 35, 35);
     rows.forEach((r, idx) => {
-      if (y > pageHeight - 16) { doc.addPage(); y = 16; drawHead(); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(35, 35, 35); }
+      if (y > pageHeight - 16) { doc.addPage(); drawDocumentHeader(true); drawHead(); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(35, 35, 35); }
       if (idx % 2 === 0) { doc.setFillColor(249, 248, 245); doc.rect(margin, y, usable, 6, 'F'); }
       drawCell(`${r.code} ${r.brand} ${r.name}`.trim(), 0, y + 4, false);
       branches.forEach((_, i) => drawCell(String(r.available[i] ?? 0), i + 1, y + 4, true));
@@ -166,13 +176,14 @@ export class StockMatrixComponent implements OnInit {
       y += 6;
     });
 
-    if (y > pageHeight - 16) { doc.addPage(); y = 16; }
+    if (y > pageHeight - 16) { doc.addPage(); drawDocumentHeader(true); }
     doc.setFont('helvetica', 'bold'); doc.setFillColor(244, 239, 229); doc.rect(margin, y, usable, 6, 'F');
     doc.setTextColor(35, 35, 35);
     drawCell('TOTAL', 0, y + 4, false);
     branches.forEach((_, i) => drawCell(String(this.branchTotal(i)), i + 1, y + 4, true));
     drawCell(String(this.grandTotal), headers.length - 1, y + 4, true);
 
+    this.pdfBranding.drawFooter(doc, pageWidth, pageHeight, margin, 'Reporte de stock');
     doc.save(`stock_por_sucursal_${new Date().toLocaleDateString('en-CA')}.pdf`);
   }
 }

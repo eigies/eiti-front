@@ -68,6 +68,11 @@
 .config-card--delay-1 { animation-delay: .1s; }
 .config-card--delay-2 { animation-delay: .2s; }
 .config-card--delay-3 { animation-delay: .3s; }
+.config-card--delay-4 { animation-delay: .4s; }
+
+.config-card--wide {
+    grid-column: 1 / -1;
+}
 
 .config-card__head {
     display: flex;
@@ -208,6 +213,83 @@
 
 .input-currency__input {
     padding-left: 1.8rem;
+}
+
+.pdf-brand-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .9rem;
+    align-items: start;
+}
+
+.pdf-brand-field {
+    display: grid;
+    gap: .55rem;
+}
+
+.pdf-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 82px;
+    border: 1px dashed color-mix(in srgb, var(--amber) 30%, var(--border-2));
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg) 91%, transparent);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    overflow: hidden;
+}
+
+.pdf-preview img {
+    max-width: 92%;
+    max-height: 62px;
+    object-fit: contain;
+}
+
+.pdf-preview--watermark img {
+    opacity: .38;
+}
+
+.pdf-brand-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.btn-file,
+.btn-inline {
+    min-height: 34px;
+    padding: .55rem .72rem;
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-file input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.btn-file:hover,
+.btn-inline:hover {
+    border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
+    color: var(--text);
 }
 
 /* ─── Toggle row ─────────────────────────────────────────── */
@@ -502,5 +584,11 @@
     .btn-save {
         width: 100%;
         justify-content: center;
+    }
+}
+
+@media (max-width: 860px) {
+    .pdf-brand-grid {
+        grid-template-columns: 1fr;
     }
 }

@@ -16,6 +16,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { SalesReportResponse, SALE_CHANNELS } from '../../../core/models/report.models';
 import { ProductCategoryResponse } from '../../../core/models/product-category.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 
 interface ReportMeta { title: string; eyebrow: string; }
 
@@ -73,7 +74,8 @@ export class SalesReportComponent implements OnInit {
     private readonly vehicleService: VehicleService,
     private readonly branchService: BranchService,
     private readonly productCategoryService: ProductCategoryService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly pdfBranding: PdfBrandingService
   ) {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -235,23 +237,30 @@ export class SalesReportComponent implements OnInit {
     XLSX.writeFile(wb, this.fileName('xlsx'), { compression: true });
   }
 
-  exportPdf(): void {
+  async exportPdf(): Promise<void> {
     if (!this.data || this.data.rows.length === 0) { this.toast.error('No hay datos para exportar.'); return; }
     const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
+    const branding = await this.pdfBranding.prepare();
     const margin = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const f = this.filterForm.value;
-    let y = 16;
+    const subtitle = `${this.meta.eyebrow} · Desde ${f.dateFrom} hasta ${f.dateTo}`;
+    let y = 12;
 
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(28, 28, 28);
-    doc.text(this.meta.title, margin, y);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.6); doc.setTextColor(108, 108, 108);
-    doc.text(`Emitido: ${new Date().toLocaleString('es-AR')}`, pageWidth - margin, y - .2, { align: 'right' });
-    y += 5;
-    doc.setFontSize(8.5); doc.setTextColor(90, 90, 90);
-    doc.text(`Desde ${f.dateFrom} hasta ${f.dateTo}`, margin, y);
-    y += 7;
+    const drawDocumentHeader = (continuation = false): void => {
+      this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
+      y = this.pdfBranding.drawHeader(doc, branding, {
+        title: this.meta.title,
+        subtitle,
+        continuation,
+        margin,
+        y: 12,
+        pageWidth
+      });
+    };
+
+    drawDocumentHeader();
 
     const headers = this.isChannelBrand
       ? [this.dimensionHeader, 'Marca', 'Ventas', 'Unid.', 'Facturacion', 'Costo', 'Ganancia', 'Margen %']
@@ -277,7 +286,7 @@ export class SalesReportComponent implements OnInit {
 
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(35, 35, 35);
     this.data.rows.forEach((r, idx) => {
-      if (y > pageHeight - 16) { doc.addPage(); y = 16; drawHead(); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(35, 35, 35); }
+      if (y > pageHeight - 16) { doc.addPage(); drawDocumentHeader(true); drawHead(); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(35, 35, 35); }
       if (idx % 2 === 0) { doc.setFillColor(249, 248, 245); doc.rect(margin, y, pageWidth - margin * 2, 6, 'F'); }
       const cells = cellsFor(r);
       cells.forEach((c, i) => doc.text(doc.splitTextToSize(c, colW[i] - 2)[0] ?? '', xs[i] + 1.5, y + 4));
@@ -291,6 +300,7 @@ export class SalesReportComponent implements OnInit {
     doc.setFont('helvetica', 'bold'); doc.setFillColor(244, 239, 229); doc.rect(margin, y, pageWidth - margin * 2, 6, 'F');
     totalCells.forEach((c, i) => doc.text(c, xs[i] + 1.5, y + 4));
 
+    this.pdfBranding.drawFooter(doc, pageWidth, pageHeight, margin, 'Reporte de ventas');
     doc.save(this.fileName('pdf'));
   }
 

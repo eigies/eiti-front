@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -19,12 +19,16 @@ import { ConfirmationService } from '../../shared/services/confirmation.service'
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.css']
 })
-export class CustomersComponent implements OnInit {
+export class CustomersComponent implements OnInit, OnDestroy {
   form: FormGroup;
   customers: CustomerResponse[] = [];
+  searchTerm = '';
   creating = false;
+  formPanelOpen = false;
+  formPanelClosing = false;
   editingId: string | null = null;
   deletingId: string | null = null;
+  private formPanelCloseTimer: ReturnType<typeof setTimeout> | null = null;
   readonly documentTypes = [
     { value: 1, label: 'DNI' },
     { value: 2, label: 'Pasaporte' },
@@ -69,12 +73,39 @@ export class CustomersComponent implements OnInit {
     this.loadCustomers();
   }
 
+  ngOnDestroy(): void {
+    this.clearFormPanelCloseTimer();
+  }
+
   get canDeleteCustomers(): boolean {
     return this.auth.hasPermission(PermissionCodes.customersDelete);
   }
 
   get isEditing(): boolean {
     return this.editingId !== null;
+  }
+
+  get filteredCustomers(): CustomerResponse[] {
+    const term = this.searchTerm.trim().toLowerCase();
+    if (!term) {
+      return this.customers;
+    }
+    const digits = term.replace(/\D/g, '');
+    return this.customers.filter(c => {
+      const haystack = [c.name, c.email, c.phone, c.documentNumber, c.taxId]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (haystack.includes(term)) {
+        return true;
+      }
+      if (digits.length > 0) {
+        const phoneDigits = (c.phone ?? '').replace(/\D/g, '');
+        const docDigits = (c.documentNumber ?? '').replace(/\D/g, '');
+        return phoneDigits.includes(digits) || docDigits.includes(digits);
+      }
+      return false;
+    });
   }
 
   isInvalid(field: string): boolean {
@@ -94,7 +125,7 @@ export class CustomersComponent implements OnInit {
     request$.subscribe({
       next: (c) => {
         this.creating = false;
-        this.resetForm();
+        this.closeFormPanel();
         this.toast.success(wasEditing
           ? `Cliente "${c.name}" actualizado correctamente`
           : `Cliente "${c.name}" creado correctamente`);
@@ -105,6 +136,13 @@ export class CustomersComponent implements OnInit {
         this.toast.error(this.resolveCustomerErrorMessage(err, wasEditing ? 'Error al actualizar el cliente' : 'Error al crear el cliente'));
       }
     });
+  }
+
+  openCreatePanel(): void {
+    this.clearFormPanelCloseTimer();
+    this.resetForm();
+    this.formPanelOpen = true;
+    this.formPanelClosing = false;
   }
 
   beginEdit(customer: CustomerResponse): void {
@@ -129,14 +167,16 @@ export class CustomersComponent implements OnInit {
           apartment: c.address?.apartment || '',
           reference: c.address?.reference || ''
         });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.clearFormPanelCloseTimer();
+        this.formPanelOpen = true;
+        this.formPanelClosing = false;
       },
       error: (err) => this.toast.error(this.resolveCustomerErrorMessage(err, 'No se pudo cargar el cliente para editar'))
     });
   }
 
   cancelEdit(): void {
-    this.resetForm();
+    this.closeFormPanel();
   }
 
   async deleteCustomer(customer: CustomerResponse): Promise<void> {
@@ -155,7 +195,7 @@ export class CustomersComponent implements OnInit {
     this.customerService.deleteCustomer(customer.id).subscribe({
       next: () => {
         this.deletingId = null;
-        if (this.editingId === customer.id) { this.resetForm(); }
+        if (this.editingId === customer.id) { this.closeFormPanel(); }
         this.toast.success('Cliente eliminado');
         this.loadCustomers();
       },
@@ -164,6 +204,40 @@ export class CustomersComponent implements OnInit {
         this.toast.error(this.resolveCustomerErrorMessage(err, 'No se pudo eliminar el cliente'));
       }
     });
+  }
+
+  customerInitial(customer: CustomerResponse): string {
+    const source = customer.name || customer.fullName || customer.email || '?';
+    return source.charAt(0).toUpperCase();
+  }
+
+  formatDocument(customer: CustomerResponse): string {
+    const documentNumber = customer.documentNumber?.trim();
+    const taxId = customer.taxId?.trim();
+    const documentLabel = customer.documentTypeName || 'Doc.';
+    const parts = [
+      documentNumber ? `${documentLabel} ${documentNumber}` : null,
+      taxId ? `CUIT ${taxId}` : null
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(' / ') : 'Sin documento';
+  }
+
+  private closeFormPanel(): void {
+    if (!this.formPanelOpen || this.formPanelClosing) { return; }
+    this.formPanelClosing = true;
+    this.clearFormPanelCloseTimer();
+    this.formPanelCloseTimer = setTimeout(() => {
+      this.formPanelOpen = false;
+      this.formPanelClosing = false;
+      this.resetForm();
+      this.formPanelCloseTimer = null;
+    }, 240);
+  }
+
+  private clearFormPanelCloseTimer(): void {
+    if (!this.formPanelCloseTimer) { return; }
+    clearTimeout(this.formPanelCloseTimer);
+    this.formPanelCloseTimer = null;
   }
 
   private buildPayload(): CreateCustomerRequest {
@@ -261,7 +335,7 @@ export class CustomersComponent implements OnInit {
     const locality = [address.city, address.stateOrProvince].filter(Boolean).join(', ').trim();
     const postal = address.postalCode ? `CP ${address.postalCode}` : '';
     const country = address.country || '';
-    return [street, locality, postal, country].filter(Boolean).join(' · ');
+    return [street, locality, postal, country].filter(Boolean).join(' - ');
   }
 
   private nullIfEmpty(value: string | null | undefined): string | null {
