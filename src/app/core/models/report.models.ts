@@ -56,6 +56,7 @@ export interface SalesReportFilters {
     deliveryMode?: 'all' | 'with' | 'without' | null;
     categoryId?: string | null;
     saleType?: 'all' | 'wholesale' | 'retail' | null;
+    branchId?: string | null;
 }
 
 export interface CustomerDebtorRow {

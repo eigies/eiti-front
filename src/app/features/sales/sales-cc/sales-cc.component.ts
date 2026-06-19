@@ -259,21 +259,23 @@ export class SalesCcComponent implements OnInit {
     return item.unitPriceOverride ?? item.stock.publicPrice ?? item.stock.price ?? 0;
   }
 
+  // El item arranca con el precio público; se considera "override" sólo si difiere de él.
+  isPriceOverridden(item: DraftItem): boolean {
+    const base = item.stock.publicPrice ?? item.stock.price ?? 0;
+    return item.unitPriceOverride != null && item.unitPriceOverride !== base;
+  }
+
   private recalcItem(item: DraftItem): void {
     const unitPrice = this.effectiveUnitPrice(item);
     item.total = Math.round(item.quantity * unitPrice * (1 - item.discountPercent / 100) * 100) / 100;
   }
 
-  setItemPrice(productId: string, rawValue: string): void {
+  setItemPrice(productId: string, value: number | null): void {
     const item = this.draftItems.find(i => i.stock.productId === productId);
     if (!item || !this.canOverridePrice) return;
-    const trimmed = rawValue.trim();
-    if (trimmed === '') {
-      item.unitPriceOverride = undefined;
-    } else {
-      const parsed = Number(trimmed);
-      item.unitPriceOverride = Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : undefined;
-    }
+    item.unitPriceOverride = value != null && Number.isFinite(value) && value >= 0
+      ? Math.round(value * 100) / 100
+      : undefined;
     this.recalcItem(item);
   }
 
@@ -290,14 +292,10 @@ export class SalesCcComponent implements OnInit {
     this.generalDiscountPercent = Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : 0;
   }
 
-  setManualOverride(rawValue: string): void {
-    const trimmed = rawValue.trim();
-    if (trimmed === '') {
-      this.manualOverridePrice = null;
-      return;
-    }
-    const parsed = Number(trimmed);
-    this.manualOverridePrice = Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : null;
+  setManualOverride(value: number | null): void {
+    this.manualOverridePrice = value != null && Number.isFinite(value) && value >= 0
+      ? Math.round(value * 100) / 100
+      : null;
   }
 
   clearManualOverride(): void {
@@ -323,7 +321,7 @@ export class SalesCcComponent implements OnInit {
     const details: CreateSaleDetailRequest[] = this.draftItems.map(item => ({
       productId: item.stock.productId,
       quantity: item.quantity,
-      unitPrice: this.canOverridePrice ? item.unitPriceOverride : undefined,
+      unitPrice: this.canOverridePrice && this.isPriceOverridden(item) ? item.unitPriceOverride : undefined,
       discountPercent: item.discountPercent || undefined
     }));
 
@@ -384,6 +382,7 @@ export class SalesCcComponent implements OnInit {
         stock,
         quantity: Math.floor(quantity),
         discountPercent: 0,
+        unitPriceOverride: stock.publicPrice ?? stock.price ?? 0,
         total: 0
       };
       this.recalcItem(item);

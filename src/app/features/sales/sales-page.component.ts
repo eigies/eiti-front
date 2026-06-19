@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
-import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 import { ProductService } from '../../core/services/product.service';
 import { SaleService } from '../../core/services/sale.service';
@@ -28,6 +27,7 @@ import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingBannerComponent } from '../../shared/components/onboarding-banner/onboarding-banner.component';
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
+import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { BankService } from '../../core/services/bank.service';
@@ -169,6 +169,7 @@ export class SalesPageComponent implements OnInit {
         private toast: ToastService,
         private onboardingService: OnboardingService,
         private bankService: BankService,
+        private remitoPdf: RemitoPdfService,
         public auth: AuthService
     ) {
         this.lineForm = this.fb.group({
@@ -1164,193 +1165,44 @@ XLSX.writeFile(workbook, `venta-${sale.createdAt.slice(0, 10)}.xlsx`, { compress
     }
 
 exportSalePdf(sale: SaleResponse): void {
-    if(sale.details.length === 0) {
-    this.toast.error('La venta no tiene items para exportar.');
-    return;
-}
-
-const doc = new jsPDF({ format: 'a4', unit: 'mm' });
-const pageWidth = doc.internal.pageSize.getWidth();
-const pageHeight = doc.internal.pageSize.getHeight();
-const margin = 14;
-const contentWidth = pageWidth - margin * 2;
-const printableBottom = pageHeight - 18;
-const colWidths = [12, 84, 18, 34, 34];
-const colX = [
-    margin,
-    margin + colWidths[0],
-    margin + colWidths[0] + colWidths[1],
-    margin + colWidths[0] + colWidths[1] + colWidths[2],
-    margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
-];
-const formatCurrency = (value: number): string =>
-    `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const formatDate = (value: string): string =>
-    new Date(value).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
-
-let y = margin;
-
-const drawDocumentHeader = (): void => {
-    doc.setDrawColor(35, 35, 35);
-    doc.setFillColor(248, 248, 248);
-    doc.roundedRect(margin, y, contentWidth, 20, 2, 2, 'FD');
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(15);
-    doc.setTextColor(20, 20, 20);
-    doc.text('Comprobante de venta', margin + 4, y + 8);
-
-    doc.setFontSize(10);
-    doc.text(`Nro. ${sale.id}`, margin + 4, y + 14);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(90, 90, 90);
-    doc.text(`Emitido: ${formatDate(new Date().toISOString())}`, pageWidth - margin - 4, y + 8, { align: 'right' });
-    doc.text(`Fecha venta: ${formatDate(sale.createdAt)}`, pageWidth - margin - 4, y + 14, { align: 'right' });
-
-    y += 25;
-};
-
-const drawMetaBlock = (): void => {
-    const metaTop = y;
-    const metaHeight = 38;
-    const halfWidth = contentWidth / 2;
-    const rowHeight = 6.5;
-    const leftX = margin + 3;
-    const rightX = margin + halfWidth + 3;
-    const valueOffset = 19;
-    const rowsLeft = [
-        ['Sucursal', this.branchName(sale.branchId)],
-        ['Cliente', sale.customerFullName || '-'],
-        ['Documento', sale.customerDocument || sale.customerTaxId || '-'],
-        ['Pago', this.salePaymentMethodSummary(sale)]
-    ];
-    const rowsRight = [
-        ['Estado', this.saleStatusLabel(sale)],
-        ['Entrega', sale.hasDelivery ? 'Con envio' : 'Retiro en local'],
-        ['Items', `${sale.details.length}`],
-        ['Cobrado', formatCurrency(this.saleCoveredAmount(sale))]
-    ];
-
-    doc.setDrawColor(185, 185, 185);
-    doc.rect(margin, metaTop, contentWidth, metaHeight);
-    doc.line(margin + halfWidth, metaTop, margin + halfWidth, metaTop + metaHeight);
-
-    doc.setFontSize(9);
-    for (let index = 0; index < rowsLeft.length; index += 1) {
-        const rowY = metaTop + 6 + index * rowHeight;
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(70, 70, 70);
-        doc.text(`${rowsLeft[index][0]}:`, leftX, rowY);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(25, 25, 25);
-        doc.text(rowsLeft[index][1], leftX + valueOffset, rowY, { maxWidth: halfWidth - valueOffset - 6 });
-
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(70, 70, 70);
-        doc.text(`${rowsRight[index][0]}:`, rightX, rowY);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(25, 25, 25);
-        doc.text(rowsRight[index][1], rightX + valueOffset, rowY, { maxWidth: halfWidth - valueOffset - 6 });
+    this.generateRemito(sale, true);
     }
 
-    y = metaTop + metaHeight + 6;
-};
-
-const drawItemsHeader = (continuation: boolean): void => {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(25, 25, 25);
-    doc.text(continuation ? 'Detalle de productos (continuacion)' : 'Detalle de productos', margin, y);
-    y += 5;
-
-    doc.setFillColor(232, 232, 232);
-    doc.setDrawColor(170, 170, 170);
-    doc.rect(margin, y, contentWidth, 8, 'FD');
-
-    doc.setFontSize(8.6);
-    doc.text('#', colX[0] + 2, y + 5.3);
-    doc.text('Producto', colX[1] + 2, y + 5.3);
-    doc.text('Cant.', colX[2] + colWidths[2] - 2, y + 5.3, { align: 'right' });
-    doc.text('Unitario', colX[3] + colWidths[3] - 2, y + 5.3, { align: 'right' });
-    doc.text('Subtotal', colX[4] + colWidths[4] - 2, y + 5.3, { align: 'right' });
-
-    y += 8;
-};
-
-const startDetailsPage = (continuation: boolean): void => {
-    if (continuation) {
-        doc.addPage();
-        y = margin;
-    }
-    drawItemsHeader(continuation);
-};
-
-drawDocumentHeader();
-drawMetaBlock();
-startDetailsPage(false);
-
-doc.setFont('helvetica', 'normal');
-doc.setFontSize(8.5);
-doc.setTextColor(25, 25, 25);
-
-for (let index = 0; index < sale.details.length; index += 1) {
-    const detail = sale.details[index];
-    const productText = `${detail.productBrand} / ${detail.productName}`;
-    const wrappedProduct = doc.splitTextToSize(productText, colWidths[1] - 4) as string[];
-    const rowHeight = Math.max(8, wrappedProduct.length * 3.8 + 2.5);
-
-    if (y + rowHeight > printableBottom) {
-        startDetailsPage(true);
+exportRemitoTraslado(sale: SaleResponse): void {
+    this.generateRemito(sale, false);
     }
 
-    doc.setDrawColor(205, 205, 205);
-    doc.rect(colX[0], y, colWidths[0], rowHeight);
-    doc.rect(colX[1], y, colWidths[1], rowHeight);
-    doc.rect(colX[2], y, colWidths[2], rowHeight);
-    doc.rect(colX[3], y, colWidths[3], rowHeight);
-    doc.rect(colX[4], y, colWidths[4], rowHeight);
-
-    doc.text(`${index + 1}`, colX[0] + 2, y + rowHeight / 2 + 1.2);
-    doc.text(wrappedProduct, colX[1] + 2, y + 4.6);
-    doc.text(`${detail.quantity}`, colX[2] + colWidths[2] - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
-    doc.text(formatCurrency(detail.unitPrice), colX[3] + colWidths[3] - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
-    doc.text(formatCurrency(detail.totalAmount), colX[4] + colWidths[4] - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
-
-    y += rowHeight;
-}
-
-if (y + 24 > printableBottom) {
-    doc.addPage();
-    y = margin;
-}
-
-const summaryWidth = 72;
-const summaryX = pageWidth - margin - summaryWidth;
-doc.setFillColor(246, 246, 246);
-doc.setDrawColor(150, 150, 150);
-doc.roundedRect(summaryX, y + 5, summaryWidth, 16, 1.2, 1.2, 'FD');
-doc.setFont('helvetica', 'bold');
-doc.setTextColor(45, 45, 45);
-doc.setFontSize(9.5);
-doc.text('TOTAL VENTA', summaryX + 3, y + 11);
-doc.setFontSize(12.5);
-doc.text(formatCurrency(sale.totalAmount), summaryX + summaryWidth - 3, y + 17, { align: 'right' });
-
-const pageCount = doc.getNumberOfPages();
-for (let page = 1; page <= pageCount; page += 1) {
-    doc.setPage(page);
-    doc.setDrawColor(205, 205, 205);
-    doc.line(margin, pageHeight - 13, pageWidth - margin, pageHeight - 13);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
-    doc.text('Documento para control interno de venta', margin, pageHeight - 8);
-    doc.text(`Pagina ${page} de ${pageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
-}
-
-doc.save(`venta-${sale.createdAt.slice(0, 10)}.pdf`);
+private generateRemito(sale: SaleResponse, incluirImportes: boolean): void {
+    if (sale.details.length === 0) {
+        this.toast.error('La venta no tiene items para exportar.');
+        return;
+    }
+    this.remitoPdf.generate(
+        {
+            id: sale.id,
+            code: null,
+            createdAt: sale.createdAt,
+            customerFullName: sale.customerFullName,
+            customerDocument: sale.customerDocument,
+            customerTaxId: sale.customerTaxId,
+            hasDelivery: sale.hasDelivery,
+            totalAmount: sale.totalAmount,
+            details: sale.details.map(d => ({
+                productBrand: d.productBrand,
+                productName: d.productName,
+                quantity: d.quantity,
+                unitPrice: d.unitPrice,
+                totalAmount: d.totalAmount
+            }))
+        },
+        {
+            branchName: this.branchName(sale.branchId),
+            statusLabel: this.saleStatusLabel(sale),
+            paymentSummary: this.salePaymentMethodSummary(sale),
+            coveredAmount: this.saleCoveredAmount(sale)
+        },
+        incluirImportes
+    );
     }
 
 branchName(branchId: string): string {

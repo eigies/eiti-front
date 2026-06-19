@@ -69,9 +69,10 @@
             <td>{{ item.quantity }}</td>
             <td>
               <input *ngIf="canOverridePrice" class="control control--compact control--price" type="number" min="0" step="0.01"
-                     [value]="effectiveUnitPrice(item)"
-                     (input)="setItemPrice(item.stock.productId, $any($event.target).value)"
-                     [class.is-overridden]="item.unitPriceOverride != null" />
+                     [ngModel]="item.unitPriceOverride"
+                     (ngModelChange)="setItemPrice(item.stock.productId, $event)"
+                     [ngModelOptions]="{ standalone: true }"
+                     [class.is-overridden]="isPriceOverridden(item)" />
               <span *ngIf="!canOverridePrice">{{ (item.stock.publicPrice ?? item.stock.price) | currency:'USD':'symbol':'1.2-2' }}</span>
             </td>
             <td>
@@ -113,8 +114,9 @@
         <label class="field field--discount">
           <span class="field__label">Precio final manual</span>
           <input class="control control--compact" type="number" min="0" step="0.01"
-                 [value]="manualOverridePrice"
-                 (input)="setManualOverride($any($event.target).value)"
+                 [ngModel]="manualOverridePrice"
+                 (ngModelChange)="setManualOverride($event)"
+                 [ngModelOptions]="{ standalone: true }"
                  placeholder="Dejar vacio para usar descuentos" />
         </label>
       </div>

@@ -453,8 +453,10 @@ export class ProductsComponent implements OnInit {
   downloadImportTemplate(): void {
     const branchNames = this.branches.map(b => b.name);
     const categoryNames = this.productCategories.map(c => c.name);
-    const dataRows: ProductImportRow[] = this.products.length > 0
-      ? this.products.map(product => ({
+    // Respeta los filtros activos de la grilla (marca, código, sku, producto, categoría, sin costo).
+    const source = this.filteredProducts;
+    const dataRows: ProductImportRow[] = source.length > 0
+      ? source.map(product => ({
           code: product.code,
           sku: product.sku,
           brand: product.brand,

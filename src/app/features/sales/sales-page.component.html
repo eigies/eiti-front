@@ -568,9 +568,14 @@
                   <img src="assets/excel-svgrepo-com.svg" alt="" />
                 </span>
               </button>
-              <button class="icon-action icon-action--pdf" type="button" aria-label="Exportar a PDF" title="Exportar a PDF" (click)="exportSalePdf(sale); $event.stopPropagation()">
+              <button *ngIf="auth.hasPermission(permissionCodes.salesRemitoAmounts)" class="icon-action icon-action--pdf" type="button" aria-label="Remito con importes" title="Remito con importes" (click)="exportSalePdf(sale); $event.stopPropagation()">
                 <span class="icon-action__image" aria-hidden="true">
                   <img src="assets/pdf-svgrepo-com.svg" alt="" />
+                </span>
+              </button>
+              <button class="icon-action icon-action--remito" type="button" aria-label="Remito de traslado (sin importes)" title="Remito de traslado (sin importes)" (click)="exportRemitoTraslado(sale); $event.stopPropagation()">
+                <span class="icon-action__image" aria-hidden="true">
+                  <img src="assets/remito-traslado.png" alt="" />
                 </span>
               </button>
               <button
