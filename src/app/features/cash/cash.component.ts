@@ -1,4 +1,5 @@
 ﻿import { Component, OnInit } from '@angular/core';
+import { formatMoney } from '../../shared/utils/money.util';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -2442,7 +2443,7 @@ export class CashComponent implements OnInit {
     }
 
     private formatCurrency(value: number): string {
-        return `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        return formatMoney(value, true);
     }
 
     private formatDate(value?: string | null): string {

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { extractApiError } from '../../../shared/utils/api-error.util';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -351,11 +352,7 @@ export class SalesCcComponent implements OnInit {
       },
       error: err => {
         this.saving = false;
-        this.toast.error(
-          (err as any)?.error?.detail ||
-          (err as any)?.error?.message ||
-          'Error al crear la venta CC'
-        );
+        this.toast.error(extractApiError(err, 'Error al crear la venta CC'));
       }
     });
   }

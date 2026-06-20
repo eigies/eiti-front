@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { formatMoney } from '../../shared/utils/money.util';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -68,6 +69,6 @@ export class PurchasesListComponent implements OnInit {
   }
 
   formatCurrency(value: number): string {
-    return value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return formatMoney(value);
   }
 }

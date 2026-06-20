@@ -1,8 +1,9 @@
-﻿import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+﻿import { Component, DestroyRef, ElementRef, HostListener, inject, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, forkJoin, map, of, Subject, switchMap } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { ProductService } from '../../core/services/product.service';
 import { SaleService } from '../../core/services/sale.service';
@@ -103,14 +104,16 @@ export class SalesPageComponent implements OnInit {
     createCustomerQuery = '';
     createCustomerSuggestions: CustomerSearchItem[] = [];
     showCreateCustomerResults = false;
-    private customerSearchTimer: ReturnType<typeof setTimeout> | null = null;
+    private readonly destroyRef = inject(DestroyRef);
+    // Búsquedas con debounce + switchMap (cancela la request anterior → sin race conditions).
+    private readonly customerSearch$ = new Subject<string>();
+    private readonly addressSearch$ = new Subject<string>();
     quickCreateCustomerOpen = false;
     quickCreateCustomerName = '';
     quickCreateCustomerPhone = '';
     quickCreateCustomerSaving = false;
     deliveryAddressSuggestions: string[] = [];
     showDeliveryAddressSuggestions = false;
-    private addressSearchTimer: ReturnType<typeof setTimeout> | null = null;
     createSelectedProductIds = new Set<string>();
     createSelectionQuantityByProductId = new Map<string, number>();
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
@@ -204,6 +207,23 @@ export class SalesPageComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.customerSearch$.pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            switchMap(q => this.customerService.searchCustomers(q).pipe(
+                catchError(() => of([] as CustomerSearchItem[])))),
+            takeUntilDestroyed(this.destroyRef)
+        ).subscribe(results => this.createCustomerSuggestions = results);
+
+        this.addressSearch$.pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            switchMap(v => v.trim()
+                ? this.saleService.searchDeliveryAddresses(v).pipe(catchError(() => of([] as string[])))
+                : of([] as string[])),
+            takeUntilDestroyed(this.destroyRef)
+        ).subscribe(results => this.deliveryAddressSuggestions = results);
+
         this.showOnboardingCompleteNotice = this.onboardingService.consumeCompletionNotice();
         this.loadProducts();
         this.loadBranches();
@@ -424,15 +444,7 @@ export class SalesPageComponent implements OnInit {
     this.createCustomerQuery = query;
     this.createCustomerId = null;
     this.showCreateCustomerResults = true;
-    if (this.customerSearchTimer) {
-        clearTimeout(this.customerSearchTimer);
-    }
-    this.customerSearchTimer = setTimeout(() => {
-        this.customerService.searchCustomers(query).subscribe({
-            next: results => this.createCustomerSuggestions = results,
-            error: () => this.createCustomerSuggestions = []
-        });
-    }, 300);
+    this.customerSearch$.next(query);
 }
 
 selectCreateCustomer(customer: CustomerSearchItem): void {
@@ -490,17 +502,11 @@ submitQuickCreateCustomer(): void {
 handleDeliveryAddressInput(form: FormGroup, value: string): void {
     form.get('deliveryAddress')?.setValue(value, { emitEvent: false });
     this.showDeliveryAddressSuggestions = value.length > 0;
-    if (this.addressSearchTimer) clearTimeout(this.addressSearchTimer);
     if (!value.trim()) {
         this.deliveryAddressSuggestions = [];
         return;
     }
-    this.addressSearchTimer = setTimeout(() => {
-        this.saleService.searchDeliveryAddresses(value).subscribe({
-            next: results => this.deliveryAddressSuggestions = results,
-            error: () => this.deliveryAddressSuggestions = []
-        });
-    }, 300);
+    this.addressSearch$.next(value);
 }
 
 selectDeliveryAddress(form: FormGroup, address: string): void {

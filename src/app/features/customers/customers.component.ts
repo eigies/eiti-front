@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { extractApiError } from '../../shared/utils/api-error.util';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -326,7 +327,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
       return 'No tienes acceso a ese cliente para la empresa actual.';
     }
 
-    return (err as any)?.error?.detail || (err as any)?.error?.message || fallback;
+    return extractApiError(err, fallback);
   }
 
   private loadCustomers(): void {

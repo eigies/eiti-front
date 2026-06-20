@@ -1,4 +1,5 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,7 +23,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
 
@@ -67,8 +68,12 @@ const PRODUCT_IMPORT_HEADERS: ProductImportColumn[] = [
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })
-export class ProductsComponent implements OnInit {
+export class ProductsComponent implements OnInit, OnDestroy {
   @ViewChild('importFileInput') importFileInput?: ElementRef<HTMLInputElement>;
+
+  private readonly destroyRef = inject(DestroyRef);
+  // Subscripciones de valueChanges de la edición masiva: se liberan al salir/re-entrar (evita leak amplificado).
+  private bulkEditSubs = new Subscription();
 
   createPriceMode: 'public' | 'margin' = 'public';
   editPriceMode: 'public' | 'margin' = 'public';
@@ -148,7 +153,7 @@ export class ProductsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       this.routeProductId = params.get('id') ?? '';
       this.viewMode = this.router.url.endsWith('/new') ? 'create' : this.routeProductId ? 'detail' : 'list';
       this.deleteConfirmOpen = false;
@@ -807,13 +812,17 @@ export class ProductsComponent implements OnInit {
     this.bulkEditSnapshots = {};
     this.modifiedBulkProductIds = new Set<string>();
 
+    // Libera las subscripciones de una edición masiva previa antes de crear las nuevas.
+    this.bulkEditSubs.unsubscribe();
+    this.bulkEditSubs = new Subscription();
+
     for (const product of this.products.filter(product => this.selectedBulkProductIds.has(product.id))) {
       const form = this.buildForm();
       form.reset(this.bulkProductFormValue(product));
       this.updatePriceValidators(form);
       this.bulkEditForms[product.id] = form;
       this.bulkEditSnapshots[product.id] = this.toProductRequest(form);
-      form.valueChanges.subscribe(() => this.refreshBulkProductState(product.id));
+      this.bulkEditSubs.add(form.valueChanges.subscribe(() => this.refreshBulkProductState(product.id)));
     }
   }
 
@@ -831,6 +840,12 @@ export class ProductsComponent implements OnInit {
     this.bulkEditSnapshots = {};
     this.modifiedBulkProductIds = new Set<string>();
     this.selectedBulkProductIds.clear();
+    this.bulkEditSubs.unsubscribe();
+    this.bulkEditSubs = new Subscription();
+  }
+
+  ngOnDestroy(): void {
+    this.bulkEditSubs.unsubscribe();
   }
 
   saveBulkChanges(): void {

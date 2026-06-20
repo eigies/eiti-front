@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { extractApiError } from '../../shared/utils/api-error.util';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -470,7 +471,7 @@ export class SalesFullComponent implements OnInit {
       return 'El cliente no esta disponible para la empresa actual.';
     }
 
-    return (err as any)?.error?.detail || (err as any)?.error?.message || fallback;
+    return extractApiError(err, fallback);
   }
 
   private resolveSaleCustomerErrorMessage(err: unknown, customerId: string | null, fallback: string): string {
@@ -478,7 +479,7 @@ export class SalesFullComponent implements OnInit {
       return 'El cliente seleccionado no pertenece a la empresa actual.';
     }
 
-    return (err as any)?.error?.detail || (err as any)?.error?.message || fallback;
+    return extractApiError(err, fallback);
   }
 
   private customerHasPhone(): boolean {
