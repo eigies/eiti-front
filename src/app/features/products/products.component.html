@@ -436,6 +436,22 @@
           </div>
           <div class="stock-num stock-num--hi"><span class="f__l">Disponible</span><strong>{{ selectedBranchStock.availableQuantity }}</strong></div>
         </div>
+        <div class="branch-pricing" *ngIf="selectedBranchStock && canManageStock">
+          <div class="f__l">Precio / costo de esta sucursal <span class="branch-pricing__hint">(vacío = usa el valor global del producto)</span></div>
+          <div class="pf__row pf__row--3">
+            <label class="f">
+              <span class="f__l">Precio venta (sucursal)</span>
+              <input class="f__i f__i--num" type="number" [(ngModel)]="pricingPriceInput" [ngModelOptions]="{ standalone: true }" [placeholder]="'Global: ' + (selectedBranchStock.price | number:'1.2-2')" />
+            </label>
+            <label class="f" *ngIf="canViewCostPrice">
+              <span class="f__l">Costo (sucursal)</span>
+              <input class="f__i f__i--num" type="number" [(ngModel)]="pricingCostInput" [ngModelOptions]="{ standalone: true }" [placeholder]="'Global: ' + ((selectedBranchStock.costPrice || 0) | number:'1.2-2')" />
+            </label>
+            <div class="pf__footer">
+              <button class="btn btn--primary" type="button" [disabled]="pricingSaving" (click)="saveBranchPricing()">{{ pricingSaving ? 'Guardando...' : 'Guardar precio/costo' }}</button>
+            </div>
+          </div>
+        </div>
         <div class="stock-hint" *ngIf="!canManageStock">
           <strong>No tenes permiso para cargar stock</strong>
           <span>Solo podes consultar el stock. Pedi a un administrador el permiso de carga de stock.</span>

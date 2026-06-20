@@ -14,6 +14,18 @@ export interface BranchProductStockResponse {
     reservedQuantity: number;
     availableQuantity: number;
     updatedAt?: string | null;
+    // Overrides por sucursal (null = usa el valor global) + valores efectivos resueltos.
+    costOverride?: number | null;
+    salePriceOverride?: number | null;
+    effectivePrice?: number;
+    effectiveCost?: number;
+}
+
+export interface SetBranchProductPricingRequest {
+    branchId: string;
+    productId: string;
+    costOverride?: number | null;
+    salePriceOverride?: number | null;
 }
 
 export interface AdjustStockRequest {

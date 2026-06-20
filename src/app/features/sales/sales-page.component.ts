@@ -1536,14 +1536,21 @@ if (form === this.editLineForm) {
         return false;
     }
 
+    const unitPrice = this.branchUnitPrice(product, target);
     if (existing) {
         existing.quantity = nextQuantity;
-        existing.total = existing.quantity * productPublicPrice(existing.product);
+        existing.total = existing.quantity * unitPrice;
     } else {
-        target.unshift({ product, quantity: Math.floor(quantity), total: productPublicPrice(product) * Math.floor(quantity) });
+        target.unshift({ product, quantity: Math.floor(quantity), total: unitPrice * Math.floor(quantity) });
     }
 
     return true;
+}
+
+    // Precio unitario del carrito: usa el precio efectivo de la sucursal (override) si existe, sino el global.
+    private branchUnitPrice(product: ProductResponse, target: DraftItem[]): number {
+    const stockMap = target === this.draftItems ? this.createStockByProductId : this.editStockByProductId;
+    return stockMap.get(product.id)?.effectivePrice ?? productPublicPrice(product);
 }
 
     get canOverridePrice(): boolean {

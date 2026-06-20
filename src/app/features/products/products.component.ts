@@ -23,6 +23,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { extractApiError } from '../../shared/utils/api-error.util';
 import { forkJoin, Subscription } from 'rxjs';
 import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
@@ -112,6 +113,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
   onboardingStatus: OnboardingStatusResponse | null = null;
   selectedStockBranchId = '';
   selectedBranchStock: BranchProductStockResponse | null = null;
+  // Override de costo/precio por sucursal (null = usar el valor global del producto).
+  pricingCostInput: number | null = null;
+  pricingPriceInput: number | null = null;
+  pricingSaving = false;
   stockMovements: StockMovementResponse[] = [];
   salePopupSale: SaleByIdResponse | null = null;
   salePopupLoading = false;
@@ -668,10 +673,12 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.stockService.getBranchProductStock(branchId, this.selectedProduct.id).subscribe({
       next: stock => {
         this.selectedBranchStock = stock;
+        this.pricingCostInput = stock.costOverride ?? null;
+        this.pricingPriceInput = stock.salePriceOverride ?? null;
         this.stockLoading = false;
       },
       error: err => {
-        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cargar el stock de la sucursal');
+        this.toast.error(extractApiError(err, 'No se pudo cargar el stock de la sucursal'));
         this.stockLoading = false;
       }
     });
@@ -679,6 +686,33 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.stockService.listStockMovements(branchId, this.selectedProduct.id).subscribe({
       next: movements => this.stockMovements = movements,
       error: () => this.stockMovements = []
+    });
+  }
+
+  saveBranchPricing(): void {
+    if (!this.selectedProduct || !this.selectedStockBranchId) {
+      this.toast.error('Selecciona una sucursal para definir precio/costo.');
+      return;
+    }
+
+    this.pricingSaving = true;
+    this.stockService.setBranchProductPricing({
+      branchId: this.selectedStockBranchId,
+      productId: this.selectedProduct.id,
+      costOverride: this.pricingCostInput,
+      salePriceOverride: this.pricingPriceInput
+    }).subscribe({
+      next: stock => {
+        this.selectedBranchStock = stock;
+        this.pricingCostInput = stock.costOverride ?? null;
+        this.pricingPriceInput = stock.salePriceOverride ?? null;
+        this.pricingSaving = false;
+        this.toast.success('Precio/costo de sucursal actualizado');
+      },
+      error: err => {
+        this.pricingSaving = false;
+        this.toast.error(extractApiError(err, 'No se pudo guardar el precio/costo de la sucursal'));
+      }
     });
   }
 
