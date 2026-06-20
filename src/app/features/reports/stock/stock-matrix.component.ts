@@ -7,6 +7,7 @@ import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { StockMatrixResponse, StockMatrixRow } from '../../../core/models/report.models';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
 
 @Component({
   selector: 'app-stock-matrix-report',
@@ -24,7 +25,8 @@ export class StockMatrixComponent implements OnInit {
   constructor(
     private readonly reportService: ReportService,
     private readonly toast: ToastService,
-    private readonly pdfBranding: PdfBrandingService
+    private readonly pdfBranding: PdfBrandingService,
+    private readonly pdfLayout: PdfLayoutService
   ) {}
 
   ngOnInit(): void { this.load(); }
@@ -147,41 +149,46 @@ export class StockMatrixComponent implements OnInit {
     const totalW = 20;
     const branchW = (usable - prodW - totalW) / Math.max(1, branches.length);
 
-    const headers = ['Producto', ...branches.map(b => b.name), 'Total'];
-    const colW = [prodW, ...branches.map(() => branchW), totalW];
-    const xs: number[] = []; let cx = margin;
-    colW.forEach(w => { xs.push(cx); cx += w; });
-
-    const drawCell = (text: string, i: number, yy: number, alignRight: boolean): void => {
-      if (alignRight) doc.text(text, xs[i] + colW[i] - 1.5, yy, { align: 'right' });
-      else doc.text(doc.splitTextToSize(text, colW[i] - 2)[0] ?? '', xs[i] + 1.5, yy);
-    };
+    const columns: PdfTableColumn[] = [
+      { header: 'Producto', width: prodW },
+      ...branches.map(branch => ({ header: branch.name, width: branchW, align: 'right' as const })),
+      { header: 'Total', width: totalW, align: 'right' }
+    ];
+    const resolvedColumns = this.pdfLayout.resolveColumns(margin, columns);
 
     const drawHead = (): void => {
-      doc.setFillColor(235, 232, 225); doc.setDrawColor(206, 202, 192);
-      doc.roundedRect(margin, y, usable, 7, 1.5, 1.5, 'FD');
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(7.2); doc.setTextColor(62, 62, 62);
-      headers.forEach((h, i) => drawCell(h, i, y + 4.7, i > 0));
-      y += 7;
+      y = this.pdfLayout.drawTableHeader(doc, resolvedColumns, y, { tableWidth: usable, fontSize: 7.2 });
     };
     drawHead();
 
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(35, 35, 35);
     rows.forEach((r, idx) => {
-      if (y > pageHeight - 16) { doc.addPage(); drawDocumentHeader(true); drawHead(); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(35, 35, 35); }
-      if (idx % 2 === 0) { doc.setFillColor(249, 248, 245); doc.rect(margin, y, usable, 6, 'F'); }
-      drawCell(`${r.code} ${r.brand} ${r.name}`.trim(), 0, y + 4, false);
-      branches.forEach((_, i) => drawCell(String(r.available[i] ?? 0), i + 1, y + 4, true));
-      drawCell(String(r.total), headers.length - 1, y + 4, true);
-      y += 6;
+      y = this.pdfLayout.ensurePageSpace(doc, y, 6, pageHeight, () => {
+        drawDocumentHeader(true);
+        drawHead();
+        return y;
+      });
+      const values = [
+        `${r.code} ${r.brand} ${r.name}`.trim(),
+        ...branches.map((_, i) => String(r.available[i] ?? 0)),
+        String(r.total)
+      ];
+      y = this.pdfLayout.drawTableRow(doc, resolvedColumns, values, y, {
+        tableWidth: usable,
+        alternate: idx % 2 === 0,
+        fontSize: 7.2
+      });
     });
 
-    if (y > pageHeight - 16) { doc.addPage(); drawDocumentHeader(true); }
-    doc.setFont('helvetica', 'bold'); doc.setFillColor(244, 239, 229); doc.rect(margin, y, usable, 6, 'F');
-    doc.setTextColor(35, 35, 35);
-    drawCell('TOTAL', 0, y + 4, false);
-    branches.forEach((_, i) => drawCell(String(this.branchTotal(i)), i + 1, y + 4, true));
-    drawCell(String(this.grandTotal), headers.length - 1, y + 4, true);
+    y = this.pdfLayout.ensurePageSpace(doc, y, 6, pageHeight, () => {
+      drawDocumentHeader(true);
+      drawHead();
+      return y;
+    });
+    y = this.pdfLayout.drawTableRow(doc, resolvedColumns, [
+      'TOTAL',
+      ...branches.map((_, i) => String(this.branchTotal(i))),
+      String(this.grandTotal)
+    ], y, { tableWidth: usable, total: true, fontSize: 7.2 });
 
     this.pdfBranding.drawFooter(doc, pageWidth, pageHeight, margin, 'Reporte de stock');
     doc.save(`stock_por_sucursal_${new Date().toLocaleDateString('en-CA')}.pdf`);

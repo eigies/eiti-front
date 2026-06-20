@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of, Subscription } from 'rxjs';
 import { CustomerService } from '../../core/services/customer.service';
 import { CreateCustomerRequest, CustomerResponse } from '../../core/models/customer.models';
 import { ToastService } from '../../shared/services/toast.service';
@@ -49,32 +49,60 @@ export class CustomersComponent implements OnInit, OnDestroy {
     private auth: AuthService,
     private confirmation: ConfirmationService
   ) {
+    // Alineado con el backend: solo el nombre es obligatorio. Email valida formato si se carga.
+    // El domicilio es "todo o nada": si se carga algún dato, se exigen los 6 campos core
+    // (lo mismo que valida Address.Create); si queda vacío, no se pide nada.
     this.form = this.fb.group({
       firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      phone: ['', Validators.required],
-      documentType: [1, Validators.required],
-      documentNumber: ['', Validators.required],
+      lastName: [''],
+      email: ['', [Validators.email]],
+      phone: [''],
+      documentType: [1],
+      documentNumber: [''],
       taxId: [''],
-      street: ['', Validators.required],
-      streetNumber: ['', Validators.required],
-      postalCode: ['', Validators.required],
-      city: ['', Validators.required],
-      stateOrProvince: ['', Validators.required],
-      country: ['Argentina', Validators.required],
+      street: [''],
+      streetNumber: [''],
+      postalCode: [''],
+      city: [''],
+      stateOrProvince: [''],
+      country: [''],
       floor: [''],
       apartment: [''],
       reference: ['']
     });
   }
 
+  private readonly addressCoreFields = ['street', 'streetNumber', 'postalCode', 'city', 'stateOrProvince', 'country'];
+  private readonly addressAllFields = [...this.addressCoreFields, 'floor', 'apartment', 'reference'];
+
+  private syncAddressValidators(): void {
+    const hasAddressData = this.addressAllFields.some(field => {
+      const value = this.form.get(field)?.value;
+      return typeof value === 'string' ? value.trim().length > 0 : !!value;
+    });
+    for (const field of this.addressCoreFields) {
+      const control = this.form.get(field);
+      if (!control) { continue; }
+      if (hasAddressData) {
+        control.setValidators([Validators.required]);
+      } else {
+        control.clearValidators();
+      }
+      control.updateValueAndValidity({ emitEvent: false });
+    }
+  }
+
+  private addressValidatorSub: Subscription | null = null;
+
   ngOnInit(): void {
     this.loadCustomers();
+    // Domicilio todo-o-nada: recalcula los validadores al cambiar cualquier campo del form.
+    this.addressValidatorSub = this.form.valueChanges.subscribe(() => this.syncAddressValidators());
   }
 
   ngOnDestroy(): void {
     this.clearFormPanelCloseTimer();
+    this.addressValidatorSub?.unsubscribe();
   }
 
   get canDeleteCustomers(): boolean {
@@ -114,7 +142,11 @@ export class CustomersComponent implements OnInit, OnDestroy {
   }
 
   submit(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.toast.error('Revisa los campos marcados: el nombre es obligatorio y, si cargas domicilio, completalo entero.');
+      return;
+    }
     this.creating = true;
     const payload = this.buildPayload();
     const wasEditing = this.editingId !== null;
@@ -162,7 +194,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
           postalCode: c.address?.postalCode || '',
           city: c.address?.city || '',
           stateOrProvince: c.address?.stateOrProvince || '',
-          country: c.address?.country || 'Argentina',
+          country: c.address?.country || '',
           floor: c.address?.floor || '',
           apartment: c.address?.apartment || '',
           reference: c.address?.reference || ''
@@ -280,11 +312,12 @@ export class CustomersComponent implements OnInit, OnDestroy {
       postalCode: '',
       city: '',
       stateOrProvince: '',
-      country: 'Argentina',
+      country: '',
       floor: '',
       apartment: '',
       reference: ''
     });
+    this.syncAddressValidators();
   }
 
   private resolveCustomerErrorMessage(err: unknown, fallback: string): string {

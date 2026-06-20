@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { jsPDF } from 'jspdf';
 import { PdfBrandingService } from './pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from './pdf-layout.service';
 
 // Datos mínimos que el remito necesita de una venta (compatible con SaleResponse y SaleByIdResponse).
 export interface RemitoSaleDetail {
@@ -34,7 +35,10 @@ export interface RemitoContext {
 // sin precios (oculta columnas Unitario/Subtotal, caja TOTAL y la info de pago/cobrado).
 @Injectable({ providedIn: 'root' })
 export class RemitoPdfService {
-  constructor(private readonly brandingService: PdfBrandingService) {}
+  constructor(
+    private readonly brandingService: PdfBrandingService,
+    private readonly pdfLayout: PdfLayoutService
+  ) {}
 
   async generate(sale: RemitoSale, ctx: RemitoContext, incluirImportes: boolean): Promise<void> {
     const doc = new jsPDF({ format: 'a4', unit: 'mm' });
@@ -46,9 +50,21 @@ export class RemitoPdfService {
     const printableBottom = pageHeight - 18;
 
     // Columnas: con importes (#, Producto, Cant., Unitario, Subtotal); traslado (#, Producto, Cant.).
-    const colWidths = incluirImportes ? [12, 84, 18, 34, 34] : [12, 152, 18];
-    const colX: number[] = [];
-    colWidths.reduce((acc, w, i) => { colX[i] = acc; return acc + w; }, margin);
+    const itemColumns: PdfTableColumn[] = incluirImportes
+      ? [
+        { header: '#', width: 12 },
+        { header: 'Producto', width: 84 },
+        { header: 'Cant.', width: 18, align: 'right' },
+        { header: 'Unitario', width: 34, align: 'right' },
+        { header: 'Subtotal', width: 34, align: 'right' }
+      ]
+      : [
+        { header: '#', width: 12 },
+        { header: 'Producto', width: 152 },
+        { header: 'Cant.', width: 18, align: 'right' }
+      ];
+    const itemTableColumns = this.pdfLayout.resolveColumns(margin, itemColumns);
+    const [numberCol, productCol, quantityCol, unitCol, subtotalCol] = itemTableColumns;
 
     const formatCurrency = (value: number): string =>
       `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -134,20 +150,11 @@ export class RemitoPdfService {
       doc.text(continuation ? 'Detalle de productos (continuacion)' : 'Detalle de productos', margin, y);
       y += 5;
 
-      doc.setFillColor(232, 232, 232);
-      doc.setDrawColor(170, 170, 170);
-      doc.rect(margin, y, contentWidth, 8, 'FD');
-
-      doc.setFontSize(8.6);
-      doc.text('#', colX[0] + 2, y + 5.3);
-      doc.text('Producto', colX[1] + 2, y + 5.3);
-      doc.text('Cant.', colX[2] + colWidths[2] - 2, y + 5.3, { align: 'right' });
-      if (incluirImportes) {
-        doc.text('Unitario', colX[3] + colWidths[3] - 2, y + 5.3, { align: 'right' });
-        doc.text('Subtotal', colX[4] + colWidths[4] - 2, y + 5.3, { align: 'right' });
-      }
-
-      y += 8;
+      y = this.pdfLayout.drawTableHeader(doc, itemTableColumns, y, {
+        tableWidth: contentWidth,
+        height: 8,
+        fontSize: 8.6
+      });
     };
 
     const startDetailsPage = (continuation: boolean): void => {
@@ -163,31 +170,41 @@ export class RemitoPdfService {
     drawMetaBlock();
     startDetailsPage(false);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(25, 25, 25);
-
     for (let index = 0; index < sale.details.length; index += 1) {
       const detail = sale.details[index];
       const productText = `${detail.productBrand} / ${detail.productName}`;
-      const wrappedProduct = doc.splitTextToSize(productText, colWidths[1] - 4) as string[];
-      const rowHeight = Math.max(8, wrappedProduct.length * 3.8 + 2.5);
+      const rowValues = [
+        `${index + 1}`,
+        productText,
+        `${detail.quantity}`,
+        ...(incluirImportes ? [formatCurrency(detail.unitPrice), formatCurrency(detail.totalAmount)] : [])
+      ];
+      const rowHeight = this.pdfLayout.measureTableRowHeight(doc, itemTableColumns, rowValues, {
+        tableWidth: contentWidth,
+        wrap: true,
+        minHeight: 8,
+        lineHeight: 3.8,
+        fontSize: 8.5
+      });
 
       if (y + rowHeight > printableBottom) {
         startDetailsPage(true);
       }
 
       doc.setDrawColor(205, 205, 205);
-      for (let c = 0; c < colWidths.length; c += 1) {
-        doc.rect(colX[c], y, colWidths[c], rowHeight);
+      for (const column of itemTableColumns) {
+        doc.rect(column.x, y, column.width, rowHeight);
       }
 
-      doc.text(`${index + 1}`, colX[0] + 2, y + rowHeight / 2 + 1.2);
-      doc.text(wrappedProduct, colX[1] + 2, y + 4.6);
-      doc.text(`${detail.quantity}`, colX[2] + colWidths[2] - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(25, 25, 25);
+      doc.text(rowValues[0], numberCol.x + 2, y + rowHeight / 2 + 1.2);
+      doc.text(this.pdfLayout.splitCellText(doc, rowValues[1], productCol), productCol.x + 2, y + 4.6);
+      doc.text(rowValues[2], quantityCol.x + quantityCol.width - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
       if (incluirImportes) {
-        doc.text(formatCurrency(detail.unitPrice), colX[3] + colWidths[3] - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
-        doc.text(formatCurrency(detail.totalAmount), colX[4] + colWidths[4] - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
+        doc.text(rowValues[3], unitCol.x + unitCol.width - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
+        doc.text(rowValues[4], subtotalCol.x + subtotalCol.width - 2, y + rowHeight / 2 + 1.2, { align: 'right' });
       }
 
       y += rowHeight;

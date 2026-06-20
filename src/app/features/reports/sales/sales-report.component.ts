@@ -17,6 +17,7 @@ import { SalesReportResponse, SALE_CHANNELS } from '../../../core/models/report.
 import { ProductCategoryResponse } from '../../../core/models/product-category.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
 
 interface ReportMeta { title: string; eyebrow: string; }
 
@@ -75,7 +76,8 @@ export class SalesReportComponent implements OnInit {
     private readonly branchService: BranchService,
     private readonly productCategoryService: ProductCategoryService,
     private readonly toast: ToastService,
-    private readonly pdfBranding: PdfBrandingService
+    private readonly pdfBranding: PdfBrandingService,
+    private readonly pdfLayout: PdfLayoutService
   ) {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -262,21 +264,30 @@ export class SalesReportComponent implements OnInit {
 
     drawDocumentHeader();
 
-    const headers = this.isChannelBrand
-      ? [this.dimensionHeader, 'Marca', 'Ventas', 'Unid.', 'Facturacion', 'Costo', 'Ganancia', 'Margen %']
-      : [this.dimensionHeader, 'Ventas', 'Unid.', 'Facturacion', 'Costo', 'Ganancia', 'Margen %'];
-    const colW = this.isChannelBrand
-      ? [50, 40, 22, 22, 35, 35, 35, 24]
-      : [80, 24, 24, 40, 40, 40, 28];
-    const xs: number[] = []; let cx = margin;
-    colW.forEach(w => { xs.push(cx); cx += w; });
+    const columns: PdfTableColumn[] = this.isChannelBrand
+      ? [
+        { header: this.dimensionHeader, width: 50 },
+        { header: 'Marca', width: 40 },
+        { header: 'Ventas', width: 22 },
+        { header: 'Unid.', width: 22 },
+        { header: 'Facturacion', width: 35 },
+        { header: 'Costo', width: 35 },
+        { header: 'Ganancia', width: 35 },
+        { header: 'Margen %', width: 24 }
+      ]
+      : [
+        { header: this.dimensionHeader, width: 80 },
+        { header: 'Ventas', width: 24 },
+        { header: 'Unid.', width: 24 },
+        { header: 'Facturacion', width: 40 },
+        { header: 'Costo', width: 40 },
+        { header: 'Ganancia', width: 40 },
+        { header: 'Margen %', width: 28 }
+      ];
+    const resolvedColumns = this.pdfLayout.resolveColumns(margin, columns);
 
     const drawHead = () => {
-      doc.setFillColor(235, 232, 225); doc.setDrawColor(206, 202, 192);
-      doc.roundedRect(margin, y, pageWidth - margin * 2, 7, 1.5, 1.5, 'FD');
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(7.6); doc.setTextColor(62, 62, 62);
-      headers.forEach((h, i) => doc.text(h, xs[i] + 1.5, y + 4.7));
-      y += 7;
+      y = this.pdfLayout.drawTableHeader(doc, resolvedColumns, y, { tableWidth: pageWidth - margin * 2, fontSize: 7.6 });
     };
     drawHead();
 
@@ -284,21 +295,34 @@ export class SalesReportComponent implements OnInit {
       ? [r.label, r.subLabel ?? '', String(r.salesCount), String(r.units), this.money(r.revenue), this.money(r.cost), this.money(r.profit), `${r.marginPct}%`]
       : [r.label, String(r.salesCount), String(r.units), this.money(r.revenue), this.money(r.cost), this.money(r.profit), `${r.marginPct}%`];
 
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(35, 35, 35);
     this.data.rows.forEach((r, idx) => {
-      if (y > pageHeight - 16) { doc.addPage(); drawDocumentHeader(true); drawHead(); doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(35, 35, 35); }
-      if (idx % 2 === 0) { doc.setFillColor(249, 248, 245); doc.rect(margin, y, pageWidth - margin * 2, 6, 'F'); }
+      y = this.pdfLayout.ensurePageSpace(doc, y, 6, pageHeight, () => {
+        drawDocumentHeader(true);
+        drawHead();
+        return y;
+      });
       const cells = cellsFor(r);
-      cells.forEach((c, i) => doc.text(doc.splitTextToSize(c, colW[i] - 2)[0] ?? '', xs[i] + 1.5, y + 4));
-      y += 6;
+      y = this.pdfLayout.drawTableRow(doc, resolvedColumns, cells, y, {
+        tableWidth: pageWidth - margin * 2,
+        alternate: idx % 2 === 0,
+        fontSize: 7.5
+      });
     });
 
     const t = this.data.totals;
     const totalCells = this.isChannelBrand
       ? ['TOTAL', '', String(t.salesCount), String(t.units), this.money(t.revenue), this.money(t.cost), this.money(t.profit), `${t.marginPct}%`]
       : ['TOTAL', String(t.salesCount), String(t.units), this.money(t.revenue), this.money(t.cost), this.money(t.profit), `${t.marginPct}%`];
-    doc.setFont('helvetica', 'bold'); doc.setFillColor(244, 239, 229); doc.rect(margin, y, pageWidth - margin * 2, 6, 'F');
-    totalCells.forEach((c, i) => doc.text(c, xs[i] + 1.5, y + 4));
+    y = this.pdfLayout.ensurePageSpace(doc, y, 6, pageHeight, () => {
+      drawDocumentHeader(true);
+      drawHead();
+      return y;
+    });
+    y = this.pdfLayout.drawTableRow(doc, resolvedColumns, totalCells, y, {
+      tableWidth: pageWidth - margin * 2,
+      total: true,
+      fontSize: 7.5
+    });
 
     this.pdfBranding.drawFooter(doc, pageWidth, pageHeight, margin, 'Reporte de ventas');
     doc.save(this.fileName('pdf'));

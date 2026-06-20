@@ -26,6 +26,7 @@ import { BankResponse } from '../../core/models/bank.models';
 import { forkJoin } from 'rxjs';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../shared/services/pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from '../../shared/services/pdf-layout.service';
 
 type CashSessionView = {
     session: CashSessionResponse;
@@ -1266,6 +1267,7 @@ export class CashComponent implements OnInit {
         private onboardingService: OnboardingService,
         private router: Router,
         private pdfBranding: PdfBrandingService,
+        private pdfLayout: PdfLayoutService,
         public auth: AuthService
     ) {
         this.drawerForm = this.fb.group({ name: ['', Validators.required] });
@@ -1778,17 +1780,19 @@ export class CashComponent implements OnInit {
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         const maxY = pageHeight - 14;
+        const tableWidth = pageWidth - margin * 2;
         let y = 16;
 
-        const movementColumns = {
-            movement: { x: margin + 2, width: 28 },
-            type: { x: margin + 33, width: 18 },
-            saleCode: { x: margin + 54, width: 36 },
-            direction: { x: margin + 93, width: 16 },
-            amount: { x: margin + 112, width: 23 },
-            payment: { x: margin + 138, width: 67 },
-            description: { x: margin + 208, width: pageWidth - margin - (margin + 208) }
-        };
+        const movementColumns = this.pdfLayout.resolveColumns(margin, [
+            { header: 'Movimiento', width: 31 },
+            { header: 'Tipo', width: 21 },
+            { header: 'Cod. venta', width: 39 },
+            { header: 'Sentido', width: 19 },
+            { header: 'Monto', width: 32, align: 'right' },
+            { header: 'Pago', width: 66 },
+            { header: 'Descripcion', width: tableWidth - 208 }
+        ] satisfies PdfTableColumn[]);
+        const [movementCol, typeCol, saleCodeCol, directionCol, amountCol, paymentCol, descriptionCol] = movementColumns;
 
         const drawDocumentHeader = (continuation = false): void => {
             this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
@@ -1811,20 +1815,7 @@ export class CashComponent implements OnInit {
         };
 
         const drawMovementHeader = (): void => {
-            doc.setFillColor(235, 232, 225);
-            doc.setDrawColor(206, 202, 192);
-            doc.roundedRect(margin, y, pageWidth - margin * 2, 7, 1.5, 1.5, 'FD');
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7.7);
-            doc.setTextColor(62, 62, 62);
-            doc.text('Movimiento', movementColumns.movement.x, y + 4.7);
-            doc.text('Tipo', movementColumns.type.x, y + 4.7);
-            doc.text('Cod. venta', movementColumns.saleCode.x, y + 4.7);
-            doc.text('Sentido', movementColumns.direction.x, y + 4.7);
-            doc.text('Monto', movementColumns.amount.x, y + 4.7);
-            doc.text('Pago', movementColumns.payment.x, y + 4.7);
-            doc.text('Descripcion', movementColumns.description.x, y + 4.7);
-            y += 7;
+            y = this.pdfLayout.drawTableHeader(doc, movementColumns, y, { tableWidth, fontSize: 7.7 });
         };
 
         const drawMetricCard = (x: number, width: number, label: string, value: string, tone: 'neutral' | 'accent' | 'success' | 'danger' = 'neutral'): void => {
@@ -1879,12 +1870,13 @@ export class CashComponent implements OnInit {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10.4);
             doc.setTextColor(30, 30, 30);
-            doc.text(`Sesion ${session.id}`, margin, y);
+            const sessionTitleLines = doc.splitTextToSize(`Sesion ${session.id}`, pageWidth - margin * 2 - 40) as string[];
+            doc.text(sessionTitleLines, margin, y);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8.2);
             doc.setTextColor(92, 92, 92);
-            doc.text(session.statusName, margin + 42, y);
-            y += 4.4;
+            doc.text(session.statusName, pageWidth - margin, y, { align: 'right' });
+            y += Math.max(5.8, sessionTitleLines.length * 4.8 + 1);
 
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8.2);
@@ -1910,46 +1902,38 @@ export class CashComponent implements OnInit {
                 const saleCode = row.saleCode || '-';
                 const typeLabel = this.translateType(row.typeName);
                 const directionLabel = this.translateDirection(row.typeName === 'TransferIncome' ? 'In' : row.directionName);
-                const typeLines = doc.splitTextToSize(typeLabel, movementColumns.type.width) as string[];
-                const saleCodeLines = doc.splitTextToSize(saleCode, movementColumns.saleCode.width) as string[];
-                const directionLines = doc.splitTextToSize(directionLabel, movementColumns.direction.width) as string[];
-                const paymentMethodLines = doc.splitTextToSize(row.paymentMethodLabel, movementColumns.payment.width) as string[];
-                const descriptionLines = doc.splitTextToSize(description, movementColumns.description.width) as string[];
-                const clippedDescription = descriptionLines.slice(0, 2);
-                const rowHeight = Math.max(
-                    8.2,
-                    clippedDescription.length * 3.4 + 2.4,
-                    paymentMethodLines.length * 3.4 + 2.4,
-                    typeLines.length * 3.4 + 2.4,
-                    saleCodeLines.length * 3.4 + 2.4,
-                    directionLines.length * 3.4 + 2.4
-                );
+                const rowValues = [
+                    this.formatDate(row.occurredAt),
+                    typeLabel,
+                    saleCode,
+                    directionLabel,
+                    this.formatCurrency(row.amount),
+                    row.paymentMethodLabel,
+                    description
+                ];
+                const rowOptions = { tableWidth, wrap: true, minHeight: 8.2, lineHeight: 3.4, maxLines: 2, fontSize: 7.9 };
+                const rowHeight = this.pdfLayout.measureTableRowHeight(doc, movementColumns, rowValues, rowOptions);
 
-                if (y + rowHeight > maxY) {
-                    doc.addPage();
+                y = this.pdfLayout.ensurePageSpace(doc, y, rowHeight, pageHeight, () => {
                     y = 16;
                     drawDocumentHeader(true);
                     drawMovementHeader();
-                }
+                    return y;
+                }, 14);
 
-                if (rowIndex % 2 === 0) {
-                    doc.setFillColor(249, 248, 245);
-                    doc.rect(margin, y, pageWidth - margin * 2, rowHeight, 'F');
-                }
-
-                doc.setDrawColor(228, 228, 226);
-                doc.line(margin, y + rowHeight, pageWidth - margin, y + rowHeight);
+                this.pdfLayout.drawTableRowBackground(doc, margin, y, tableWidth, rowHeight, { alternate: rowIndex % 2 === 0 });
+                this.pdfLayout.drawTableSeparator(doc, margin, y + rowHeight, tableWidth);
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7.9);
                 doc.setTextColor(35, 35, 35);
-                doc.text(this.formatDate(row.occurredAt), movementColumns.movement.x, y + 4.8);
-                doc.text(typeLines, movementColumns.type.x, y + 4.8);
-                doc.text(saleCodeLines, movementColumns.saleCode.x, y + 4.8);
-                doc.text(directionLines, movementColumns.direction.x, y + 4.8);
-                doc.text(this.formatCurrency(row.amount), movementColumns.amount.x + movementColumns.amount.width, y + 4.8, { align: 'right' });
-                doc.text(paymentMethodLines, movementColumns.payment.x, y + 4.8);
-                doc.text(clippedDescription, movementColumns.description.x, y + 4.8);
+                doc.text(this.pdfLayout.splitCellText(doc, rowValues[0], movementCol, 2), movementCol.x + 1.5, y + 4.8);
+                doc.text(this.pdfLayout.splitCellText(doc, rowValues[1], typeCol, 2), typeCol.x + 1.5, y + 4.8);
+                doc.text(this.pdfLayout.splitCellText(doc, rowValues[2], saleCodeCol, 2), saleCodeCol.x + 1.5, y + 4.8);
+                doc.text(this.pdfLayout.splitCellText(doc, rowValues[3], directionCol, 2), directionCol.x + 1.5, y + 4.8);
+                doc.text(rowValues[4], amountCol.x + amountCol.width - 1.5, y + 4.8, { align: 'right' });
+                doc.text(this.pdfLayout.splitCellText(doc, rowValues[5], paymentCol, 2), paymentCol.x + 1.5, y + 4.8);
+                doc.text(this.pdfLayout.splitCellText(doc, rowValues[6], descriptionCol, 2), descriptionCol.x + 1.5, y + 4.8);
 
                 y += rowHeight;
             }

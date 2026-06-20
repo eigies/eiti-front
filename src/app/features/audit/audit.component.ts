@@ -16,6 +16,7 @@ import { AuditLogItem } from '../../core/models/audit.models';
 import { UserResponse } from '../../core/models/user.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../shared/services/pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from '../../shared/services/pdf-layout.service';
 
 interface PayloadRow {
   label: string;
@@ -147,7 +148,8 @@ export class AuditComponent implements OnInit {
     private readonly supplierService: SupplierService,
     private readonly branchService: BranchService,
     private readonly toast: ToastService,
-    private readonly pdfBranding: PdfBrandingService
+    private readonly pdfBranding: PdfBrandingService,
+    private readonly pdfLayout: PdfLayoutService
   ) {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -506,13 +508,15 @@ export class AuditComponent implements OnInit {
     const f = this.filterForm.value;
     let y = 16;
 
-    const cols = {
-      date: { x: margin + 2, width: 30 },
-      user: { x: margin + 34, width: 44 },
-      action: { x: margin + 80, width: 92 },
-      result: { x: margin + 174, width: 26 },
-      detail: { x: margin + 202, width: pageWidth - margin - (margin + 202) }
-    };
+    const tableWidth = pageWidth - margin * 2;
+    const columns = this.pdfLayout.resolveColumns(margin, [
+      { header: 'Fecha / hora', width: 32 },
+      { header: 'Usuario', width: 46 },
+      { header: 'Accion', width: 94 },
+      { header: 'Resultado', width: 28 },
+      { header: 'Identificador / cambios', width: tableWidth - 200 }
+    ] satisfies PdfTableColumn[]);
+    const [dateCol, userCol, actionCol, resultCol, detailCol] = columns;
 
     const drawDocumentHeader = (continuation = false): void => {
       this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
@@ -545,18 +549,7 @@ export class AuditComponent implements OnInit {
     };
 
     const drawTableHeader = (): void => {
-      doc.setFillColor(235, 232, 225);
-      doc.setDrawColor(206, 202, 192);
-      doc.roundedRect(margin, y, pageWidth - margin * 2, 7, 1.5, 1.5, 'FD');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.7);
-      doc.setTextColor(62, 62, 62);
-      doc.text('Fecha / hora', cols.date.x, y + 4.7);
-      doc.text('Usuario', cols.user.x, y + 4.7);
-      doc.text('Accion', cols.action.x, y + 4.7);
-      doc.text('Resultado', cols.result.x, y + 4.7);
-      doc.text('Identificador / cambios', cols.detail.x, y + 4.7);
-      y += 7;
+      y = this.pdfLayout.drawTableHeader(doc, columns, y, { tableWidth, fontSize: 7.7 });
     };
 
     drawDocumentHeader();
@@ -571,47 +564,41 @@ export class AuditComponent implements OnInit {
         ? `${this.exportIdentifier(item)}${changeSummary === '-' ? '' : ' / ' + changeSummary}`
         : (item.errorCode || 'Error');
 
-      const userLines = doc.splitTextToSize(userLabel, cols.user.width) as string[];
-      const actionLines = doc.splitTextToSize(this.actionLabel(item.actionType), cols.action.width) as string[];
-      const detailLines = (doc.splitTextToSize(detail, cols.detail.width) as string[]).slice(0, 2);
-      const rowHeight = Math.max(
-        8.2,
-        userLines.length * 3.4 + 2.4,
-        actionLines.length * 3.4 + 2.4,
-        detailLines.length * 3.4 + 2.4
-      );
+      const values = [
+        this.formatDateTime(item.timestamp),
+        userLabel,
+        this.actionLabel(item.actionType),
+        item.succeeded ? 'OK' : 'Error',
+        detail
+      ];
+      const rowOptions = { tableWidth, wrap: true, minHeight: 8.2, lineHeight: 3.4, maxLines: 2, fontSize: 7.9 };
+      const rowHeight = this.pdfLayout.measureTableRowHeight(doc, columns, values, rowOptions);
 
-      if (y + rowHeight > maxY) {
-        doc.addPage();
-        y = 16;
+      y = this.pdfLayout.ensurePageSpace(doc, y, rowHeight, pageHeight, () => {
         drawDocumentHeader(true);
         drawTableHeader();
-      }
+        return y;
+      }, 14);
 
-      if (rowIndex % 2 === 0) {
-        doc.setFillColor(249, 248, 245);
-        doc.rect(margin, y, pageWidth - margin * 2, rowHeight, 'F');
-      }
-
-      doc.setDrawColor(228, 228, 226);
-      doc.line(margin, y + rowHeight, pageWidth - margin, y + rowHeight);
+      this.pdfLayout.drawTableRowBackground(doc, margin, y, tableWidth, rowHeight, { alternate: rowIndex % 2 === 0 });
+      this.pdfLayout.drawTableSeparator(doc, margin, y + rowHeight, tableWidth);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.9);
       doc.setTextColor(35, 35, 35);
-      doc.text(this.formatDateTime(item.timestamp), cols.date.x, y + 4.8);
-      doc.text(userLines, cols.user.x, y + 4.8);
-      doc.text(actionLines, cols.action.x, y + 4.8);
+      doc.text(this.pdfLayout.splitCellText(doc, values[0], dateCol, 2), dateCol.x + 1.5, y + 4.8);
+      doc.text(this.pdfLayout.splitCellText(doc, values[1], userCol, 2), userCol.x + 1.5, y + 4.8);
+      doc.text(this.pdfLayout.splitCellText(doc, values[2], actionCol, 2), actionCol.x + 1.5, y + 4.8);
 
       if (item.succeeded) {
         doc.setTextColor(34, 120, 58);
       } else {
         doc.setTextColor(178, 52, 52);
       }
-      doc.text(item.succeeded ? 'OK' : 'Error', cols.result.x, y + 4.8);
+      doc.text(values[3], resultCol.x + 1.5, y + 4.8);
 
       doc.setTextColor(90, 90, 90);
-      doc.text(detailLines, cols.detail.x, y + 4.8);
+      doc.text(this.pdfLayout.splitCellText(doc, values[4], detailCol, 2), detailCol.x + 1.5, y + 4.8);
 
       y += rowHeight;
     }

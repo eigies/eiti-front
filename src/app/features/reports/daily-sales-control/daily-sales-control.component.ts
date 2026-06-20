@@ -13,6 +13,7 @@ import {
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
 
 @Component({
   selector: 'app-daily-sales-control',
@@ -38,7 +39,8 @@ export class DailySalesControlComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly reportService: ReportService,
     private readonly toast: ToastService,
-    private readonly pdfBranding: PdfBrandingService
+    private readonly pdfBranding: PdfBrandingService,
+    private readonly pdfLayout: PdfLayoutService
   ) {
     const today = this.toIso(new Date());
     this.filterForm = this.fb.group({
@@ -207,8 +209,18 @@ export class DailySalesControlComponent implements OnInit {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 9;
-    const widths = [17, 25, 25, 35, 57, 48, 51, 21];
-    const headers = ['Hora', 'Comprobante', 'Sucursal', 'Cliente', 'Batería vendida', 'Pago / referencia', 'Canje', 'Total'];
+    const tableWidth = pageWidth - margin * 2;
+    const columns: PdfTableColumn[] = [
+      { header: 'Hora', width: 17 },
+      { header: 'Comprobante', width: 25 },
+      { header: 'Sucursal', width: 25 },
+      { header: 'Cliente', width: 35 },
+      { header: 'Batería vendida', width: 57 },
+      { header: 'Pago / referencia', width: 48 },
+      { header: 'Canje', width: 51 },
+      { header: 'Total', width: 21 }
+    ];
+    const resolvedColumns = this.pdfLayout.resolveColumns(margin, columns);
     let y = 12;
 
     const drawHeader = (continuation = false): void => {
@@ -223,21 +235,10 @@ export class DailySalesControlComponent implements OnInit {
         pageWidth
       });
 
-      doc.setFillColor(235, 232, 225);
-      doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6.8);
-      doc.setTextColor(60, 60, 60);
-      let x = margin;
-      headers.forEach((header, index) => {
-        doc.text(header, x + 1.5, y + 4.7);
-        x += widths[index];
-      });
-      y += 7;
+      y = this.pdfLayout.drawTableHeader(doc, resolvedColumns, y, { tableWidth, fontSize: 6.8 });
     };
 
     drawHeader();
-    doc.setFontSize(6.6);
 
     rows.forEach((row, index) => {
       const values = [
@@ -250,28 +251,21 @@ export class DailySalesControlComponent implements OnInit {
         this.tradeInsText(row.tradeIns),
         `$ ${this.money(row.totalAmount)}`
       ];
-      const lines = values.map((value, column) => doc.splitTextToSize(value, widths[column] - 3) as string[]);
-      const rowHeight = Math.max(7, ...lines.map(value => value.length * 3 + 2));
+      const rowOptions = {
+        tableWidth,
+        wrap: true,
+        minHeight: 7,
+        lineHeight: 3,
+        fontSize: 6.6,
+        alternate: index % 2 === 0
+      };
+      const rowHeight = this.pdfLayout.measureTableRowHeight(doc, resolvedColumns, values, rowOptions);
 
-      if (y + rowHeight > pageHeight - 12) {
-        doc.addPage();
+      y = this.pdfLayout.ensurePageSpace(doc, y, rowHeight, pageHeight, () => {
         drawHeader(true);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.6);
-      }
-
-      if (index % 2 === 0) {
-        doc.setFillColor(249, 248, 245);
-        doc.rect(margin, y, pageWidth - margin * 2, rowHeight, 'F');
-      }
-
-      doc.setTextColor(35, 35, 35);
-      let x = margin;
-      lines.forEach((value, column) => {
-        doc.text(value, x + 1.5, y + 4);
-        x += widths[column];
-      });
-      y += rowHeight;
+        return y;
+      }, 12);
+      y = this.pdfLayout.drawTableRow(doc, resolvedColumns, values, y, { ...rowOptions, height: rowHeight });
     });
 
     const value = this.filterForm.value;
