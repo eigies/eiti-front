@@ -438,17 +438,17 @@
         </div>
         <div class="branch-pricing" *ngIf="selectedBranchStock && canManageStock">
           <div class="f__l">Precio / costo de esta sucursal <span class="branch-pricing__hint">(vacío = usa el valor global del producto)</span></div>
-          <div class="pf__row pf__row--3">
+          <div class="branch-pricing__form">
             <label class="f">
               <span class="f__l">Precio venta (sucursal)</span>
-              <input class="f__i f__i--num" type="number" [(ngModel)]="pricingPriceInput" [ngModelOptions]="{ standalone: true }" [placeholder]="'Global: ' + (selectedBranchStock.price | number:'1.2-2')" />
+              <input class="f__i f__i--num f__i--sm" type="number" [(ngModel)]="pricingPriceInput" [ngModelOptions]="{ standalone: true }" [placeholder]="'Global: ' + (selectedBranchStock.price | number:'1.2-2')" />
             </label>
             <label class="f" *ngIf="canViewCostPrice">
               <span class="f__l">Costo (sucursal)</span>
-              <input class="f__i f__i--num" type="number" [(ngModel)]="pricingCostInput" [ngModelOptions]="{ standalone: true }" [placeholder]="'Global: ' + ((selectedBranchStock.costPrice || 0) | number:'1.2-2')" />
+              <input class="f__i f__i--num f__i--sm" type="number" [(ngModel)]="pricingCostInput" [ngModelOptions]="{ standalone: true }" [placeholder]="'Global: ' + ((selectedBranchStock.costPrice || 0) | number:'1.2-2')" />
             </label>
-            <div class="pf__footer">
-              <button class="btn btn--primary" type="button" [disabled]="pricingSaving" (click)="saveBranchPricing()">{{ pricingSaving ? 'Guardando...' : 'Guardar precio/costo' }}</button>
+            <div class="pf__footer branch-pricing__actions">
+              <button class="btn btn--primary btn--sm" type="button" [disabled]="pricingSaving" (click)="saveBranchPricing()">{{ pricingSaving ? 'Guardando...' : 'Guardar precio/costo' }}</button>
             </div>
           </div>
         </div>
@@ -458,13 +458,13 @@
         </div>
         <fieldset class="fs" [disabled]="!selectedStockBranchId || !canManageStock">
           <form [formGroup]="stockForm" (ngSubmit)="submitStock()" novalidate>
-            <div class="pf__row pf__row--3">
-              <label class="f"><span class="f__l">Movimiento</span><app-searchable-select formControlName="type" [options]="stockMovementOptions" placeholder="Movimiento" searchPlaceholder="Buscar movimiento..."></app-searchable-select></label>
-              <label class="f"><span class="f__l">Cantidad</span><input class="f__i f__i--num" type="number" formControlName="quantity" /></label>
-              <label class="f"><span class="f__l">Descripcion</span><input class="f__i" type="text" formControlName="description" /></label>
-            </div>
-            <div class="pf__footer">
-              <button class="btn btn--primary" type="submit" [disabled]="stockSaving || !selectedStockBranchId">{{ stockSaving ? 'Guardando...' : 'Guardar stock' }}</button>
+            <div class="stock-movement-form">
+              <label class="f stock-movement-form__type"><span class="f__l">Movimiento</span><app-searchable-select formControlName="type" [options]="stockMovementOptions" [compact]="true" placeholder="Movimiento" searchPlaceholder="Buscar movimiento..."></app-searchable-select></label>
+              <label class="f stock-movement-form__quantity"><span class="f__l">Cantidad</span><input class="f__i f__i--num f__i--sm" type="number" formControlName="quantity" /></label>
+              <label class="f stock-movement-form__description"><span class="f__l">Descripcion</span><input class="f__i f__i--sm" type="text" formControlName="description" /></label>
+              <div class="pf__footer stock-movement-form__actions">
+                <button class="btn btn--primary btn--sm" type="submit" [disabled]="stockSaving || !selectedStockBranchId">{{ stockSaving ? 'Guardando...' : 'Guardar stock' }}</button>
+              </div>
             </div>
           </form>
         </fieldset>
