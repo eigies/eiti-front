@@ -397,6 +397,15 @@
   color: var(--text-dim);
 }
 
+.import-report__subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0.75rem 0 0.35rem;
+}
+
 .import-report__summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

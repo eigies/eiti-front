@@ -28,6 +28,29 @@ export interface SetBranchProductPricingRequest {
     salePriceOverride?: number | null;
 }
 
+export interface ImportBranchPricingRowRequest {
+    code: string;
+    branchName: string;
+    costOverride?: number | null;
+    salePriceOverride?: number | null;
+}
+
+export interface ImportBranchPricingRowResponse {
+    rowNumber: number;
+    code: string;
+    branchName: string;
+    action: string;
+    message: string;
+}
+
+export interface ImportBranchPricingResponse {
+    totalRows: number;
+    updatedCount: number;
+    skippedCount: number;
+    errorCount: number;
+    rows: ImportBranchPricingRowResponse[];
+}
+
 export interface AdjustStockRequest {
     branchId: string;
     productId: string;

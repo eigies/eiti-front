@@ -154,44 +154,83 @@
       </div>
     </div>
 
-    <section class="import-report" *ngIf="importReport as report">
+    <section class="import-report" *ngIf="importReport || importPricingReport">
       <div class="import-report__head">
         <span class="import-report__title">Resultado de importacion</span>
         <button class="btn btn--ghost btn--sm" type="button" (click)="closeImportReport()">Cerrar</button>
       </div>
 
-      <div class="import-report__summary">
-        <div class="import-report__metric">
-          <span class="import-report__label">Filas</span>
-          <strong>{{ report.totalRows }}</strong>
-        </div>
-        <div class="import-report__metric">
-          <span class="import-report__label">Creados</span>
-          <strong>{{ report.createdCount }}</strong>
-        </div>
-        <div class="import-report__metric">
-          <span class="import-report__label">Actualizados</span>
-          <strong>{{ report.updatedCount }}</strong>
-        </div>
-        <div class="import-report__metric import-report__metric--danger">
-          <span class="import-report__label">Rechazados</span>
-          <strong>{{ report.errorCount }}</strong>
-        </div>
-      </div>
-
-      <div class="import-report__rows" *ngIf="report.errorCount > 0">
-        <div class="import-row" *ngFor="let row of importErrorRows(report)">
-          <div class="import-row__main">
-            <span class="import-row__line">Fila {{ row.rowNumber }}</span>
-            <strong>{{ row.code || 'Sin code' }}</strong>
+      <ng-container *ngIf="importReport as report">
+        <div class="import-report__subtitle">Productos</div>
+        <div class="import-report__summary">
+          <div class="import-report__metric">
+            <span class="import-report__label">Filas</span>
+            <strong>{{ report.totalRows }}</strong>
           </div>
-          <span class="import-row__action" [class.import-row__action--created]="row.action === 'created'" [class.import-row__action--updated]="row.action === 'updated'" [class.import-row__action--error]="row.action === 'error'">{{ row.action }}</span>
-          <span class="import-row__message">{{ row.message }}</span>
+          <div class="import-report__metric">
+            <span class="import-report__label">Creados</span>
+            <strong>{{ report.createdCount }}</strong>
+          </div>
+          <div class="import-report__metric">
+            <span class="import-report__label">Actualizados</span>
+            <strong>{{ report.updatedCount }}</strong>
+          </div>
+          <div class="import-report__metric import-report__metric--danger">
+            <span class="import-report__label">Rechazados</span>
+            <strong>{{ report.errorCount }}</strong>
+          </div>
         </div>
-      </div>
-      <div class="import-report__ok" *ngIf="report.errorCount === 0">
-        No hubo rechazos en la importacion.
-      </div>
+
+        <div class="import-report__rows" *ngIf="report.errorCount > 0">
+          <div class="import-row" *ngFor="let row of importErrorRows(report)">
+            <div class="import-row__main">
+              <span class="import-row__line">Fila {{ row.rowNumber }}</span>
+              <strong>{{ row.code || 'Sin code' }}</strong>
+            </div>
+            <span class="import-row__action" [class.import-row__action--created]="row.action === 'created'" [class.import-row__action--updated]="row.action === 'updated'" [class.import-row__action--error]="row.action === 'error'">{{ row.action }}</span>
+            <span class="import-row__message">{{ row.message }}</span>
+          </div>
+        </div>
+        <div class="import-report__ok" *ngIf="report.errorCount === 0">
+          No hubo rechazos en la importacion.
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="importPricingReport as pricing">
+        <div class="import-report__subtitle">Precios por sucursal</div>
+        <div class="import-report__summary">
+          <div class="import-report__metric">
+            <span class="import-report__label">Filas</span>
+            <strong>{{ pricing.totalRows }}</strong>
+          </div>
+          <div class="import-report__metric">
+            <span class="import-report__label">Actualizados</span>
+            <strong>{{ pricing.updatedCount }}</strong>
+          </div>
+          <div class="import-report__metric">
+            <span class="import-report__label">Omitidos</span>
+            <strong>{{ pricing.skippedCount }}</strong>
+          </div>
+          <div class="import-report__metric import-report__metric--danger">
+            <span class="import-report__label">Rechazados</span>
+            <strong>{{ pricing.errorCount }}</strong>
+          </div>
+        </div>
+
+        <div class="import-report__rows" *ngIf="pricing.errorCount > 0">
+          <div class="import-row" *ngFor="let row of importPricingErrorRows(pricing)">
+            <div class="import-row__main">
+              <span class="import-row__line">Fila {{ row.rowNumber }}</span>
+              <strong>{{ row.code || 'Sin code' }} · {{ row.branchName || 'Sin sucursal' }}</strong>
+            </div>
+            <span class="import-row__action import-row__action--error">{{ row.action }}</span>
+            <span class="import-row__message">{{ row.message }}</span>
+          </div>
+        </div>
+        <div class="import-report__ok" *ngIf="pricing.errorCount === 0">
+          No hubo rechazos en precios por sucursal.
+        </div>
+      </ng-container>
     </section>
 
     <div class="state-box" *ngIf="loading">Cargando productos...</div>

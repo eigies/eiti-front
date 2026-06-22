@@ -11,7 +11,7 @@ import { BranchResponse } from '../../core/models/branch.models';
 import { ProductCategoryService } from '../../core/services/product-category.service';
 import { ProductCategoryResponse } from '../../core/models/product-category.models';
 import { StockService } from '../../core/services/stock.service';
-import { BranchProductStockResponse, ProductReservationsResponse, StockMovementResponse, TransferDetailResponse } from '../../core/models/stock.models';
+import { BranchProductStockResponse, ImportBranchPricingResponse, ImportBranchPricingRowRequest, ProductReservationsResponse, StockMovementResponse, TransferDetailResponse } from '../../core/models/stock.models';
 import { SaleService } from '../../core/services/sale.service';
 import { SaleByIdResponse } from '../../core/models/sale.models';
 import { PurchaseService } from '../../core/services/purchase.service';
@@ -60,6 +60,31 @@ const PRODUCT_IMPORT_HEADERS: ProductImportColumn[] = [
   'noDeliverySurcharge',
   'branchName',
   'initialStock'
+];
+
+// Hoja de precios/costo por sucursal del template. Solo code/branchName/costOverride/salePriceOverride
+// se importan; name y los globales son informativos para guiar la edición.
+type PricingImportColumn =
+  | 'code'
+  | 'name'
+  | 'branchName'
+  | 'costOverride'
+  | 'salePriceOverride'
+  | 'costoGlobal'
+  | 'precioGlobal';
+
+type PricingImportRow = Record<PricingImportColumn, string | number | null>;
+
+const PRICING_SHEET_NAME = 'PreciosSucursal';
+
+const PRICING_IMPORT_HEADERS: PricingImportColumn[] = [
+  'code',
+  'name',
+  'branchName',
+  'costOverride',
+  'salePriceOverride',
+  'costoGlobal',
+  'precioGlobal'
 ];
 
 @Component({
@@ -132,6 +157,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   sortDir: 'asc' | 'desc' = 'desc';
   importInProgress = false;
   importReport: ImportProductsResponse | null = null;
+  importPricingReport: ImportBranchPricingResponse | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -494,6 +520,48 @@ export class ProductsComponent implements OnInit, OnDestroy {
           branchName: null, initialStock: null
         }];
 
+    // Grilla producto×sucursal para la hoja de precios. Si no hay sucursales no tiene sentido pedirla.
+    if (this.branches.length === 0) {
+      this.buildAndDownloadTemplate(dataRows, branchNames, categoryNames, []);
+      return;
+    }
+
+    // Limita la grilla a los productos visibles cuando hay filtros activos (consistente con la hoja Productos).
+    const codeFilter = source.length > 0 ? new Set(source.map(p => p.code)) : null;
+
+    forkJoin(this.branches.map(branch => this.stockService.listBranchStock(branch.id))).subscribe({
+      next: perBranch => {
+        const pricingRows: PricingImportRow[] = [];
+        perBranch.forEach((stocks, i) => {
+          const branchName = this.branches[i].name;
+          stocks
+            .filter(s => !codeFilter || codeFilter.has(s.code))
+            .forEach(s => pricingRows.push({
+              code: s.code,
+              name: s.name,
+              branchName,
+              costOverride: s.costOverride ?? null,
+              salePriceOverride: s.salePriceOverride ?? null,
+              costoGlobal: s.costPrice ?? null,
+              precioGlobal: s.price ?? null
+            }));
+        });
+        this.buildAndDownloadTemplate(dataRows, branchNames, categoryNames, pricingRows);
+      },
+      error: () => {
+        // Si falla la carga de la grilla, igual entregamos el template sin precarga de precios.
+        this.toast.error('No se pudo precargar precios por sucursal; se descarga el template sin esa precarga.');
+        this.buildAndDownloadTemplate(dataRows, branchNames, categoryNames, []);
+      }
+    });
+  }
+
+  private buildAndDownloadTemplate(
+    dataRows: ProductImportRow[],
+    branchNames: string[],
+    categoryNames: string[],
+    pricingRows: PricingImportRow[]
+  ): void {
     const wb = new ExcelJS.Workbook();
 
     // Hidden helper sheet with branch names for the dropdown formula
@@ -554,6 +622,47 @@ export class ProductsComponent implements OnInit, OnDestroy {
       }
     }
 
+    // Hoja "PreciosSucursal": override de costo/precio de venta por sucursal.
+    const ps = wb.addWorksheet(PRICING_SHEET_NAME);
+    ps.addRow(PRICING_IMPORT_HEADERS);
+    ps.getRow(1).font = { bold: true };
+    ps.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8E8E8' } };
+
+    const pricingWidths: Record<string, number> = {
+      code: 14, name: 28, branchName: 22,
+      costOverride: 16, salePriceOverride: 18, costoGlobal: 14, precioGlobal: 14
+    };
+    PRICING_IMPORT_HEADERS.forEach((h, i) => {
+      ps.getColumn(i + 1).width = pricingWidths[h] ?? 16;
+    });
+
+    pricingRows.forEach(row => {
+      ps.addRow(PRICING_IMPORT_HEADERS.map(h => row[h]));
+    });
+
+    // Columnas globales informativas (no se importan): atenuadas para no confundir.
+    const globalCostIdx = PRICING_IMPORT_HEADERS.indexOf('costoGlobal') + 1;
+    const globalPriceIdx = PRICING_IMPORT_HEADERS.indexOf('precioGlobal') + 1;
+    for (let r = 2; r <= pricingRows.length + 1; r++) {
+      ps.getCell(r, globalCostIdx).font = { color: { argb: 'FF999999' } };
+      ps.getCell(r, globalPriceIdx).font = { color: { argb: 'FF999999' } };
+    }
+
+    // Dropdown de sucursal también en la hoja de precios.
+    const psBranchColIdx = PRICING_IMPORT_HEADERS.indexOf('branchName') + 1;
+    if (branchNames.length > 0) {
+      for (let r = 2; r <= pricingRows.length + 1; r++) {
+        ps.getCell(r, psBranchColIdx).dataValidation = {
+          type: 'list',
+          allowBlank: false,
+          formulae: [`_Sucursales!$A$1:$A$${branchNames.length}`],
+          showErrorMessage: true,
+          errorTitle: 'Sucursal inválida',
+          error: 'Seleccioná una sucursal de la lista.'
+        };
+      }
+    }
+
     wb.xlsx.writeBuffer().then((buffer: ArrayBuffer) => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
@@ -575,9 +684,14 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   closeImportReport(): void {
     this.importReport = null;
+    this.importPricingReport = null;
   }
 
   importErrorRows(report: ImportProductsResponse) {
+    return report.rows.filter(row => row.action === 'error');
+  }
+
+  importPricingErrorRows(report: ImportBranchPricingResponse) {
     return report.rows.filter(row => row.action === 'error');
   }
 
@@ -590,31 +704,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
     this.importInProgress = true;
     this.importReport = null;
+    this.importPricingReport = null;
 
     const reader = new FileReader();
     reader.onload = () => {
+      let parsed: { products: ImportProductRowRequest[]; pricing: ImportBranchPricingRowRequest[] };
       try {
-        const rows = this.parseImportRows(reader.result);
-        this.productService.importProducts(rows).subscribe({
-          next: report => {
-            this.importReport = report;
-            this.importInProgress = false;
-            this.toast.success(`Importacion finalizada: ${report.createdCount} creados, ${report.updatedCount} actualizados, ${report.errorCount} rechazados.`);
-            this.resetImportInput();
-            this.currentPage = 1;
-            this.loadProducts();
-          },
-          error: err => {
-            this.importInProgress = false;
-            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo importar el archivo');
-            this.resetImportInput();
-          }
-        });
+        parsed = this.parseWorkbook(reader.result);
       } catch (error) {
         this.importInProgress = false;
         this.toast.error(error instanceof Error ? error.message : 'El archivo no tiene un formato valido.');
         this.resetImportInput();
+        return;
       }
+      this.runImport(parsed.products, parsed.pricing);
     };
 
     reader.onerror = () => {
@@ -624,6 +727,63 @@ export class ProductsComponent implements OnInit, OnDestroy {
     };
 
     reader.readAsArrayBuffer(file);
+  }
+
+  // Importa productos (si hay) y luego precios por sucursal (si hay), con un reporte combinado.
+  private runImport(products: ImportProductRowRequest[], pricing: ImportBranchPricingRowRequest[]): void {
+    const finish = () => {
+      this.importInProgress = false;
+      this.resetImportInput();
+      this.currentPage = 1;
+      this.loadProducts();
+      const parts: string[] = [];
+      if (this.importReport) {
+        parts.push(`Productos: ${this.importReport.createdCount} creados, ${this.importReport.updatedCount} actualizados, ${this.importReport.errorCount} rechazados`);
+      }
+      if (this.importPricingReport) {
+        parts.push(`Precios x sucursal: ${this.importPricingReport.updatedCount} actualizados, ${this.importPricingReport.errorCount} rechazados`);
+      }
+      this.toast.success(`Importación finalizada. ${parts.join(' · ')}`);
+    };
+
+    const importPricingThenFinish = () => {
+      if (pricing.length === 0) {
+        finish();
+        return;
+      }
+      this.stockService.importBranchPricing(pricing).subscribe({
+        next: report => {
+          this.importPricingReport = report;
+          finish();
+        },
+        error: err => {
+          this.importInProgress = false;
+          this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron importar los precios por sucursal');
+          this.resetImportInput();
+          if (this.importReport) {
+            this.currentPage = 1;
+            this.loadProducts();
+          }
+        }
+      });
+    };
+
+    if (products.length === 0) {
+      importPricingThenFinish();
+      return;
+    }
+
+    this.productService.importProducts(products).subscribe({
+      next: report => {
+        this.importReport = report;
+        importPricingThenFinish();
+      },
+      error: err => {
+        this.importInProgress = false;
+        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo importar el archivo');
+        this.resetImportInput();
+      }
+    });
   }
 
   async goToProduct(product: ProductResponse): Promise<void> {
@@ -1333,15 +1493,37 @@ export class ProductsComponent implements OnInit, OnDestroy {
       && left.categoryId === right.categoryId;
   }
 
-  private parseImportRows(source: string | ArrayBuffer | null): ImportProductRowRequest[] {
+  private parseWorkbook(source: string | ArrayBuffer | null): {
+    products: ImportProductRowRequest[];
+    pricing: ImportBranchPricingRowRequest[];
+  } {
     if (!source) {
       throw new Error('El archivo seleccionado esta vacio.');
     }
 
     const workbook = XLSX.read(source, { type: 'array' });
-    const worksheet = workbook.Sheets['Productos'] ?? workbook.Sheets[workbook.SheetNames[0] ?? ''];
+    const products = this.parseProductsSheet(workbook);
+    const pricing = this.parsePricingSheet(workbook);
+
+    if (products.length === 0 && pricing.length === 0) {
+      throw new Error('El archivo no contiene filas para importar (ni productos ni precios por sucursal).');
+    }
+
+    return { products, pricing };
+  }
+
+  private parseProductsSheet(workbook: XLSX.WorkBook): ImportProductRowRequest[] {
+    const worksheet = workbook.Sheets['Productos'];
     if (!worksheet) {
-      throw new Error('No se encontro la hoja "Productos" en el archivo.');
+      return [];
+    }
+
+    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
+      defval: null,
+      raw: false
+    });
+    if (rawRows.length === 0) {
+      return [];
     }
 
     const headerRows = XLSX.utils.sheet_to_json<(string | null)[]>(worksheet, {
@@ -1354,19 +1536,78 @@ export class ProductsComponent implements OnInit, OnDestroy {
       header => header !== 'categoryName' && !normalizedHeaders.includes(header)
     );
     if (missingHeaders.length > 0) {
-      throw new Error(`Faltan columnas obligatorias en el template: ${missingHeaders.join(', ')}.`);
+      throw new Error(`Faltan columnas obligatorias en la hoja Productos: ${missingHeaders.join(', ')}.`);
+    }
+
+    return rawRows.map((row, index) => this.mapImportRow(row, index + 2));
+  }
+
+  private parsePricingSheet(workbook: XLSX.WorkBook): ImportBranchPricingRowRequest[] {
+    const worksheet = workbook.Sheets[PRICING_SHEET_NAME];
+    if (!worksheet) {
+      return [];
     }
 
     const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
       defval: null,
       raw: false
     });
-
     if (rawRows.length === 0) {
-      throw new Error('El archivo no contiene filas de productos para importar.');
+      return [];
     }
 
-    return rawRows.map((row, index) => this.mapImportRow(row, index + 2));
+    const headerRows = XLSX.utils.sheet_to_json<(string | null)[]>(worksheet, {
+      header: 1,
+      blankrows: false,
+      defval: null
+    });
+    const normalizedHeaders = (headerRows[0] ?? []).map(header => String(header ?? '').trim());
+    const missing = (['code', 'branchName'] as PricingImportColumn[]).filter(h => !normalizedHeaders.includes(h));
+    if (missing.length > 0) {
+      throw new Error(`Faltan columnas obligatorias en la hoja ${PRICING_SHEET_NAME}: ${missing.join(', ')}.`);
+    }
+
+    const result: ImportBranchPricingRowRequest[] = [];
+    rawRows.forEach((row, index) => {
+      const rowNumber = index + 2;
+      const costOverride = this.readPricingNumber(row, 'costOverride', rowNumber);
+      const salePriceOverride = this.readPricingNumber(row, 'salePriceOverride', rowNumber);
+
+      // Sin overrides => nada para actualizar; se omite (semántica "dejar como está").
+      if (costOverride == null && salePriceOverride == null) {
+        return;
+      }
+
+      const code = String(row['code'] ?? '').trim();
+      const branchName = String(row['branchName'] ?? '').trim();
+      if (!code) {
+        throw new Error(`Hoja ${PRICING_SHEET_NAME}, fila ${rowNumber}: code es obligatorio.`);
+      }
+      if (!branchName) {
+        throw new Error(`Hoja ${PRICING_SHEET_NAME}, fila ${rowNumber}: branchName es obligatorio.`);
+      }
+
+      result.push({ code, branchName, costOverride, salePriceOverride });
+    });
+
+    return result;
+  }
+
+  private readPricingNumber(row: Record<string, unknown>, key: PricingImportColumn, rowNumber: number): number | null {
+    const rawValue = row[key];
+    if (rawValue == null || String(rawValue).trim() === '') {
+      return null;
+    }
+
+    const normalizedValue = Number(String(rawValue).replace(',', '.'));
+    if (!Number.isFinite(normalizedValue)) {
+      throw new Error(`Hoja ${PRICING_SHEET_NAME}, fila ${rowNumber}: ${key} debe ser numérico.`);
+    }
+    if (normalizedValue < 0) {
+      throw new Error(`Hoja ${PRICING_SHEET_NAME}, fila ${rowNumber}: ${key} no puede ser negativo.`);
+    }
+
+    return normalizedValue;
   }
 
   private mapImportRow(row: Record<string, unknown>, rowNumber: number): ImportProductRowRequest {
