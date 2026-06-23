@@ -237,22 +237,55 @@
     <div class="state-box" *ngIf="!loading && totalProducts === 0">No hay productos para los filtros aplicados.</div>
 
     <div *ngIf="!loading && totalProducts > 0">
-      <div class="bulk-bar" [class.bulk-bar--active]="bulkEditMode">
-        <div class="bulk-bar__info">
-          <span class="bulk-bar__label">{{ bulkEditMode ? 'Edicion masiva activa' : 'Seleccion multiple' }}</span>
-          <span class="bulk-bar__detail" *ngIf="!bulkEditMode">{{ selectedBulkProductsCount }} producto(s) seleccionado(s). Selecciona con el checkbox izquierdo y luego habilita la edicion.</span>
-          <span class="bulk-bar__detail" *ngIf="bulkEditMode">{{ modifiedProductsCount }} cambio(s)<span *ngIf="invalidBulkRowsCount > 0"> · {{ invalidBulkRowsCount }} fila(s) con errores</span></span>
+      <div class="products-list-tools">
+        <div class="cost-branch-bar" *ngIf="canViewCostPrice && branches.length > 0">
+          <div class="cost-branch-bar__intro">
+            <span class="cost-branch-bar__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M4 20V9l8-5 8 5v11M8 20v-7h8v7M9 9h.01M15 9h.01" />
+              </svg>
+            </span>
+            <span class="cost-branch-bar__copy">
+              <span class="cost-branch-bar__label">Costo y precio según sucursal</span>
+              <span class="cost-branch-bar__description">Elegí el contexto que querés comparar en la grilla.</span>
+            </span>
+          </div>
+
+          <app-searchable-select
+            class="cost-branch-bar__select"
+            [ngModel]="costBranchId"
+            (ngModelChange)="setCostBranch($event)"
+            [ngModelOptions]="{standalone:true}"
+            [options]="costBranchOptions"
+            [compact]="true"
+            placeholder="Seleccionar contexto"
+            searchPlaceholder="Buscar sucursal...">
+          </app-searchable-select>
+
+          <span class="cost-branch-bar__status" [class.cost-branch-bar__status--branch]="costBranchId">
+            <span class="cost-branch-bar__status-dot" aria-hidden="true"></span>
+            <span *ngIf="!costBranchId">Mostrando costo y precio global de la empresa</span>
+            <span *ngIf="costBranchId">Override de <strong>{{ costBranchLabel }}</strong>; usa el global si no existe.</span>
+          </span>
         </div>
-        <div class="bulk-bar__actions">
-          <ng-container *ngIf="!bulkEditMode">
-            <button class="btn btn--ghost btn--sm" type="button" (click)="toggleCompactMode()">{{ compactMode ? 'Columnas' : 'Compacto' }}</button>
-            <button class="btn btn--outline-amber btn--sm" type="button" (click)="enterBulkEditMode()" [disabled]="selectedBulkProductsCount === 0">Editar seleccionados</button>
-          </ng-container>
-          <ng-container *ngIf="bulkEditMode">
-            <span class="change-badge" *ngIf="modifiedProductsCount > 0">{{ modifiedProductsCount }}</span>
-            <button class="btn btn--ghost btn--sm" type="button" (click)="cancelBulkEdit()">Cancelar</button>
-            <button class="btn btn--primary btn--sm" type="button" (click)="saveBulkChanges()" [disabled]="bulkEditSaving || modifiedProductsCount === 0 || invalidBulkRowsCount > 0">{{ bulkEditSaving ? 'Guardando...' : 'Confirmar cambios' }}</button>
-          </ng-container>
+
+        <div class="bulk-bar" [class.bulk-bar--active]="bulkEditMode">
+          <div class="bulk-bar__info">
+            <span class="bulk-bar__label">{{ bulkEditMode ? 'Edicion masiva activa' : 'Seleccion multiple' }}</span>
+            <span class="bulk-bar__detail" *ngIf="!bulkEditMode">{{ selectedBulkProductsCount }} producto(s) seleccionado(s). Selecciona con el checkbox izquierdo y luego habilita la edicion.</span>
+            <span class="bulk-bar__detail" *ngIf="bulkEditMode">{{ modifiedProductsCount }} cambio(s)<span *ngIf="invalidBulkRowsCount > 0"> · {{ invalidBulkRowsCount }} fila(s) con errores</span></span>
+          </div>
+          <div class="bulk-bar__actions">
+            <ng-container *ngIf="!bulkEditMode">
+              <button class="btn btn--ghost btn--sm" type="button" (click)="toggleCompactMode()">{{ compactMode ? 'Columnas' : 'Compacto' }}</button>
+              <button class="btn btn--outline-amber btn--sm" type="button" (click)="enterBulkEditMode()" [disabled]="selectedBulkProductsCount === 0">Editar seleccionados</button>
+            </ng-container>
+            <ng-container *ngIf="bulkEditMode">
+              <span class="change-badge" *ngIf="modifiedProductsCount > 0">{{ modifiedProductsCount }}</span>
+              <button class="btn btn--ghost btn--sm" type="button" (click)="cancelBulkEdit()">Cancelar</button>
+              <button class="btn btn--primary btn--sm" type="button" (click)="saveBulkChanges()" [disabled]="bulkEditSaving || modifiedProductsCount === 0 || invalidBulkRowsCount > 0">{{ bulkEditSaving ? 'Guardando...' : 'Confirmar cambios' }}</button>
+            </ng-container>
+          </div>
         </div>
       </div>
 
@@ -325,11 +358,11 @@
               </td>
               <td class="td--mono td--r td--num td--price" data-label="Precio publico" [class.cell-ch]="isBulkFieldChanged(product.id,'publicPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'publicPrice')">
                 <ng-container *ngIf="isBulkRowEditable(product.id); else readPub"><input class="ti ti--r" type="number" min="0" step="0.01" formControlName="publicPrice" (click)="$event.stopPropagation()" /></ng-container>
-                <ng-template #readPub><span *ngIf="!productAllowsManualSaleValue(product)">$ {{ visiblePrice(product) | number:'1.2-2' }}</span><span *ngIf="productAllowsManualSaleValue(product)" class="price-note">En venta</span></ng-template>
+                <ng-template #readPub><span *ngIf="!productAllowsManualSaleValue(product)">$ {{ displayPublicPrice(product) | number:'1.2-2' }}<span *ngIf="costBranchId && displayPublicPrice(product) !== visiblePrice(product)" class="cost-ovr" title="Override de sucursal · global: $ {{ visiblePrice(product) | number:'1.2-2' }}">•</span></span><span *ngIf="productAllowsManualSaleValue(product)" class="price-note">En venta</span></ng-template>
               </td>
               <td class="td--mono td--r td--dim" data-label="Costo" *ngIf="canViewCostPrice" [class.cell-ch]="isBulkFieldChanged(product.id,'costPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'costPrice')">
                 <ng-container *ngIf="isBulkRowEditable(product.id); else readCost"><input class="ti ti--r" type="number" min="0" step="0.01" formControlName="costPrice" (click)="$event.stopPropagation()" /></ng-container>
-                <ng-template #readCost>$ {{ (product.costPrice ?? 0) | number:'1.2-2' }}</ng-template>
+                <ng-template #readCost>$ {{ displayCost(product) | number:'1.2-2' }}<span *ngIf="costBranchId && displayCost(product) !== (product.costPrice ?? 0)" class="cost-ovr" title="Override de sucursal · global: $ {{ (product.costPrice ?? 0) | number:'1.2-2' }}">•</span></ng-template>
               </td>
               <td *ngIf="showHiddenColumns" class="td--mono td--r td--dim" data-label="Unitario" [class.cell-ch]="isBulkFieldChanged(product.id,'unitPrice')" [class.cell-inv]="isBulkFieldInvalid(product.id,'unitPrice')">
                 <ng-container *ngIf="isBulkRowEditable(product.id); else readUnit"><input class="ti ti--r" type="number" min="0" step="0.01" formControlName="unitPrice" (click)="$event.stopPropagation()" /></ng-container>

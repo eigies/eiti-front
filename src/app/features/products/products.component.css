@@ -265,14 +265,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.88rem 1.25rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--amber) 24%, var(--border));
+  margin: 1rem 1rem 0;
+  padding: 0.88rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 24%, var(--border));
+  border-radius: 14px;
   background:
     linear-gradient(90deg,
       color-mix(in srgb, var(--amber) 10%, transparent) 0%,
       color-mix(in srgb, var(--amber) 4%, transparent) 55%,
       transparent 100%);
   animation: cost-alert-in 0.32s cubic-bezier(.22, 1, .36, 1) both;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
 }
 
 @keyframes cost-alert-in {
@@ -395,6 +398,135 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-dim);
+}
+
+.products-list-tools {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1rem 0.9rem;
+}
+
+.cost-branch-bar {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(13rem, 16rem) minmax(16rem, auto);
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 0 50%, color-mix(in srgb, var(--amber) 10%, transparent), transparent 30%),
+    linear-gradient(115deg, color-mix(in srgb, var(--bg-panel) 96%, transparent), color-mix(in srgb, var(--bg) 88%, transparent));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 8%, transparent),
+    0 12px 28px -24px color-mix(in srgb, var(--amber) 45%, transparent);
+}
+
+.cost-branch-bar__intro {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.cost-branch-bar__icon {
+  flex: 0 0 auto;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--amber) 30%, var(--border));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--amber) 10%, var(--bg-panel));
+  color: var(--amber);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+}
+
+.cost-branch-bar__icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cost-branch-bar__copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.16rem;
+}
+
+.cost-branch-bar__label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--amber) 72%, var(--text));
+}
+
+.cost-branch-bar__description {
+  overflow: hidden;
+  color: var(--text-soft);
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.84rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cost-branch-bar__select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.cost-branch-bar__status {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border-2) 82%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  line-height: 1.35;
+}
+
+.cost-branch-bar__status strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.cost-branch-bar__status-dot {
+  flex: 0 0 auto;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: var(--text-dim);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-dim) 12%, transparent);
+}
+
+.cost-branch-bar__status--branch {
+  border-color: color-mix(in srgb, var(--amber) 22%, var(--border));
+  color: color-mix(in srgb, var(--amber) 52%, var(--text-dim));
+}
+
+.cost-branch-bar__status--branch .cost-branch-bar__status-dot {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 13%, transparent);
+}
+
+.cost-ovr {
+  color: var(--accent-amber, #e0a800);
+  margin-left: 0.25rem;
+  font-weight: 700;
 }
 
 .import-report__subtitle {
@@ -812,14 +944,15 @@
   gap: 1rem;
   flex-wrap: wrap;
   padding: 0.82rem 1.25rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 14px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg-soft) 74%, transparent), transparent);
   transition: background 0.2s ease;
 }
 
 .bulk-bar--active {
   background: linear-gradient(90deg, color-mix(in srgb, var(--amber) 5%, transparent), transparent 52%);
-  border-bottom-color: color-mix(in srgb, var(--amber) 14%, var(--border));
+  border-color: color-mix(in srgb, var(--amber) 18%, var(--border));
 }
 
 .bulk-bar__info { display: grid; gap: 0.2rem; }
@@ -1340,6 +1473,13 @@
 /* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
   .filters { grid-template-columns: repeat(3, minmax(10rem, 1fr)); }
+  .cost-branch-bar {
+    grid-template-columns: minmax(15rem, 1fr) minmax(13rem, 16rem);
+  }
+  .cost-branch-bar__status {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
 }
 
 @media (max-width: 860px) {
@@ -1450,6 +1590,30 @@
 }
 
 @media (max-width: 720px) {
+  .cost-alert {
+    margin: 0.75rem 0.75rem 0;
+  }
+
+  .products-list-tools {
+    gap: 0.75rem;
+    padding: 0.75rem 0.75rem 0.8rem;
+  }
+
+  .cost-branch-bar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.7rem;
+  }
+
+  .cost-branch-bar__status {
+    grid-column: auto;
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .cost-branch-bar__description {
+    white-space: normal;
+  }
+
   .page {
     max-width: none;
     background:

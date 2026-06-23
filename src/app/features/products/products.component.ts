@@ -158,6 +158,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
   importInProgress = false;
   importReport: ImportProductsResponse | null = null;
   importPricingReport: ImportBranchPricingResponse | null = null;
+  // Contexto de sucursal para mostrar costo/precio efectivo en la grilla ('' = valor global de empresa).
+  costBranchId = '';
+  // productId -> costo / precio efectivo de la sucursal seleccionada (override ?? global).
+  branchCostMap = new Map<string, number>();
+  branchPriceMap = new Map<string, number>();
 
   constructor(
     private fb: FormBuilder,
@@ -222,6 +227,74 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   get canViewCostPrice(): boolean {
     return this.auth.hasPermission(PermissionCodes.productsViewCost);
+  }
+
+  // Opciones del selector de sucursal para el costo: las accesibles del usuario + "Global".
+  get costBranchOptions(): SearchableSelectOption[] {
+    return [
+      { value: '', label: 'Global (empresa)', meta: 'Costo base de todos los productos' },
+      ...this.branches.map(branch => ({
+        value: branch.id,
+        label: branch.name,
+        meta: 'Costo específico de sucursal'
+      }))
+    ];
+  }
+
+  get costBranchLabel(): string {
+    return this.branches.find(b => b.id === this.costBranchId)?.name ?? 'Global';
+  }
+
+  // Costo a mostrar en la grilla: override de la sucursal en contexto si existe, si no el global.
+  displayCost(product: ProductResponse): number {
+    if (this.costBranchId) {
+      return this.branchCostMap.get(product.id) ?? product.costPrice ?? 0;
+    }
+    return product.costPrice ?? 0;
+  }
+
+  // Precio público a mostrar en la grilla: override de la sucursal en contexto si existe, si no el global.
+  displayPublicPrice(product: ProductResponse): number {
+    if (this.costBranchId) {
+      return this.branchPriceMap.get(product.id) ?? this.visiblePrice(product);
+    }
+    return this.visiblePrice(product);
+  }
+
+  // Default: la sucursal del usuario; quien puede ver todas arranca en "Global".
+  private initCostBranchContext(): void {
+    if (!this.canViewCostPrice) {
+      return;
+    }
+    const canViewAll = !!this.auth.currentUser?.canViewAllBranches;
+    const defaultBranch = !canViewAll && this.branches.length >= 1 ? this.branches[0].id : '';
+    this.setCostBranch(defaultBranch);
+  }
+
+  setCostBranch(branchId: string): void {
+    this.costBranchId = branchId;
+    this.branchCostMap = new Map();
+    this.branchPriceMap = new Map();
+    if (!branchId) {
+      return;
+    }
+    this.stockService.listBranchStock(branchId).subscribe({
+      next: stocks => {
+        const costMap = new Map<string, number>();
+        const priceMap = new Map<string, number>();
+        stocks.forEach(s => {
+          costMap.set(s.productId, s.effectiveCost ?? s.costPrice ?? 0);
+          priceMap.set(s.productId, s.effectivePrice ?? s.price ?? 0);
+        });
+        this.branchCostMap = costMap;
+        this.branchPriceMap = priceMap;
+      },
+      error: () => {
+        this.branchCostMap = new Map();
+        this.branchPriceMap = new Map();
+        this.toast.error('No se pudo cargar el costo/precio de la sucursal seleccionada');
+      }
+    });
   }
 
   get canManageStock(): boolean {
@@ -506,6 +579,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
           categoryName: product.categoryName ?? null,
           description: product.description ?? null,
           publicPrice: product.publicPrice ?? product.price,
+          // Hoja Productos = costo GLOBAL del catálogo (re-importarla escribe el global).
+          // El costo efectivo por sucursal se edita en la hoja PreciosSucursal.
           costPrice: product.costPrice ?? 0,
           unitPrice: product.unitPrice ?? null,
           allowsManualValueInSale: product.allowsManualValueInSale,
@@ -1343,7 +1418,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   private loadBranches(): void {
     this.branchService.listBranches().subscribe({
-      next: branches => this.branches = branches,
+      next: branches => {
+        this.branches = branches;
+        this.initCostBranchContext();
+      },
       error: () => this.branches = []
     });
   }
