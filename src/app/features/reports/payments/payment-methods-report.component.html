@@ -1,0 +1,74 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Reporteria / Medios de pago</div>
+    <h1>Cobros por medio de pago</h1>
+    <p>Total cobrado y cantidad de pagos por cada medio (efectivo, tarjeta, transferencia, cheque, etc.) en el período. No incluye ventas canceladas.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div><span>Período</span></div>
+      <div class="panel__actions">
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.rows.length === 0">Exportar XLSX</button>
+        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="!data || data.rows.length === 0">Exportar PDF</button>
+      </div>
+    </div>
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form">
+      <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
+      <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+      <label class="field" *ngIf="branches.length > 1"><span>Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <div class="filter-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="loading-shell" *ngIf="loading"><div class="loading-shell__grid"><div class="loading-card" *ngFor="let _ of [1,2,3]"></div></div></div>
+
+  <ng-container *ngIf="!loading && data">
+    <section class="panel" *ngIf="data.rows.length > 0; else emptyState">
+      <div class="table-wrap">
+        <table class="data-table data-table--sticky-first">
+          <thead>
+            <tr>
+              <th>Medio de pago</th>
+              <th class="t-right">Cantidad</th>
+              <th class="t-right">Monto</th>
+              <th class="t-right">% del total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let r of data.rows">
+              <tr class="data-row">
+                <td class="strong">{{ r.methodLabel }}</td>
+                <td class="t-right dim">{{ r.count }}</td>
+                <td class="t-right strong">$ {{ money(r.total) }}</td>
+                <td class="t-right dim">{{ r.percent | number:'1.2-2' }}%</td>
+              </tr>
+              <tr class="data-row data-row--sub" *ngFor="let s of r.subgroups">
+                <td class="sub-label">└ {{ s.label }}</td>
+                <td class="t-right dim">{{ s.count }}</td>
+                <td class="t-right dim">$ {{ money(s.total) }}</td>
+                <td class="t-right dim">{{ s.percent | number:'1.2-2' }}%</td>
+              </tr>
+            </ng-container>
+          </tbody>
+          <tfoot>
+            <tr class="data-row data-row--total">
+              <td class="strong">Total</td>
+              <td class="t-right strong">{{ data.totals.count }}</td>
+              <td class="t-right strong">$ {{ money(data.totals.total) }}</td>
+              <td class="t-right strong">100%</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <ng-template #emptyState>
+      <section class="panel"><p class="note">No hay pagos registrados en el período seleccionado.</p></section>
+    </ng-template>
+  </ng-container>
+</div>

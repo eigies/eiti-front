@@ -96,6 +96,34 @@ export interface CashMovementsReportResponse {
     totalGeneral: number;
 }
 
+export interface PaymentMethodsReportSubgroup {
+    label: string;
+    cardBankId: number | null;
+    cardCuotas: number | null;
+    count: number;
+    total: number;
+    percent: number;
+}
+
+export interface PaymentMethodsReportRow {
+    methodId: number;
+    methodLabel: string;
+    count: number;
+    total: number;
+    percent: number;
+    subgroups: PaymentMethodsReportSubgroup[];
+}
+
+export interface PaymentMethodsReportTotals {
+    count: number;
+    total: number;
+}
+
+export interface PaymentMethodsReportResponse {
+    rows: PaymentMethodsReportRow[];
+    totals: PaymentMethodsReportTotals;
+}
+
 export interface DailySalesProductItem {
     productId: string;
     code: string;

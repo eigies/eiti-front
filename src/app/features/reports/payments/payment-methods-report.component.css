@@ -1,0 +1,14 @@
+.data-row--total td {
+  border-top: 2px solid var(--border-2);
+  background: var(--bg-panel);
+}
+
+.data-row--sub td {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+.data-row--sub .sub-label {
+  padding-left: 1.5rem;
+  color: var(--text-dim);
+}

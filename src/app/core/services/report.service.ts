@@ -6,6 +6,7 @@ import {
     CashMovementsReportResponse,
     CustomerDebtorsResponse,
     DailySalesControlResponse,
+    PaymentMethodsReportResponse,
     SalesReportFilters,
     SalesReportResponse,
     StockMatrixResponse
@@ -40,6 +41,12 @@ export class ReportService {
     cashMovements(dateFrom: string, dateTo: string): Observable<CashMovementsReportResponse> {
         const params = new URLSearchParams({ dateFrom, dateTo });
         return this.http.get<CashMovementsReportResponse>(`${this.base}/cash/movements?${params.toString()}`);
+    }
+
+    paymentMethods(dateFrom: string, dateTo: string, branchId?: string): Observable<PaymentMethodsReportResponse> {
+        const params = new URLSearchParams({ dateFrom, dateTo });
+        if (branchId) params.set('branchId', branchId);
+        return this.http.get<PaymentMethodsReportResponse>(`${this.base}/payments?${params.toString()}`);
     }
 
     stockMatrix(): Observable<StockMatrixResponse> {
