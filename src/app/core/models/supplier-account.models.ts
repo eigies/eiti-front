@@ -30,6 +30,8 @@ export interface SupplierAccountMovement {
   chequeNumero: string | null;
   imputaciones: SupplierPaymentImputacion[] | null; // facturas que cubrió este pago
   sobrante: number | null;                          // excedente del pago a saldo a favor
+  reference: string | null;                         // referencia ingresada al registrar el pago
+  notes: string | null;                             // nota ingresada al registrar el pago
 }
 
 export interface SupplierAccount {

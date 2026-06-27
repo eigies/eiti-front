@@ -53,8 +53,10 @@ export class SaleService {
         return this.http.post<SendSaleWhatsAppResponse>(`${this.base}/${id}/send-whatsapp`, {});
     }
 
-    cancelSale(id: string): Observable<void> {
-        return this.http.post<void>(`${this.base}/${id}/cancel`, {});
+    // refundMode (solo ventas CC con cobros): 1 = saldo a favor, 2 = anular pagos (cuentas a 0).
+    cancelSale(id: string, refundMode?: number): Observable<void> {
+        const query = refundMode ? `?refundMode=${refundMode}` : '';
+        return this.http.post<void>(`${this.base}/${id}/cancel${query}`, {});
     }
 
     deleteSale(id: string): Observable<void> {

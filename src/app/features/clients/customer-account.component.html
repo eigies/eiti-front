@@ -237,6 +237,7 @@
                       (click)="$event.stopPropagation(); togglePaymentDetail(p)">
                       {{ isExpanded(p) ? 'Ocultar ventas ▴' : 'Ver ventas ▾' }}
                     </button>
+                    <small class="movement-ref" *ngIf="p.reference || p.notes">{{ p.reference || p.notes }}</small>
                   </td>
                   <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
                   <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>
@@ -300,6 +301,7 @@
       </div>
       <div class="modal-head__actions">
         <button class="detalle-remito-btn" type="button" *ngIf="detalleModalSale" (click)="descargarRemitoTraslado()">↓ Remito sin precios</button>
+        <button class="detalle-anular-btn" type="button" *ngIf="canCancelDetalleSale" [disabled]="cancelingSale" (click)="openCancelModal()">Anular venta</button>
         <button class="modal-close" type="button" (click)="closeDetalle()">×</button>
       </div>
     </div>
@@ -359,5 +361,104 @@
         </div>
       </div>
     </ng-container>
+  </div>
+</div>
+
+<!-- Modal anular venta -->
+<div class="modal-backdrop modal-backdrop--top" *ngIf="cancelModalOpen"></div>
+<div class="modal-panel modal-panel--top modal-panel--cancel" *ngIf="cancelModalOpen" (click)="closeCancelModal()">
+  <div
+    class="modal-card modal-card--cancel"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="cancel-sale-title"
+    aria-describedby="cancel-sale-warning"
+    [attr.aria-busy]="cancelingSale"
+    (click)="$event.stopPropagation()">
+    <div class="modal-head cancel-head">
+      <span class="cancel-head__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M12 8v5m0 3.5v.01M10.2 4.9 3.1 17.2A1.2 1.2 0 0 0 4.15 19h15.7a1.2 1.2 0 0 0 1.04-1.8L13.8 4.9a2.08 2.08 0 0 0-3.6 0Z"></path>
+        </svg>
+      </span>
+      <div class="modal-head__copy">
+        <p class="eyebrow">Acción irreversible</p>
+        <h2 id="cancel-sale-title">Anular venta</h2>
+        <p class="cancel-head__meta">Cuenta corriente <span aria-hidden="true">·</span> {{ detalleModalSale?.code || 'Sin número' }}</p>
+      </div>
+      <button class="modal-close" type="button" [disabled]="cancelingSale" aria-label="Cerrar" (click)="closeCancelModal()">×</button>
+    </div>
+
+    <div class="cancel-body">
+      <div class="cancel-warning" id="cancel-sale-warning">
+        <span class="cancel-warning__mark" aria-hidden="true"></span>
+        <div>
+          <strong>La venta quedará anulada</strong>
+          <p>Los productos volverán al stock y la deuda de esta operación se eliminará de la cuenta corriente.</p>
+        </div>
+      </div>
+
+      <ng-container *ngIf="detalleHasCobros">
+        <div class="cancel-paid">
+          <span class="cancel-paid__label">Monto ya cobrado</span>
+          <strong>${{ detalleCcPaidTotal | number:'1.2-2' }}</strong>
+        </div>
+
+        <fieldset class="cancel-options">
+          <legend>¿Qué querés hacer con ese dinero?</legend>
+
+          <label class="cancel-opt" [class.cancel-opt--active]="cancelRefundMode === 1">
+            <input type="radio" name="refundMode" [checked]="cancelRefundMode === 1" (change)="setCancelRefundMode(1)" />
+            <span class="cancel-opt__control" aria-hidden="true"><span></span></span>
+            <span class="cancel-opt__body">
+              <span class="cancel-opt__heading">
+                <span class="cancel-opt__title">Dejar saldo a favor</span>
+                <span class="cancel-opt__tag">Sin mover caja</span>
+              </span>
+              <span class="cancel-opt__desc">El cliente podrá usar el monto en próximas compras.</span>
+              <span class="cancel-opt__result">
+                <span>Saldo disponible</span>
+                <strong>+${{ detalleCcPaidTotal | number:'1.2-2' }}</strong>
+              </span>
+            </span>
+          </label>
+
+          <label class="cancel-opt" [class.cancel-opt--active]="cancelRefundMode === 2">
+            <input type="radio" name="refundMode" [checked]="cancelRefundMode === 2" (change)="setCancelRefundMode(2)" />
+            <span class="cancel-opt__control" aria-hidden="true"><span></span></span>
+            <span class="cancel-opt__body">
+              <span class="cancel-opt__heading">
+                <span class="cancel-opt__title">Anular los pagos</span>
+                <span class="cancel-opt__tag cancel-opt__tag--danger">Revierte caja</span>
+              </span>
+              <span class="cancel-opt__desc">Se revierten los cobros vinculados y no se genera saldo a favor.</span>
+              <span class="cancel-opt__result">
+                <span>Saldo a favor</span>
+                <strong>$0.00</strong>
+              </span>
+            </span>
+          </label>
+        </fieldset>
+      </ng-container>
+
+      <div class="cancel-nopaid" *ngIf="!detalleHasCobros">
+        <span class="cancel-nopaid__icon" aria-hidden="true">✓</span>
+        <div>
+          <strong>Sin cobros asociados</strong>
+          <p>No hay movimientos de dinero que resolver. Sólo se anulará la venta y se revertirá el stock.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cancel-actions">
+      <p>Revisá el destino del dinero antes de confirmar.</p>
+      <div class="cancel-actions__buttons">
+        <button class="cancel-button cancel-button--ghost" type="button" [disabled]="cancelingSale" autofocus (click)="closeCancelModal()">Volver</button>
+        <button class="cancel-button cancel-button--danger" type="button" [disabled]="cancelingSale" (click)="confirmCancelSale()">
+          <span class="cancel-button__spinner" *ngIf="cancelingSale" aria-hidden="true"></span>
+          {{ cancelingSale ? 'Anulando venta…' : 'Confirmar anulación' }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>

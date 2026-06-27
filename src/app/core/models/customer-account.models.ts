@@ -32,6 +32,8 @@ export interface CustomerAccountMovement {
   chequeNumero: string | null;
   imputaciones: CustomerPaymentImputacion[] | null; // ventas que cubrió este cobro
   sobrante: number | null;                          // excedente del cobro a saldo a favor
+  reference: string | null;                         // referencia ingresada al registrar el cobro
+  notes: string | null;                             // nota ingresada al registrar el cobro
 }
 
 export interface CustomerAccount {

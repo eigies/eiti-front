@@ -9,7 +9,8 @@ import {
     PaymentMethodsReportResponse,
     SalesReportFilters,
     SalesReportResponse,
-    StockMatrixResponse
+    StockMatrixResponse,
+    StockMovementsReportResponse
 } from '../models/report.models';
 
 @Injectable({ providedIn: 'root' })
@@ -43,14 +44,23 @@ export class ReportService {
         return this.http.get<CashMovementsReportResponse>(`${this.base}/cash/movements?${params.toString()}`);
     }
 
-    paymentMethods(dateFrom: string, dateTo: string, branchId?: string): Observable<PaymentMethodsReportResponse> {
+    paymentMethods(dateFrom: string, dateTo: string, branchId?: string, saleType?: string): Observable<PaymentMethodsReportResponse> {
         const params = new URLSearchParams({ dateFrom, dateTo });
         if (branchId) params.set('branchId', branchId);
+        if (saleType && saleType !== 'all') params.set('saleType', saleType);
         return this.http.get<PaymentMethodsReportResponse>(`${this.base}/payments?${params.toString()}`);
     }
 
     stockMatrix(): Observable<StockMatrixResponse> {
         return this.http.get<StockMatrixResponse>(`${this.base}/stock-matrix`);
+    }
+
+    stockMovements(dateFrom: string, dateTo: string, productId?: string, branchId?: string, type?: number): Observable<StockMovementsReportResponse> {
+        const params = new URLSearchParams({ dateFrom, dateTo });
+        if (productId) params.set('productId', productId);
+        if (branchId) params.set('branchId', branchId);
+        if (type != null) params.set('type', String(type));
+        return this.http.get<StockMovementsReportResponse>(`${this.base}/stock-movements?${params.toString()}`);
     }
 
     dailySalesControl(dateFrom: string, dateTo: string, status = 0): Observable<DailySalesControlResponse> {

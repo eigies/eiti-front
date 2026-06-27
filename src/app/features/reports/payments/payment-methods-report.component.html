@@ -19,6 +19,9 @@
       <label class="field" *ngIf="branches.length > 1"><span>Sucursal</span>
         <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
       </label>
+      <label class="field"><span>Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Todas"></app-searchable-select>
+      </label>
       <div class="filter-form__actions">
         <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
       </div>

@@ -124,6 +124,36 @@ export interface PaymentMethodsReportResponse {
     totals: PaymentMethodsReportTotals;
 }
 
+export interface StockMovementsReportRow {
+    date: string;
+    branchId: string;
+    branchName: string;
+    productId: string;
+    code: string;
+    brand: string;
+    name: string;
+    typeId: number;
+    typeName: string;
+    direction: number;          // +1 entrada, -1 salida, 0 neutro
+    quantity: number;
+    referenceType: string | null;
+    referenceId: string | null;
+    referenceCode: string | null;
+    description: string | null;
+}
+
+export interface StockMovementsReportTotals {
+    entradas: number;
+    salidas: number;
+    neto: number;
+    count: number;
+}
+
+export interface StockMovementsReportResponse {
+    rows: StockMovementsReportRow[];
+    totals: StockMovementsReportTotals;
+}
+
 export interface DailySalesProductItem {
     productId: string;
     code: string;

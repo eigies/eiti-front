@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { formatMoney } from '../../shared/utils/money.util';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -44,6 +44,7 @@ export class CustomerAccountComponent implements OnInit {
   detalleModalOpen = false;
   detalleModalSale: SaleByIdResponse | null = null;
   detalleLoading = false;
+  cancelingSale = false;
 
   // Form de cobro
   showPaymentForm = false;
@@ -320,8 +321,82 @@ export class CustomerAccountComponent implements OnInit {
   }
 
   closeDetalle(): void {
+    if (this.cancelingSale) return;
     this.detalleModalOpen = false;
     this.detalleModalSale = null;
+  }
+
+  // Modal de anulación de venta (con elección de qué hacer con los cobros).
+  cancelModalOpen = false;
+  cancelRefundMode = 1; // 1 = saldo a favor, 2 = anular pagos
+
+  // Solo ventas pendientes (1) o pagadas (2) y con permiso de anulación.
+  get canCancelDetalleSale(): boolean {
+    const sale = this.detalleModalSale;
+    return !!sale
+      && (sale.idSaleStatus === 1 || sale.idSaleStatus === 2)
+      && this.auth.hasPermission(PermissionCodes.salesDelete);
+  }
+
+  // Monto ya cobrado de la venta en detalle (cobros imputados).
+  get detalleCcPaidTotal(): number {
+    return this.detalleModalSale?.ccPaidTotal ?? 0;
+  }
+
+  get detalleHasCobros(): boolean {
+    return this.detalleCcPaidTotal > 0;
+  }
+
+  openCancelModal(): void {
+    if (!this.detalleModalSale) return;
+    this.cancelRefundMode = 1;
+    this.cancelModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeCancelModal(): void {
+    if (this.cancelingSale) return;
+    this.cancelModalOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  @HostListener('document:keydown.escape')
+  closeActiveModal(): void {
+    if (this.cancelModalOpen) {
+      this.closeCancelModal();
+      return;
+    }
+    if (this.detalleModalOpen) this.closeDetalle();
+  }
+
+  setCancelRefundMode(mode: number): void {
+    this.cancelRefundMode = mode;
+    this.cdr.markForCheck();
+  }
+
+  confirmCancelSale(): void {
+    const sale = this.detalleModalSale;
+    if (!sale || this.cancelingSale) return;
+    // Solo manda el modo si hay cobros que resolver.
+    const refundMode = this.detalleHasCobros ? this.cancelRefundMode : undefined;
+    this.cancelingSale = true;
+    this.cdr.markForCheck();
+    this.saleService.cancelSale(sale.id, refundMode).subscribe({
+      next: () => {
+        this.cancelingSale = false;
+        this.cancelModalOpen = false;
+        this.detalleModalOpen = false;
+        this.detalleModalSale = null;
+        this.toast.success('Venta anulada');
+        this.cdr.markForCheck();
+        this.load();
+      },
+      error: (err: { error?: { detail?: string } }) => {
+        this.cancelingSale = false;
+        this.toast.error(err?.error?.detail || 'No se pudo anular la venta');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   // Remito de traslado (sin importes) desde el detalle de la venta CC.

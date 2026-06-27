@@ -39,11 +39,19 @@ export class PaymentMethodsReportComponent implements OnInit {
     this.filterForm = this.fb.group({
       dateFrom: [firstOfMonth, Validators.required],
       dateTo: [today, Validators.required],
-      branchId: [null]
+      branchId: [null],
+      saleType: ['all']
     });
   }
 
+  readonly saleTypes = [
+    { value: 'all', label: 'Todas' },
+    { value: 'wholesale', label: 'Mayorista (CC)' },
+    { value: 'retail', label: 'Minorista' }
+  ];
+
   get branchOptions(): SearchableSelectOption[] { return this.branches.map(b => ({ value: b.id, label: b.name })); }
+  get saleTypeOptions(): SearchableSelectOption[] { return this.saleTypes.map(t => ({ value: t.value, label: t.label })); }
 
   ngOnInit(): void {
     this.branchService.listBranches().subscribe({
@@ -65,7 +73,7 @@ export class PaymentMethodsReportComponent implements OnInit {
 
     this.loading = true;
     this.hasSearched = true;
-    this.reportService.paymentMethods(v.dateFrom, v.dateTo, v.branchId || undefined).subscribe({
+    this.reportService.paymentMethods(v.dateFrom, v.dateTo, v.branchId || undefined, v.saleType).subscribe({
       next: res => { this.data = res; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => { this.loading = false; this.toast.error(err?.error?.detail || 'No se pudo cargar el reporte.'); }
     });
@@ -99,7 +107,8 @@ export class PaymentMethodsReportComponent implements OnInit {
     const pageHeight = doc.internal.pageSize.getHeight();
     const f = this.filterForm.value;
     const branchName = f.branchId ? (this.branches.find(b => b.id === f.branchId)?.name ?? '') : 'Todas las sucursales';
-    const subtitle = `Medios de pago · Desde ${f.dateFrom} hasta ${f.dateTo} · ${branchName}`;
+    const saleTypeName = this.saleTypes.find(t => t.value === (f.saleType || 'all'))?.label ?? 'Todas';
+    const subtitle = `Medios de pago · Desde ${f.dateFrom} hasta ${f.dateTo} · ${branchName} · ${saleTypeName}`;
     let y = 12;
 
     const drawDocumentHeader = (continuation = false): void => {

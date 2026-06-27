@@ -1,0 +1,194 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Reporteria / Stock</div>
+    <h1>Movimientos de stock</h1>
+    <p>Historial de movimientos por modelo y fecha: entradas, salidas, ventas, compras, ajustes y transferencias.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div><span>Filtros</span></div>
+      <div class="panel__actions">
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.rows.length === 0">Exportar XLSX</button>
+        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="!data || data.rows.length === 0">Exportar PDF</button>
+      </div>
+    </div>
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form">
+      <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
+      <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+      <label class="field"><span>Modelo</span>
+        <app-searchable-select formControlName="productId" [options]="productOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los modelos" searchPlaceholder="Buscar modelo..."></app-searchable-select>
+      </label>
+      <label class="field" *ngIf="branches.length > 1"><span>Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label class="field"><span>Tipo</span>
+        <app-searchable-select formControlName="type" [options]="typeOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los tipos" searchPlaceholder="Buscar tipo..."></app-searchable-select>
+      </label>
+      <div class="filter-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="loading-shell" *ngIf="loading"><div class="loading-shell__grid"><div class="loading-card" *ngFor="let _ of [1,2,3]"></div></div></div>
+
+  <ng-container *ngIf="!loading && data">
+    <section class="panel" *ngIf="data.rows.length > 0; else emptyState">
+      <div class="movements-summary">
+        <span class="movements-summary__item movements-summary__item--in">Entradas: +{{ qty(data.totals.entradas) }}</span>
+        <span class="movements-summary__item movements-summary__item--out">Salidas: -{{ qty(data.totals.salidas) }}</span>
+        <span class="movements-summary__item">Neto: {{ data.totals.neto >= 0 ? '+' : '' }}{{ qty(data.totals.neto) }}</span>
+        <span class="movements-summary__item movements-summary__item--dim">{{ data.totals.count }} movimiento(s)</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table data-table--sticky-first">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Sucursal</th>
+              <th>Producto</th>
+              <th>Tipo</th>
+              <th class="t-right">Cantidad</th>
+              <th>Documento</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="data-row" *ngFor="let r of data.rows">
+              <td class="dim">{{ formatDate(r.date) }}</td>
+              <td>{{ r.branchName }}</td>
+              <td class="strong">{{ r.code }} · {{ r.brand }} {{ r.name }}</td>
+              <td>{{ r.typeName }}</td>
+              <td class="t-right strong" [class.qty-in]="r.direction > 0" [class.qty-out]="r.direction < 0">{{ signed(r) }}</td>
+              <td class="dim">
+                <button *ngIf="isTransfer(r); else docPlain" type="button" class="transfer-link" (click)="openTransfer(r)">Ver traspaso →</button>
+                <ng-template #docPlain>{{ r.referenceCode || '—' }}</ng-template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <ng-template #emptyState>
+      <section class="panel"><p class="note">No hay movimientos para los filtros seleccionados.</p></section>
+    </ng-template>
+  </ng-container>
+</div>
+
+<!-- Popup detalle de traspaso -->
+<div class="transfer-backdrop" *ngIf="transferPopup || transferLoading"></div>
+<div class="transfer-modal" *ngIf="transferPopup || transferLoading" (click)="closeTransfer()">
+  <article
+    class="transfer-card"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="transfer-detail-title"
+    [attr.aria-busy]="transferLoading"
+    (click)="$event.stopPropagation()">
+    <div class="transfer-card__head">
+      <span class="transfer-card__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M3.5 7.5 12 3l8.5 4.5L12 12 3.5 7.5Z"></path>
+          <path d="M3.5 7.5V16L12 21l8.5-5V7.5M12 12v9"></path>
+        </svg>
+      </span>
+      <div class="transfer-card__heading">
+        <span class="transfer-card__eyebrow">Movimiento interno</span>
+        <h2 id="transfer-detail-title">{{ transferLoading ? 'Cargando traspaso' : 'Traspaso de stock' }}</h2>
+      </div>
+      <span class="transfer-card__status" *ngIf="!transferLoading">
+        <i aria-hidden="true"></i>
+        Completado
+      </span>
+      <button class="transfer-card__close" type="button" aria-label="Cerrar detalle" autofocus (click)="closeTransfer()">×</button>
+    </div>
+
+    <div class="transfer-loading" *ngIf="transferLoading" aria-live="polite">
+      <div class="transfer-loading__route">
+        <span></span><i></i><span></span>
+      </div>
+      <div class="transfer-loading__line" *ngFor="let _ of [1,2,3]"></div>
+      <p>Cargando datos del movimiento…</p>
+    </div>
+
+    <ng-container *ngIf="!transferLoading && transferPopup as t">
+      <div class="transfer-card__content">
+        <section class="transfer-route" aria-label="Ruta del traspaso">
+          <div class="transfer-stop transfer-stop--origin">
+            <span class="transfer-stop__index">01</span>
+            <div>
+              <span class="transfer-stop__label">Origen</span>
+              <strong>{{ t.fromBranchName || 'Sucursal de origen' }}</strong>
+            </div>
+          </div>
+
+          <div class="transfer-route__connector" aria-hidden="true">
+            <span></span>
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M5 12h13m-5-5 5 5-5 5"></path>
+            </svg>
+          </div>
+
+          <div class="transfer-stop transfer-stop--destination">
+            <span class="transfer-stop__index">02</span>
+            <div>
+              <span class="transfer-stop__label">Destino</span>
+              <strong>{{ t.toBranchName || 'Sucursal de destino' }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <div class="transfer-facts">
+          <div class="transfer-fact">
+            <span>Fecha y hora</span>
+            <strong>{{ formatDate(t.date) }}</strong>
+          </div>
+          <div class="transfer-fact">
+            <span>Productos</span>
+            <strong>{{ t.items.length }}</strong>
+          </div>
+          <div class="transfer-fact">
+            <span>Unidades</span>
+            <strong>{{ qty(transferTotalQuantity) }}</strong>
+          </div>
+        </div>
+
+        <div class="transfer-note" *ngIf="t.description">
+          <span class="transfer-note__label">Nota del movimiento</span>
+          <p>{{ t.description }}</p>
+        </div>
+
+        <section class="transfer-products">
+          <div class="transfer-products__head">
+            <div>
+              <span class="transfer-products__eyebrow">Carga transferida</span>
+              <h3>Productos</h3>
+            </div>
+            <span class="transfer-products__count">{{ t.items.length }} {{ t.items.length === 1 ? 'línea' : 'líneas' }}</span>
+          </div>
+
+          <div class="transfer-product-list">
+            <div class="transfer-product" *ngFor="let it of t.items; let i = index">
+              <span class="transfer-product__index">{{ (i + 1).toString().padStart(2, '0') }}</span>
+              <div class="transfer-product__identity">
+                <span class="transfer-product__code">{{ it.code }}</span>
+                <strong>{{ it.brand }} {{ it.name }}</strong>
+              </div>
+              <div class="transfer-product__quantity">
+                <span>Cantidad</span>
+                <strong>{{ qty(it.quantity) }}</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="transfer-card__footer">
+        <span>Stock actualizado en ambas sucursales</span>
+        <button class="transfer-card__done" type="button" (click)="closeTransfer()">Cerrar detalle</button>
+      </footer>
+    </ng-container>
+  </article>
+</div>

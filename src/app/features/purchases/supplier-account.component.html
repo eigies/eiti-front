@@ -188,6 +188,7 @@
                       (click)="$event.stopPropagation(); togglePaymentDetail(p)">
                       {{ isExpanded(p) ? 'Ocultar facturas ▴' : 'Ver facturas ▾' }}
                     </button>
+                    <small class="movement-ref" *ngIf="p.reference || p.notes">{{ p.reference || p.notes }}</small>
                   </td>
                   <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
                   <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>

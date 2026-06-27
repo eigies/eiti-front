@@ -544,3 +544,12 @@
     display: none;
   }
 }
+
+.movement-ref {
+  display: block;
+  margin-top: .2rem;
+  color: var(--text-dim);
+  font-family: 'Crimson Pro', serif;
+  font-size: .82rem;
+  font-style: italic;
+}

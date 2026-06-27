@@ -212,6 +212,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/payments/payment-methods-report.component').then(m => m.PaymentMethodsReportComponent)
     },
     {
+        path: 'reportes/movimientos-stock',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsStock },
+        loadComponent: () => import('./features/reports/stock-movements/stock-movements-report.component').then(m => m.StockMovementsReportComponent)
+    },
+    {
         path: 'profile',
         canActivate: [authGuard],
         loadComponent: () =>
