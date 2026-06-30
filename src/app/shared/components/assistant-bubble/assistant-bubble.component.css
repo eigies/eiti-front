@@ -1,7 +1,7 @@
 :host {
   position: fixed;
-  right: 1.35rem;
-  bottom: 1.35rem;
+  right: 1.5rem;
+  bottom: 1.5rem;
   z-index: 10000;
   pointer-events: none;
 }
@@ -19,19 +19,30 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+.assistant-panel svg,
+.assistant-fab svg {
+  display: block;
+  shape-rendering: geometricPrecision;
+}
+
+.assistant-panel svg *,
+.assistant-fab svg * {
+  vector-effect: non-scaling-stroke;
+}
+
 /* ── Launcher ─────────────────────────────────────────────── */
 .assistant-fab {
   position: relative;
   display: flex;
   align-items: center;
-  gap: .65rem;
-  width: 168px;
-  min-height: 54px;
+  gap: .7rem;
+  width: 174px;
+  min-height: 60px;
   margin-left: auto;
-  padding: .42rem .55rem .42rem .45rem;
+  padding: .5rem .65rem .5rem .5rem;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--amber) 44%, var(--border-2));
-  border-radius: 14px;
+  border-radius: 16px;
   color: var(--text);
   background:
     linear-gradient(105deg, color-mix(in srgb, var(--amber) 12%, var(--bg-panel)), var(--bg-panel) 58%),
@@ -43,7 +54,6 @@ button {
   cursor: pointer;
   pointer-events: auto;
   transition:
-    width .22s cubic-bezier(.22, 1, .36, 1),
     transform .18s ease,
     border-color .18s ease,
     box-shadow .18s ease;
@@ -71,19 +81,15 @@ button {
   transform: translateX(120%);
 }
 
-.assistant-fab--open {
-  width: 148px;
-}
-
 .assistant-fab__orb {
   position: relative;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex: 0 0 auto;
   border: 1px solid color-mix(in srgb, var(--amber) 58%, transparent);
-  border-radius: 11px;
+  border-radius: 12px;
   color: color-mix(in srgb, var(--amber) 88%, var(--text));
   background:
     radial-gradient(circle at 35% 28%, color-mix(in srgb, white 18%, transparent), transparent 35%),
@@ -92,11 +98,11 @@ button {
 }
 
 .assistant-fab__orb svg {
-  width: 21px;
-  height: 21px;
+  width: 22px;
+  height: 22px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.55;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -115,7 +121,8 @@ button {
 
 .assistant-fab__copy {
   display: grid;
-  gap: .08rem;
+  flex: 1 1 auto;
+  gap: .18rem;
   min-width: 0;
   text-align: left;
 }
@@ -123,59 +130,49 @@ button {
 .assistant-fab__copy small {
   color: var(--text-dim);
   font-family: 'DM Mono', monospace;
-  font-size: .51rem;
-  letter-spacing: .13em;
-  line-height: 1.1;
+  font-size: .66rem;
+  font-weight: 500;
+  letter-spacing: .11em;
+  line-height: 1;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .assistant-fab__copy strong {
   color: var(--text);
   font-family: 'Crimson Pro', serif;
-  font-size: .82rem;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1.1;
   white-space: nowrap;
-}
-
-.assistant-fab__arrow {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-  margin-left: auto;
-  fill: none;
-  stroke: var(--amber);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* ── Workspace panel ──────────────────────────────────────── */
 .assistant-panel {
   position: absolute;
   right: 0;
-  bottom: 68px;
+  bottom: 74px;
   display: flex;
   flex-direction: column;
-  width: 440px;
+  width: 460px;
   max-width: calc(100vw - 2rem);
-  height: min(680px, calc(100vh - 115px));
-  min-height: 480px;
+  height: min(720px, calc(100vh - 116px));
+  min-height: 500px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--amber) 22%, var(--border));
-  border-radius: 15px;
+  border-radius: 18px;
   color: var(--text);
   background:
-    linear-gradient(color-mix(in srgb, var(--border) 18%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--border) 13%, transparent) 1px, transparent 1px),
-    radial-gradient(circle at 0 0, color-mix(in srgb, var(--amber) 7%, transparent), transparent 26%),
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--amber) 8%, transparent), transparent 30%),
+    linear-gradient(145deg, color-mix(in srgb, white 2.5%, transparent), transparent 45%),
     var(--bg-panel);
-  background-size: 28px 28px, 28px 28px, auto, auto;
   box-shadow:
     0 34px 90px -30px rgba(0, 0, 0, .78),
     0 12px 30px rgba(0, 0, 0, .24),
     inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
   pointer-events: auto;
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
   transform-origin: right bottom;
   animation: assistant-panel-in .3s cubic-bezier(.22, 1, .36, 1) both;
 }
@@ -197,7 +194,7 @@ button {
   justify-content: space-between;
   gap: 1rem;
   flex: 0 0 auto;
-  padding: 1rem 1.05rem .9rem;
+  padding: 1.1rem 1.2rem 1rem;
   border-bottom: 1px solid color-mix(in srgb, var(--amber) 13%, var(--border));
   background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
   backdrop-filter: blur(14px);
@@ -206,44 +203,45 @@ button {
 .assistant-brand {
   display: flex;
   align-items: center;
-  gap: .72rem;
+  gap: .85rem;
   min-width: 0;
 }
 
 .assistant-brand__mark {
   display: grid;
   place-items: center;
-  width: 2.55rem;
-  height: 2.55rem;
+  width: 2.9rem;
+  height: 2.9rem;
   flex: 0 0 auto;
   border: 1px solid color-mix(in srgb, var(--amber) 42%, var(--border));
-  border-radius: 10px;
+  border-radius: 11px;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 8%, var(--bg));
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
 }
 
 .assistant-brand__mark svg {
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 1.55rem;
+  height: 1.55rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.45;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .assistant-brand > div {
   display: grid;
-  gap: .1rem;
+  gap: .22rem;
   min-width: 0;
 }
 
 .assistant-brand__eyebrow {
   color: var(--amber);
   font-family: 'DM Mono', monospace;
-  font-size: .52rem;
-  letter-spacing: .17em;
+  font-size: .67rem;
+  font-weight: 500;
+  letter-spacing: .14em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -252,7 +250,7 @@ button {
   margin: 0;
   color: var(--text);
   font-family: 'Crimson Pro', serif;
-  font-size: 1.08rem;
+  font-size: 1.24rem;
   font-weight: 600;
   line-height: 1.15;
 }
@@ -260,17 +258,17 @@ button {
 .assistant-panel__actions {
   display: flex;
   align-items: center;
-  gap: .3rem;
+  gap: .35rem;
 }
 
 .assistant-icon-btn {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 9px;
   color: var(--text-dim);
   background: transparent;
   cursor: pointer;
@@ -278,11 +276,11 @@ button {
 }
 
 .assistant-icon-btn svg {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.6;
+  stroke-width: 1.9;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -297,11 +295,11 @@ button {
 .assistant-context {
   position: relative;
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto;
-  gap: .62rem;
+  grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+  gap: .75rem;
   align-items: center;
   flex: 0 0 auto;
-  padding: .67rem 1rem;
+  padding: .75rem 1.2rem;
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg) 58%, var(--bg-panel));
 }
@@ -309,35 +307,36 @@ button {
 .assistant-context__icon {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.4rem;
+  height: 2.4rem;
   border: 1px solid color-mix(in srgb, var(--amber) 20%, var(--border));
-  border-radius: 7px;
+  border-radius: 9px;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 5%, transparent);
 }
 
 .assistant-context__icon svg {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.45;
+  stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .assistant-context__copy {
   display: grid;
-  gap: .12rem;
+  gap: .2rem;
   min-width: 0;
 }
 
 .assistant-context__copy span {
   color: var(--text-dim);
   font-family: 'DM Mono', monospace;
-  font-size: .49rem;
-  letter-spacing: .12em;
+  font-size: .64rem;
+  font-weight: 500;
+  letter-spacing: .1em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -346,7 +345,7 @@ button {
   overflow: hidden;
   color: var(--text);
   font-family: 'Crimson Pro', serif;
-  font-size: .76rem;
+  font-size: .96rem;
   font-weight: 600;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -356,15 +355,16 @@ button {
 .assistant-context__status {
   display: inline-flex;
   align-items: center;
-  gap: .35rem;
-  padding: .26rem .42rem;
+  gap: .4rem;
+  padding: .38rem .55rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg-panel) 65%, transparent);
   font-family: 'DM Mono', monospace;
-  font-size: .46rem;
-  letter-spacing: .06em;
+  font-size: .64rem;
+  font-weight: 500;
+  letter-spacing: .05em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -392,9 +392,9 @@ button {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
   min-height: 0;
-  padding: 1rem;
+  padding: 1.2rem;
   overflow-y: auto;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
@@ -408,7 +408,7 @@ button {
   align-items: center;
   justify-content: center;
   min-height: 100%;
-  padding: .4rem .3rem .75rem;
+  padding: .75rem .35rem 1rem;
   text-align: center;
   animation: assistant-content-in .38s cubic-bezier(.22, 1, .36, 1) .08s both;
 }
@@ -417,9 +417,9 @@ button {
   position: relative;
   display: grid;
   place-items: center;
-  width: 5.25rem;
-  height: 5.25rem;
-  margin-bottom: 1rem;
+  width: 5.7rem;
+  height: 5.7rem;
+  margin-bottom: 1.25rem;
   border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
   border-radius: 50%;
   background:
@@ -431,26 +431,31 @@ button {
 .assistant-empty__signal::after {
   content: '';
   position: absolute;
-  border: 1px solid color-mix(in srgb, var(--amber) 13%, transparent);
   border-radius: 50%;
 }
 
 .assistant-empty__signal::before {
   inset: .45rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 22%, transparent);
 }
 
 .assistant-empty__signal::after {
-  inset: -.45rem;
-  border-style: dashed;
-  animation: assistant-orbit 18s linear infinite;
+  inset: -.5rem;
+  border: 1px solid transparent;
+  border-top-color: color-mix(in srgb, var(--amber) 72%, transparent);
+  border-right-color: color-mix(in srgb, var(--amber) 22%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--amber) 8%, transparent);
+  animation: assistant-orbit 7s linear infinite;
 }
 
 .assistant-empty__signal svg {
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 2.65rem;
+  height: 2.65rem;
   fill: none;
   stroke: var(--amber);
-  stroke-width: 1;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .assistant-empty__signal > span {
@@ -467,56 +472,85 @@ button {
 .assistant-empty__signal > span:nth-child(2) { right: .2rem; bottom: 1.5rem; opacity: .55; }
 .assistant-empty__signal > span:nth-child(3) { bottom: .55rem; left: 1.25rem; opacity: .3; }
 
+:host-context(body.theme-light) .assistant-empty__signal {
+  border-color: color-mix(in srgb, var(--amber) 42%, var(--border));
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--amber) 15%, transparent), transparent 64%),
+    color-mix(in srgb, var(--bg-panel) 72%, white);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--amber) 5%, transparent),
+    0 12px 28px -20px color-mix(in srgb, var(--amber) 80%, transparent);
+}
+
+:host-context(body.theme-light) .assistant-empty__signal::before {
+  border-color: color-mix(in srgb, var(--amber) 38%, transparent);
+}
+
+:host-context(body.theme-light) .assistant-empty__signal::after {
+  border-top-color: color-mix(in srgb, var(--amber) 92%, #6f3d00);
+  border-right-color: color-mix(in srgb, var(--amber) 46%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--amber) 16%, transparent);
+}
+
+:host-context(body.theme-light) .assistant-empty__signal > span:nth-child(2) {
+  opacity: .72;
+}
+
+:host-context(body.theme-light) .assistant-empty__signal > span:nth-child(3) {
+  opacity: .52;
+}
+
 .assistant-empty__eyebrow {
-  margin-bottom: .35rem;
+  margin-bottom: .5rem;
   color: var(--amber);
   font-family: 'DM Mono', monospace;
-  font-size: .54rem;
-  letter-spacing: .18em;
+  font-size: .66rem;
+  font-weight: 500;
+  letter-spacing: .15em;
   text-transform: uppercase;
 }
 
 .assistant-empty h3 {
-  max-width: 19rem;
+  max-width: 23rem;
   margin: 0;
   color: var(--text);
   font-family: 'Crimson Pro', serif;
-  font-size: 1.28rem;
+  font-size: 1.62rem;
   font-weight: 600;
   line-height: 1.15;
 }
 
 .assistant-empty > p {
-  max-width: 21rem;
-  margin: .5rem 0 0;
+  max-width: 24rem;
+  margin: .65rem 0 0;
   color: var(--text-dim);
   font-family: 'Crimson Pro', serif;
-  font-size: .82rem;
-  line-height: 1.4;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .assistant-suggestions {
   display: grid;
-  gap: .45rem;
+  gap: .6rem;
   width: 100%;
-  margin-top: 1.15rem;
+  margin-top: 1.35rem;
 }
 
 .assistant-suggestions button {
   display: grid;
-  grid-template-columns: 1.6rem minmax(0, 1fr) 1rem;
-  gap: .55rem;
+  grid-template-columns: 1.8rem minmax(0, 1fr) 1.2rem;
+  gap: .7rem;
   align-items: center;
   width: 100%;
-  min-height: 42px;
-  padding: .55rem .65rem;
+  min-height: 50px;
+  padding: .7rem .8rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 11px;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 54%, transparent);
   font-family: 'Crimson Pro', serif;
-  font-size: .76rem;
-  line-height: 1.2;
+  font-size: .94rem;
+  line-height: 1.3;
   text-align: left;
   cursor: pointer;
   transition: color .16s ease, border-color .16s ease, background .16s ease, transform .16s ease;
@@ -525,16 +559,17 @@ button {
 .assistant-suggestions button > span {
   color: color-mix(in srgb, var(--amber) 72%, var(--text-dim));
   font-family: 'DM Mono', monospace;
-  font-size: .52rem;
+  font-size: .64rem;
+  font-weight: 500;
   letter-spacing: .06em;
 }
 
 .assistant-suggestions button svg {
-  width: 1rem;
-  height: 1rem;
+  width: 1.2rem;
+  height: 1.2rem;
   fill: none;
   stroke: var(--text-mute);
-  stroke-width: 1.5;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
   transition: stroke .16s ease, transform .16s ease;
@@ -555,7 +590,7 @@ button {
 .assistant-msg {
   display: flex;
   flex-direction: column;
-  gap: .35rem;
+  gap: .5rem;
   animation: assistant-message-in .25s cubic-bezier(.22, 1, .36, 1) both;
 }
 
@@ -563,7 +598,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 1.35rem;
+  min-height: 1.6rem;
   padding-inline: .1rem;
 }
 
@@ -574,27 +609,36 @@ button {
 .assistant-msg__author {
   display: inline-flex;
   align-items: center;
-  gap: .38rem;
+  gap: .5rem;
   color: var(--text-dim);
   font-family: 'DM Mono', monospace;
-  font-size: .5rem;
-  letter-spacing: .1em;
+  font-size: .64rem;
+  font-weight: 500;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
 .assistant-msg__author i {
   display: grid;
   place-items: center;
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 1.65rem;
+  height: 1.65rem;
   border: 1px solid color-mix(in srgb, var(--amber) 25%, var(--border));
   border-radius: 5px;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 6%, transparent);
-  font-family: 'DM Mono', monospace;
-  font-size: .45rem;
   font-style: normal;
   letter-spacing: 0;
+}
+
+.assistant-msg__author i svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .assistant-msg--user .assistant-msg__author i {
@@ -606,25 +650,26 @@ button {
 .assistant-copy {
   display: inline-flex;
   align-items: center;
-  gap: .28rem;
-  padding: .22rem .34rem;
+  gap: .35rem;
+  padding: .3rem .45rem;
   border: 1px solid transparent;
   border-radius: 5px;
   color: var(--text-mute);
   background: transparent;
   font-family: 'DM Mono', monospace;
-  font-size: .47rem;
+  font-size: .61rem;
+  font-weight: 500;
   letter-spacing: .05em;
   text-transform: uppercase;
   cursor: pointer;
 }
 
 .assistant-copy svg {
-  width: .78rem;
-  height: .78rem;
+  width: 1rem;
+  height: 1rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.5;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -639,8 +684,8 @@ button {
   max-width: 88%;
   color: var(--text);
   font-family: 'Crimson Pro', serif;
-  font-size: .86rem;
-  line-height: 1.48;
+  font-size: 1rem;
+  line-height: 1.55;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
@@ -650,9 +695,9 @@ button {
 }
 
 .assistant-msg--user .assistant-msg__bubble {
-  padding: .62rem .78rem;
+  padding: .75rem .9rem;
   border: 1px solid color-mix(in srgb, var(--amber) 27%, var(--border));
-  border-radius: 10px 10px 3px 10px;
+  border-radius: 12px 12px 4px 12px;
   background:
     linear-gradient(110deg, color-mix(in srgb, var(--amber) 10%, var(--bg)), color-mix(in srgb, var(--amber) 4%, var(--bg)));
 }
@@ -664,9 +709,9 @@ button {
 .assistant-msg--bot .assistant-msg__bubble {
   position: relative;
   max-width: 100%;
-  padding: .65rem .8rem .65rem .92rem;
+  padding: .8rem 1rem .8rem 1.05rem;
   border: 1px solid var(--border);
-  border-radius: 3px 10px 10px 10px;
+  border-radius: 4px 12px 12px 12px;
   background: color-mix(in srgb, var(--bg-elevated) 72%, var(--bg-panel));
   box-shadow: inset 2px 0 0 color-mix(in srgb, var(--amber) 72%, transparent);
 }
@@ -693,7 +738,8 @@ button {
   margin-left: .35rem;
   color: var(--text-dim);
   font-family: 'DM Mono', monospace;
-  font-size: .51rem;
+  font-size: .65rem;
+  font-weight: 500;
   font-style: normal;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -704,9 +750,9 @@ button {
   position: relative;
   z-index: 2;
   display: grid;
-  gap: .45rem;
+  gap: .6rem;
   flex: 0 0 auto;
-  padding: .72rem .85rem .65rem;
+  padding: .9rem 1rem .8rem;
   border-top: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
   backdrop-filter: blur(16px);
@@ -717,13 +763,14 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: .75rem;
-  padding: .34rem .5rem;
+  padding: .5rem .65rem;
   border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
-  border-radius: 7px;
+  border-radius: 9px;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--amber) 5%, var(--bg));
   font-family: 'DM Mono', monospace;
-  font-size: .5rem;
+  font-size: .64rem;
+  font-weight: 500;
   letter-spacing: .07em;
   text-transform: uppercase;
 }
@@ -749,7 +796,8 @@ button {
   color: color-mix(in srgb, var(--danger) 82%, var(--text));
   background: transparent;
   font-family: 'DM Mono', monospace;
-  font-size: .49rem;
+  font-size: .63rem;
+  font-weight: 500;
   letter-spacing: .07em;
   text-transform: uppercase;
   cursor: pointer;
@@ -762,12 +810,12 @@ button {
 
 .assistant-composer__field {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 2.45rem;
-  gap: .45rem;
+  grid-template-columns: minmax(0, 1fr) 2.75rem;
+  gap: .55rem;
   align-items: end;
-  padding: .35rem;
+  padding: .42rem;
   border: 1px solid var(--border-2);
-  border-radius: 10px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--bg) 72%, var(--bg-panel));
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 7%, transparent);
   transition: border-color .18s ease, box-shadow .18s ease;
@@ -782,17 +830,17 @@ button {
 
 .assistant-composer textarea {
   width: 100%;
-  min-height: 2rem;
+  min-height: 2.3rem;
   max-height: 112px;
-  padding: .42rem .48rem;
+  padding: .5rem .55rem;
   overflow-y: auto;
   border: 0;
   outline: 0;
   color: var(--text);
   background: transparent;
   font-family: 'Crimson Pro', serif;
-  font-size: .86rem;
-  line-height: 1.35;
+  font-size: 1rem;
+  line-height: 1.4;
   resize: none;
 }
 
@@ -804,10 +852,10 @@ button {
 .assistant-send {
   display: grid;
   place-items: center;
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 2.65rem;
+  height: 2.65rem;
   border: 1px solid color-mix(in srgb, var(--amber) 70%, var(--border-2));
-  border-radius: 8px;
+  border-radius: 9px;
   color: #15100a;
   background: linear-gradient(135deg,
     color-mix(in srgb, var(--amber) 86%, white),
@@ -820,11 +868,11 @@ button {
 }
 
 .assistant-send svg {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1.3rem;
+  height: 1.3rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.7;
+  stroke-width: 1.9;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -848,8 +896,9 @@ button {
   padding-inline: .15rem;
   color: var(--text-mute);
   font-family: 'DM Mono', monospace;
-  font-size: .43rem;
-  letter-spacing: .02em;
+  font-size: .64rem;
+  font-weight: 500;
+  letter-spacing: .01em;
 }
 
 .assistant-composer__meta > span {
@@ -916,12 +965,12 @@ button {
 
   .assistant-panel {
     position: fixed;
-    inset: 68px .55rem .55rem;
+    inset: .65rem;
     width: auto;
     max-width: none;
     height: auto;
     min-height: 0;
-    border-radius: 14px 14px 10px 10px;
+    border-radius: 16px;
     transform-origin: center bottom;
   }
 
@@ -937,8 +986,7 @@ button {
     height: 42px;
   }
 
-  .assistant-fab__copy,
-  .assistant-fab__arrow {
+  .assistant-fab__copy {
     display: none;
   }
 
@@ -949,7 +997,7 @@ button {
   }
 
   .assistant-context {
-    grid-template-columns: 2rem minmax(0, 1fr);
+    grid-template-columns: 2.4rem minmax(0, 1fr);
     padding-inline: .85rem;
   }
 
@@ -958,7 +1006,7 @@ button {
   }
 
   .assistant-panel__messages {
-    padding: .85rem;
+    padding: 1rem;
   }
 
   .assistant-empty {
@@ -973,7 +1021,7 @@ button {
   }
 
   .assistant-composer {
-    padding: .65rem .7rem .6rem;
+    padding: .8rem;
   }
 
   .assistant-composer__meta > span:first-child {
@@ -987,7 +1035,7 @@ button {
 
 @media (max-height: 650px) and (min-width: 641px) {
   .assistant-panel {
-    height: calc(100vh - 95px);
+    height: calc(100vh - 116px);
     min-height: 420px;
   }
 

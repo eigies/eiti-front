@@ -10,8 +10,8 @@
       <div class="assistant-brand">
         <span class="assistant-brand__mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">
-            <path d="M12 3.5 13.6 9l5.4 1.6-5.4 1.7L12 18l-1.7-5.7L5 10.6 10.3 9 12 3.5Z"></path>
-            <path d="m18.3 4 .6 2 .1.1 1.9.6-1.9.6-.1.1-.6 2-.6-2-.1-.1-1.9-.6 1.9-.6.1-.1.6-2Z"></path>
+            <path d="M5 16.5 9.25 12l3.1 2.5L19 7.5"></path>
+            <path d="M15 7.5h4v4"></path>
           </svg>
         </span>
         <div>
@@ -42,8 +42,8 @@
     <div class="assistant-context" *ngIf="context$ | async as context">
       <span class="assistant-context__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" focusable="false">
-          <path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"></path>
-          <path d="M8 12h8m-4-4v8"></path>
+          <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+          <path d="M8 15v-3m4 3V9m4 6v-5"></path>
         </svg>
       </span>
       <div class="assistant-context__copy">
@@ -63,8 +63,10 @@
         <div class="assistant-empty__signal" aria-hidden="true">
           <span></span><span></span><span></span>
           <svg viewBox="0 0 48 48" focusable="false">
-            <path d="M24 10v28M10 24h28"></path>
-            <circle cx="24" cy="24" r="7"></circle>
+            <path d="M10 35.5h28"></path>
+            <path d="M14 31v-7m10 7V14m10 17V20"></path>
+            <path d="m13 18 8-7 6 4 8-8"></path>
+            <path d="M31.5 7H35v3.5"></path>
           </svg>
         </div>
         <span class="assistant-empty__eyebrow">Lectura contextual</span>
@@ -91,7 +93,16 @@
            [class.assistant-msg--bot]="m.role === 'assistant'">
         <div class="assistant-msg__meta">
           <span class="assistant-msg__author">
-            <i aria-hidden="true">{{ m.role === 'assistant' ? '✦' : 'TÚ' }}</i>
+            <i aria-hidden="true">
+              <svg *ngIf="m.role === 'assistant'" viewBox="0 0 24 24" focusable="false">
+                <path d="M5 16.5 9.25 12l3.1 2.5L19 7.5"></path>
+                <path d="M15 7.5h4v4"></path>
+              </svg>
+              <svg *ngIf="m.role === 'user'" viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="8" r="3.25"></circle>
+                <path d="M5.5 19c.8-3.4 3-5.1 6.5-5.1s5.7 1.7 6.5 5.1"></path>
+              </svg>
+            </i>
             {{ m.role === 'assistant' ? 'Analista EITI' : 'Tu consulta' }}
           </span>
           <button
@@ -162,11 +173,12 @@
     [class.assistant-fab--open]="isOpen"
     [attr.aria-expanded]="isOpen"
     aria-controls="assistant-panel"
-    title="Abrir analista de negocio"
-    aria-label="Abrir analista de negocio">
+    [attr.title]="isOpen ? 'Cerrar analista de negocio' : 'Abrir analista de negocio'"
+    [attr.aria-label]="isOpen ? 'Cerrar analista de negocio' : 'Abrir analista de negocio'">
     <span class="assistant-fab__orb" aria-hidden="true">
       <svg viewBox="0 0 24 24" focusable="false">
-        <path d="M12 3.5 13.6 9l5.4 1.6-5.4 1.7L12 18l-1.7-5.7L5 10.6 10.3 9 12 3.5Z"></path>
+        <path d="M6.5 5.5h11a2.5 2.5 0 0 1 2.5 2.5v6.5a2.5 2.5 0 0 1-2.5 2.5h-5.2l-4.2 2.7V17H6.5A2.5 2.5 0 0 1 4 14.5V8a2.5 2.5 0 0 1 2.5-2.5Z"></path>
+        <path d="M12 8.1c.25 1.2.9 1.85 2.1 2.1-1.2.25-1.85.9-2.1 2.1-.25-1.2-.9-1.85-2.1-2.1 1.2-.25 1.85-.9 2.1-2.1Z"></path>
       </svg>
       <i></i>
     </span>
@@ -174,9 +186,5 @@
       <small>Asistente IA</small>
       <strong>{{ isOpen ? 'Cerrar panel' : 'Consultar datos' }}</strong>
     </span>
-    <svg class="assistant-fab__arrow" viewBox="0 0 24 24" aria-hidden="true">
-      <path *ngIf="!isOpen" d="M5 12h13m-5-5 5 5-5 5"></path>
-      <path *ngIf="isOpen" d="m7 7 10 10M17 7 7 17"></path>
-    </svg>
   </button>
 </ng-container>
