@@ -9,8 +9,8 @@
     <div class="panel__header">
       <div><span>Filtros</span></div>
       <div class="panel__actions">
-        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.rows.length === 0">Exportar XLSX</button>
-        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="!data || data.rows.length === 0">Exportar PDF</button>
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.totalCount === 0 || exporting">Exportar XLSX</button>
+        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="!data || data.totalCount === 0 || exporting">Exportar PDF</button>
       </div>
     </div>
     <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form">
@@ -68,6 +68,17 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="pager" *ngIf="data.totalPages > 1">
+        <span class="pager__info">Mostrando {{ rangeFrom }} a {{ rangeTo }} de {{ data.totalCount }}</span>
+        <div class="pager__controls">
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="loading || data.page <= 1" (click)="goToPage(1)">«</button>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="loading || data.page <= 1" (click)="goToPage(data.page - 1)">Anterior</button>
+          <span class="pager__page">Página {{ data.page }} de {{ data.totalPages }}</span>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="loading || data.page >= data.totalPages" (click)="goToPage(data.page + 1)">Siguiente</button>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="loading || data.page >= data.totalPages" (click)="goToPage(data.totalPages)">»</button>
+        </div>
       </div>
     </section>
 

@@ -1,3 +1,38 @@
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+  margin-top: 1rem;
+  padding-top: .9rem;
+  border-top: 1px solid var(--border-2, var(--border));
+}
+
+.pager__info {
+  font-size: .82rem;
+  color: var(--text-dim, var(--text-soft));
+  font-family: 'DM Mono', monospace;
+}
+
+.pager__controls {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.pager__page {
+  font-size: .82rem;
+  color: var(--text-dim, var(--text-soft));
+  padding: 0 .5rem;
+  white-space: nowrap;
+}
+
+.btn--sm {
+  padding: .35rem .7rem;
+  font-size: .8rem;
+}
+
 .movements-summary {
   display: flex;
   flex-wrap: wrap;

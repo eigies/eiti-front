@@ -152,6 +152,10 @@ export interface StockMovementsReportTotals {
 export interface StockMovementsReportResponse {
     rows: StockMovementsReportRow[];
     totals: StockMovementsReportTotals;
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
 }
 
 export interface DailySalesProductItem {

@@ -55,11 +55,13 @@ export class ReportService {
         return this.http.get<StockMatrixResponse>(`${this.base}/stock-matrix`);
     }
 
-    stockMovements(dateFrom: string, dateTo: string, productId?: string, branchId?: string, type?: number): Observable<StockMovementsReportResponse> {
+    stockMovements(dateFrom: string, dateTo: string, productId?: string, branchId?: string, type?: number, page = 1, pageSize = 50): Observable<StockMovementsReportResponse> {
         const params = new URLSearchParams({ dateFrom, dateTo });
         if (productId) params.set('productId', productId);
         if (branchId) params.set('branchId', branchId);
         if (type != null) params.set('type', String(type));
+        params.set('page', String(page));
+        params.set('pageSize', String(pageSize));
         return this.http.get<StockMovementsReportResponse>(`${this.base}/stock-movements?${params.toString()}`);
     }
 

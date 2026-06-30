@@ -13,7 +13,7 @@ import { TransferDetailResponse } from '../../../core/models/stock.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-stock-movements-report',
@@ -27,6 +27,10 @@ export class StockMovementsReportComponent implements OnInit, OnDestroy {
   loading = false;
   hasSearched = false;
   data: StockMovementsReportResponse | null = null;
+
+  page = 1;
+  readonly pageSize = 50;
+  exporting = false;
 
   products: { id: string; label: string }[] = [];
   branches: { id: string; name: string }[] = [];
@@ -87,17 +91,40 @@ export class StockMovementsReportComponent implements OnInit, OnDestroy {
     return !!c && c.invalid && (c.touched || c.dirty);
   }
 
+  // Nueva búsqueda desde los filtros: siempre vuelve a la página 1.
   search(): void {
+    this.page = 1;
+    this.load();
+  }
+
+  private load(): void {
     if (this.filterForm.invalid) { this.filterForm.markAllAsTouched(); this.toast.error('Las fechas son obligatorias.'); return; }
     const v = this.filterForm.value;
     if (v.dateFrom > v.dateTo) { this.toast.error('La fecha desde no puede ser posterior a la hasta.'); return; }
 
     this.loading = true;
     this.hasSearched = true;
-    this.reportService.stockMovements(v.dateFrom, v.dateTo, v.productId || undefined, v.branchId || undefined, v.type ?? undefined).subscribe({
+    this.reportService.stockMovements(v.dateFrom, v.dateTo, v.productId || undefined, v.branchId || undefined, v.type ?? undefined, this.page, this.pageSize).subscribe({
       next: res => { this.data = res; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => { this.loading = false; this.toast.error(err?.error?.detail || 'No se pudo cargar el reporte.'); }
     });
+  }
+
+  goToPage(page: number): void {
+    if (!this.data || this.loading) return;
+    if (page < 1 || page > this.data.totalPages || page === this.page) return;
+    this.page = page;
+    this.load();
+  }
+
+  get rangeFrom(): number {
+    if (!this.data || this.data.totalCount === 0) return 0;
+    return (this.data.page - 1) * this.data.pageSize + 1;
+  }
+
+  get rangeTo(): number {
+    if (!this.data) return 0;
+    return Math.min(this.data.page * this.data.pageSize, this.data.totalCount);
   }
 
   // Detalle de traspaso (popup).
@@ -157,9 +184,30 @@ export class StockMovementsReportComponent implements OnInit, OnDestroy {
     return this.qty(r.quantity);
   }
 
-  exportExcel(): void {
-    if (!this.data || this.data.rows.length === 0) { this.toast.error('No hay movimientos para exportar.'); return; }
-    const rows: Record<string, unknown>[] = this.data.rows.map(r => ({
+  // Trae el set COMPLETO (todas las páginas) para exportar, sin importar la página visible.
+  private async getAllRowsForExport(): Promise<StockMovementsReportRow[] | null> {
+    if (!this.data || this.data.totalCount === 0) { this.toast.error('No hay movimientos para exportar.'); return null; }
+    // Si la página actual ya contiene todo, reusarla.
+    if (this.data.rows.length >= this.data.totalCount) return this.data.rows;
+    const v = this.filterForm.value;
+    this.exporting = true;
+    try {
+      const res = await firstValueFrom(
+        this.reportService.stockMovements(v.dateFrom, v.dateTo, v.productId || undefined, v.branchId || undefined, v.type ?? undefined, 1, this.data.totalCount)
+      );
+      return res.rows;
+    } catch {
+      this.toast.error('No se pudo preparar la exportación.');
+      return null;
+    } finally {
+      this.exporting = false;
+    }
+  }
+
+  async exportExcel(): Promise<void> {
+    const allRows = await this.getAllRowsForExport();
+    if (!allRows) return;
+    const rows: Record<string, unknown>[] = allRows.map(r => ({
       'Fecha': this.formatDate(r.date),
       'Sucursal': r.branchName,
       'Producto': `${r.code} ${r.brand} ${r.name}`.trim(),
@@ -176,7 +224,8 @@ export class StockMovementsReportComponent implements OnInit, OnDestroy {
   }
 
   async exportPdf(): Promise<void> {
-    if (!this.data || this.data.rows.length === 0) { this.toast.error('No hay movimientos para exportar.'); return; }
+    const allRows = await this.getAllRowsForExport();
+    if (!allRows) return;
     const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
     const branding = await this.pdfBranding.prepare();
     const margin = 10;
@@ -204,13 +253,13 @@ export class StockMovementsReportComponent implements OnInit, OnDestroy {
     const drawHead = () => { y = this.pdfLayout.drawTableHeader(doc, resolvedColumns, y, { tableWidth: pageWidth - margin * 2, fontSize: 7.6 }); };
     drawHead();
 
-    this.data.rows.forEach((r, idx) => {
+    allRows.forEach((r, idx) => {
       y = this.pdfLayout.ensurePageSpace(doc, y, 6, pageHeight, () => { drawDocumentHeader(true); drawHead(); return y; });
       const cells = [this.formatDate(r.date), r.branchName, `${r.code} ${r.brand} ${r.name}`.trim(), r.typeName, this.signed(r), r.referenceCode ?? ''];
       y = this.pdfLayout.drawTableRow(doc, resolvedColumns, cells, y, { tableWidth: pageWidth - margin * 2, alternate: idx % 2 === 0, fontSize: 7.4 });
     });
 
-    const t = this.data.totals;
+    const t = this.data!.totals;
     y = this.pdfLayout.ensurePageSpace(doc, y, 6, pageHeight, () => { drawDocumentHeader(true); drawHead(); return y; });
     y = this.pdfLayout.drawTableRow(doc, resolvedColumns, ['TOTALES', '', '', `Entradas +${this.qty(t.entradas)} / Salidas -${this.qty(t.salidas)}`, `${t.neto >= 0 ? '+' : ''}${this.qty(t.neto)}`, ''], y, { tableWidth: pageWidth - margin * 2, total: true, fontSize: 7.4 });
 

@@ -141,10 +141,6 @@ export class DailySalesControlComponent implements OnInit {
       .join(' | ');
   }
 
-  formatTime(value: string): string {
-    return new Date(value).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  }
-
   formatDateTime(value: string): string {
     return new Date(value).toLocaleString('es-AR', {
       day: '2-digit',
@@ -211,14 +207,14 @@ export class DailySalesControlComponent implements OnInit {
     const margin = 9;
     const tableWidth = pageWidth - margin * 2;
     const columns: PdfTableColumn[] = [
-      { header: 'Hora', width: 17 },
-      { header: 'Comprobante', width: 25 },
-      { header: 'Sucursal', width: 25 },
-      { header: 'Cliente', width: 35 },
-      { header: 'Batería vendida', width: 57 },
-      { header: 'Pago / referencia', width: 48 },
-      { header: 'Canje', width: 51 },
-      { header: 'Total', width: 21 }
+      { header: 'Fecha / hora', width: 30 },
+      { header: 'Comprobante', width: 24 },
+      { header: 'Sucursal', width: 22 },
+      { header: 'Cliente', width: 33 },
+      { header: 'Batería vendida', width: 56 },
+      { header: 'Pago / referencia', width: 44 },
+      { header: 'Canje', width: 46 },
+      { header: 'Total', width: 24 }
     ];
     const resolvedColumns = this.pdfLayout.resolveColumns(margin, columns);
     let y = 12;
@@ -242,7 +238,7 @@ export class DailySalesControlComponent implements OnInit {
 
     rows.forEach((row, index) => {
       const values = [
-        this.formatTime(row.createdAt),
+        this.formatDateTime(row.createdAt),
         row.code || row.saleId.slice(0, 8),
         row.branchName,
         row.customerName,
