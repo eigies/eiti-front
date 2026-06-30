@@ -180,7 +180,7 @@ export class SalesPageComponent implements OnInit {
             idSaleStatus: [1, Validators.required],
             hasDelivery: [false],
             cashDrawerId: [''],
-            sourceChannel: [null],
+            sourceChannel: [null, Validators.required],
             deliveryAddress: [''],
             productId: ['', Validators.required],
             quantity: [1, [Validators.required, Validators.min(1)]]
@@ -203,7 +203,7 @@ export class SalesPageComponent implements OnInit {
             notes: ['']
         });
         const today = localDateString();
-        this.filterForm = this.fb.group({ dateFrom: [today], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], deliveryAddress: [''] });
+        this.filterForm = this.fb.group({ dateFrom: [today], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], code: [''], phone: [''], deliveryAddress: [''] });
     }
 
     ngOnInit(): void {
@@ -612,8 +612,11 @@ removeEditItem(productId: string): void {
 }
 
 createSale(): void {
-    if(this.lineForm.get('branchId')?.invalid || this.draftItems.length === 0) {
+    if(this.lineForm.get('branchId')?.invalid || this.lineForm.get('sourceChannel')?.invalid || this.draftItems.length === 0) {
     this.lineForm.markAllAsTouched();
+    if (this.lineForm.get('sourceChannel')?.invalid) {
+        this.toast.error('Seleccioná el canal de origen de la venta.');
+    }
     return;
 }
 
@@ -692,6 +695,18 @@ loadSales(): void {
             } else if (transportStatus !== '' && transportStatus !== null && transportStatus !== undefined) {
                 const ts = Number(transportStatus);
                 filtered = filtered.filter(sale => sale.transportStatus === ts);
+            }
+            const codeQuery = (this.filterForm.get('code')?.value || '').trim().toLowerCase();
+            if (codeQuery) {
+                filtered = filtered.filter(sale =>
+                    (sale.code || '').toLowerCase().includes(codeQuery)
+                );
+            }
+            const phoneQuery = (this.filterForm.get('phone')?.value || '').replace(/\D/g, '');
+            if (phoneQuery) {
+                filtered = filtered.filter(sale =>
+                    (sale.customerPhone || '').replace(/\D/g, '').includes(phoneQuery)
+                );
             }
             const addressQuery = (this.filterForm.get('deliveryAddress')?.value || '').trim().toLowerCase();
             if (addressQuery) {
@@ -1348,7 +1363,7 @@ applySaleFilters(): void {
 
 clearSaleFilters(): void {
     const today = localDateString();
-    this.filterForm.reset({ dateFrom: today, dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', deliveryAddress: '' });
+    this.filterForm.reset({ dateFrom: today, dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', code: '', phone: '', deliveryAddress: '' });
     this.currentSalesPage = 1;
     this.loadSales();
 }

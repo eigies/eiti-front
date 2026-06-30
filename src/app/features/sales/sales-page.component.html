@@ -55,13 +55,15 @@
             </label>
 
             <label class="field">
-              <span class="field__label">Canal de origen <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+              <span class="field__label">Canal de origen <span class="field__required">*</span></span>
               <div class="ch-sel" [class.ch-sel--open]="showCreateChannelDrop">
                 <div class="ch-sel__bg" *ngIf="showCreateChannelDrop" (click)="showCreateChannelDrop=false"></div>
-                <button type="button" class="control ch-sel__trigger" (click)="showCreateChannelDrop=!showCreateChannelDrop">
+                <button type="button" class="control ch-sel__trigger"
+                  [class.control--invalid]="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched"
+                  (click)="showCreateChannelDrop=!showCreateChannelDrop">
                   <span class="ch-sel__val">
                     <ng-container *ngIf="lineForm.get('sourceChannel')?.value == null; else createChSel">
-                      <span class="ch-sel__placeholder">Sin especificar</span>
+                      <span class="ch-sel__placeholder">Seleccionar canal…</span>
                     </ng-container>
                     <ng-template #createChSel>
                       <ng-container *ngFor="let ch of saleSourceChannels">
@@ -75,10 +77,6 @@
                   <svg class="ch-sel__caret" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
                 <div class="ch-sel__menu" *ngIf="showCreateChannelDrop">
-                  <button type="button" class="ch-sel__opt" [class.ch-sel__opt--on]="lineForm.get('sourceChannel')?.value == null"
-                    (click)="lineForm.get('sourceChannel')?.setValue(null); showCreateChannelDrop=false">
-                    <span class="ch-sel__ico ch-sel__ico--blank">—</span><span>Sin especificar</span>
-                  </button>
                   <button type="button" class="ch-sel__opt" *ngFor="let ch of saleSourceChannels"
                     [class.ch-sel__opt--on]="lineForm.get('sourceChannel')?.value === ch.value"
                     (click)="lineForm.get('sourceChannel')?.setValue(ch.value); showCreateChannelDrop=false">
@@ -87,6 +85,9 @@
                   </button>
                 </div>
               </div>
+              <span class="field__error" *ngIf="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched">
+                Seleccioná el canal de origen.
+              </span>
             </label>
 
             <div class="field">
@@ -444,56 +445,103 @@
 
     <div class="panel__body" *ngIf="listExpanded">
       <form class="filters" [formGroup]="filterForm" (ngSubmit)="applySaleFilters()">
-        <label class="field">
-          <span class="field__label">Desde</span>
-          <input class="control control--sm" type="date" formControlName="dateFrom" />
-        </label>
-        <label class="field">
-          <span class="field__label">Hasta</span>
-          <input class="control control--sm" type="date" formControlName="dateTo" />
-        </label>
-        <label class="field">
-          <span class="field__label">Estado</span>
-          <app-searchable-select
-            formControlName="idSaleStatus"
-            [options]="saleFilterStatusOptions"
-            [compact]="true"
-            [allowClear]="true"
-            clearLabel="Todos"
-            clearValue=""
-            placeholder="Todos"
-            searchPlaceholder="Buscar estado...">
-          </app-searchable-select>
-        </label>
-        <label class="field">
-          <span class="field__label">Transporte</span>
-          <app-searchable-select
-            formControlName="transportStatus"
-            [options]="transportStatusOptions"
-            [compact]="true"
-            [allowClear]="true"
-            clearLabel="Todos"
-            clearValue=""
-            placeholder="Todos"
-            searchPlaceholder="Buscar estado...">
-          </app-searchable-select>
-        </label>
-        <label class="field">
-          <span class="field__label">Dirección</span>
-          <input class="control control--sm" type="text" formControlName="deliveryAddress" placeholder="Buscar dirección..." />
-        </label>
-        <div class="filters__actions">
-          <button class="btn btn--secondary btn--sm" type="submit">Filtrar</button>
-          <button class="btn btn--ghost btn--sm" type="button" (click)="clearSaleFilters()">Limpiar</button>
+        <div class="filters__primary">
+          <label class="field field--sale-search">
+            <span class="field__label">Buscar venta</span>
+            <span class="filters__search-control">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="6"></circle>
+                <path d="m16 16 4 4"></path>
+              </svg>
+              <input class="control control--sm" type="search" formControlName="code" placeholder="Número de comprobante" />
+            </span>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Desde</span>
+            <input class="control control--sm" type="date" formControlName="dateFrom" />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Hasta</span>
+            <input class="control control--sm" type="date" formControlName="dateTo" />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Estado</span>
+            <app-searchable-select
+              formControlName="idSaleStatus"
+              [options]="saleFilterStatusOptions"
+              [allowClear]="true"
+              clearLabel="Todos"
+              clearValue=""
+              placeholder="Todos"
+              searchPlaceholder="Buscar estado...">
+            </app-searchable-select>
+          </label>
+
+          <div class="filters__actions">
+            <button class="btn btn--secondary btn--sm" type="submit">Filtrar</button>
+            <button class="btn btn--ghost btn--sm" type="button" (click)="clearSaleFilters()">Limpiar</button>
+          </div>
         </div>
+
+        <details class="filters__more">
+          <summary>
+            <span class="filters__more-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 7h10m4 0h2M4 17h2m4 0h10"></path>
+                <circle cx="16" cy="7" r="2"></circle>
+                <circle cx="8" cy="17" r="2"></circle>
+              </svg>
+            </span>
+            <span class="filters__more-copy">
+              <strong>Más filtros</strong>
+              <small>Transporte, teléfono y dirección</small>
+            </span>
+            <span
+              class="filters__active"
+              *ngIf="filterForm.get('transportStatus')?.value || filterForm.get('phone')?.value || filterForm.get('deliveryAddress')?.value">
+              Activos
+            </span>
+            <svg class="filters__more-chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m8 10 4 4 4-4"></path>
+            </svg>
+          </summary>
+
+          <div class="filters__secondary">
+            <label class="field">
+              <span class="field__label">Transporte</span>
+              <app-searchable-select
+                formControlName="transportStatus"
+                [options]="transportStatusOptions"
+                [allowClear]="true"
+                clearLabel="Todos"
+                clearValue=""
+                placeholder="Todos"
+                searchPlaceholder="Buscar estado...">
+              </app-searchable-select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Teléfono</span>
+              <input class="control control--sm" type="search" formControlName="phone" placeholder="Buscar teléfono" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Dirección</span>
+              <input class="control control--sm" type="search" formControlName="deliveryAddress" placeholder="Buscar dirección" />
+            </label>
+          </div>
+        </details>
       </form>
 
       <div class="list-meta">
         <span *ngIf="loadingSales">Cargando ventas...</span>
         <span *ngIf="!loadingSales && sales.length > 0">Mostrando {{ salesPageStart }} a {{ salesPageEnd }} de {{ sales.length }}</span>
         <label class="page-size">
-          <span>Pagina</span>
-          <app-searchable-select [ngModel]="salesPageSize" (ngModelChange)="changeSalesPageSize($event)" [ngModelOptions]="{ standalone: true }" [options]="salesPageSizeSelectOptions" [compact]="true" placeholder="Pagina" searchPlaceholder="Buscar cantidad..."></app-searchable-select>
+          <span>Página</span>
+          <app-searchable-select [ngModel]="salesPageSize" (ngModelChange)="changeSalesPageSize($event)" [ngModelOptions]="{ standalone: true }" [options]="salesPageSizeSelectOptions" [compact]="true" placeholder="Página" searchPlaceholder="Buscar cantidad..."></app-searchable-select>
         </label>
       </div>
 

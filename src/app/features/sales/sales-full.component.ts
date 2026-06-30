@@ -27,6 +27,7 @@ import { PermissionCodes } from '../../core/models/permission.models';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
+import { SALE_SOURCE_CHANNELS, SaleSourceChannel } from '../../core/models/sale.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import {
   SalePaymentDraftState,
@@ -74,7 +75,7 @@ export class SalesFullComponent implements OnInit {
   readonly searchForm = this.fb.group({ query: [''] });
   readonly customerForm = this.fb.group({ firstName: ['', Validators.required], lastName: ['', Validators.required], email: ['', [Validators.required, Validators.email]], phone: ['', Validators.required], documentType: [1, Validators.required], documentNumber: ['', Validators.required], taxId: [''] });
   readonly addressForm = this.fb.group({ street: ['', Validators.required], streetNumber: ['', Validators.required], postalCode: ['', Validators.required], city: ['', Validators.required], stateOrProvince: ['', Validators.required], country: ['Argentina', Validators.required], floor: [''], apartment: [''], reference: [''] });
-  readonly saleForm = this.fb.group({ branchId: ['', Validators.required], idSaleStatus: [1, Validators.required], hasDelivery: [false], cashDrawerId: [''] });
+  readonly saleForm = this.fb.group({ branchId: ['', Validators.required], idSaleStatus: [1, Validators.required], sourceChannel: [null as number | null, Validators.required], hasDelivery: [false], cashDrawerId: [''] });
   readonly itemForm = this.fb.group({ productId: ['', Validators.required], quantity: [1, [Validators.required, Validators.min(1)]] });
   readonly transportForm = this.fb.group({ driverEmployeeId: ['', Validators.required], vehicleId: ['', Validators.required], notes: [''] });
 
@@ -117,6 +118,7 @@ export class SalesFullComponent implements OnInit {
   get documentTypeOptions(): SearchableSelectOption[] { return this.documentTypes.map(type => ({ value: type.value, label: type.label })); }
   get branchOptions(): SearchableSelectOption[] { return this.branches.map(branch => ({ value: branch.id, label: branch.name })); }
   readonly saleStatusOptions: SearchableSelectOption[] = [{ value: 1, label: 'En espera' }, { value: 2, label: 'Pagada' }];
+  readonly channelOptions: SearchableSelectOption[] = SALE_SOURCE_CHANNELS.map(channel => ({ value: channel.value, label: channel.label }));
   get driverOptions(): SearchableSelectOption[] { return this.activeDrivers.map(driver => ({ value: driver.employeeId, label: driver.fullName })); }
   get vehicleOptions(): SearchableSelectOption[] { return this.activeVehicles.map(vehicle => ({ value: vehicle.id, label: `${vehicle.plate} / ${vehicle.model}` })); }
   get total(): number { return this.draftItems.reduce((sum, item) => sum + item.total, 0); }
@@ -358,6 +360,11 @@ export class SalesFullComponent implements OnInit {
         this.toast.error('Selecciona una sucursal.');
         return false;
       }
+      if (this.saleForm.get('sourceChannel')?.invalid) {
+        this.saleForm.markAllAsTouched();
+        this.toast.error('Selecciona el canal de origen de la venta.');
+        return false;
+      }
       if (this.draftItems.length === 0) {
         this.toast.error('Agrega al menos un item para continuar.');
         return false;
@@ -377,6 +384,7 @@ export class SalesFullComponent implements OnInit {
       branchId: String(raw.branchId || ''),
       customerId,
       idSaleStatus: Number(raw.idSaleStatus ?? 1),
+      sourceChannel: raw.sourceChannel != null ? Number(raw.sourceChannel) as SaleSourceChannel : null,
       hasDelivery: Boolean(raw.hasDelivery),
       cashDrawerId: raw.cashDrawerId || null,
       payments,

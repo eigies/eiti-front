@@ -171,6 +171,10 @@
                         <span class="field__label">Estado de venta</span>
                         <app-searchable-select formControlName="idSaleStatus" [options]="saleStatusOptions" placeholder="Estado de venta" searchPlaceholder="Buscar estado..."></app-searchable-select>
                     </label>
+                    <label class="field">
+                        <span class="field__label">Canal de origen <span class="field__required">*</span></span>
+                        <app-searchable-select formControlName="sourceChannel" [options]="channelOptions" placeholder="Seleccionar canal…" searchPlaceholder="Buscar canal..."></app-searchable-select>
+                    </label>
                     <div class="field">
                         <span class="field__label">Modalidad de entrega</span>
                         <label class="toggle-check">
