@@ -29,6 +29,7 @@ import * as XLSX from 'xlsx';
 import * as ExcelJS from 'exceljs';
 
 type ProductsViewMode = 'list' | 'create' | 'detail';
+type ProductCatalogLayout = 'table' | 'cards';
 type ProductImportColumn =
   | 'code'
   | 'sku'
@@ -123,6 +124,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   bulkEditMode = false;
   bulkEditSaving = false;
   viewMode: ProductsViewMode = 'list';
+  catalogLayout: ProductCatalogLayout = 'table';
   routeProductId = '';
   deleteConfirmOpen = false;
   currentPage = 1;
@@ -189,6 +191,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.restoreCatalogLayout();
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       this.routeProductId = params.get('id') ?? '';
       this.viewMode = this.router.url.endsWith('/new') ? 'create' : this.routeProductId ? 'detail' : 'list';
@@ -549,6 +552,19 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   toggleCompactMode(): void {
     this.compactMode = !this.compactMode;
+  }
+
+  setCatalogLayout(layout: ProductCatalogLayout): void {
+    if (this.bulkEditMode && layout === 'cards') {
+      return;
+    }
+
+    this.catalogLayout = layout;
+    try {
+      localStorage.setItem('eiti_products_catalog_layout', layout);
+    } catch {
+      // La preferencia visual no debe bloquear el catálogo si el storage no está disponible.
+    }
   }
 
   async goToList(): Promise<void> {
@@ -1414,6 +1430,17 @@ export class ProductsComponent implements OnInit, OnDestroy {
         this.cancelBulkEdit(true);
       }
     });
+  }
+
+  private restoreCatalogLayout(): void {
+    try {
+      const stored = localStorage.getItem('eiti_products_catalog_layout');
+      if (stored === 'cards' || stored === 'table') {
+        this.catalogLayout = stored;
+      }
+    } catch {
+      this.catalogLayout = 'table';
+    }
   }
 
   private loadBranches(): void {

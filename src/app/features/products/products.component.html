@@ -21,7 +21,7 @@
     <div class="ph__body">
       <div class="ph__tag">_ Productos</div>
       <h1 class="ph__title">{{ viewMode === 'create' ? 'Nuevo producto' : viewMode === 'detail' ? 'Administrador de productos' : 'Catalogo activo' }}</h1>
-      <p class="ph__desc" *ngIf="viewMode === 'list'">Listado directo, filtros operativos y edicion masiva solo sobre productos seleccionados.</p>
+      <p class="ph__desc" *ngIf="viewMode === 'list'">Catálogo operativo con vista de lista o cards y edición masiva sobre productos seleccionados.</p>
       <p class="ph__desc" *ngIf="viewMode === 'create'">Carga un producto nuevo sin mezclar el alta con la grilla de trabajo.</p>
       <p class="ph__desc" *ngIf="viewMode === 'detail'">Desde esta pantalla podes ver datos, editar, ajustar stock y eliminar el producto.</p>
     </div>
@@ -115,8 +115,37 @@
     <div class="card__head-static">
       <div class="card__head-static-left">
         <span class="card__icon">#</span>
-        <span class="card__title">Listado</span>
+        <span class="card__title">Catálogo</span>
         <span class="count-badge" *ngIf="totalProducts > 0">{{ totalProducts }}</span>
+      </div>
+      <div class="catalog-layout-switch" role="group" aria-label="Vista del catálogo">
+        <button
+          type="button"
+          [class.catalog-layout-switch__button--active]="catalogLayout === 'table' || bulkEditMode"
+          [attr.aria-pressed]="catalogLayout === 'table' || bulkEditMode"
+          (click)="setCatalogLayout('table')">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 6h12M8 12h12M8 18h12"></path>
+            <circle cx="4" cy="6" r=".8"></circle>
+            <circle cx="4" cy="12" r=".8"></circle>
+            <circle cx="4" cy="18" r=".8"></circle>
+          </svg>
+          <span>Lista</span>
+        </button>
+        <button
+          type="button"
+          [class.catalog-layout-switch__button--active]="catalogLayout === 'cards' && !bulkEditMode"
+          [attr.aria-pressed]="catalogLayout === 'cards' && !bulkEditMode"
+          [disabled]="bulkEditMode"
+          (click)="setCatalogLayout('cards')">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"></rect>
+            <rect x="14" y="3.5" width="6.5" height="6.5" rx="1"></rect>
+            <rect x="3.5" y="14" width="6.5" height="6.5" rx="1"></rect>
+            <rect x="14" y="14" width="6.5" height="6.5" rx="1"></rect>
+          </svg>
+          <span>Cards</span>
+        </button>
       </div>
     </div>
 
@@ -247,7 +276,7 @@
             </span>
             <span class="cost-branch-bar__copy">
               <span class="cost-branch-bar__label">Costo y precio según sucursal</span>
-              <span class="cost-branch-bar__description">Elegí el contexto que querés comparar en la grilla.</span>
+              <span class="cost-branch-bar__description">Elegí el contexto que querés comparar en el catálogo.</span>
             </span>
           </div>
 
@@ -272,12 +301,12 @@
         <div class="bulk-bar" [class.bulk-bar--active]="bulkEditMode">
           <div class="bulk-bar__info">
             <span class="bulk-bar__label">{{ bulkEditMode ? 'Edicion masiva activa' : 'Seleccion multiple' }}</span>
-            <span class="bulk-bar__detail" *ngIf="!bulkEditMode">{{ selectedBulkProductsCount }} producto(s) seleccionado(s). Selecciona con el checkbox izquierdo y luego habilita la edicion.</span>
+            <span class="bulk-bar__detail" *ngIf="!bulkEditMode">{{ selectedBulkProductsCount }} producto(s) seleccionado(s). Seleccioná desde cada producto y luego habilitá la edición.</span>
             <span class="bulk-bar__detail" *ngIf="bulkEditMode">{{ modifiedProductsCount }} cambio(s)<span *ngIf="invalidBulkRowsCount > 0"> · {{ invalidBulkRowsCount }} fila(s) con errores</span></span>
           </div>
           <div class="bulk-bar__actions">
             <ng-container *ngIf="!bulkEditMode">
-              <button class="btn btn--ghost btn--sm" type="button" (click)="toggleCompactMode()">{{ compactMode ? 'Columnas' : 'Compacto' }}</button>
+              <button class="btn btn--ghost btn--sm" type="button" *ngIf="catalogLayout === 'table'" (click)="toggleCompactMode()">{{ compactMode ? 'Columnas' : 'Compacto' }}</button>
               <button class="btn btn--outline-amber btn--sm" type="button" (click)="enterBulkEditMode()" [disabled]="selectedBulkProductsCount === 0">Editar seleccionados</button>
             </ng-container>
             <ng-container *ngIf="bulkEditMode">
@@ -289,7 +318,80 @@
         </div>
       </div>
 
-      <div class="tbl-wrap">
+      <div class="product-card-grid" *ngIf="catalogLayout === 'cards' && !bulkEditMode">
+        <article
+          class="product-tile"
+          *ngFor="let product of sortedProducts; trackBy: trackByProduct"
+          [class.product-tile--selected]="isBulkProductSelected(product.id)"
+          (click)="goToProduct(product)">
+          <div class="product-tile__visual">
+            <label class="product-tile__check" (click)="$event.stopPropagation()">
+              <input
+                class="row-check"
+                type="checkbox"
+                [checked]="isBulkProductSelected(product.id)"
+                [attr.aria-label]="'Seleccionar ' + product.name"
+                (change)="toggleBulkProduct(product, $any($event.target).checked)" />
+            </label>
+
+            <span
+              class="product-tile__status"
+              [class.product-tile__status--available]="product.totalAvailableQuantity > 0"
+              [class.product-tile__status--reserved]="product.totalOnHandQuantity > 0 && product.totalAvailableQuantity <= 0"
+              [class.product-tile__status--empty]="product.totalOnHandQuantity <= 0">
+              <i aria-hidden="true"></i>
+              {{ product.totalAvailableQuantity > 0 ? 'Disponible' : product.totalOnHandQuantity > 0 ? 'Reservado' : 'Sin stock' }}
+            </span>
+
+            <span class="product-tile__code">{{ product.code || 'Sin código' }}</span>
+            <span class="product-tile__monogram" aria-hidden="true">{{ (product.brand || product.name).charAt(0) }}</span>
+            <span class="product-tile__visual-label">Catálogo EITI</span>
+          </div>
+
+          <div class="product-tile__body">
+            <div class="product-tile__identity">
+              <span class="product-tile__brand">{{ product.brand || 'Sin marca' }}</span>
+              <h3>{{ product.name }}</h3>
+              <p>{{ product.description || 'Sin descripción cargada.' }}</p>
+            </div>
+
+            <div class="product-tile__tags">
+              <span>{{ product.categoryName || 'Sin categoría' }}</span>
+              <span [class.product-tile__tag--special]="productAllowsManualSaleValue(product)">
+                {{ productAllowsManualSaleValue(product) ? 'Valor en venta' : 'Producto común' }}
+              </span>
+            </div>
+
+            <div class="product-tile__metrics" [class.product-tile__metrics--with-cost]="canViewCostPrice">
+              <div class="product-tile__metric product-tile__metric--price">
+                <span>Precio público</span>
+                <strong *ngIf="!productAllowsManualSaleValue(product)">$ {{ displayPublicPrice(product) | number:'1.2-2' }}</strong>
+                <strong *ngIf="productAllowsManualSaleValue(product)">En venta</strong>
+                <small *ngIf="costBranchId && displayPublicPrice(product) !== visiblePrice(product)">Precio específico de sucursal</small>
+              </div>
+              <div class="product-tile__metric">
+                <span>Disponible</span>
+                <strong [class.product-tile__stock--ok]="product.totalAvailableQuantity > 0">{{ product.totalAvailableQuantity }}</strong>
+              </div>
+              <div class="product-tile__metric" *ngIf="canViewCostPrice">
+                <span>Costo</span>
+                <strong>$ {{ displayCost(product) | number:'1.2-2' }}</strong>
+                <small *ngIf="costBranchId && displayCost(product) !== (product.costPrice ?? 0)">Override activo</small>
+              </div>
+            </div>
+
+            <footer class="product-tile__footer">
+              <span>SKU <strong>{{ product.sku || '—' }}</strong></span>
+              <button type="button" (click)="openEditor(product); $event.stopPropagation()">
+                Ver detalle
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12m-4-4 4 4-4 4"></path></svg>
+              </button>
+            </footer>
+          </div>
+        </article>
+      </div>
+
+      <div class="tbl-wrap" *ngIf="catalogLayout === 'table' || bulkEditMode">
         <table class="tbl">
           <thead>
             <tr>
