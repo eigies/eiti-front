@@ -401,6 +401,15 @@ export class CustomerAccountComponent implements OnInit {
 
   // Remito de traslado (sin importes) desde el detalle de la venta CC.
   async descargarRemitoTraslado(): Promise<void> {
+    await this.generarRemitoCc(false);
+  }
+
+  // Comprobante con precios de la venta CC (mismo remito, con importes). Bajo permiso salesRemitoAmounts.
+  async descargarComprobante(): Promise<void> {
+    await this.generarRemitoCc(true);
+  }
+
+  private async generarRemitoCc(incluirImportes: boolean): Promise<void> {
     const sale = this.detalleModalSale;
     if (!sale) return;
     if (!sale.details?.length) {
@@ -433,9 +442,11 @@ export class CustomerAccountComponent implements OnInit {
       },
       {
         branchName: this.branches.find(b => b.id === sale.branchId)?.name ?? 'Sucursal',
-        statusLabel: this.detalleStatusLabel
+        statusLabel: this.detalleStatusLabel,
+        paymentSummary: 'Cuenta corriente',
+        coveredAmount: this.detalleCcPaidTotal
       },
-      false
+      incluirImportes
     );
   }
 
