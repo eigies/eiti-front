@@ -107,8 +107,17 @@ export interface CreateCcSaleRequest {
     branchId: string;
     customerId: string;
     details: CreateSaleDetailRequest[];
+    tradeIns?: SaleTradeInRequest[];
     generalDiscountPercent?: number;
     manualOverridePrice?: number | null;
+}
+
+export interface SaleTradeInDetail {
+    productId: string;
+    productName: string;
+    productBrand: string;
+    quantity: number;
+    amount: number;
 }
 
 export interface CcPaymentResponse {
@@ -181,6 +190,9 @@ export interface CreateCcSaleResponse {
     code?: string | null;
     creditApplied?: number;
     remainingCustomerCredit?: number;
+    tradeInAmount?: number;
+    ccPendingAmount?: number;
+    tradeIns?: SaleTradeInDetail[];
 }
 
 export interface SaleByIdResponse {
@@ -214,4 +226,5 @@ export interface SaleByIdResponse {
     details: SaleDetailResponse[];
     payments: { idPaymentMethod: number; paymentMethod: string; amount: number; reference?: string | null }[];
     ccPayments: CcPaymentResponse[];
+    tradeIns: SaleTradeInDetail[];
 }

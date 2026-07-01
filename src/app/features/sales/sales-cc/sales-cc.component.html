@@ -124,6 +124,54 @@
         <strong>Precio modificado manualmente.</strong> Los descuentos anteriores han sido reemplazados.
         <button class="btn btn--ghost btn--sm" type="button" (click)="clearManualOverride()">Restaurar</button>
       </div>
+
+      <div class="canje-section" *ngIf="draftItems.length > 0">
+        <h3 class="canje-title">Canje (opcional)</h3>
+        <p class="picker-summary">La batería entregada suma al stock y descuenta de la deuda del cliente.</p>
+        <div class="canje-editor">
+          <label class="field">
+            <span class="field__label">Producto del canje</span>
+            <app-searchable-select [(ngModel)]="canjeProductId" [ngModelOptions]="{ standalone: true }"
+              [options]="tradeInProductOptions" (click)="ensureStockForCanje()"
+              placeholder="Elegir producto" searchPlaceholder="Buscar producto..."></app-searchable-select>
+          </label>
+          <label class="field field--discount">
+            <span class="field__label">Cantidad</span>
+            <input class="control control--compact" type="number" min="1" step="1"
+              [(ngModel)]="canjeQuantity" [ngModelOptions]="{ standalone: true }" />
+          </label>
+          <label class="field field--discount">
+            <span class="field__label">Valor del canje</span>
+            <input class="control control--compact" type="number" min="0" step="0.01"
+              [(ngModel)]="canjeAmount" [ngModelOptions]="{ standalone: true }" placeholder="0.00" />
+          </label>
+          <button class="btn btn--secondary" type="button" (click)="addTradeIn()">Agregar canje</button>
+        </div>
+
+        <table class="table" *ngIf="tradeInDrafts.length > 0">
+          <thead>
+            <tr><th>Producto</th><th>Cantidad</th><th>Valor</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of tradeInDrafts; let i = index">
+              <td>{{ t.brand }} / {{ t.name }}</td>
+              <td>{{ t.quantity }}</td>
+              <td>{{ t.amount | currency:'USD':'symbol':'1.2-2' }}</td>
+              <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeTradeIn(i)">Quitar</button></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" class="text-right"><strong>Canje total</strong></td>
+              <td colspan="2">-{{ canjeTotal | currency:'USD':'symbol':'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td colspan="2" class="text-right"><strong>Deuda a asumir</strong></td>
+              <td colspan="2"><strong>{{ netAfterTradeIn | currency:'USD':'symbol':'1.2-2' }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
 
     <div class="footer">

@@ -423,6 +423,12 @@ export class CustomerAccountComponent implements OnInit {
           quantity: d.quantity,
           unitPrice: d.unitPrice,
           totalAmount: d.totalAmount
+        })),
+        tradeIns: (sale.tradeIns ?? []).map(t => ({
+          productBrand: t.productBrand,
+          productName: t.productName,
+          quantity: t.quantity,
+          amount: t.amount
         }))
       },
       {

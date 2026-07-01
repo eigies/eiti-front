@@ -346,6 +346,26 @@
         </table>
       </div>
 
+      <div class="detalle-section" *ngIf="sale.tradeIns?.length">
+        <div class="detalle-section__title">Canje recibido</div>
+        <table class="detalle-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-right">Cant.</th>
+              <th class="text-right">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of sale.tradeIns">
+              <td>{{ t.productBrand }} / {{ t.productName }}</td>
+              <td class="text-right">{{ t.quantity }}</td>
+              <td class="text-right">-${{ t.amount | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="detalle-totals">
         <div class="detalle-totals__row" *ngIf="sale.generalDiscountPercent && sale.generalDiscountPercent > 0">
           <span>Subtotal</span>
@@ -358,6 +378,14 @@
         <div class="detalle-totals__row detalle-totals__row--total">
           <span>Total</span>
           <span>${{ sale.totalAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--discount" *ngIf="sale.tradeInAmount > 0">
+          <span>Canje</span>
+          <span>-${{ sale.tradeInAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--total" *ngIf="sale.tradeInAmount > 0">
+          <span>Deuda a cuenta</span>
+          <span>${{ (sale.totalAmount - sale.tradeInAmount) | number:'1.2-2' }}</span>
         </div>
       </div>
     </ng-container>

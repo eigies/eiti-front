@@ -1215,6 +1215,12 @@ private async generateRemito(sale: SaleResponse, incluirImportes: boolean): Prom
                 quantity: d.quantity,
                 unitPrice: d.unitPrice,
                 totalAmount: d.totalAmount
+            })),
+            tradeIns: (sale.tradeIns ?? []).map(t => ({
+                productBrand: '',
+                productName: t.productName ?? '',
+                quantity: t.quantity,
+                amount: t.amount
             }))
         },
         {

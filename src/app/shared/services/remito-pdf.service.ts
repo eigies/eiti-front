@@ -12,6 +12,13 @@ export interface RemitoSaleDetail {
   totalAmount: number;
 }
 
+export interface RemitoSaleTradeIn {
+  productBrand: string;
+  productName: string;
+  quantity: number;
+  amount: number;
+}
+
 export interface RemitoSale {
   id: string;
   code?: string | null;
@@ -22,6 +29,7 @@ export interface RemitoSale {
   hasDelivery: boolean;
   totalAmount: number;
   details: RemitoSaleDetail[];
+  tradeIns?: RemitoSaleTradeIn[];
 }
 
 export interface RemitoContext {
@@ -170,15 +178,8 @@ export class RemitoPdfService {
     drawMetaBlock();
     startDetailsPage(false);
 
-    for (let index = 0; index < sale.details.length; index += 1) {
-      const detail = sale.details[index];
-      const productText = `${detail.productBrand} / ${detail.productName}`;
-      const rowValues = [
-        `${index + 1}`,
-        productText,
-        `${detail.quantity}`,
-        ...(incluirImportes ? [formatCurrency(detail.unitPrice), formatCurrency(detail.totalAmount)] : [])
-      ];
+    // Dibuja una fila de la tabla de items (productos o canje), manejando salto de página.
+    const drawItemRow = (rowValues: string[]): void => {
       const rowHeight = this.pdfLayout.measureTableRowHeight(doc, itemTableColumns, rowValues, {
         tableWidth: contentWidth,
         wrap: true,
@@ -208,6 +209,44 @@ export class RemitoPdfService {
       }
 
       y += rowHeight;
+    };
+
+    for (let index = 0; index < sale.details.length; index += 1) {
+      const detail = sale.details[index];
+      drawItemRow([
+        `${index + 1}`,
+        `${detail.productBrand} / ${detail.productName}`,
+        `${detail.quantity}`,
+        ...(incluirImportes ? [formatCurrency(detail.unitPrice), formatCurrency(detail.totalAmount)] : [])
+      ]);
+    }
+
+    // Sección de canje (mismo formato que productos): figura como "Canje recibido".
+    const tradeIns = sale.tradeIns ?? [];
+    if (tradeIns.length > 0) {
+      if (y + 16 > printableBottom) {
+        startDetailsPage(true);
+      }
+      y += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(25, 25, 25);
+      doc.text('Canje recibido', margin, y);
+      y += 5;
+      y = this.pdfLayout.drawTableHeader(doc, itemTableColumns, y, {
+        tableWidth: contentWidth,
+        height: 8,
+        fontSize: 8.6
+      });
+      for (let index = 0; index < tradeIns.length; index += 1) {
+        const tradeIn = tradeIns[index];
+        drawItemRow([
+          `${index + 1}`,
+          [tradeIn.productBrand, tradeIn.productName].filter(Boolean).join(' / '),
+          `${tradeIn.quantity}`,
+          ...(incluirImportes ? ['', `-${formatCurrency(tradeIn.amount)}`] : [])
+        ]);
+      }
     }
 
     if (incluirImportes) {
@@ -216,17 +255,31 @@ export class RemitoPdfService {
         y = margin;
         drawDocumentHeader(true);
       }
+      const canjeTotal = (sale.tradeIns ?? []).reduce((sum, t) => sum + t.amount, 0);
       const summaryWidth = 72;
       const summaryX = pageWidth - margin - summaryWidth;
+      const summaryHeight = canjeTotal > 0 ? 28 : 16;
       doc.setFillColor(246, 246, 246);
       doc.setDrawColor(150, 150, 150);
-      doc.roundedRect(summaryX, y + 5, summaryWidth, 16, 1.2, 1.2, 'FD');
+      doc.roundedRect(summaryX, y + 5, summaryWidth, summaryHeight, 1.2, 1.2, 'FD');
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(45, 45, 45);
       doc.setFontSize(9.5);
       doc.text('TOTAL VENTA', summaryX + 3, y + 11);
-      doc.setFontSize(12.5);
-      doc.text(formatCurrency(sale.totalAmount), summaryX + summaryWidth - 3, y + 17, { align: 'right' });
+      doc.setFontSize(canjeTotal > 0 ? 10.5 : 12.5);
+      doc.text(formatCurrency(sale.totalAmount), summaryX + summaryWidth - 3, canjeTotal > 0 ? y + 11 : y + 17, { align: 'right' });
+      if (canjeTotal > 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.text('Canje', summaryX + 3, y + 18);
+        doc.text(`-${formatCurrency(canjeTotal)}`, summaryX + summaryWidth - 3, y + 18, { align: 'right' });
+        doc.setDrawColor(180, 180, 180);
+        doc.line(summaryX + 3, y + 21, summaryX + summaryWidth - 3, y + 21);
+        doc.setFont('helvetica', 'bold');
+        doc.text('A PAGAR', summaryX + 3, y + 27);
+        doc.setFontSize(11.5);
+        doc.text(formatCurrency(Math.max(0, sale.totalAmount - canjeTotal)), summaryX + summaryWidth - 3, y + 27, { align: 'right' });
+      }
     }
 
     const footerText = incluirImportes

@@ -24,6 +24,14 @@ interface DraftItem {
   total: number;
 }
 
+interface TradeInDraft {
+  productId: string;
+  brand: string;
+  name: string;
+  quantity: number;
+  amount: number;
+}
+
 @Component({
   selector: 'app-sales-cc',
   standalone: true,
@@ -51,6 +59,12 @@ export class SalesCcComponent implements OnInit {
   stockByProductId = new Map<string, BranchProductStockResponse>();
   selectedProductIds = new Set<string>();
   selectionQuantityByProductId = new Map<string, number>();
+
+  // Canje (igual que en la venta normal): suma al stock y descuenta de la deuda.
+  tradeInDrafts: TradeInDraft[] = [];
+  canjeProductId: string | null = null;
+  canjeQuantity = 1;
+  canjeAmount: number | null = null;
 
   constructor(
     private readonly branchService: BranchService,
@@ -125,6 +139,10 @@ export class SalesCcComponent implements OnInit {
     this.stockByProductId.clear();
     this.selectedProductIds.clear();
     this.selectionQuantityByProductId.clear();
+    this.tradeInDrafts = [];
+    this.canjeProductId = null;
+    this.canjeQuantity = 1;
+    this.canjeAmount = null;
   }
 
   searchCustomers(): void {
@@ -170,7 +188,7 @@ export class SalesCcComponent implements OnInit {
     }
   }
 
-  private loadStock(): void {
+  private loadStock(openModal = true): void {
     this.stockService.listBranchStock(this.selectedBranchId).subscribe({
       next: items => {
         this.stockItems = items;
@@ -178,7 +196,9 @@ export class SalesCcComponent implements OnInit {
         for (const item of items) {
           this.stockByProductId.set(item.productId, item);
         }
-        this.productModalOpen = true;
+        if (openModal) {
+          this.productModalOpen = true;
+        }
       },
       error: () => this.toast.error('No se pudo cargar el stock de la sucursal')
     });
@@ -303,6 +323,53 @@ export class SalesCcComponent implements OnInit {
     this.manualOverridePrice = null;
   }
 
+  // --- Canje ---
+  get tradeInProductOptions(): SearchableSelectOption[] {
+    return this.stockItems.map(s => ({ value: s.productId, label: `${s.code} · ${s.brand} ${s.name}`.trim() }));
+  }
+
+  get canjeTotal(): number {
+    return Math.round(this.tradeInDrafts.reduce((sum, t) => sum + t.amount, 0) * 100) / 100;
+  }
+
+  // Deuda que asume el cliente = total de la venta menos el valor del canje entregado.
+  get netAfterTradeIn(): number {
+    return Math.max(0, Math.round((this.total - this.canjeTotal) * 100) / 100);
+  }
+
+  // El catálogo del canje reutiliza el stock de la sucursal; lo cargamos si aún no está.
+  ensureStockForCanje(): void {
+    if (this.stockItems.length === 0 && this.selectedBranchId) {
+      this.loadStock(false);
+    }
+  }
+
+  addTradeIn(): void {
+    if (!this.canjeProductId) { this.toast.error('Elegí el producto del canje.'); return; }
+    const stock = this.stockByProductId.get(this.canjeProductId);
+    if (!stock) { this.toast.error('Producto de canje inválido.'); return; }
+    const quantity = Math.floor(Number(this.canjeQuantity));
+    if (!Number.isFinite(quantity) || quantity <= 0) { this.toast.error('La cantidad del canje debe ser mayor a cero.'); return; }
+    const amount = Number(this.canjeAmount);
+    if (!Number.isFinite(amount) || amount < 0) { this.toast.error('Ingresá el valor del canje.'); return; }
+    if (this.tradeInDrafts.some(t => t.productId === stock.productId)) { this.toast.error('Ese producto ya está en el canje.'); return; }
+
+    this.tradeInDrafts = [...this.tradeInDrafts, {
+      productId: stock.productId,
+      brand: stock.brand,
+      name: stock.name,
+      quantity,
+      amount: Math.round(amount * 100) / 100
+    }];
+    this.canjeProductId = null;
+    this.canjeQuantity = 1;
+    this.canjeAmount = null;
+  }
+
+  removeTradeIn(index: number): void {
+    this.tradeInDrafts = this.tradeInDrafts.filter((_, i) => i !== index);
+  }
+
   submit(): void {
     if (!this.canSubmit) { return; }
     if (!this.selectedCustomer) {
@@ -330,6 +397,9 @@ export class SalesCcComponent implements OnInit {
       branchId: this.selectedBranchId,
       customerId: this.selectedCustomer.id,
       details,
+      tradeIns: this.tradeInDrafts.length
+        ? this.tradeInDrafts.map(t => ({ productId: t.productId, quantity: t.quantity, amount: t.amount }))
+        : undefined,
       generalDiscountPercent: this.generalDiscountPercent || undefined,
       manualOverridePrice: this.manualOverridePrice ?? undefined
     }).subscribe({
@@ -345,6 +415,10 @@ export class SalesCcComponent implements OnInit {
         this.customerQuery = '';
         this.searchResults = [];
         this.draftItems = [];
+        this.tradeInDrafts = [];
+        this.canjeProductId = null;
+        this.canjeQuantity = 1;
+        this.canjeAmount = null;
         this.generalDiscountPercent = 0;
         this.manualOverridePrice = null;
         this.selectedProductIds.clear();
