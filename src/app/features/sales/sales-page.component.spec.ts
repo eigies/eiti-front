@@ -225,4 +225,12 @@ describe('SalesPageComponent (price override)', () => {
         expect(saleSpy.createSale).toHaveBeenCalled();
         expect(component.activeCreateStage).toBe('config');
     });
+
+    it('uses plain channel labels without legacy emoji', () => {
+        component.lineForm.patchValue({ sourceChannel: 2 });
+        const sale = { sourceChannel: 2 } as any;
+
+        expect(component.createChannelLabel).toBe('WhatsApp');
+        expect(component.saleChannelLabel(sale)).toBe('WhatsApp');
+    });
 });

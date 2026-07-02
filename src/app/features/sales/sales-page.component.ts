@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, saleSourceChannelLabel } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
@@ -140,8 +140,6 @@ export class SalesPageComponent implements OnInit {
     defaultNoDeliverySurcharge = 0;
     activeMode: SalesPageMode = 'sell';
     activeCreateStage: QuickSaleStage = 'config';
-    createExpanded = true;
-    listExpanded = true;
     showOnboardingCompleteNotice = false;
     infoModal: { title: string; rows: Array<{ label: string; value: string }> } | null = null;
     cancelSaleModal: SaleResponse | null = null;
@@ -418,7 +416,7 @@ export class SalesPageComponent implements OnInit {
 
     get createChannelLabel(): string {
         const channel = this.optionalNumber(this.lineForm.get('sourceChannel')?.value);
-        return channel ? saleSourceChannelLabel(channel as SaleSourceChannel) : 'Sin seleccionar';
+        return this.saleSourceChannels.find(item => item.value === channel)?.label ?? 'Sin seleccionar';
     }
 
     get createDeliveryLabel(): string {
@@ -873,7 +871,6 @@ beginEdit(sale: SaleResponse, presetPaid = false): void {
 }
 
 this.editingSale = sale;
-this.createExpanded = false;
 this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: sale.cashDrawerId ?? '', sourceChannel: sale.sourceChannel ?? null, deliveryAddress: sale.deliveryAddress ?? '' });
 this.editItems = sale.details
     .map(detail => {
@@ -905,7 +902,6 @@ cancelEdit(): void {
 }
 
 this.editingSale = null;
-this.createExpanded = true;
 this.editItems = [];
 this.editDrawers = [];
 this.editStockByProductId.clear();
@@ -1754,7 +1750,7 @@ if (form === this.editLineForm) {
 }
 
 saleChannelLabel(sale: SaleResponse): string {
-    return saleSourceChannelLabel(sale.sourceChannel);
+    return this.saleSourceChannels.find(item => item.value === sale.sourceChannel)?.label ?? '';
 }
 
 openChannelPopup(sale: SaleResponse): void {

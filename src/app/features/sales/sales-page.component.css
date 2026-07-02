@@ -145,16 +145,6 @@
     z-index: 30;
 }
 
-.panel--collapsible {
-    padding-top: .9rem;
-}
-
-.panel--quick-sale {
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--amber) 4%, transparent), transparent 7rem),
-      color-mix(in srgb, var(--bg-panel) 96%, transparent);
-}
-
 .panel__header {
     justify-content: space-between;
     padding-bottom: .9rem;
@@ -164,35 +154,10 @@
     font-family: 'DM Mono', monospace;
 }
 
-.panel__header--button {
-    width: 100%;
-    border: none;
-    background: transparent;
-    padding: 0 0 .9rem;
-    cursor: pointer;
-}
-
 .panel__header-meta {
     display: inline-flex;
     gap: .8rem;
     align-items: center;
-}
-
-.panel__chevron {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.8rem;
-    height: 1.8rem;
-    border: 1px solid var(--border-2);
-    border-radius: 999px;
-    color: var(--text);
-    background: color-mix(in srgb, var(--bg) 75%, transparent);
-    transition: transform .2s ease, border-color .2s ease, background .2s ease;
-}
-
-.panel__chevron--open {
-    transform: rotate(180deg);
 }
 
 .panel__body,
@@ -202,48 +167,6 @@
 .info-list {
     display: grid;
     gap: 1rem;
-}
-
-.quick-sale-flow {
-    display: grid;
-    gap: 1.35rem;
-    position: relative;
-}
-
-.quick-sale-card {
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-2) 16%, transparent);
-    padding: 1.1rem 1.15rem;
-}
-
-.quick-sale-card--step {
-    position: relative;
-    padding-left: 1.3rem;
-}
-
-.quick-sale-card--step::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 1rem;
-    bottom: 1rem;
-    width: 3px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--border-2) 72%, transparent);
-}
-
-.quick-sale-card--config::before {
-    background: color-mix(in srgb, var(--amber) 54%, transparent);
-}
-
-.quick-sale-card--products::before {
-    background: color-mix(in srgb, #d7c16b 46%, transparent);
-}
-
-.quick-sale-stage::before {
-    background: color-mix(in srgb, #8fd3a8 42%, transparent);
 }
 
 .quick-sale-card__head {
@@ -351,14 +274,6 @@
     color: var(--text-dim);
     font-size: .72rem;
     line-height: 1.5;
-}
-
-.summary-row--create {
-    padding: 1rem 1rem;
-    border: 1px solid color-mix(in srgb, var(--amber) 24%, var(--border));
-    border-radius: 3px;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--amber) 6%, transparent), transparent 58%), color-mix(in srgb, var(--bg-panel) 92%, transparent);
-    margin-top: 1.35rem;
 }
 
 .grid {
@@ -1138,52 +1053,12 @@
     box-shadow: 0 22px 40px rgba(0, 0, 0, .1);
 }
 
-.sale-card__top {
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: .85rem;
-    gap: 1rem;
-}
-
-.sale-card h2 {
-    font-size: 1rem;
-    letter-spacing: .02em;
-}
-
-.sale-card__content {
-    min-width: 0;
-}
-
-.sale-card__amount-block {
-    display: grid;
-    gap: .22rem;
-    min-width: 8.5rem;
-    justify-items: end;
-    text-align: right;
-}
-
 .sale-card__amount-label {
     color: var(--text-dim);
     font-family: 'DM Mono', monospace;
     font-size: .62rem;
     letter-spacing: .12em;
     text-transform: uppercase;
-}
-
-.sale-card__chips,
-.transport-state {
-    display: grid;
-    gap: .45rem;
-}
-
-.sale-card__chip-row {
-    display: flex;
-    gap: .5rem;
-    flex-wrap: wrap;
-}
-
-.sale-card__chip-row--secondary {
-    opacity: .86;
 }
 
 .chip {
@@ -1202,13 +1077,6 @@
     font-size: .66rem;
     letter-spacing: .08em;
     text-transform: uppercase;
-}
-
-.chip__trade-icon {
-    margin-left: .45rem;
-    font-size: .85rem;
-    line-height: 1;
-    opacity: .85;
 }
 
 .chip--neutral {
@@ -1261,199 +1129,6 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, #e28c8c 58%, transparent);
 }
 
-.chip--channel {
-    background: color-mix(in srgb, #a78bfa 12%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 36%, transparent);
-}
-
-.chip--cc {
-    background: color-mix(in srgb, var(--amber) 12%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 36%, transparent);
-}
-
-.sale-card__actions {
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: .85rem;
-    padding-top: .85rem;
-    margin-top: .85rem;
-    border-top: 1px solid var(--border);
-}
-
-.sale-card__actions .btn {
-    min-width: 96px;
-    justify-content: center;
-}
-
-.sale-card__action-tools,
-.sale-card__action-main {
-    display: flex;
-    gap: .5rem;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.sale-card__action-tools {
-    flex: 1 1 28rem;
-}
-
-.sale-card__action-main {
-    justify-content: flex-end;
-    margin-left: auto;
-}
-
-.sale-card__actions .btn--cancel {
-    margin-left: auto;
-    background: color-mix(in srgb, #d36262 78%, var(--bg) 22%);
-    color: #1a1a1a;
-    border: 1px solid color-mix(in srgb, #d36262 52%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #d36262 24%, transparent);
-}
-
-.sale-card__actions .btn--cancel:hover:not(:disabled) {
-    background: color-mix(in srgb, #d36262 86%, var(--bg) 14%);
-    color: #121212;
-}
-
-.sale-card__actions .btn--cancel + .btn--edit,
-.sale-card__actions .btn--cancel + .btn--pay {
-    margin-left: 0;
-}
-
-.sale-card__actions .btn--edit {
-    margin-left: 0;
-}
-
-.sale-card__actions .btn--pay {
-    margin-left: 0;
-}
-
-.sale-card__actions .btn--edit + .btn--pay {
-    margin-left: 0;
-}
-
-.btn__icon {
-    margin-right: .35rem;
-    font-size: .9rem;
-    line-height: 1;
-}
-
-.btn__icon--svg {
-    display: inline-flex;
-    width: 1rem;
-    height: 1rem;
-    margin-right: .45rem;
-}
-
-.btn__icon--svg svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-.icon-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.15rem;
-    height: 2.15rem;
-    padding: 0;
-    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
-    background: color-mix(in srgb, var(--bg) 84%, transparent);
-    cursor: pointer;
-    border-radius: 10px;
-    transition: transform .15s ease, filter .2s ease, box-shadow .2s ease, background .2s ease;
-}
-
-.icon-action:hover {
-    transform: translateY(-1px) scale(1.04);
-    filter: saturate(1.06);
-}
-
-.icon-action__emoji {
-    font-size: 1rem;
-    line-height: 1;
-}
-
-.icon-action__image {
-    display: inline-flex;
-    width: 1.25rem;
-    height: 1.25rem;
-}
-
-.icon-action__image img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-.icon-action__svg {
-    display: inline-flex;
-    width: 1.35rem;
-    height: 1.35rem;
-}
-
-.icon-action__svg svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-.icon-action--info {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8dc7d8 38%, transparent);
-}
-
-.icon-action--detail {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #d7c16b 44%, transparent);
-}
-
-.icon-action--driver {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8fd3a8 38%, transparent);
-}
-
-.icon-action--vehicle {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #c7a6e8 34%, transparent);
-}
-
-.icon-action--transport {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #79c7b7 34%, transparent);
-}
-
-.icon-action--whatsapp {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #67c15e 34%, transparent);
-}
-
-.icon-action--channel {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #a78bfa 34%, transparent);
-}
-
-.icon-action--excel {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #1d6f42 30%, transparent);
-}
-
-.icon-action--pdf {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #c62828 30%, transparent);
-}
-
-.icon-action--whatsapp:disabled {
-    opacity: .58;
-    cursor: wait;
-    transform: none;
-    filter: none;
-}
-
-.btn--info {
-    background: color-mix(in srgb, #8dc7d8 74%, var(--bg) 26%);
-}
-
-.btn--driver {
-    background: color-mix(in srgb, #8fd3a8 74%, var(--bg) 26%);
-}
-
-.btn--vehicle {
-    background: color-mix(in srgb, #c7a6e8 74%, var(--bg) 26%);
-}
 
 .btn--transport {
     background: color-mix(in srgb, #79c7b7 74%, var(--bg) 26%);
@@ -2161,8 +1836,7 @@
     .summary-row,
     .list-meta,
     .modal-panel__actions,
-    .modal-panel__actions--split,
-    .sale-card__top {
+    .modal-panel__actions--split {
         flex-direction: column;
         align-items: stretch;
     }
@@ -2312,24 +1986,6 @@
     .customer-picker__control-row {
         display: grid;
         grid-template-columns: 1fr;
-    }
-
-    .sale-card__chip-row {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: .45rem;
-    }
-
-    .sale-card__action-tools {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: .45rem;
-    }
-
-    .sale-card__action-main {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: .45rem;
     }
 
     .stacked-picker__menu,
@@ -2490,8 +2146,6 @@
     }
 
     .panel__header-meta,
-    .sale-card__top,
-    .transport-state,
     .transport-actions__row,
     .transport-actions--footer,
     .modal-panel__head,
@@ -2504,8 +2158,6 @@
         font-size: 1rem;
     }
 
-    .sale-card__actions .btn,
-    .sale-card__actions .icon-action,
     .actions-inline .btn,
     .filters__actions .btn,
     .summary-row .btn,
@@ -2523,17 +2175,6 @@
         width: 100%;
         justify-items: start;
         text-align: left;
-    }
-
-    .sale-card__actions .icon-action {
-        width: 100%;
-        height: 3rem;
-        border-radius: 8px;
-        justify-content: center;
-    }
-
-    .sale-card__actions .btn {
-        min-width: 0;
     }
 
     .metric-card {
@@ -2776,12 +2417,6 @@
 }
 
 @media (max-width: 520px) {
-    .sale-card__chip-row,
-    .sale-card__action-tools,
-    .sale-card__action-main {
-        grid-template-columns: 1fr;
-    }
-
     .table--draft td,
     .table--edit td,
     .table--picker td {
