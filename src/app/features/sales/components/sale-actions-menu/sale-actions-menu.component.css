@@ -3,6 +3,7 @@
 }
 
 .sale-actions {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -93,7 +94,7 @@ svg {
 }
 
 .sale-actions__menu-wrap {
-  position: relative;
+  position: static;
 }
 
 .sale-actions__popover {

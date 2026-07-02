@@ -61,4 +61,14 @@ describe('SaleActionsMenuComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-action="pay"]')).toBeNull();
         expect(fixture.nativeElement.textContent).not.toContain('Editar venta');
     });
+
+    it('anchors popovers to the full action bar instead of the icon button', () => {
+        fixture.detectChanges();
+
+        const actions = fixture.nativeElement.querySelector('.sale-actions') as HTMLElement;
+        const menuWrap = fixture.nativeElement.querySelector('.sale-actions__menu-wrap') as HTMLElement;
+
+        expect(getComputedStyle(actions).position).toBe('relative');
+        expect(getComputedStyle(menuWrap).position).toBe('static');
+    });
 });
