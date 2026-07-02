@@ -124,4 +124,29 @@ describe('SalesPageComponent (price override)', () => {
 
         expect(request.details[0].unitPrice).toBeUndefined();
     });
+
+    it('starts in sell mode and configuration stage', () => {
+        expect(component.activeMode).toBe('sell');
+        expect(component.activeCreateStage).toBe('config');
+    });
+
+    it('switches modes without resetting draft or filters', () => {
+        component.draftItems = [{ product: { id: 'p1' } as any, quantity: 1, total: 100 }];
+        component.filterForm.patchValue({ code: 'V-42' });
+
+        component.setActiveMode('manage');
+        component.setActiveMode('sell');
+
+        expect(component.draftItems.length).toBe(1);
+        expect(component.filterForm.get('code')?.value).toBe('V-42');
+    });
+
+    it('moves to the first invalid stage before creating a sale', () => {
+        component.activeCreateStage = 'payment';
+        component.lineForm.patchValue({ branchId: '', sourceChannel: null });
+
+        component.createSale();
+
+        expect(component.activeCreateStage).toBe('config');
+    });
 });

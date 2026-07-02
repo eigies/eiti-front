@@ -45,6 +45,7 @@ import {
     SALE_PAYMENT_METHODS,
     roundMoney
 } from '../../core/models/sale-payment.models';
+import { QuickSaleStage, SalesPageMode } from './sales-page-ui.models';
 
 function localDateString(date = new Date()): string {
     const y = date.getFullYear();
@@ -119,6 +120,8 @@ export class SalesPageComponent implements OnInit {
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     editPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     defaultNoDeliverySurcharge = 0;
+    activeMode: SalesPageMode = 'sell';
+    activeCreateStage: QuickSaleStage = 'config';
     createExpanded = true;
     listExpanded = true;
     showOnboardingCompleteNotice = false;
@@ -356,6 +359,25 @@ export class SalesPageComponent implements OnInit {
         }
 
         return Math.min(this.currentSalesPage * this.salesPageSize, this.sales.length);
+    }
+
+    setActiveMode(mode: SalesPageMode): void {
+        this.activeMode = mode;
+    }
+
+    setActiveCreateStage(stage: QuickSaleStage): void {
+        this.activeCreateStage = stage;
+    }
+
+    get isCreateConfigComplete(): boolean {
+        return Boolean(
+            this.lineForm.get('branchId')?.valid
+            && this.lineForm.get('sourceChannel')?.valid
+        );
+    }
+
+    get isCreateProductsComplete(): boolean {
+        return this.draftItems.length > 0;
     }
 
     handleCreateBranchChange(): void {
@@ -612,6 +634,12 @@ removeEditItem(productId: string): void {
 }
 
 createSale(): void {
+    if (!this.isCreateConfigComplete) {
+    this.activeCreateStage = 'config';
+} else if (!this.isCreateProductsComplete) {
+    this.activeCreateStage = 'products';
+}
+
     if(this.lineForm.get('branchId')?.invalid || this.lineForm.get('sourceChannel')?.invalid || this.draftItems.length === 0) {
     this.lineForm.markAllAsTouched();
     if (this.lineForm.get('sourceChannel')?.invalid) {
