@@ -1,0 +1,177 @@
+:host {
+  display: block;
+}
+
+.sale-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .4rem;
+}
+
+.sale-actions__primary,
+.sale-actions__icon,
+.sale-actions__popover button,
+.sale-actions__popover a {
+  font-family: 'DM Mono', monospace;
+}
+
+.sale-actions__primary,
+.sale-actions__icon {
+  min-height: 38px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.sale-actions__primary {
+  min-width: 78px;
+  padding: .65rem .85rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 44%, var(--border-2));
+  color: var(--bg);
+  background: var(--amber);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.sale-actions__primary--secondary {
+  color: var(--text);
+  border-color: var(--border-2);
+  background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
+}
+
+.sale-actions__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  padding: 0;
+  border: 1px solid var(--border-2);
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
+}
+
+.sale-actions__icon--whatsapp {
+  color: color-mix(in srgb, var(--success) 80%, var(--text));
+  border-color: color-mix(in srgb, var(--success) 28%, var(--border));
+  background: color-mix(in srgb, var(--success) 7%, transparent);
+}
+
+.sale-actions__primary:hover:not(:disabled),
+.sale-actions__icon:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.sale-actions__icon:hover:not(:disabled) {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--amber) 32%, var(--border-2));
+}
+
+.sale-actions__primary:focus-visible,
+.sale-actions__icon:focus-visible,
+.sale-actions__popover button:focus-visible,
+.sale-actions__popover a:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--amber) 72%, white);
+  outline-offset: 2px;
+}
+
+.sale-actions__primary:disabled,
+.sale-actions__icon:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sale-actions__menu-wrap {
+  position: relative;
+}
+
+.sale-actions__popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + .45rem);
+  z-index: 70;
+  display: grid;
+  width: 245px;
+  padding: .45rem;
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-panel) 98%, transparent);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, .28);
+}
+
+.sale-actions__popover--more {
+  width: 265px;
+  max-height: min(480px, calc(100vh - 130px));
+  overflow: auto;
+}
+
+.sale-actions__group-label {
+  padding: .6rem .6rem .35rem;
+  color: var(--text-soft);
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.sale-actions__popover button,
+.sale-actions__popover a {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: .55rem;
+  align-items: center;
+  min-height: 38px;
+  padding: .45rem .55rem;
+  border: 0;
+  border-radius: 7px;
+  color: var(--text-dim);
+  background: transparent;
+  font-size: .68rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sale-actions__popover button:hover,
+.sale-actions__popover a:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
+}
+
+.sale-actions__popover .sale-actions__danger {
+  color: color-mix(in srgb, var(--danger) 78%, var(--text));
+}
+
+@media (max-width: 720px) {
+  .sale-actions {
+    justify-content: flex-start;
+  }
+
+  .sale-actions__primary,
+  .sale-actions__icon {
+    min-height: 44px;
+  }
+
+  .sale-actions__icon {
+    width: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sale-actions__primary,
+  .sale-actions__icon {
+    transition: none;
+  }
+}

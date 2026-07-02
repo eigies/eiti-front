@@ -159,4 +159,13 @@ describe('SalesPageComponent (price override)', () => {
         component.handleQuickSalePrimaryAction();
         expect(component.activeCreateStage).toBe('payment');
     });
+
+    it('dispatches semantic sale actions to the existing handlers', () => {
+        const sale = { id: 'sale-1' } as any;
+        spyOn(component, 'beginEdit');
+
+        component.handleSaleUiAction(sale, 'edit');
+
+        expect(component.beginEdit).toHaveBeenCalledWith(sale);
+    });
 });

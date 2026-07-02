@@ -33,6 +33,7 @@ import { SalePaymentInlineComponent } from '../../shared/components/sale-payment
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
 import { QuickSaleSummaryComponent } from './components/quick-sale-summary/quick-sale-summary.component';
+import { SaleActionsMenuComponent } from './components/sale-actions-menu/sale-actions-menu.component';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import {
@@ -47,7 +48,7 @@ import {
     SALE_PAYMENT_METHODS,
     roundMoney
 } from '../../core/models/sale-payment.models';
-import { QuickSaleStage, SalesPageMode } from './sales-page-ui.models';
+import { QuickSaleStage, SalesPageMode, SaleUiAction } from './sales-page-ui.models';
 
 function localDateString(date = new Date()): string {
     const y = date.getFullYear();
@@ -68,7 +69,8 @@ function localDateString(date = new Date()): string {
         SalePaymentInlineComponent,
         SearchableSelectComponent,
         QuickSaleWorkspaceComponent,
-        QuickSaleSummaryComponent
+        QuickSaleSummaryComponent,
+        SaleActionsMenuComponent
     ],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
@@ -426,6 +428,50 @@ export class SalesPageComponent implements OnInit {
         }
 
         this.createSale();
+    }
+
+    handleSaleUiAction(sale: SaleResponse, action: SaleUiAction): void {
+        switch (action) {
+            case 'details':
+                this.toggleSaleDetails(sale.id);
+                break;
+            case 'customer':
+                this.openCustomerInfo(sale);
+                break;
+            case 'driver':
+                this.openDriverInfo(sale);
+                break;
+            case 'vehicle':
+                this.openVehicleInfo(sale);
+                break;
+            case 'transport':
+                this.openTransport(sale);
+                break;
+            case 'channel':
+                this.openChannelPopup(sale);
+                break;
+            case 'excel':
+                this.exportSaleExcel(sale);
+                break;
+            case 'pdf':
+                this.exportSalePdf(sale);
+                break;
+            case 'remito':
+                this.exportRemitoTraslado(sale);
+                break;
+            case 'whatsapp':
+                this.sendSaleWhatsApp(sale);
+                break;
+            case 'cancel':
+                this.requestCancelSale(sale);
+                break;
+            case 'edit':
+                this.beginEdit(sale);
+                break;
+            case 'pay':
+                this.markAsPaid(sale);
+                break;
+        }
     }
 
     handleCreateBranchChange(): void {
