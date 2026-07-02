@@ -274,7 +274,8 @@
   </div>
 
   <div class="sales-mode-panel" data-mode-panel="manage" [hidden]="activeMode !== 'manage'">
-    <section class="panel" *ngIf="editingSale" #editSection>
+    <app-sales-management>
+    <section managementEditor class="panel" *ngIf="editingSale" #editSection>
     <div class="panel__header">
       <span>Editando venta {{ editingSale.id }}</span>
       <button class="btn btn--secondary btn--sm" type="button" (click)="cancelEdit()">Cerrar</button>
@@ -458,16 +459,18 @@
     </div>
     </section>
 
-  <section class="panel panel--collapsible">
-    <button class="panel__header panel__header--button" type="button" (click)="listExpanded = !listExpanded">
-      <span>Ventas registradas</span>
-      <span class="panel__header-meta">
-        <span>{{ sales.length }}</span>
-        <span class="panel__chevron" [class.panel__chevron--open]="listExpanded" aria-hidden="true">▾</span>
+  <section managementContent class="panel panel--sales-management">
+    <div class="panel__header">
+      <span>
+        Ventas registradas
+        <small class="panel__header-subtitle">Consultá, cobrá y gestioná cada operación.</small>
       </span>
-    </button>
+      <span class="panel__header-meta">
+        <span>{{ sales.length }} ventas</span>
+      </span>
+    </div>
 
-    <div class="panel__body" *ngIf="listExpanded">
+    <div class="panel__body">
       <form class="filters" [formGroup]="filterForm" (ngSubmit)="applySaleFilters()">
         <div class="filters__primary">
           <label class="field field--sale-search">
@@ -569,45 +572,51 @@
         </label>
       </div>
 
-      <div class="sales-stack" *ngIf="pagedSales.length > 0; else emptySales">
-        <article class="sale-card" *ngFor="let sale of pagedSales; trackBy: trackBySale" (click)="toggleSaleDetails(sale.id)">
-          <div class="sale-card__top">
-            <div class="sale-card__content">
-              <p class="sale-card__eyebrow">{{ sale.code ? (sale.code + ' · ') : '' }}{{ branchName(sale.branchId) }}</p>
-              <h2>{{ sale.customerFullName || sale.code || 'Venta' }}</h2>
-              <p class="sale-card__address" *ngIf="sale.customerPhone || sale.deliveryAddress || sale.customerAddress">
-                <ng-container *ngIf="sale.customerPhone">{{ sale.customerPhone }}</ng-container><ng-container *ngIf="sale.customerPhone && (sale.deliveryAddress || sale.customerAddress)"> · </ng-container><ng-container *ngIf="sale.deliveryAddress || sale.customerAddress">{{ sale.deliveryAddress || sale.customerAddress }}</ng-container>
-              </p>
-              <p class="sale-card__ref" *ngIf="salePaymentRefs(sale)">{{ salePaymentRefs(sale) }}</p>
-              <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s)</p>
+      <div class="sales-list-head" aria-hidden="true">
+        <span>Venta</span>
+        <span>Cliente</span>
+        <span>Estado</span>
+        <span>Entrega</span>
+        <span>Total</span>
+        <span>Acciones</span>
+      </div>
+
+      <div class="sales-stack" role="table" aria-label="Ventas registradas" *ngIf="pagedSales.length > 0; else emptySales">
+        <article
+          appSaleListItem
+          class="sale-card"
+          *ngFor="let sale of pagedSales; trackBy: trackBySale"
+          [expanded]="isSaleExpanded(sale.id)"
+          (click)="toggleSaleDetails(sale.id)">
+          <div class="sale-card__row">
+            <div class="sale-card__identity">
+              <strong>{{ sale.code || 'Venta sin número' }}</strong>
+              <span>{{ sale.createdAt | date:'short' }} · {{ branchName(sale.branchId) }}</span>
+              <small>{{ sale.details.length }} {{ sale.details.length === 1 ? 'producto' : 'productos' }}</small>
             </div>
+
+            <div class="sale-card__customer">
+              <strong>{{ sale.customerFullName || 'Consumidor final' }}</strong>
+              <span>{{ sale.customerPhone || sale.customerDocument || salePaymentRefs(sale) || 'Venta de mostrador' }}</span>
+            </div>
+
+            <div class="sale-card__status">
+              <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">{{ saleStatusLabel(sale) }}</span>
+              <small *ngIf="sale.isCuentaCorriente">Cuenta corriente</small>
+            </div>
+
+            <div class="sale-card__delivery">
+              <strong>{{ sale.hasDelivery ? transportStatusChipLabel(sale) : 'Retira cliente' }}</strong>
+              <span *ngIf="sale.hasDelivery">{{ sale.deliveryAddress || sale.vehiclePlate || 'Entrega coordinada' }}</span>
+              <span *ngIf="!sale.hasDelivery">{{ saleChannelLabel(sale) || salePaymentDetailSummary(sale) }}</span>
+            </div>
+
             <div class="sale-card__amount-block">
               <span class="sale-card__amount-label">Total</span>
               <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>
             </div>
-          </div>
 
-          <div class="sale-card__chips">
-            <div class="sale-card__chip-row sale-card__chip-row--primary">
-              <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">
-                <strong>Estado venta:</strong> {{ saleStatusLabel(sale) }}
-              </span>
-              <span class="chip chip--transport" [ngClass]="transportStatusChipClass(sale)">
-                <strong>Estado transporte:</strong> {{ transportStatusChipLabel(sale) }}
-              </span>
-              <span class="chip"><strong>Entrega:</strong> {{ sale.hasDelivery ? 'Con envio' : 'Retiro' }}</span>
-              <span class="chip"><strong>Pago:</strong> {{ salePaymentDetailSummary(sale) }}<span *ngIf="(sale.tradeInAmount ?? 0) > 0" title="Incluye canje" class="chip__trade-icon">♻️</span></span>
-            </div>
-            <div class="sale-card__chip-row sale-card__chip-row--secondary">
-              <span class="chip" *ngIf="sale.customerFullName"><strong>Cliente:</strong> {{ sale.customerFullName }}</span>
-              <span class="chip chip--cc" *ngIf="sale.isCuentaCorriente"><strong>Cuenta Corriente</strong></span>
-              <span class="chip chip--channel" *ngIf="sale.sourceChannel"><strong>Canal:</strong> {{ saleChannelLabel(sale) }}</span>
-              <span class="chip" *ngIf="sale.driverFullName"><strong>Conductor:</strong> {{ sale.driverFullName }}</span>
-              <span class="chip" *ngIf="sale.vehiclePlate"><strong>Vehiculo:</strong> {{ sale.vehiclePlate }}</span>
-            </div>
-          </div>
-
-          <div class="sale-card__actions">
+            <div class="sale-card__actions">
             <app-sale-actions-menu
               [sale]="sale"
               [expanded]="isSaleExpanded(sale.id)"
@@ -621,6 +630,7 @@
               [sendingWhatsApp]="sendingSaleWhatsAppId === sale.id"
               (action)="handleSaleUiAction(sale, $event)">
             </app-sale-actions-menu>
+            </div>
           </div>
 
           <div class="sale-card__details" *ngIf="isSaleExpanded(sale.id)">
@@ -679,6 +689,7 @@
       </div>
     </div>
     </section>
+    </app-sales-management>
   </div>
 </div>
 

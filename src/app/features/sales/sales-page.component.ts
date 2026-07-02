@@ -34,6 +34,8 @@ import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/
 import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
 import { QuickSaleSummaryComponent } from './components/quick-sale-summary/quick-sale-summary.component';
 import { SaleActionsMenuComponent } from './components/sale-actions-menu/sale-actions-menu.component';
+import { SalesManagementComponent } from './components/sales-management/sales-management.component';
+import { SaleListItemComponent } from './components/sale-list-item/sale-list-item.component';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import {
@@ -70,7 +72,9 @@ function localDateString(date = new Date()): string {
         SearchableSelectComponent,
         QuickSaleWorkspaceComponent,
         QuickSaleSummaryComponent,
-        SaleActionsMenuComponent
+        SaleActionsMenuComponent,
+        SalesManagementComponent,
+        SaleListItemComponent
     ],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
