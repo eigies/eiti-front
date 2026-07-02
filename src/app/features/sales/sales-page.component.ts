@@ -31,6 +31,8 @@ import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
+import { QuickSaleSummaryComponent } from './components/quick-sale-summary/quick-sale-summary.component';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import {
@@ -57,7 +59,17 @@ function localDateString(date = new Date()): string {
 @Component({
     selector: 'app-sales-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, OnboardingBannerComponent, SalePaymentInlineComponent, SearchableSelectComponent],
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        RouterModule,
+        OnboardingBannerComponent,
+        SalePaymentInlineComponent,
+        SearchableSelectComponent,
+        QuickSaleWorkspaceComponent,
+        QuickSaleSummaryComponent
+    ],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
 })
@@ -378,6 +390,42 @@ export class SalesPageComponent implements OnInit {
 
     get isCreateProductsComplete(): boolean {
         return this.draftItems.length > 0;
+    }
+
+    get createBranchLabel(): string {
+        const branchId = this.lineForm.get('branchId')?.value;
+        return this.branches.find(branch => branch.id === branchId)?.name ?? 'Sin seleccionar';
+    }
+
+    get createChannelLabel(): string {
+        const channel = this.optionalNumber(this.lineForm.get('sourceChannel')?.value);
+        return channel ? saleSourceChannelLabel(channel as SaleSourceChannel) : 'Sin seleccionar';
+    }
+
+    get createDeliveryLabel(): string {
+        if (!this.lineForm.get('hasDelivery')?.value) {
+            return 'Retira cliente';
+        }
+
+        return this.lineForm.get('deliveryAddress')?.value || 'Con envío';
+    }
+
+    get createCustomerLabel(): string {
+        return this.createCustomerId ? this.createCustomerQuery : 'Consumidor final';
+    }
+
+    handleQuickSalePrimaryAction(): void {
+        if (this.activeCreateStage === 'config') {
+            this.activeCreateStage = 'products';
+            return;
+        }
+
+        if (this.activeCreateStage === 'products') {
+            this.activeCreateStage = 'payment';
+            return;
+        }
+
+        this.createSale();
     }
 
     handleCreateBranchChange(): void {

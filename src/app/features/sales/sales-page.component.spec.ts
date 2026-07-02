@@ -149,4 +149,14 @@ describe('SalesPageComponent (price override)', () => {
 
         expect(component.activeCreateStage).toBe('config');
     });
+
+    it('advances the quick-sale primary action through the stages', () => {
+        component.activeCreateStage = 'config';
+
+        component.handleQuickSalePrimaryAction();
+        expect(component.activeCreateStage).toBe('products');
+
+        component.handleQuickSalePrimaryAction();
+        expect(component.activeCreateStage).toBe('payment');
+    });
 });

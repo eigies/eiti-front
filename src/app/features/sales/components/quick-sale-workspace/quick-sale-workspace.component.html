@@ -1,0 +1,59 @@
+<section class="quick-workspace">
+  <div class="quick-workspace__steps" role="tablist" aria-label="Etapas de la venta rápida">
+    <button
+      class="quick-workspace__step"
+      type="button"
+      role="tab"
+      [class.is-active]="activeStage === 'config'"
+      [class.is-complete]="configComplete"
+      [attr.aria-selected]="activeStage === 'config'"
+      (click)="selectStage('config')">
+      <span class="quick-workspace__index">{{ configComplete ? '✓' : '1' }}</span>
+      <span>
+        <strong>Datos de venta</strong>
+        <small>Sucursal y modalidad</small>
+      </span>
+    </button>
+
+    <button
+      class="quick-workspace__step"
+      type="button"
+      role="tab"
+      [class.is-active]="activeStage === 'products'"
+      [class.is-complete]="productsComplete"
+      [attr.aria-selected]="activeStage === 'products'"
+      (click)="selectStage('products')">
+      <span class="quick-workspace__index">{{ productsComplete ? '✓' : '2' }}</span>
+      <span>
+        <strong>Productos</strong>
+        <small>{{ productsComplete ? 'Productos cargados' : 'Armá el pedido' }}</small>
+      </span>
+    </button>
+
+    <button
+      class="quick-workspace__step"
+      type="button"
+      role="tab"
+      [class.is-active]="activeStage === 'payment'"
+      [attr.aria-selected]="activeStage === 'payment'"
+      (click)="selectStage('payment')">
+      <span class="quick-workspace__index">3</span>
+      <span>
+        <strong>Cliente y cobro</strong>
+        <small>Datos finales</small>
+      </span>
+    </button>
+  </div>
+
+  <div class="quick-workspace__content" role="tabpanel">
+    <div [hidden]="activeStage !== 'config'">
+      <ng-content select="[quickSaleConfig]"></ng-content>
+    </div>
+    <div [hidden]="activeStage !== 'products'">
+      <ng-content select="[quickSaleProducts]"></ng-content>
+    </div>
+    <div [hidden]="activeStage !== 'payment'">
+      <ng-content select="[quickSalePayment]"></ng-content>
+    </div>
+  </div>
+</section>

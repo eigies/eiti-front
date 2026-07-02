@@ -2153,7 +2153,7 @@
 }
 
 @media (max-width: 980px) {
-    .page {
+.page {
         padding: 1rem;
     }
 
@@ -2199,6 +2199,75 @@
     .info-row {
         grid-template-columns: 1fr;
     }
+}
+
+.sales-mode-tabs {
+    display: inline-flex;
+    gap: .3rem;
+    margin-bottom: 1rem;
+    padding: .3rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
+}
+
+.sales-mode-tabs button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    min-height: 42px;
+    padding: .7rem 1.1rem;
+    border: 0;
+    border-radius: 7px;
+    color: var(--text-dim);
+    background: transparent;
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.sales-mode-tabs button:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--amber) 5%, transparent);
+}
+
+.sales-mode-tabs button.is-active {
+    color: var(--text);
+    background: color-mix(in srgb, var(--amber) 8%, var(--bg-panel));
+    box-shadow: inset 0 -2px var(--amber);
+}
+
+.sales-mode-tabs button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--amber) 70%, white);
+    outline-offset: 2px;
+}
+
+.sales-mode-tabs__count {
+    display: grid;
+    place-items: center;
+    min-width: 1.45rem;
+    height: 1.45rem;
+    padding: 0 .3rem;
+    border-radius: 999px;
+    color: var(--bg);
+    background: var(--amber);
+    font-size: .6rem;
+}
+
+.sales-mode-panel[hidden] {
+    display: none !important;
+}
+
+.quick-sale-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 310px);
+    gap: 1rem;
+    align-items: start;
 }
 
 @media (max-width: 720px) {
@@ -2337,6 +2406,10 @@
 }
 
 @media (max-width: 980px) {
+    .quick-sale-layout {
+        grid-template-columns: 1fr;
+    }
+
     .hero__copy {
         width: 100%;
     }
@@ -2359,6 +2432,16 @@
 }
 
 @media (max-width: 720px) {
+    .sales-mode-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+    }
+
+    .sales-mode-tabs button {
+        padding-inline: .65rem;
+    }
+
     .page {
         padding: 1rem 0.85rem 1.5rem;
     }

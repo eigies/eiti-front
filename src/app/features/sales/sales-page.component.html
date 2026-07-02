@@ -17,15 +17,34 @@
     text="Ya podes operar ventas, caja y transporte desde esta pantalla.">
   </app-onboarding-banner>
 
-  <section class="panel panel--collapsible panel--quick-sale">
-    <button class="panel__header panel__header--button" type="button" (click)="createExpanded = !createExpanded">
-      <span>Nueva venta rapida</span>
-      <span class="panel__chevron" [class.panel__chevron--open]="createExpanded" aria-hidden="true">▾</span>
+  <nav class="sales-mode-tabs" role="tablist" aria-label="Modos del centro de ventas">
+    <button
+      type="button"
+      role="tab"
+      [class.is-active]="activeMode === 'sell'"
+      [attr.aria-selected]="activeMode === 'sell'"
+      (click)="setActiveMode('sell')">
+      Vender
     </button>
+    <button
+      type="button"
+      role="tab"
+      [class.is-active]="activeMode === 'manage'"
+      [attr.aria-selected]="activeMode === 'manage'"
+      (click)="setActiveMode('manage')">
+      Gestionar ventas
+      <span class="sales-mode-tabs__count" *ngIf="sales.length > 0">{{ sales.length }}</span>
+    </button>
+  </nav>
 
-    <div class="panel__body" *ngIf="createExpanded">
-      <div class="quick-sale-flow">
-        <section class="quick-sale-card quick-sale-card--config quick-sale-card--step">
+  <div class="sales-mode-panel" data-mode-panel="sell" [hidden]="activeMode !== 'sell'">
+    <div class="quick-sale-layout">
+      <app-quick-sale-workspace
+        [activeStage]="activeCreateStage"
+        [configComplete]="isCreateConfigComplete"
+        [productsComplete]="isCreateProductsComplete"
+        (stageChange)="setActiveCreateStage($event)">
+        <section quickSaleConfig class="quick-sale-card quick-sale-card--config quick-sale-card--step">
           <div class="quick-sale-card__head">
             <p class="quick-sale-card__eyebrow">Paso 1</p>
             <h2>Configuracion de la venta</h2>
@@ -101,7 +120,7 @@
           </form>
         </section>
 
-        <section class="quick-sale-card quick-sale-card--products quick-sale-card--step">
+        <section quickSaleProducts class="quick-sale-card quick-sale-card--products quick-sale-card--step">
           <div class="quick-sale-card__head">
             <p class="quick-sale-card__eyebrow">Paso 2</p>
             <h2>Carga de productos</h2>
@@ -159,7 +178,7 @@
           </div>
         </section>
 
-        <section class="quick-sale-card quick-sale-stage quick-sale-card--step">
+        <section quickSalePayment class="quick-sale-card quick-sale-stage quick-sale-card--step">
           <div class="quick-sale-stage__head">
             <p class="quick-sale-card__eyebrow">Paso 3</p>
             <h2>Cliente y cobro</h2>
@@ -234,23 +253,28 @@
             (cashDrawerIdChange)="setCreateCashDrawerId($event)">
           </app-sale-payment-inline>
         </section>
-      </div>
 
-      <ng-template #emptyDraft>
-        <div class="empty empty--soft">Todavia no agregaste productos a la venta.</div>
-      </ng-template>
+        <ng-template #emptyDraft>
+          <div class="empty empty--soft">Todavia no agregaste productos a la venta.</div>
+        </ng-template>
+      </app-quick-sale-workspace>
 
-      <div class="summary-row summary-row--create">
-        <div class="metric-card">
-          <span>Paso 4 · Confirmacion</span>
-          <strong>{{ draftEffectiveTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
-        </div>
-        <button class="btn" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" [disabled]="saving || draftItems.length === 0" (click)="createSale()">{{ saving ? 'Guardando...' : 'Crear venta' }}</button>
-      </div>
+      <app-quick-sale-summary
+        [activeStage]="activeCreateStage"
+        [branch]="createBranchLabel"
+        [channel]="createChannelLabel"
+        [delivery]="createDeliveryLabel"
+        [customer]="createCustomerLabel"
+        [productCount]="draftItems.length"
+        [total]="draftEffectiveTotal"
+        [saving]="saving"
+        (primaryAction)="handleQuickSalePrimaryAction()">
+      </app-quick-sale-summary>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" *ngIf="editingSale" #editSection>
+  <div class="sales-mode-panel" data-mode-panel="manage" [hidden]="activeMode !== 'manage'">
+    <section class="panel" *ngIf="editingSale" #editSection>
     <div class="panel__header">
       <span>Editando venta {{ editingSale.id }}</span>
       <button class="btn btn--secondary btn--sm" type="button" (click)="cancelEdit()">Cerrar</button>
@@ -432,7 +456,7 @@
         </div>
       </div>
     </div>
-  </section>
+    </section>
 
   <section class="panel panel--collapsible">
     <button class="panel__header panel__header--button" type="button" (click)="listExpanded = !listExpanded">
@@ -702,7 +726,8 @@
         <button class="btn btn--ghost btn--sm" type="button" (click)="goToSalesPage(currentSalesPage + 1)" [disabled]="currentSalesPage >= totalSalesPages">→</button>
       </div>
     </div>
-  </section>
+    </section>
+  </div>
 </div>
 
 <div class="modal-backdrop" *ngIf="createProductModalOpen" (click)="closeCreateProductModal()"></div>
