@@ -48,6 +48,7 @@ lerna-debug.log*
 testem.log
 /typings/
 .superpowers/
+.worktrees/
 
 # System files
 .DS_Store
