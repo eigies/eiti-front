@@ -398,6 +398,19 @@ export class SalesPageComponent implements OnInit {
         return this.draftItems.length > 0;
     }
 
+    get hasActiveOptionalSaleFilters(): boolean {
+        const raw = this.filterForm.getRawValue();
+        return [
+            raw.code,
+            raw.dateTo,
+            raw.idSaleStatus,
+            raw.sourceChannel,
+            raw.transportStatus,
+            raw.phone,
+            raw.deliveryAddress
+        ].some(value => value !== null && value !== undefined && String(value).trim() !== '');
+    }
+
     get createBranchLabel(): string {
         const branchId = this.lineForm.get('branchId')?.value;
         return this.branches.find(branch => branch.id === branchId)?.name ?? 'Sin seleccionar';
@@ -769,6 +782,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.createCustomerQuery = '';
         this.createCustomerSuggestions = [];
         this.showCreateCustomerResults = false;
+        this.activeCreateStage = 'config';
         this.saving = false;
         this.currentSalesPage = 1;
         this.loadDrawers(branchId, true);

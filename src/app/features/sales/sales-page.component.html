@@ -79,6 +79,8 @@
                 <div class="ch-sel__bg" *ngIf="showCreateChannelDrop" (click)="showCreateChannelDrop=false"></div>
                 <button type="button" class="control ch-sel__trigger"
                   [class.control--invalid]="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched"
+                  [attr.aria-invalid]="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched"
+                  aria-describedby="create-channel-error"
                   (click)="showCreateChannelDrop=!showCreateChannelDrop">
                   <span class="ch-sel__val">
                     <ng-container *ngIf="lineForm.get('sourceChannel')?.value == null; else createChSel">
@@ -104,7 +106,7 @@
                   </button>
                 </div>
               </div>
-              <span class="field__error" *ngIf="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched">
+              <span id="create-channel-error" class="field__error" *ngIf="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched">
                 Seleccioná el canal de origen.
               </span>
             </label>
@@ -581,7 +583,11 @@
         <span>Acciones</span>
       </div>
 
-      <div class="sales-stack" role="table" aria-label="Ventas registradas" *ngIf="pagedSales.length > 0; else emptySales">
+      <div class="sales-skeleton" *ngIf="loadingSales" aria-label="Cargando ventas" aria-live="polite">
+        <span class="sales-skeleton__row" *ngFor="let placeholder of [1, 2, 3, 4]"></span>
+      </div>
+
+      <div class="sales-stack" role="table" aria-label="Ventas registradas" *ngIf="!loadingSales && pagedSales.length > 0">
         <article
           appSaleListItem
           class="sale-card"
@@ -678,9 +684,9 @@
         </article>
       </div>
 
-      <ng-template #emptySales>
-        <div class="empty">No hay ventas para los filtros aplicados.</div>
-      </ng-template>
+      <div class="empty" *ngIf="!loadingSales && pagedSales.length === 0">
+        {{ hasActiveOptionalSaleFilters ? 'No hay resultados para los filtros aplicados.' : 'Todavía no hay ventas registradas.' }}
+      </div>
 
       <div class="pagination pagination--footer" *ngIf="sales.length > salesPageSize">
         <button class="btn btn--ghost btn--sm" type="button" (click)="goToSalesPage(currentSalesPage - 1)" [disabled]="currentSalesPage <= 1">←</button>
