@@ -47,6 +47,7 @@ lerna-debug.log*
 /libpeerconnection.log
 testem.log
 /typings/
+.superpowers/
 
 # System files
 .DS_Store
