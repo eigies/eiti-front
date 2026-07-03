@@ -85,9 +85,17 @@ En desktop, un resumen lateral muestra:
 - total;
 - siguiente acción contextual.
 
+Entre los datos generales y el total, el resumen muestra una vista previa de hasta tres productos. Cada fila contiene:
+
+- marca y nombre del producto, truncados con elipsis y disponibles completos mediante `title`;
+- cantidad con formato `× N`;
+- subtotal de la línea.
+
+Si el borrador contiene más de tres productos, aparece `+ N productos más`. Esa acción abre la etapa Productos sin modificar el borrador. Si no hay productos, la vista previa no se renderiza.
+
 La acción muestra “Continuar a productos”, “Continuar al cobro” o “Confirmar venta” según la etapa y el estado del borrador.
 
-En tablet, el resumen se transforma en una barra inferior compacta con total y acción principal. La información completa se abre bajo demanda. La barra no debe cubrir campos ni acciones al final de la página.
+En tablet, el resumen se transforma en una barra inferior compacta con `Total · N productos` y la acción principal. Las filas de producto no se muestran en esa barra. La barra no debe cubrir campos ni acciones al final de la página.
 
 ### Interacción
 
@@ -235,7 +243,7 @@ Los nombres y límites anteriores son parte del diseño. `SalesPageComponent` co
 
 1. `SalesPageComponent` carga sucursales, estados, productos, cajas y ventas como hoy.
 2. El modo Vender recibe catálogos y el formulario; emite eventos para agregar productos, cobrar y confirmar.
-3. El resumen deriva sus valores del mismo formulario y borrador, sin estado duplicado.
+3. El resumen deriva sus valores del mismo formulario y borrador, sin estado duplicado. La vista previa recibe elementos derivados con `id`, `label`, `quantity` y `subtotal`; no conoce el tipo interno `DraftItem`.
 4. El modo Gestionar recibe ventas, filtros y paginación; emite eventos de filtro, navegación y acciones.
 5. Tras una mutación exitosa, el coordinador actualiza o recarga la lista con el comportamiento existente.
 6. Los permisos se calculan en el coordinador y también se respetan en cada acción contextual.
@@ -260,6 +268,8 @@ Los nombres y límites anteriores son parte del diseño. `SalesPageComponent` co
 - Las etapas son navegables sin validación forzada.
 - Confirmar con errores abre y enfoca la primera etapa inválida.
 - El resumen refleja cambios en productos, cliente y total.
+- El resumen muestra como máximo tres productos y calcula correctamente la cantidad restante.
+- `+ N productos más` solicita abrir la etapa Productos.
 - Cada estado de venta muestra la acción primaria correcta.
 - WhatsApp, documentos, cuenta corriente y Más respetan condiciones y permisos.
 - Los menús exponen las mismas acciones existentes.
@@ -280,6 +290,7 @@ Los nombres y límites anteriores son parte del diseño. `SalesPageComponent` co
 - `/sales` abre en Vender y permite acceder a Gestionar sin navegar.
 - Cambiar de modo no pierde datos ni repite cargas innecesarias.
 - La venta rápida muestra una sola etapa de contenido a la vez y un resumen persistente.
+- El resumen muestra hasta tres líneas de producto en desktop y el conteo en tablet.
 - La gestión no muestra más de cuatro controles de acción permanentes por venta.
 - Todas las acciones y permisos actuales siguen disponibles.
 - A 768 px no hay tablas comprimidas ni desplazamiento horizontal para el flujo principal.
