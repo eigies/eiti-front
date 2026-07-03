@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -161,6 +161,21 @@ describe('SalesPageComponent (price override)', () => {
             subtotal: 104000
         }]);
     });
+
+    it('focuses the product draft when remaining products are requested from the products stage', fakeAsync(() => {
+        component.activeCreateStage = 'products';
+        fixture.detectChanges();
+        const productDraft = fixture.nativeElement.querySelector('.quick-sale-draft');
+        spyOn(productDraft, 'focus');
+        spyOn(productDraft, 'scrollIntoView');
+
+        component.handleSummaryProductsRequested();
+        tick();
+
+        expect(component.activeCreateStage).toBe('products');
+        expect(productDraft.focus).toHaveBeenCalled();
+        expect(productDraft.scrollIntoView).toHaveBeenCalled();
+    }));
 
     it('moves to the first invalid stage before creating a sale', () => {
         component.activeCreateStage = 'payment';

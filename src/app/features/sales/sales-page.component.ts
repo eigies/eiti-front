@@ -84,6 +84,7 @@ function localDateString(date = new Date()): string {
 })
 export class SalesPageComponent implements OnInit {
     readonly permissionCodes = PermissionCodes;
+    @ViewChild('createProductDraft') createProductDraft?: ElementRef<HTMLElement>;
     @ViewChild('editProductPicker') editProductPicker?: ElementRef<HTMLElement>;
     @ViewChild('editSection') editSection?: ElementRef<HTMLElement>;
 
@@ -395,6 +396,15 @@ export class SalesPageComponent implements OnInit {
 
     setActiveCreateStage(stage: QuickSaleStage): void {
         this.activeCreateStage = stage;
+    }
+
+    handleSummaryProductsRequested(): void {
+        this.activeCreateStage = 'products';
+        window.setTimeout(() => {
+            const productDraft = this.createProductDraft?.nativeElement;
+            productDraft?.focus({ preventScroll: true });
+            productDraft?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     }
 
     get isCreateConfigComplete(): boolean {

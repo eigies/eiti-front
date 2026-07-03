@@ -140,7 +140,11 @@
               </div>
             </div>
           </div>
-          <div class="quick-sale-draft">
+          <div
+            #createProductDraft
+            class="quick-sale-draft"
+            tabindex="-1"
+            aria-label="Productos agregados a la venta">
             <div class="quick-sale-draft__head">
               <span class="quick-sale-draft__label">Borrador actual</span>
               <span class="picker-summary" *ngIf="draftItems.length > 0">{{ draftItems.length }} item(s) en la venta</span>
@@ -271,7 +275,7 @@
         [items]="quickSaleSummaryItems"
         [total]="draftEffectiveTotal"
         [saving]="saving"
-        (productsRequested)="setActiveCreateStage('products')"
+        (productsRequested)="handleSummaryProductsRequested()"
         (primaryAction)="handleQuickSalePrimaryAction()">
       </app-quick-sale-summary>
     </div>
