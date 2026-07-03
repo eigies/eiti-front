@@ -17,15 +17,34 @@
     text="Ya podes operar ventas, caja y transporte desde esta pantalla.">
   </app-onboarding-banner>
 
-  <section class="panel panel--collapsible panel--quick-sale">
-    <button class="panel__header panel__header--button" type="button" (click)="createExpanded = !createExpanded">
-      <span>Nueva venta rapida</span>
-      <span class="panel__chevron" [class.panel__chevron--open]="createExpanded" aria-hidden="true">▾</span>
+  <nav class="sales-mode-tabs" role="tablist" aria-label="Modos del centro de ventas">
+    <button
+      type="button"
+      role="tab"
+      [class.is-active]="activeMode === 'sell'"
+      [attr.aria-selected]="activeMode === 'sell'"
+      (click)="setActiveMode('sell')">
+      Vender
     </button>
+    <button
+      type="button"
+      role="tab"
+      [class.is-active]="activeMode === 'manage'"
+      [attr.aria-selected]="activeMode === 'manage'"
+      (click)="setActiveMode('manage')">
+      Gestionar ventas
+      <span class="sales-mode-tabs__count" *ngIf="sales.length > 0">{{ sales.length }}</span>
+    </button>
+  </nav>
 
-    <div class="panel__body" *ngIf="createExpanded">
-      <div class="quick-sale-flow">
-        <section class="quick-sale-card quick-sale-card--config quick-sale-card--step">
+  <div class="sales-mode-panel" data-mode-panel="sell" [hidden]="activeMode !== 'sell'">
+    <div class="quick-sale-layout">
+      <app-quick-sale-workspace
+        [activeStage]="activeCreateStage"
+        [configComplete]="isCreateConfigComplete"
+        [productsComplete]="isCreateProductsComplete"
+        (stageChange)="setActiveCreateStage($event)">
+        <section quickSaleConfig class="quick-sale-card quick-sale-card--config quick-sale-card--step">
           <div class="quick-sale-card__head">
             <p class="quick-sale-card__eyebrow">Paso 1</p>
             <h2>Configuracion de la venta</h2>
@@ -60,6 +79,8 @@
                 <div class="ch-sel__bg" *ngIf="showCreateChannelDrop" (click)="showCreateChannelDrop=false"></div>
                 <button type="button" class="control ch-sel__trigger"
                   [class.control--invalid]="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched"
+                  [attr.aria-invalid]="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched"
+                  aria-describedby="create-channel-error"
                   (click)="showCreateChannelDrop=!showCreateChannelDrop">
                   <span class="ch-sel__val">
                     <ng-container *ngIf="lineForm.get('sourceChannel')?.value == null; else createChSel">
@@ -85,7 +106,7 @@
                   </button>
                 </div>
               </div>
-              <span class="field__error" *ngIf="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched">
+              <span id="create-channel-error" class="field__error" *ngIf="lineForm.get('sourceChannel')?.invalid && lineForm.get('sourceChannel')?.touched">
                 Seleccioná el canal de origen.
               </span>
             </label>
@@ -101,7 +122,7 @@
           </form>
         </section>
 
-        <section class="quick-sale-card quick-sale-card--products quick-sale-card--step">
+        <section quickSaleProducts class="quick-sale-card quick-sale-card--products quick-sale-card--step">
           <div class="quick-sale-card__head">
             <p class="quick-sale-card__eyebrow">Paso 2</p>
             <h2>Carga de productos</h2>
@@ -119,7 +140,11 @@
               </div>
             </div>
           </div>
-          <div class="quick-sale-draft">
+          <div
+            #createProductDraft
+            class="quick-sale-draft"
+            tabindex="-1"
+            aria-label="Productos agregados a la venta">
             <div class="quick-sale-draft__head">
               <span class="quick-sale-draft__label">Borrador actual</span>
               <span class="picker-summary" *ngIf="draftItems.length > 0">{{ draftItems.length }} item(s) en la venta</span>
@@ -159,7 +184,7 @@
           </div>
         </section>
 
-        <section class="quick-sale-card quick-sale-stage quick-sale-card--step">
+        <section quickSalePayment class="quick-sale-card quick-sale-stage quick-sale-card--step">
           <div class="quick-sale-stage__head">
             <p class="quick-sale-card__eyebrow">Paso 3</p>
             <h2>Cliente y cobro</h2>
@@ -234,23 +259,31 @@
             (cashDrawerIdChange)="setCreateCashDrawerId($event)">
           </app-sale-payment-inline>
         </section>
-      </div>
 
-      <ng-template #emptyDraft>
-        <div class="empty empty--soft">Todavia no agregaste productos a la venta.</div>
-      </ng-template>
+        <ng-template #emptyDraft>
+          <div class="empty empty--soft">Todavia no agregaste productos a la venta.</div>
+        </ng-template>
+      </app-quick-sale-workspace>
 
-      <div class="summary-row summary-row--create">
-        <div class="metric-card">
-          <span>Paso 4 · Confirmacion</span>
-          <strong>{{ draftEffectiveTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
-        </div>
-        <button class="btn" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" [disabled]="saving || draftItems.length === 0" (click)="createSale()">{{ saving ? 'Guardando...' : 'Crear venta' }}</button>
-      </div>
+      <app-quick-sale-summary
+        [activeStage]="activeCreateStage"
+        [branch]="createBranchLabel"
+        [channel]="createChannelLabel"
+        [delivery]="createDeliveryLabel"
+        [customer]="createCustomerLabel"
+        [productCount]="draftItems.length"
+        [items]="quickSaleSummaryItems"
+        [total]="draftEffectiveTotal"
+        [saving]="saving"
+        (productsRequested)="handleSummaryProductsRequested()"
+        (primaryAction)="handleQuickSalePrimaryAction()">
+      </app-quick-sale-summary>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" *ngIf="editingSale" #editSection>
+  <div class="sales-mode-panel" data-mode-panel="manage" [hidden]="activeMode !== 'manage'">
+    <app-sales-management>
+    <section managementEditor class="panel" *ngIf="editingSale" #editSection>
     <div class="panel__header">
       <span>Editando venta {{ editingSale.id }}</span>
       <button class="btn btn--secondary btn--sm" type="button" (click)="cancelEdit()">Cerrar</button>
@@ -432,18 +465,20 @@
         </div>
       </div>
     </div>
-  </section>
+    </section>
 
-  <section class="panel panel--collapsible">
-    <button class="panel__header panel__header--button" type="button" (click)="listExpanded = !listExpanded">
-      <span>Ventas registradas</span>
-      <span class="panel__header-meta">
-        <span>{{ sales.length }}</span>
-        <span class="panel__chevron" [class.panel__chevron--open]="listExpanded" aria-hidden="true">▾</span>
+  <section managementContent class="panel panel--sales-management">
+    <div class="panel__header">
+      <span>
+        Ventas registradas
+        <small class="panel__header-subtitle">Consultá, cobrá y gestioná cada operación.</small>
       </span>
-    </button>
+      <span class="panel__header-meta">
+        <span>{{ sales.length }} ventas</span>
+      </span>
+    </div>
 
-    <div class="panel__body" *ngIf="listExpanded">
+    <div class="panel__body">
       <form class="filters" [formGroup]="filterForm" (ngSubmit)="applySaleFilters()">
         <div class="filters__primary">
           <label class="field field--sale-search">
@@ -545,105 +580,68 @@
         </label>
       </div>
 
-      <div class="sales-stack" *ngIf="pagedSales.length > 0; else emptySales">
-        <article class="sale-card" *ngFor="let sale of pagedSales; trackBy: trackBySale" (click)="toggleSaleDetails(sale.id)">
-          <div class="sale-card__top">
-            <div class="sale-card__content">
-              <p class="sale-card__eyebrow">{{ sale.code ? (sale.code + ' · ') : '' }}{{ branchName(sale.branchId) }}</p>
-              <h2>{{ sale.customerFullName || sale.code || 'Venta' }}</h2>
-              <p class="sale-card__address" *ngIf="sale.customerPhone || sale.deliveryAddress || sale.customerAddress">
-                <ng-container *ngIf="sale.customerPhone">{{ sale.customerPhone }}</ng-container><ng-container *ngIf="sale.customerPhone && (sale.deliveryAddress || sale.customerAddress)"> · </ng-container><ng-container *ngIf="sale.deliveryAddress || sale.customerAddress">{{ sale.deliveryAddress || sale.customerAddress }}</ng-container>
-              </p>
-              <p class="sale-card__ref" *ngIf="salePaymentRefs(sale)">{{ salePaymentRefs(sale) }}</p>
-              <p class="sale-card__meta">{{ sale.createdAt | date:'short' }} · {{ saleStatusLabel(sale) }} · {{ sale.details.length }} item(s)</p>
+      <div class="sales-list-head" aria-hidden="true">
+        <span>Venta</span>
+        <span>Cliente</span>
+        <span>Estado</span>
+        <span>Entrega</span>
+        <span>Total</span>
+        <span>Acciones</span>
+      </div>
+
+      <div class="sales-skeleton" *ngIf="loadingSales" aria-label="Cargando ventas" aria-live="polite">
+        <span class="sales-skeleton__row" *ngFor="let placeholder of [1, 2, 3, 4]"></span>
+      </div>
+
+      <div class="sales-stack" role="table" aria-label="Ventas registradas" *ngIf="!loadingSales && pagedSales.length > 0">
+        <article
+          appSaleListItem
+          class="sale-card"
+          *ngFor="let sale of pagedSales; trackBy: trackBySale"
+          [expanded]="isSaleExpanded(sale.id)"
+          (click)="toggleSaleDetails(sale.id)">
+          <div class="sale-card__row">
+            <div class="sale-card__identity">
+              <strong>{{ sale.code || 'Venta sin número' }}</strong>
+              <span>{{ sale.createdAt | date:'short' }} · {{ branchName(sale.branchId) }}</span>
+              <small>{{ sale.details.length }} {{ sale.details.length === 1 ? 'producto' : 'productos' }}</small>
             </div>
+
+            <div class="sale-card__customer">
+              <strong>{{ sale.customerFullName || 'Consumidor final' }}</strong>
+              <span>{{ sale.customerPhone || sale.customerDocument || salePaymentRefs(sale) || 'Venta de mostrador' }}</span>
+            </div>
+
+            <div class="sale-card__status">
+              <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">{{ saleStatusLabel(sale) }}</span>
+              <small *ngIf="sale.isCuentaCorriente">Cuenta corriente</small>
+            </div>
+
+            <div class="sale-card__delivery">
+              <strong>{{ sale.hasDelivery ? transportStatusChipLabel(sale) : 'Retira cliente' }}</strong>
+              <span *ngIf="sale.hasDelivery">{{ sale.deliveryAddress || sale.vehiclePlate || 'Entrega coordinada' }}</span>
+              <span *ngIf="!sale.hasDelivery">{{ saleChannelLabel(sale) || salePaymentDetailSummary(sale) }}</span>
+            </div>
+
             <div class="sale-card__amount-block">
               <span class="sale-card__amount-label">Total</span>
               <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>
             </div>
-          </div>
 
-          <div class="sale-card__chips">
-            <div class="sale-card__chip-row sale-card__chip-row--primary">
-              <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">
-                <strong>Estado venta:</strong> {{ saleStatusLabel(sale) }}
-              </span>
-              <span class="chip chip--transport" [ngClass]="transportStatusChipClass(sale)">
-                <strong>Estado transporte:</strong> {{ transportStatusChipLabel(sale) }}
-              </span>
-              <span class="chip"><strong>Entrega:</strong> {{ sale.hasDelivery ? 'Con envio' : 'Retiro' }}</span>
-              <span class="chip"><strong>Pago:</strong> {{ salePaymentDetailSummary(sale) }}<span *ngIf="(sale.tradeInAmount ?? 0) > 0" title="Incluye canje" class="chip__trade-icon">♻️</span></span>
-            </div>
-            <div class="sale-card__chip-row sale-card__chip-row--secondary">
-              <span class="chip" *ngIf="sale.customerFullName"><strong>Cliente:</strong> {{ sale.customerFullName }}</span>
-              <span class="chip chip--cc" *ngIf="sale.isCuentaCorriente"><strong>Cuenta Corriente</strong></span>
-              <span class="chip chip--channel" *ngIf="sale.sourceChannel"><strong>Canal:</strong> {{ saleChannelLabel(sale) }}</span>
-              <span class="chip" *ngIf="sale.driverFullName"><strong>Conductor:</strong> {{ sale.driverFullName }}</span>
-              <span class="chip" *ngIf="sale.vehiclePlate"><strong>Vehiculo:</strong> {{ sale.vehiclePlate }}</span>
-            </div>
-          </div>
-
-          <div class="sale-card__actions">
-            <div class="sale-card__action-tools">
-              <button class="icon-action icon-action--detail" type="button" [attr.aria-label]="isSaleExpanded(sale.id) ? 'Ocultar detalle' : 'Ver detalle'" [attr.title]="isSaleExpanded(sale.id) ? 'Ocultar detalle' : 'Ver detalle'" (click)="toggleSaleDetails(sale.id); $event.stopPropagation()">
-                <span class="icon-action__image" aria-hidden="true">
-                  <img src="assets/buscar.png" alt="" />
-                </span>
-              </button>
-              <button class="icon-action icon-action--info" type="button" *ngIf="sale.customerFullName" aria-label="Ver cliente" title="Cliente" (click)="openCustomerInfo(sale); $event.stopPropagation()">
-                <span class="icon-action__emoji" aria-hidden="true">👤</span>
-              </button>
-              <button class="icon-action icon-action--driver" type="button" *ngIf="sale.driverFullName" aria-label="Ver conductor" title="Conductor" (click)="openDriverInfo(sale); $event.stopPropagation()">
-                <span class="icon-action__image" aria-hidden="true">
-                  <img src="assets/volante.png" alt="" />
-                </span>
-              </button>
-              <button class="icon-action icon-action--vehicle" type="button" *ngIf="sale.vehiclePlate" aria-label="Ver vehículo" title="Vehículo" (click)="openVehicleInfo(sale); $event.stopPropagation()">
-                <span class="icon-action__image" aria-hidden="true">
-                  <img src="assets/entrega.png" alt="" />
-                </span>
-              </button>
-              <button class="icon-action icon-action--transport" type="button" *ngIf="sale.hasDelivery" aria-label="Gestionar transporte" title="Gestión de transporte" (click)="openTransport(sale); $event.stopPropagation()">
-                <span class="icon-action__image" aria-hidden="true">
-                  <img src="assets/carga.png" alt="" />
-                </span>
-              </button>
-              <button class="icon-action icon-action--channel" type="button" aria-label="Asignar canal de origen" title="Canal de origen" (click)="openChannelPopup(sale); $event.stopPropagation()">
-                <span class="icon-action__emoji" aria-hidden="true">📡</span>
-              </button>
-              <button class="icon-action icon-action--excel" type="button" aria-label="Exportar a Excel" title="Exportar a Excel" (click)="exportSaleExcel(sale); $event.stopPropagation()">
-                <span class="icon-action__image" aria-hidden="true">
-                  <img src="assets/excel-svgrepo-com.svg" alt="" />
-                </span>
-              </button>
-              <button *ngIf="auth.hasPermission(permissionCodes.salesRemitoAmounts)" class="icon-action icon-action--pdf" type="button" aria-label="Remito con importes" title="Remito con importes" (click)="exportSalePdf(sale); $event.stopPropagation()">
-                <span class="icon-action__image" aria-hidden="true">
-                  <img src="assets/pdf-svgrepo-com.svg" alt="" />
-                </span>
-              </button>
-              <button class="icon-action icon-action--remito" type="button" aria-label="Remito de traslado (sin importes)" title="Remito de traslado (sin importes)" (click)="exportRemitoTraslado(sale); $event.stopPropagation()">
-                <span class="icon-action__image" aria-hidden="true">
-                  <img src="assets/remito-traslado.png" alt="" />
-                </span>
-              </button>
-              <button
-                class="icon-action icon-action--whatsapp"
-                type="button"
-                *ngIf="canSendSaleWhatsApp(sale) && auth.hasPermission(permissionCodes.salesPay)"
-                [disabled]="sendingSaleWhatsAppId === sale.id"
-                [attr.aria-label]="sendingSaleWhatsAppId === sale.id ? 'Preparando WhatsApp' : 'Enviar WhatsApp'"
-                [attr.title]="sendingSaleWhatsAppId === sale.id ? 'Preparando WhatsApp' : 'Enviar WhatsApp'"
-                (click)="sendSaleWhatsApp(sale, $event)">
-                <span class="icon-action__image" aria-hidden="true">
-                  <img src="assets/whatsapp-color-svgrepo-com.svg" alt="" />
-                </span>
-              </button>
-              <a *ngIf="sale.isCuentaCorriente && sale.customerId" [routerLink]="['/clients-cc/customer', sale.customerId]" class="btn btn--ghost btn--sm btn--cc" (click)="$event.stopPropagation()">Cuenta CC</a>
-            </div>
-            <div class="sale-card__action-main">
-              <button class="btn btn--ghost btn--sm btn--danger btn--cancel" type="button" *ngIf="(sale.idSaleStatus === 1 || sale.idSaleStatus === 2) && auth.hasPermission(permissionCodes.salesDelete)" [disabled]="cancelingSaleId === sale.id" (click)="requestCancelSale(sale); $event.stopPropagation()">{{ cancelingSaleId === sale.id ? 'Cancelando...' : 'Anular' }}</button>
-              <button class="btn btn--secondary btn--sm btn--edit" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesUpdate)" (click)="beginEdit(sale); $event.stopPropagation()">Editar</button>
-              <button class="btn btn--secondary btn--sm btn--pay" type="button" *ngIf="sale.idSaleStatus === 1 && auth.hasPermission(permissionCodes.salesPay)" [disabled]="quickPayingSaleId === sale.id" (click)="markAsPaid(sale); $event.stopPropagation()">{{ quickPayingSaleId === sale.id ? 'Cobrando...' : 'Cobrar' }}</button>
+            <div class="sale-card__actions">
+            <app-sale-actions-menu
+              [sale]="sale"
+              [expanded]="isSaleExpanded(sale.id)"
+              [canPay]="auth.hasPermission(permissionCodes.salesPay)"
+              [canEdit]="auth.hasPermission(permissionCodes.salesUpdate)"
+              [canDelete]="auth.hasPermission(permissionCodes.salesDelete)"
+              [canRemitoAmounts]="auth.hasPermission(permissionCodes.salesRemitoAmounts)"
+              [canSendWhatsApp]="canSendSaleWhatsApp(sale) && auth.hasPermission(permissionCodes.salesPay)"
+              [paying]="quickPayingSaleId === sale.id"
+              [canceling]="cancelingSaleId === sale.id"
+              [sendingWhatsApp]="sendingSaleWhatsAppId === sale.id"
+              (action)="handleSaleUiAction(sale, $event)">
+            </app-sale-actions-menu>
             </div>
           </div>
 
@@ -692,9 +690,9 @@
         </article>
       </div>
 
-      <ng-template #emptySales>
-        <div class="empty">No hay ventas para los filtros aplicados.</div>
-      </ng-template>
+      <div class="empty" *ngIf="!loadingSales && pagedSales.length === 0">
+        {{ hasActiveOptionalSaleFilters ? 'No hay resultados para los filtros aplicados.' : 'Todavía no hay ventas registradas.' }}
+      </div>
 
       <div class="pagination pagination--footer" *ngIf="sales.length > salesPageSize">
         <button class="btn btn--ghost btn--sm" type="button" (click)="goToSalesPage(currentSalesPage - 1)" [disabled]="currentSalesPage <= 1">←</button>
@@ -702,7 +700,9 @@
         <button class="btn btn--ghost btn--sm" type="button" (click)="goToSalesPage(currentSalesPage + 1)" [disabled]="currentSalesPage >= totalSalesPages">→</button>
       </div>
     </div>
-  </section>
+    </section>
+    </app-sales-management>
+  </div>
 </div>
 
 <div class="modal-backdrop" *ngIf="createProductModalOpen" (click)="closeCreateProductModal()"></div>

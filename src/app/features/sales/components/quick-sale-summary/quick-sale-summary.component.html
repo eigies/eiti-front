@@ -1,0 +1,67 @@
+<aside class="quick-summary" aria-label="Resumen de la venta">
+  <header class="quick-summary__head">
+    <p>Resumen de venta</p>
+    <span>{{ productCount }} {{ productCount === 1 ? 'producto' : 'productos' }}</span>
+  </header>
+
+  <dl class="quick-summary__details">
+    <div>
+      <dt>Sucursal</dt>
+      <dd>{{ branch }}</dd>
+    </div>
+    <div>
+      <dt>Canal</dt>
+      <dd>{{ channel }}</dd>
+    </div>
+    <div>
+      <dt>Entrega</dt>
+      <dd>{{ delivery }}</dd>
+    </div>
+    <div>
+      <dt>Cliente</dt>
+      <dd>{{ customer }}</dd>
+    </div>
+  </dl>
+
+  <section
+    *ngIf="items.length > 0"
+    class="quick-summary__products"
+    aria-label="Productos agregados">
+    <ul>
+      <li
+        *ngFor="let item of visibleItems"
+        class="quick-summary__product">
+        <span class="quick-summary__product-name" [title]="item.label">{{ item.label }}</span>
+        <span class="quick-summary__product-quantity">× {{ item.quantity }}</span>
+        <strong>{{ item.subtotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+      </li>
+    </ul>
+
+    <button
+      *ngIf="hiddenItemCount > 0"
+      class="quick-summary__more"
+      type="button"
+      (click)="requestProducts()">
+      + {{ hiddenItemCount }} {{ hiddenItemCount === 1 ? 'producto más' : 'productos más' }}
+    </button>
+  </section>
+
+  <div class="quick-summary__total" aria-live="polite">
+    <span>
+      Total
+      <span class="quick-summary__mobile-count">
+        · {{ productCount }} {{ productCount === 1 ? 'producto' : 'productos' }}
+      </span>
+    </span>
+    <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
+  </div>
+
+  <button
+    class="quick-summary__action"
+    type="button"
+    [disabled]="saving"
+    (click)="handlePrimaryAction()">
+    {{ actionLabel }}
+    <span aria-hidden="true">→</span>
+  </button>
+</aside>

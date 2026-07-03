@@ -1,0 +1,133 @@
+<div class="sale-actions" (click)="$event.stopPropagation()">
+  <button
+    *ngIf="isPending && canPay"
+    class="sale-actions__primary"
+    data-action="pay"
+    type="button"
+    [disabled]="paying"
+    (click)="emitAction('pay', $event)">
+    {{ paying ? 'Cobrando...' : 'Cobrar' }}
+  </button>
+  <button
+    *ngIf="!isPending || !canPay"
+    class="sale-actions__primary sale-actions__primary--secondary"
+    data-action="details"
+    type="button"
+    (click)="emitAction('details', $event)">
+    {{ expanded ? 'Ocultar' : 'Ver' }}
+  </button>
+
+  <div
+    class="sale-actions__slot sale-actions__slot--whatsapp"
+    [class.is-empty]="!canSendWhatsApp"
+    data-slot="whatsapp">
+    <button
+      *ngIf="canSendWhatsApp"
+      class="sale-actions__icon sale-actions__icon--whatsapp"
+      data-action="whatsapp"
+      type="button"
+      [disabled]="sendingWhatsApp"
+      aria-label="Enviar por WhatsApp"
+      title="Enviar por WhatsApp"
+      (click)="emitAction('whatsapp', $event)">
+      <img src="assets/channels/ch-whatsapp.svg" alt="" aria-hidden="true" />
+    </button>
+  </div>
+
+  <div class="sale-actions__menu-wrap">
+    <button
+      class="sale-actions__icon"
+      data-menu="documents"
+      type="button"
+      [attr.aria-expanded]="documentsOpen"
+      aria-label="Documentos de la venta"
+      title="Documentos"
+      (click)="toggleDocuments($event)">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 3h7l4 4v14H7z"></path>
+        <path d="M14 3v5h5M10 13h5M10 17h5"></path>
+      </svg>
+    </button>
+
+    <div class="sale-actions__popover" *ngIf="documentsOpen">
+      <span class="sale-actions__group-label">Documentos</span>
+      <button type="button" (click)="emitAction('excel', $event)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18H7zM10 9l4 6m0-6-4 6"></path></svg>
+        <span>Exportar a Excel</span>
+      </button>
+      <button *ngIf="canRemitoAmounts" type="button" (click)="emitAction('pdf', $event)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v5h5M10 14h4"></path></svg>
+        <span>Remito con importes</span>
+      </button>
+      <button type="button" (click)="emitAction('remito', $event)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z"></path><circle cx="7" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
+        <span>Remito de traslado</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="sale-actions__menu-wrap">
+    <button
+      class="sale-actions__icon"
+      data-menu="more"
+      type="button"
+      [attr.aria-expanded]="moreOpen"
+      aria-label="Más acciones"
+      title="Más acciones"
+      (click)="toggleMore($event)">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="5" cy="12" r="1"></circle>
+        <circle cx="12" cy="12" r="1"></circle>
+        <circle cx="19" cy="12" r="1"></circle>
+      </svg>
+    </button>
+
+    <div class="sale-actions__popover sale-actions__popover--more" *ngIf="moreOpen">
+      <span class="sale-actions__group-label">Operación</span>
+      <button type="button" (click)="emitAction('details', $event)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg>
+        <span>{{ expanded ? 'Ocultar detalle' : 'Ver detalle' }}</span>
+      </button>
+      <button *ngIf="isPending && canEdit" type="button" (click)="emitAction('edit', $event)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V20h.5L17 7.5 13.5 4 1 16.5V20h3z"></path><path d="m12.5 5 3.5 3.5"></path></svg>
+        <span>Editar venta</span>
+      </button>
+      <button *ngIf="sale.hasDelivery" type="button" (click)="emitAction('transport', $event)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z"></path><circle cx="7" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
+        <span>Gestionar transporte</span>
+      </button>
+      <button type="button" (click)="emitAction('channel', $event)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 16 0M7 12a5 5 0 0 1 10 0"></path><circle cx="12" cy="12" r="1.5"></circle></svg>
+        <span>Canal de origen</span>
+      </button>
+
+      <ng-container *ngIf="sale.customerFullName || sale.driverFullName || sale.vehiclePlate || (sale.isCuentaCorriente && sale.customerId)">
+        <span class="sale-actions__group-label">Relacionado</span>
+        <button *ngIf="sale.customerFullName" type="button" (click)="emitAction('customer', $event)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"></circle><path d="M5 21c.7-4 3-6 7-6s6.3 2 7 6"></path></svg>
+          <span>Ver cliente</span>
+        </button>
+        <button *ngIf="sale.driverFullName" type="button" (click)="emitAction('driver', $event)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2"></circle><path d="m12 10-5-3m5 3 5-3m-5 5v6"></path></svg>
+          <span>Ver conductor</span>
+        </button>
+        <button *ngIf="sale.vehiclePlate" type="button" (click)="emitAction('vehicle', $event)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h14l-1.5-6h-11zM3 16v3h18v-3M7 19v2m10-2v2"></path></svg>
+          <span>Ver vehículo</span>
+        </button>
+        <a *ngIf="sale.isCuentaCorriente && sale.customerId" [routerLink]="['/clients-cc/customer', sale.customerId]">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM8 10h8M8 14h5"></path></svg>
+          <span>Cuenta corriente</span>
+        </a>
+      </ng-container>
+
+      <ng-container *ngIf="canCancel">
+        <span class="sale-actions__group-label">Riesgo</span>
+        <button class="sale-actions__danger" type="button" [disabled]="canceling" (click)="emitAction('cancel', $event)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14"></path></svg>
+          <span>{{ canceling ? 'Anulando...' : 'Anular venta' }}</span>
+        </button>
+      </ng-container>
+    </div>
+  </div>
+</div>

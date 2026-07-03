@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, saleSourceChannelLabel } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
@@ -31,6 +31,14 @@ import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
+import {
+    QuickSaleSummaryComponent,
+    QuickSaleSummaryItem
+} from './components/quick-sale-summary/quick-sale-summary.component';
+import { SaleActionsMenuComponent } from './components/sale-actions-menu/sale-actions-menu.component';
+import { SalesManagementComponent } from './components/sales-management/sales-management.component';
+import { SaleListItemComponent } from './components/sale-list-item/sale-list-item.component';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import {
@@ -45,6 +53,7 @@ import {
     SALE_PAYMENT_METHODS,
     roundMoney
 } from '../../core/models/sale-payment.models';
+import { QuickSaleStage, SalesPageMode, SaleUiAction } from './sales-page-ui.models';
 
 function localDateString(date = new Date()): string {
     const y = date.getFullYear();
@@ -56,12 +65,26 @@ function localDateString(date = new Date()): string {
 @Component({
     selector: 'app-sales-page',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, OnboardingBannerComponent, SalePaymentInlineComponent, SearchableSelectComponent],
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        RouterModule,
+        OnboardingBannerComponent,
+        SalePaymentInlineComponent,
+        SearchableSelectComponent,
+        QuickSaleWorkspaceComponent,
+        QuickSaleSummaryComponent,
+        SaleActionsMenuComponent,
+        SalesManagementComponent,
+        SaleListItemComponent
+    ],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
 })
 export class SalesPageComponent implements OnInit {
     readonly permissionCodes = PermissionCodes;
+    @ViewChild('createProductDraft') createProductDraft?: ElementRef<HTMLElement>;
     @ViewChild('editProductPicker') editProductPicker?: ElementRef<HTMLElement>;
     @ViewChild('editSection') editSection?: ElementRef<HTMLElement>;
 
@@ -119,8 +142,8 @@ export class SalesPageComponent implements OnInit {
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     editPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     defaultNoDeliverySurcharge = 0;
-    createExpanded = true;
-    listExpanded = true;
+    activeMode: SalesPageMode = 'sell';
+    activeCreateStage: QuickSaleStage = 'config';
     showOnboardingCompleteNotice = false;
     infoModal: { title: string; rows: Array<{ label: string; value: string }> } | null = null;
     cancelSaleModal: SaleResponse | null = null;
@@ -247,6 +270,15 @@ export class SalesPageComponent implements OnInit {
         return roundMoney(this.draftTotal + cardSurcharge);
     }
 
+    get quickSaleSummaryItems(): QuickSaleSummaryItem[] {
+        return this.draftItems.map(item => ({
+            id: item.product.id,
+            label: `${item.product.brand} / ${item.product.name}`,
+            quantity: item.quantity,
+            subtotal: item.total
+        }));
+    }
+
     get editTotal(): number {
         return roundMoney(this.sum(this.editItems) + this.editAutoSurcharge);
     }
@@ -356,6 +388,127 @@ export class SalesPageComponent implements OnInit {
         }
 
         return Math.min(this.currentSalesPage * this.salesPageSize, this.sales.length);
+    }
+
+    setActiveMode(mode: SalesPageMode): void {
+        this.activeMode = mode;
+    }
+
+    setActiveCreateStage(stage: QuickSaleStage): void {
+        this.activeCreateStage = stage;
+    }
+
+    handleSummaryProductsRequested(): void {
+        this.activeCreateStage = 'products';
+        window.setTimeout(() => {
+            const productDraft = this.createProductDraft?.nativeElement;
+            productDraft?.focus({ preventScroll: true });
+            productDraft?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+
+    get isCreateConfigComplete(): boolean {
+        return Boolean(
+            this.lineForm.get('branchId')?.valid
+            && this.lineForm.get('sourceChannel')?.valid
+        );
+    }
+
+    get isCreateProductsComplete(): boolean {
+        return this.draftItems.length > 0;
+    }
+
+    get hasActiveOptionalSaleFilters(): boolean {
+        const raw = this.filterForm.getRawValue();
+        return [
+            raw.code,
+            raw.dateTo,
+            raw.idSaleStatus,
+            raw.sourceChannel,
+            raw.transportStatus,
+            raw.phone,
+            raw.deliveryAddress
+        ].some(value => value !== null && value !== undefined && String(value).trim() !== '');
+    }
+
+    get createBranchLabel(): string {
+        const branchId = this.lineForm.get('branchId')?.value;
+        return this.branches.find(branch => branch.id === branchId)?.name ?? 'Sin seleccionar';
+    }
+
+    get createChannelLabel(): string {
+        const channel = this.optionalNumber(this.lineForm.get('sourceChannel')?.value);
+        return this.saleSourceChannels.find(item => item.value === channel)?.label ?? 'Sin seleccionar';
+    }
+
+    get createDeliveryLabel(): string {
+        if (!this.lineForm.get('hasDelivery')?.value) {
+            return 'Retira cliente';
+        }
+
+        return this.lineForm.get('deliveryAddress')?.value || 'Con envío';
+    }
+
+    get createCustomerLabel(): string {
+        return this.createCustomerId ? this.createCustomerQuery : 'Consumidor final';
+    }
+
+    handleQuickSalePrimaryAction(): void {
+        if (this.activeCreateStage === 'config') {
+            this.activeCreateStage = 'products';
+            return;
+        }
+
+        if (this.activeCreateStage === 'products') {
+            this.activeCreateStage = 'payment';
+            return;
+        }
+
+        this.createSale();
+    }
+
+    handleSaleUiAction(sale: SaleResponse, action: SaleUiAction): void {
+        switch (action) {
+            case 'details':
+                this.toggleSaleDetails(sale.id);
+                break;
+            case 'customer':
+                this.openCustomerInfo(sale);
+                break;
+            case 'driver':
+                this.openDriverInfo(sale);
+                break;
+            case 'vehicle':
+                this.openVehicleInfo(sale);
+                break;
+            case 'transport':
+                this.openTransport(sale);
+                break;
+            case 'channel':
+                this.openChannelPopup(sale);
+                break;
+            case 'excel':
+                this.exportSaleExcel(sale);
+                break;
+            case 'pdf':
+                this.exportSalePdf(sale);
+                break;
+            case 'remito':
+                this.exportRemitoTraslado(sale);
+                break;
+            case 'whatsapp':
+                this.sendSaleWhatsApp(sale);
+                break;
+            case 'cancel':
+                this.requestCancelSale(sale);
+                break;
+            case 'edit':
+                this.beginEdit(sale);
+                break;
+            case 'pay':
+                this.markAsPaid(sale);
+                break;
+        }
     }
 
     handleCreateBranchChange(): void {
@@ -612,6 +765,12 @@ removeEditItem(productId: string): void {
 }
 
 createSale(): void {
+    if (!this.isCreateConfigComplete) {
+    this.activeCreateStage = 'config';
+} else if (!this.isCreateProductsComplete) {
+    this.activeCreateStage = 'products';
+}
+
     if(this.lineForm.get('branchId')?.invalid || this.lineForm.get('sourceChannel')?.invalid || this.draftItems.length === 0) {
     this.lineForm.markAllAsTouched();
     if (this.lineForm.get('sourceChannel')?.invalid) {
@@ -643,6 +802,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.createCustomerQuery = '';
         this.createCustomerSuggestions = [];
         this.showCreateCustomerResults = false;
+        this.activeCreateStage = 'config';
         this.saving = false;
         this.currentSalesPage = 1;
         this.loadDrawers(branchId, true);
@@ -733,7 +893,6 @@ beginEdit(sale: SaleResponse, presetPaid = false): void {
 }
 
 this.editingSale = sale;
-this.createExpanded = false;
 this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: sale.cashDrawerId ?? '', sourceChannel: sale.sourceChannel ?? null, deliveryAddress: sale.deliveryAddress ?? '' });
 this.editItems = sale.details
     .map(detail => {
@@ -765,7 +924,6 @@ cancelEdit(): void {
 }
 
 this.editingSale = null;
-this.createExpanded = true;
 this.editItems = [];
 this.editDrawers = [];
 this.editStockByProductId.clear();
@@ -1614,7 +1772,7 @@ if (form === this.editLineForm) {
 }
 
 saleChannelLabel(sale: SaleResponse): string {
-    return saleSourceChannelLabel(sale.sourceChannel);
+    return this.saleSourceChannels.find(item => item.value === sale.sourceChannel)?.label ?? '';
 }
 
 openChannelPopup(sale: SaleResponse): void {

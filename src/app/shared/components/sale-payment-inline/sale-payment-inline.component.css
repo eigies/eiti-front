@@ -1,5 +1,6 @@
 .payment-block {
     display: grid;
+    container-type: inline-size;
     gap: 1rem;
     padding: 1rem 1.05rem;
     border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
@@ -685,6 +686,34 @@
 
     .toggle-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@container (max-width: 860px) {
+    .payment-block__head {
+        display: grid;
+    }
+
+    .payment-summary {
+        position: static;
+    }
+
+    .payment-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@container (max-width: 640px) {
+    .payment-line__row,
+    .payment-line__row--tradein,
+    .section-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .line-remove,
+    .action-chip {
+        width: 100%;
     }
 }
 

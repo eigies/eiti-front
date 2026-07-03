@@ -1,0 +1,8 @@
+:host {
+  display: block;
+}
+
+.sales-management {
+  display: grid;
+  gap: 1rem;
+}

@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -21,7 +21,9 @@ import { of } from 'rxjs';
 
 describe('SalesPageComponent (price override)', () => {
     let component: SalesPageComponent;
+    let fixture: ComponentFixture<SalesPageComponent>;
     let authSpy: jasmine.SpyObj<AuthService>;
+    let saleSpy: jasmine.SpyObj<SaleService>;
 
     function createMockService<T>(methods: string[]): jasmine.SpyObj<T> {
         return jasmine.createSpyObj(methods) as jasmine.SpyObj<T>;
@@ -31,22 +33,26 @@ describe('SalesPageComponent (price override)', () => {
         authSpy = jasmine.createSpyObj('AuthService', ['hasPermission', 'getToken', 'isAuthenticated'], { currentUser$: of(null), currentUser: null });
         const productSpy = createMockService<ProductService>(['listProducts']);
         (productSpy as any).listProducts.and.returnValue(of([]));
-        const saleSpy = createMockService<SaleService>(['listSales', 'createSale']);
+        saleSpy = createMockService<SaleService>(['listSales', 'createSale']);
         (saleSpy as any).listSales.and.returnValue(of([]));
+        (saleSpy as any).createSale.and.returnValue(of({}));
         const companySpy = createMockService<CompanyService>(['getCurrentCompany']);
         (companySpy as any).getCurrentCompany.and.returnValue(of({}));
         const customerSpy = createMockService<CustomerService>(['searchCustomers']);
         const branchSpy = createMockService<BranchService>(['listBranches']);
         (branchSpy as any).listBranches.and.returnValue(of([]));
         const cashSpy = createMockService<CashService>(['listCashDrawers']);
+        (cashSpy as any).listCashDrawers.and.returnValue(of([]));
         const stockSpy = createMockService<StockService>(['listBranchStock']);
+        (stockSpy as any).listBranchStock.and.returnValue(of([]));
         const employeeSpy = createMockService<EmployeeService>(['listDrivers']);
         (employeeSpy as any).listDrivers.and.returnValue(of([]));
         const vehicleSpy = createMockService<VehicleService>(['listVehicles']);
         (vehicleSpy as any).listVehicles.and.returnValue(of([]));
         const toastSpy = createMockService<ToastService>(['success', 'error', 'show']);
-        const onboardingSpy = createMockService<OnboardingService>(['getStatus', 'reset']);
+        const onboardingSpy = createMockService<OnboardingService>(['getStatus', 'reset', 'consumeCompletionNotice']);
         (onboardingSpy as any).getStatus.and.returnValue(of(null));
+        (onboardingSpy as any).consumeCompletionNotice.and.returnValue(false);
 
         TestBed.configureTestingModule({
             imports: [SalesPageComponent, ReactiveFormsModule, RouterTestingModule],
@@ -68,7 +74,7 @@ describe('SalesPageComponent (price override)', () => {
             ]
         });
 
-        const fixture = TestBed.createComponent(SalesPageComponent);
+        fixture = TestBed.createComponent(SalesPageComponent);
         component = fixture.componentInstance;
     });
 
@@ -123,5 +129,138 @@ describe('SalesPageComponent (price override)', () => {
         );
 
         expect(request.details[0].unitPrice).toBeUndefined();
+    });
+
+    it('starts in sell mode and configuration stage', () => {
+        expect(component.activeMode).toBe('sell');
+        expect(component.activeCreateStage).toBe('config');
+    });
+
+    it('switches modes without resetting draft or filters', () => {
+        component.draftItems = [{ product: { id: 'p1' } as any, quantity: 1, total: 100 }];
+        component.filterForm.patchValue({ code: 'V-42' });
+
+        component.setActiveMode('manage');
+        component.setActiveMode('sell');
+
+        expect(component.draftItems.length).toBe(1);
+        expect(component.filterForm.get('code')?.value).toBe('V-42');
+    });
+
+    it('maps draft products to summary preview items', () => {
+        component.draftItems = [{
+            product: { id: 'p1', brand: 'Moura', name: 'M20GD' } as any,
+            quantity: 2,
+            total: 104000
+        }];
+
+        expect(component.quickSaleSummaryItems).toEqual([{
+            id: 'p1',
+            label: 'Moura / M20GD',
+            quantity: 2,
+            subtotal: 104000
+        }]);
+    });
+
+    it('focuses the product draft when remaining products are requested from the products stage', fakeAsync(() => {
+        component.activeCreateStage = 'products';
+        fixture.detectChanges();
+        const productDraft = fixture.nativeElement.querySelector('.quick-sale-draft');
+        spyOn(productDraft, 'focus');
+        spyOn(productDraft, 'scrollIntoView');
+
+        component.handleSummaryProductsRequested();
+        tick();
+
+        expect(component.activeCreateStage).toBe('products');
+        expect(productDraft.focus).toHaveBeenCalled();
+        expect(productDraft.scrollIntoView).toHaveBeenCalled();
+    }));
+
+    it('moves to the first invalid stage before creating a sale', () => {
+        component.activeCreateStage = 'payment';
+        component.lineForm.patchValue({ branchId: '', sourceChannel: null });
+
+        component.createSale();
+
+        expect(component.activeCreateStage).toBe('config');
+    });
+
+    it('advances the quick-sale primary action through the stages', () => {
+        component.activeCreateStage = 'config';
+
+        component.handleQuickSalePrimaryAction();
+        expect(component.activeCreateStage).toBe('products');
+
+        component.handleQuickSalePrimaryAction();
+        expect(component.activeCreateStage).toBe('payment');
+    });
+
+    it('dispatches semantic sale actions to the existing handlers', () => {
+        const sale = { id: 'sale-1' } as any;
+        spyOn(component, 'beginEdit');
+
+        component.handleSaleUiAction(sale, 'edit');
+
+        expect(component.beginEdit).toHaveBeenCalledWith(sale);
+    });
+
+    it('exposes accessible mode tabs', () => {
+        fixture.detectChanges();
+
+        const tabs = fixture.nativeElement.querySelectorAll('.sales-mode-tabs [role="tab"]');
+        expect(tabs.length).toBe(2);
+        expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('marks the invalid channel control for assistive technology', () => {
+        component.activeCreateStage = 'payment';
+        component.lineForm.patchValue({ branchId: '', sourceChannel: null });
+
+        component.createSale();
+        fixture.detectChanges();
+
+        expect(component.activeCreateStage).toBe('config');
+        expect(fixture.nativeElement.querySelector('.ch-sel__trigger[aria-invalid="true"]')).not.toBeNull();
+    });
+
+    it('detects active optional sales filters', () => {
+        expect(component.hasActiveOptionalSaleFilters).toBeFalse();
+
+        component.filterForm.patchValue({ code: 'V-42' });
+
+        expect(component.hasActiveOptionalSaleFilters).toBeTrue();
+    });
+
+    it('renders stable loading rows while sales are loading', () => {
+        fixture.detectChanges();
+        component.loadingSales = true;
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('.sales-skeleton__row').length).toBe(4);
+    });
+
+    it('returns to the configuration stage after creating a sale', () => {
+        component.activeCreateStage = 'payment';
+        component.lineForm.patchValue({ branchId: 'branch-1', sourceChannel: 1 });
+        component.draftItems = [{
+            product: { id: 'p1', price: 100, publicPrice: 100 } as any,
+            quantity: 1,
+            total: 100
+        }];
+
+        component.createSale();
+
+        expect(saleSpy.createSale).toHaveBeenCalled();
+        expect(component.activeCreateStage).toBe('config');
+    });
+
+    it('uses plain channel labels without legacy emoji', () => {
+        component.lineForm.patchValue({ sourceChannel: 2 });
+        const sale = { sourceChannel: 2 } as any;
+
+        expect(component.createChannelLabel).toBe('WhatsApp');
+        expect(component.saleChannelLabel(sale)).toBe('WhatsApp');
     });
 });
