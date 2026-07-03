@@ -268,8 +268,10 @@
         [delivery]="createDeliveryLabel"
         [customer]="createCustomerLabel"
         [productCount]="draftItems.length"
+        [items]="quickSaleSummaryItems"
         [total]="draftEffectiveTotal"
         [saving]="saving"
+        (productsRequested)="setActiveCreateStage('products')"
         (primaryAction)="handleQuickSalePrimaryAction()">
       </app-quick-sale-summary>
     </div>

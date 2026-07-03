@@ -147,6 +147,21 @@ describe('SalesPageComponent (price override)', () => {
         expect(component.filterForm.get('code')?.value).toBe('V-42');
     });
 
+    it('maps draft products to summary preview items', () => {
+        component.draftItems = [{
+            product: { id: 'p1', brand: 'Moura', name: 'M20GD' } as any,
+            quantity: 2,
+            total: 104000
+        }];
+
+        expect(component.quickSaleSummaryItems).toEqual([{
+            id: 'p1',
+            label: 'Moura / M20GD',
+            quantity: 2,
+            subtotal: 104000
+        }]);
+    });
+
     it('moves to the first invalid stage before creating a sale', () => {
         component.activeCreateStage = 'payment';
         component.lineForm.patchValue({ branchId: '', sourceChannel: null });

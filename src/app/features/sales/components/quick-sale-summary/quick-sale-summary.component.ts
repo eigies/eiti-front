@@ -2,6 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { QuickSaleStage } from '../../sales-page-ui.models';
 
+export interface QuickSaleSummaryItem {
+    id: string;
+    label: string;
+    quantity: number;
+    subtotal: number;
+}
+
 @Component({
     selector: 'app-quick-sale-summary',
     standalone: true,
@@ -16,9 +23,19 @@ export class QuickSaleSummaryComponent {
     @Input() delivery = 'Retira cliente';
     @Input() customer = 'Consumidor final';
     @Input() productCount = 0;
+    @Input() items: QuickSaleSummaryItem[] = [];
     @Input() total = 0;
     @Input() saving = false;
     @Output() primaryAction = new EventEmitter<void>();
+    @Output() productsRequested = new EventEmitter<void>();
+
+    get visibleItems(): QuickSaleSummaryItem[] {
+        return this.items.slice(0, 3);
+    }
+
+    get hiddenItemCount(): number {
+        return Math.max(0, this.items.length - this.visibleItems.length);
+    }
 
     get actionLabel(): string {
         if (this.saving) return 'Guardando...';
@@ -31,5 +48,9 @@ export class QuickSaleSummaryComponent {
         if (!this.saving) {
             this.primaryAction.emit();
         }
+    }
+
+    requestProducts(): void {
+        this.productsRequested.emit();
     }
 }

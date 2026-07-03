@@ -23,8 +23,36 @@
     </div>
   </dl>
 
+  <section
+    *ngIf="items.length > 0"
+    class="quick-summary__products"
+    aria-label="Productos agregados">
+    <ul>
+      <li
+        *ngFor="let item of visibleItems"
+        class="quick-summary__product">
+        <span class="quick-summary__product-name" [title]="item.label">{{ item.label }}</span>
+        <span class="quick-summary__product-quantity">× {{ item.quantity }}</span>
+        <strong>{{ item.subtotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+      </li>
+    </ul>
+
+    <button
+      *ngIf="hiddenItemCount > 0"
+      class="quick-summary__more"
+      type="button"
+      (click)="requestProducts()">
+      + {{ hiddenItemCount }} {{ hiddenItemCount === 1 ? 'producto más' : 'productos más' }}
+    </button>
+  </section>
+
   <div class="quick-summary__total" aria-live="polite">
-    <span>Total</span>
+    <span>
+      Total
+      <span class="quick-summary__mobile-count">
+        · {{ productCount }} {{ productCount === 1 ? 'producto' : 'productos' }}
+      </span>
+    </span>
     <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
   </div>
 

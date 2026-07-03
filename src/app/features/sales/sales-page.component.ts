@@ -32,7 +32,10 @@ import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
-import { QuickSaleSummaryComponent } from './components/quick-sale-summary/quick-sale-summary.component';
+import {
+    QuickSaleSummaryComponent,
+    QuickSaleSummaryItem
+} from './components/quick-sale-summary/quick-sale-summary.component';
 import { SaleActionsMenuComponent } from './components/sale-actions-menu/sale-actions-menu.component';
 import { SalesManagementComponent } from './components/sales-management/sales-management.component';
 import { SaleListItemComponent } from './components/sale-list-item/sale-list-item.component';
@@ -264,6 +267,15 @@ export class SalesPageComponent implements OnInit {
     get draftEffectiveTotal(): number {
         const cardSurcharge = roundMoney(this.createPaymentState.payments.reduce((sum, p) => sum + (p.cardSurchargeAmt ?? 0), 0));
         return roundMoney(this.draftTotal + cardSurcharge);
+    }
+
+    get quickSaleSummaryItems(): QuickSaleSummaryItem[] {
+        return this.draftItems.map(item => ({
+            id: item.product.id,
+            label: `${item.product.brand} / ${item.product.name}`,
+            quantity: item.quantity,
+            subtotal: item.total
+        }));
     }
 
     get editTotal(): number {

@@ -30,4 +30,27 @@ describe('QuickSaleSummaryComponent', () => {
 
         expect(component.primaryAction.emit).toHaveBeenCalled();
     });
+
+    it('shows at most three product rows and the remaining count', () => {
+        fixture.componentRef.setInput('items', [
+            { id: '1', label: 'Producto 1', quantity: 1, subtotal: 10 },
+            { id: '2', label: 'Producto 2', quantity: 2, subtotal: 20 },
+            { id: '3', label: 'Producto 3', quantity: 3, subtotal: 30 },
+            { id: '4', label: 'Producto 4', quantity: 4, subtotal: 40 },
+            { id: '5', label: 'Producto 5', quantity: 5, subtotal: 50 }
+        ]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('.quick-summary__product').length).toBe(3);
+        expect(fixture.nativeElement.querySelector('.quick-summary__more').textContent)
+            .toContain('+ 2 productos más');
+    });
+
+    it('emits when the user requests the remaining products', () => {
+        spyOn(component.productsRequested, 'emit');
+
+        component.requestProducts();
+
+        expect(component.productsRequested.emit).toHaveBeenCalled();
+    });
 });
