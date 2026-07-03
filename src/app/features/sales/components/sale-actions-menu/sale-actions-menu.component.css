@@ -53,10 +53,27 @@
   background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
 }
 
+.sale-actions__slot {
+  display: grid;
+  flex: 0 0 38px;
+  place-items: center;
+  width: 38px;
+}
+
+.sale-actions__slot .sale-actions__icon {
+  width: 100%;
+}
+
 .sale-actions__icon--whatsapp {
   color: color-mix(in srgb, var(--success) 80%, var(--text));
   border-color: color-mix(in srgb, var(--success) 28%, var(--border));
   background: color-mix(in srgb, var(--success) 7%, transparent);
+}
+
+.sale-actions__icon--whatsapp img {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 .sale-actions__primary:hover:not(:disabled),
@@ -153,6 +170,12 @@ svg {
 
 .sale-actions__popover .sale-actions__danger {
   color: color-mix(in srgb, var(--danger) 78%, var(--text));
+}
+
+@media (max-width: 900px) {
+  .sale-actions__slot.is-empty {
+    display: none;
+  }
 }
 
 @media (max-width: 720px) {

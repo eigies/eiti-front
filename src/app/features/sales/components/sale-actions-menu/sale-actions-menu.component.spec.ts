@@ -62,6 +62,27 @@ describe('SaleActionsMenuComponent', () => {
         expect(fixture.nativeElement.textContent).not.toContain('Editar venta');
     });
 
+    it('keeps a stable WhatsApp slot when the action is unavailable', () => {
+        fixture.componentRef.setInput('canSendWhatsApp', false);
+        fixture.detectChanges();
+
+        const slot = fixture.nativeElement.querySelector('[data-slot="whatsapp"]');
+        expect(slot).not.toBeNull();
+        if (!slot) return;
+        expect(slot.classList).toContain('is-empty');
+        expect(slot.querySelector('[data-action="whatsapp"]')).toBeNull();
+    });
+
+    it('uses the official WhatsApp asset when the action is available', () => {
+        fixture.componentRef.setInput('canSendWhatsApp', true);
+        fixture.detectChanges();
+
+        const icon = fixture.nativeElement.querySelector('[data-action="whatsapp"] img');
+        expect(icon).not.toBeNull();
+        if (!icon) return;
+        expect(icon.getAttribute('src')).toBe('assets/channels/ch-whatsapp.svg');
+    });
+
     it('anchors popovers to the full action bar instead of the icon button', () => {
         fixture.detectChanges();
 
