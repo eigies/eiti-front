@@ -158,6 +158,10 @@ La fila o tarjeta conserva visibles:
 - Documentos;
 - Más acciones.
 
+En desktop, el grupo usa cuatro posiciones estables: acción primaria, WhatsApp, Documentos y Más acciones. La posición de WhatsApp se reserva aunque una venta no permita el envío, de modo que los demás controles no cambien de lugar entre filas. En tarjetas de tablet o teléfono, la posición vacía se elimina porque las acciones ya no necesitan alinearse entre filas.
+
+WhatsApp utiliza el glifo oficial disponible en `assets/channels/ch-whatsapp.svg`, con tamaño óptico equivalente al resto de los iconos y un tratamiento verde discreto en borde y fondo. No se dibuja una aproximación lineal propia de la marca.
+
 “Documentos” abre un menú con:
 
 - Excel;
@@ -173,7 +177,7 @@ La fila o tarjeta conserva visibles:
 
 Ninguna capacidad actual desaparece. Las acciones siguen condicionadas por estado y permisos.
 
-Los iconos se normalizan como SVG lineales de `24 × 24`, con el mismo grosor y estilo que la navegación existente. No se agregará una librería. Se reemplazan emojis e imágenes visualmente incompatibles. Los iconos sin texto visible deben tener `aria-label` y `title`; dentro de menús siempre se acompañan con una etiqueta.
+Los iconos se normalizan como SVG lineales de `24 × 24`, con el mismo grosor y estilo que la navegación existente; el glifo oficial de WhatsApp es la única excepción de marca. No se agregará una librería. Se reemplazan emojis e imágenes visualmente incompatibles. Los iconos sin texto visible deben tener `aria-label` y `title`; dentro de menús siempre se acompañan con una etiqueta.
 
 ## Lenguaje visual
 
@@ -272,6 +276,8 @@ Los nombres y límites anteriores son parte del diseño. `SalesPageComponent` co
 - `+ N productos más` solicita abrir la etapa Productos.
 - Cada estado de venta muestra la acción primaria correcta.
 - WhatsApp, documentos, cuenta corriente y Más respetan condiciones y permisos.
+- Las posiciones de las acciones permanecen alineadas entre filas de desktop, exista o no WhatsApp.
+- El botón de WhatsApp usa el asset oficial y conserva nombre accesible.
 - Los menús exponen las mismas acciones existentes.
 - Filtrar, limpiar y paginar mantienen el comportamiento actual.
 - Errores de creación o cobro conservan el borrador.
