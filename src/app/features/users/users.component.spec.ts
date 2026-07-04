@@ -75,7 +75,10 @@ describe('UsersComponent', () => {
     }).compileComponents();
   });
 
-  afterEach(() => fixture?.destroy());
+  afterEach(() => {
+    document.body.classList.remove('theme-light');
+    fixture?.destroy();
+  });
 
   it('starts in Usuarios with the new list and no panel or permanent create form', () => {
     render();
@@ -139,6 +142,45 @@ describe('UsersComponent', () => {
     expect(toast.success).toHaveBeenCalledOnceWith('Usuario creado');
     expect(auth.refreshCurrentUserProfile).not.toHaveBeenCalled();
   });
+
+  it('focuses the created user edit action when the empty-state opener disappears', fakeAsync(() => {
+    const created = user({ id: 'created', username: 'beto', profileId: 'profile-a' });
+    userService.listUsers.and.returnValue(of([]));
+    userService.createUser.and.returnValue(of(created));
+    render();
+    const emptyCreate = query('.user-list__empty--catalog button') as HTMLButtonElement;
+    emptyCreate.focus();
+    emptyCreate.click();
+    fixture.detectChanges();
+    tick();
+
+    component.saveUserDraft(accessDraft({ username: 'beto' }));
+    fixture.detectChanges();
+    tick();
+
+    const createdEdit = query(
+      '[data-user-id="created"] .user-list__open'
+    ) as HTMLButtonElement;
+    expect(createdEdit).not.toBeNull();
+    expect(document.activeElement).toBe(createdEdit);
+  }));
+
+  it('lets the panel restore a surviving opener exactly once on normal close', fakeAsync(() => {
+    render();
+    const createButton = query('.user-list__create') as HTMLButtonElement;
+    createButton.focus();
+    createButton.click();
+    fixture.detectChanges();
+    tick();
+    const focus = spyOn(createButton, 'focus').and.callThrough();
+
+    component.requestUserPanelClose(false);
+    fixture.detectChanges();
+    tick();
+
+    expect(document.activeElement).toBe(createButton);
+    expect(focus).toHaveBeenCalledTimes(1);
+  }));
 
   it('edits with the exact preserved employee and draft access, patches the user, and refreshes auth', () => {
     const selected = users.find(item => item.employeeId === 'employee-7')!;
@@ -222,6 +264,37 @@ describe('UsersComponent', () => {
     expect(component.userPanelMode).toBe('closed');
   }));
 
+  it('ignores a dirty-close confirmation after the component is destroyed', fakeAsync(() => {
+    const pending = deferred<boolean>();
+    confirmation.confirm.and.returnValue(pending.promise);
+    render();
+    component.openUserCreator();
+
+    component.requestUserPanelClose(true);
+    fixture.destroy();
+    pending.resolve(true);
+    tick();
+
+    expect(component.userPanelMode).toBe('create');
+  }));
+
+  it('ignores a stale dirty-close confirmation after another user is selected', fakeAsync(() => {
+    const pending = deferred<boolean>();
+    confirmation.confirm.and.returnValue(pending.promise);
+    render();
+    const first = component.users[0];
+    const second = component.users[1];
+    component.openUserEditor(first);
+
+    component.requestUserPanelClose(true);
+    component.openUserEditor(second);
+    pending.resolve(true);
+    tick();
+
+    expect(component.userPanelMode).toBe('edit');
+    expect(component.selectedUser).toBe(second);
+  }));
+
   it('confirms deactivation but activates directly and calls setStatus with exact values', fakeAsync(() => {
     const active = user({ id: 'active', username: 'activo', isActive: true });
     const inactive = user({ id: 'inactive', username: 'inactivo', isActive: false });
@@ -229,6 +302,7 @@ describe('UsersComponent', () => {
       of(user({ id, username: id, isActive }))
     );
     render();
+    component.users = [active, inactive];
 
     confirmation.confirm.and.resolveTo(false);
     component.requestUserStatusChange(active);
@@ -245,6 +319,40 @@ describe('UsersComponent', () => {
     tick();
     expect(confirmation.confirm).not.toHaveBeenCalled();
     expect(userService.setStatus).toHaveBeenCalledWith('inactive', true);
+  }));
+
+  it('ignores a stale deactivation confirmation after a newer status request', fakeAsync(() => {
+    const pending = deferred<boolean>();
+    const active = user({ id: 'active', username: 'activo', isActive: true });
+    const inactive = user({ id: 'inactive', username: 'inactivo', isActive: false });
+    confirmation.confirm.and.returnValue(pending.promise);
+    userService.setStatus.and.callFake((id, isActive) =>
+      of(user({ id, username: id, isActive }))
+    );
+    render();
+    component.users = [active, inactive];
+
+    component.requestUserStatusChange(active);
+    component.requestUserStatusChange(inactive);
+    pending.resolve(true);
+    tick();
+
+    expect(userService.setStatus).toHaveBeenCalledTimes(1);
+    expect(userService.setStatus).toHaveBeenCalledOnceWith('inactive', true);
+  }));
+
+  it('does not delete a profile when its confirmation resolves after destroy', fakeAsync(() => {
+    const pending = deferred<boolean>();
+    confirmation.confirm.and.returnValue(pending.promise);
+    render();
+    const selectedProfile = component.profiles[0];
+
+    component.deleteProfile(selectedProfile);
+    fixture.destroy();
+    pending.resolve(true);
+    tick();
+
+    expect(profileService.deleteAccessProfile).not.toHaveBeenCalled();
   }));
 
   it('uses accessible tabs and keeps both sections mounted with hidden semantics', () => {
@@ -329,21 +437,100 @@ describe('UsersComponent', () => {
   it('keeps tabs touch-friendly, visibly focusable, and the shell free of narrow overflow', async () => {
     render();
     const tab = query('.access-tabs__item') as HTMLButtonElement;
+    const tablist = query('.access-tabs') as HTMLElement;
     const componentStyles = Array.from(document.head.querySelectorAll('style'))
       .map(style => style.textContent ?? '')
       .find(css => css.includes('.access-tabs__item'));
 
     expect(Number.parseFloat(getComputedStyle(tab).minHeight)).toBeGreaterThanOrEqual(44);
     expect(componentStyles).toMatch(/\.access-tabs__item[^{]*:focus-visible[\s\S]*outline:/);
+    expect(getComputedStyle(tablist).alignItems).toBe('flex-end');
 
-    fixture.nativeElement.style.width = '375px';
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-    fixture.detectChanges();
-    const page = query('.page') as HTMLElement;
-    expect(page.scrollWidth).toBeLessThanOrEqual(page.clientWidth);
+    for (const width of [768, 375]) {
+      fixture.nativeElement.style.display = 'block';
+      fixture.nativeElement.style.width = `${width}px`;
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      fixture.detectChanges();
+      const page = query('.page') as HTMLElement;
+      expect(page.getBoundingClientRect().width).toBeLessThanOrEqual(width);
+      expect(page.scrollWidth).toBeLessThanOrEqual(page.clientWidth);
+      expect(fixture.nativeElement.scrollWidth)
+        .toBeLessThanOrEqual(fixture.nativeElement.clientWidth);
+    }
   });
 
-  it('preserves data-loading behavior and reports user and profile load errors', () => {
+  it('keeps inactive tab foreground above WCAG AA contrast in both themes', fakeAsync(() => {
+    render();
+    const inactiveTab = query('#profiles-tab') as HTMLButtonElement;
+
+    expect(contrastRatio(
+      getComputedStyle(inactiveTab).color,
+      inheritedColorVariable('--bg')
+    )).toBeGreaterThanOrEqual(4.5);
+
+    inactiveTab.style.transition = 'none';
+    document.body.classList.add('theme-light');
+    tick(400);
+    fixture.detectChanges();
+    expect(contrastRatio(
+      getComputedStyle(inactiveTab).color,
+      inheritedColorVariable('--bg')
+    )).toBeGreaterThanOrEqual(4.5);
+  }));
+
+  it('shows a persistent user error before the hidden list and retries users only', () => {
+    userService.listUsers.and.returnValues(
+      throwError(() => ({ error: { detail: 'Falló usuarios' } })),
+      of([...users])
+    );
+    render();
+
+    const error = query('[data-testid="users-load-error"]') as HTMLElement;
+    const listHost = query('app-user-access-list') as HTMLElement;
+    expect(error?.textContent).toContain('Falló usuarios');
+    expect(error?.compareDocumentPosition(listHost) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+    expect(listHost.hidden).toBeTrue();
+
+    (error?.querySelector('button') as HTMLButtonElement | null)?.click();
+    fixture.detectChanges();
+
+    expect(userService.listUsers).toHaveBeenCalledTimes(2);
+    expect(profileService.listAccessProfiles).toHaveBeenCalledTimes(1);
+    expect(query('[data-testid="users-load-error"]')).toBeNull();
+    expect(listHost.hidden).toBeFalse();
+  });
+
+  it('shows a persistent profile error before the hidden legacy catalog and retries profiles only', () => {
+    profileService.listAccessProfiles.and.returnValues(
+      throwError(() => ({ error: { message: 'Falló perfiles' } })),
+      of([...profiles])
+    );
+    render();
+    component.profileForm.controls.name.setValue('Borrador conservado');
+    component.profileForm.controls.name.markAsDirty();
+    component.selectSection('profiles');
+    fixture.detectChanges();
+
+    const error = query('[data-testid="profiles-load-error"]') as HTMLElement;
+    const layout = query('.layout--profiles') as HTMLElement;
+    expect(error?.textContent).toContain('Falló perfiles');
+    expect(error?.compareDocumentPosition(layout) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+    expect(layout.hidden).toBeTrue();
+
+    (error?.querySelector('button') as HTMLButtonElement | null)?.click();
+    fixture.detectChanges();
+
+    expect(profileService.listAccessProfiles).toHaveBeenCalledTimes(2);
+    expect(userService.listUsers).toHaveBeenCalledTimes(1);
+    expect(query('[data-testid="profiles-load-error"]')).toBeNull();
+    expect(layout.hidden).toBeFalse();
+    expect(component.profileForm.controls.name.value).toBe('Borrador conservado');
+    expect(component.profileForm.dirty).toBeTrue();
+  });
+
+  it('keeps existing error toasts while storing per-resource load errors', () => {
     userService.listUsers.and.returnValue(throwError(() => ({
       error: { detail: 'Falló usuarios' }
     })));
@@ -362,7 +549,7 @@ describe('UsersComponent', () => {
     expect(toast.error).toHaveBeenCalledWith('Falló perfiles');
   });
 
-  it('keeps loading true until pending user and profile requests settle', () => {
+  it('binds list loading to the user request instead of the pending profile request', () => {
     const pendingUsers = new Subject<UserResponse[]>();
     const pendingProfiles = new Subject<AccessProfileResponse[]>();
     userService.listUsers.and.returnValue(pendingUsers);
@@ -376,12 +563,31 @@ describe('UsersComponent', () => {
     pendingUsers.complete();
     fixture.detectChanges();
     expect(component.loading).toBeTrue();
+    expect(component.loadingUsers).toBeFalse();
+    expect(component.loadingProfiles).toBeTrue();
+    expect(listComponent()?.loading).toBeFalse();
 
     pendingProfiles.next(profiles);
     pendingProfiles.complete();
     fixture.detectChanges();
     expect(component.loading).toBeFalse();
     expect(listComponent()?.loading).toBeFalse();
+  });
+
+  it('reloads users only from the list and preserves hidden profile editor state', () => {
+    render();
+    component.profileForm.controls.name.setValue('Perfil en progreso');
+    component.profileForm.controls.name.markAsDirty();
+    userService.listUsers.calls.reset();
+    profileService.listAccessProfiles.calls.reset();
+
+    listComponent()?.reloadRequested.emit();
+    fixture.detectChanges();
+
+    expect(userService.listUsers).toHaveBeenCalledTimes(1);
+    expect(profileService.listAccessProfiles).not.toHaveBeenCalled();
+    expect(component.profileForm.controls.name.value).toBe('Perfil en progreso');
+    expect(component.profileForm.dirty).toBeTrue();
   });
 
   function render(): void {
@@ -400,6 +606,43 @@ describe('UsersComponent', () => {
 
   function panelComponent(): UserAccessPanelComponent | null {
     return fixture.debugElement.query(By.directive(UserAccessPanelComponent))?.componentInstance ?? null;
+  }
+
+  function deferred<T>(): {
+    promise: Promise<T>;
+    resolve: (value: T) => void;
+  } {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>(promiseResolve => {
+      resolve = promiseResolve;
+    });
+    return { promise, resolve };
+  }
+
+  function inheritedColorVariable(name: string): string {
+    return getComputedStyle(document.body).getPropertyValue(name).trim()
+      || getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function contrastRatio(foreground: string, background: string): number {
+    const lighter = Math.max(relativeLuminance(foreground), relativeLuminance(background));
+    const darker = Math.min(relativeLuminance(foreground), relativeLuminance(background));
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  function relativeLuminance(color: string): number {
+    const hex = color.match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
+    const channelRange = color.startsWith('color(srgb') ? 1 : 255;
+    const channels = (hex
+      ? hex.slice(1).map(value => Number.parseInt(value, 16) / 255)
+      : (color.match(/\d+(?:\.\d+)?/g) ?? [])
+          .slice(0, 3)
+          .map(value => Number(value) / channelRange))
+      .map(value => value <= 0.03928
+        ? value / 12.92
+        : Math.pow((value + 0.055) / 1.055, 2.4));
+
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
   }
 
   function accessDraft(overrides: Partial<UserAccessDraft> = {}): UserAccessDraft {

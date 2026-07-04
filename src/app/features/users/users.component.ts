@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccessProfileResponse } from '../../core/models/access-profile.models';
@@ -32,7 +41,7 @@ import { AccessPanelMode, AccessSection, UserAccessDraft } from './users-ui.mode
   styleUrls: ['./users.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class UsersComponent implements OnInit {
+export class UsersComponent implements OnInit, OnDestroy {
   readonly sections = [
     { id: 'users', label: 'Usuarios' },
     { id: 'profiles', label: 'Perfiles' }
@@ -68,6 +77,8 @@ export class UsersComponent implements OnInit {
   showSelectedPermissionsOnly = false;
   loadingUsers = true;
   loadingProfiles = true;
+  usersLoadError: string | null = null;
+  profilesLoadError: string | null = null;
   savingCreate = false;
   savingProfile = false;
   editingProfileId: string | null = null;
@@ -78,7 +89,11 @@ export class UsersComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
-  private userPanelTrigger: HTMLElement | null = null;
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private destroyed = false;
+  private panelCloseRequestId = 0;
+  private statusRequestId = 0;
+  private profileDeleteRequestId = 0;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -259,33 +274,52 @@ export class UsersComponent implements OnInit {
   }
 
   loadData(): void {
+    this.loadProfiles();
+    this.loadUsers();
+  }
+
+  loadProfiles(): void {
     this.loadingProfiles = true;
+    this.profilesLoadError = null;
     this.accessProfileService.listAccessProfiles().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: profiles => {
         this.profiles = profiles.sort((left, right) => left.name.localeCompare(right.name));
         this.collapsedProfileIds = new Set(this.profiles.map(profile => profile.id));
         this.loadingProfiles = false;
+        this.profilesLoadError = null;
         this.ensureCreateProfileSelection();
         this.cdr.markForCheck();
       },
       error: err => {
         this.loadingProfiles = false;
-        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron cargar los perfiles');
+        this.profilesLoadError = this.loadErrorMessage(
+          err,
+          'No se pudieron cargar los perfiles'
+        );
+        this.toast.error(this.profilesLoadError);
         this.cdr.markForCheck();
       }
     });
+  }
 
+  loadUsers(): void {
     this.loadingUsers = true;
+    this.usersLoadError = null;
     this.userService.listUsers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: users => {
         this.users = users.sort((left, right) => left.username.localeCompare(right.username));
         this.collapsedUserIds = new Set(this.users.map(user => user.id));
         this.loadingUsers = false;
+        this.usersLoadError = null;
         this.cdr.markForCheck();
       },
       error: err => {
         this.loadingUsers = false;
-        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron cargar los usuarios');
+        this.usersLoadError = this.loadErrorMessage(
+          err,
+          'No se pudieron cargar los usuarios'
+        );
+        this.toast.error(this.usersLoadError);
         this.cdr.markForCheck();
       }
     });
@@ -305,14 +339,14 @@ export class UsersComponent implements OnInit {
   }
 
   openUserCreator(): void {
-    this.captureUserPanelTrigger();
+    this.panelCloseRequestId++;
     this.selectedUser = null;
     this.userPanelMode = 'create';
     this.cdr.markForCheck();
   }
 
   openUserEditor(user: UserResponse): void {
-    this.captureUserPanelTrigger();
+    this.panelCloseRequestId++;
     this.selectedUser = user;
     this.userPanelMode = 'edit';
     this.cdr.markForCheck();
@@ -333,7 +367,7 @@ export class UsersComponent implements OnInit {
           this.users = [...this.users, created]
             .sort((left, right) => left.username.localeCompare(right.username));
           this.userPanelSaving = false;
-          this.closeUserPanel();
+          this.closeUserPanel(created.id);
           this.toast.success('Usuario creado');
           this.cdr.markForCheck();
         },
@@ -373,11 +407,21 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.panelCloseRequestId++;
+    this.statusRequestId++;
+    this.profileDeleteRequestId++;
+  }
+
   async requestUserPanelClose(dirty: boolean): Promise<void> {
     if (this.userPanelSaving || this.userPanelMode === 'closed') {
       return;
     }
 
+    const requestId = ++this.panelCloseRequestId;
+    const expectedMode = this.userPanelMode;
+    const expectedUserId = this.selectedUser?.id ?? null;
     if (dirty) {
       const confirmed = await this.confirmation.confirm({
         eyebrow: 'Cambios sin guardar',
@@ -388,15 +432,22 @@ export class UsersComponent implements OnInit {
         cancelLabel: 'Seguir editando',
         tone: 'warning'
       });
-      if (!confirmed) {
+      if (
+        !confirmed
+        || !this.isCurrentPanelRequest(requestId, expectedMode, expectedUserId)
+      ) {
         return;
       }
     }
 
+    if (!this.isCurrentPanelRequest(requestId, expectedMode, expectedUserId)) {
+      return;
+    }
     this.closeUserPanel();
   }
 
   async requestUserStatusChange(user: UserResponse): Promise<void> {
+    const requestId = ++this.statusRequestId;
     if (user.isActive) {
       const confirmed = await this.confirmation.confirm({
         eyebrow: 'Estado del usuario',
@@ -406,12 +457,19 @@ export class UsersComponent implements OnInit {
         confirmLabel: 'Desactivar usuario',
         tone: 'danger'
       });
-      if (!confirmed) {
+      if (!confirmed || this.destroyed || requestId !== this.statusRequestId) {
         return;
       }
     }
 
-    this.toggleStatus(user);
+    if (this.destroyed || requestId !== this.statusRequestId) {
+      return;
+    }
+    const current = this.users.find(candidate => candidate.id === user.id);
+    if (!current || current.isActive !== user.isActive) {
+      return;
+    }
+    this.toggleStatus(current);
   }
 
   createUser(): void {
@@ -502,7 +560,7 @@ export class UsersComponent implements OnInit {
         this.beginCreateProfile();
         this.toast.success(editingProfileId ? 'Perfil actualizado' : 'Perfil creado');
         this.cdr.markForCheck();
-        this.reloadUsers();
+        this.loadUsers();
         this.auth.refreshCurrentUserProfile();
       },
       error: err => {
@@ -514,6 +572,7 @@ export class UsersComponent implements OnInit {
   }
 
   async deleteProfile(profile: AccessProfileResponse): Promise<void> {
+    const requestId = ++this.profileDeleteRequestId;
     const confirmed = await this.confirmation.confirm({
       eyebrow: 'Administracion de acceso',
       title: 'Eliminar perfil',
@@ -522,7 +581,12 @@ export class UsersComponent implements OnInit {
       confirmLabel: 'Eliminar perfil',
       tone: 'danger'
     });
-    if (!confirmed) {
+    if (
+      !confirmed
+      || this.destroyed
+      || requestId !== this.profileDeleteRequestId
+      || !this.profiles.some(candidate => candidate.id === profile.id)
+    ) {
       return;
     }
 
@@ -690,41 +754,65 @@ export class UsersComponent implements OnInit {
     permissionCodes.forEach(code => this.selectedProfilePermissionCodes.delete(code));
   }
 
-  private reloadUsers(): void {
-    this.userService.listUsers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: users => {
-        this.users = users.sort((left, right) => left.username.localeCompare(right.username));
-        this.collapsedUserIds = new Set(this.users.map(user => user.id));
-        this.cdr.markForCheck();
-      },
-      error: () => undefined
-    });
-  }
-
   private patchUser(updated: UserResponse): void {
     this.users = this.users
       .map(user => user.id === updated.id ? updated : user)
       .sort((left, right) => left.username.localeCompare(right.username));
   }
 
-  private captureUserPanelTrigger(): void {
-    this.userPanelTrigger = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-  }
-
-  private closeUserPanel(): void {
-    const trigger = this.userPanelTrigger;
+  private closeUserPanel(preferredUserId?: string): void {
+    this.panelCloseRequestId++;
     this.userPanelMode = 'closed';
     this.selectedUser = null;
-    this.userPanelTrigger = null;
     this.cdr.markForCheck();
 
     setTimeout(() => {
-      if (trigger?.isConnected) {
-        trigger.focus();
+      if (this.destroyed) {
+        return;
+      }
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement && activeElement !== document.body) {
+        return;
+      }
+
+      const preferredAction = preferredUserId
+        ? this.createdUserEditAction(preferredUserId)
+        : null;
+      const fallback = preferredAction
+        ?? this.host.nativeElement.querySelector<HTMLElement>('.user-list__create')
+        ?? this.host.nativeElement.querySelector<HTMLElement>('#user-list-title');
+      if (fallback) {
+        if (!fallback.matches('button, a, input, select, textarea, [tabindex]')) {
+          fallback.tabIndex = -1;
+        }
+        fallback.focus();
       }
     });
+  }
+
+  private isCurrentPanelRequest(
+    requestId: number,
+    expectedMode: AccessPanelMode,
+    expectedUserId: string | null
+  ): boolean {
+    return !this.destroyed
+      && requestId === this.panelCloseRequestId
+      && this.userPanelMode === expectedMode
+      && (this.selectedUser?.id ?? null) === expectedUserId;
+  }
+
+  private createdUserEditAction(userId: string): HTMLElement | null {
+    const row = Array.from(
+      this.host.nativeElement.querySelectorAll<HTMLElement>('[data-user-id]')
+    ).find(candidate => candidate.dataset['userId'] === userId);
+    return row?.querySelector<HTMLElement>('.user-list__open') ?? null;
+  }
+
+  private loadErrorMessage(error: unknown, fallback: string): string {
+    const response = error as {
+      error?: { detail?: string; message?: string };
+    } | null;
+    return response?.error?.detail || response?.error?.message || fallback;
   }
 
   private ensureCreateProfileSelection(preferredProfileId?: string): void {

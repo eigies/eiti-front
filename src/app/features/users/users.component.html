@@ -48,16 +48,28 @@
       role="tabpanel"
       aria-labelledby="users-tab"
       [hidden]="activeSection !== 'users'">
+      <article
+        *ngIf="usersLoadError"
+        class="resource-error"
+        data-testid="users-load-error"
+        role="alert">
+        <div>
+          <span class="resource-error__eyebrow">No pudimos cargar usuarios</span>
+          <p>{{ usersLoadError }}</p>
+        </div>
+        <button type="button" (click)="loadUsers()">Reintentar</button>
+      </article>
       <app-user-access-list
+        [hidden]="!!usersLoadError"
         [users]="users"
         [profiles]="profiles"
         [branches]="branches"
-        [loading]="loading"
+        [loading]="loadingUsers"
         [selectedUserId]="selectedUser?.id ?? null"
         (createRequested)="openUserCreator()"
         (userSelected)="openUserEditor($event)"
         (statusRequested)="requestUserStatusChange($event)"
-        (reloadRequested)="loadData()">
+        (reloadRequested)="loadUsers()">
       </app-user-access-list>
     </section>
 
@@ -67,7 +79,18 @@
       role="tabpanel"
       aria-labelledby="profiles-tab"
       [hidden]="activeSection !== 'profiles'">
-      <div class="layout layout--profiles">
+      <article
+        *ngIf="profilesLoadError"
+        class="resource-error"
+        data-testid="profiles-load-error"
+        role="alert">
+        <div>
+          <span class="resource-error__eyebrow">No pudimos cargar perfiles</span>
+          <p>{{ profilesLoadError }}</p>
+        </div>
+        <button type="button" (click)="loadProfiles()">Reintentar</button>
+      </article>
+      <div class="layout layout--profiles" [hidden]="!!profilesLoadError">
         <article class="panel panel--profiles-editor">
           <div class="panel__head">
             <div class="panel__copy">
@@ -230,7 +253,7 @@
               <span class="panel__kicker">Perfiles cargados</span>
               <h2>Catálogo operativo</h2>
             </div>
-            <button class="btn btn--ghost" type="button" (click)="loadData()">Actualizar</button>
+            <button class="btn btn--ghost" type="button" (click)="loadProfiles()">Actualizar</button>
           </div>
 
           <div class="empty" *ngIf="loadingProfiles">Cargando perfiles...</div>
