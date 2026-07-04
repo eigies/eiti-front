@@ -179,6 +179,20 @@ describe('UserAccessListComponent', () => {
     expect(component.visibleUsers).toEqual(users);
   });
 
+  it('uses the application control geometry for search and filters', () => {
+    const input = fixture.nativeElement.querySelector(
+      'input[type="search"]'
+    ) as HTMLInputElement;
+    const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+
+    for (const control of [input, select]) {
+      const style = getComputedStyle(control);
+      expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+      expect(style.borderTopLeftRadius).toBe('8px');
+    }
+    expect(getComputedStyle(input).fontFamily).toContain('Crimson Pro');
+  });
+
   it('emits create and reload requests from the toolbar', () => {
     const createRequested = jasmine.createSpy('createRequested');
     const reloadRequested = jasmine.createSpy('reloadRequested');

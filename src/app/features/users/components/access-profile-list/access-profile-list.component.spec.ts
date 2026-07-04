@@ -83,6 +83,20 @@ describe('AccessProfileListComponent', () => {
     expect(component.visibleProfiles.length).toBe(2);
   });
 
+  it('uses the application control geometry for search and filters', () => {
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector(
+      'input[type="search"]'
+    ) as HTMLInputElement;
+    const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+
+    for (const control of [input, select]) {
+      const style = getComputedStyle(control);
+      expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+      expect(style.borderTopLeftRadius).toBe('8px');
+    }
+  });
+
   it('distinguishes an empty catalog from filtered results', () => {
     fixture.componentRef.setInput('profiles', []);
     fixture.detectChanges();

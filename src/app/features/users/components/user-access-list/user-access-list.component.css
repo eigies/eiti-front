@@ -130,14 +130,21 @@ a:focus-visible {
 .user-list__filter select {
   width: 100%;
   min-width: 0;
-  height: 40px;
+  min-height: 44px;
   border: 1px solid var(--border-2);
-  border-radius: 0;
-  background: color-mix(in srgb, var(--bg-panel) 80%, transparent);
+  border-radius: 8px;
+  outline: none;
+  background-color: color-mix(in srgb, var(--bg-panel) 78%, var(--bg));
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: .92rem;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease;
 }
 
 .user-list__search input {
-  padding: 0 0.9rem 0 2.3rem;
+  padding: .7rem .8rem .7rem 2.3rem;
 }
 
 .user-list__search input::placeholder {
@@ -151,7 +158,19 @@ a:focus-visible {
 }
 
 .user-list__filter select {
-  padding: 0 2.4rem 0 0.7rem;
+  padding: .7rem 2.9rem .7rem .8rem;
+}
+
+.user-list__search input:hover,
+.user-list__filter select:hover {
+  border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
+}
+
+.user-list__search input:focus-visible,
+.user-list__filter select:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
 }
 
 .user-list__reload,

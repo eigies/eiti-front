@@ -109,13 +109,34 @@ button {
 .profile-list__filter select {
   width: 100%;
   min-width: 0;
-  min-height: 42px;
-  padding: .6rem .7rem;
+  min-height: 44px;
+  padding: .7rem .8rem;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--bg-panel) 78%, var(--bg));
+  outline: none;
+  background-color: color-mix(in srgb, var(--bg-panel) 78%, var(--bg));
   font-family: 'Crimson Pro', Georgia, serif;
   font-size: .92rem;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease;
+}
+
+.profile-list__filter select {
+  padding-right: 2.9rem;
+}
+
+.profile-list__filter input:hover,
+.profile-list__filter select:hover {
+  border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
+}
+
+.profile-list__filter input:focus-visible,
+.profile-list__filter select:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
 }
 
 .profile-list__head,
