@@ -1,0 +1,91 @@
+<section class="permission-matrix" aria-labelledby="permission-matrix-title">
+  <div class="permission-matrix__toolbar">
+    <div class="permission-matrix__intro">
+      <div>
+        <p class="permission-matrix__eyebrow">Matriz de permisos</p>
+        <h3 id="permission-matrix-title">Alcance del perfil</h3>
+      </div>
+      <p class="permission-matrix__count" aria-live="polite">
+        <strong>{{ selectedCount }}</strong>
+        {{ selectedCount === 1 ? 'permiso activo' : 'permisos activos' }}
+      </p>
+    </div>
+
+    <div class="permission-matrix__filters">
+      <label class="permission-matrix__search" for="permission-search">
+        <span>Buscar permiso</span>
+        <input
+          id="permission-search"
+          class="permission-matrix__input"
+          type="search"
+          [ngModel]="query"
+          (ngModelChange)="setQuery($event)"
+          aria-label="Buscar permisos"
+          placeholder="Ventas, caja, stock..." />
+      </label>
+
+      <label class="permission-matrix__selected-only">
+        <input
+          type="checkbox"
+          [ngModel]="selectedOnly"
+          (ngModelChange)="setSelectedOnly($event)" />
+        <span>Sólo seleccionados</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="permission-matrix__modules" *ngIf="modules.length > 0; else emptyResults">
+    <article
+      class="permission-module"
+      *ngFor="let module of modules; trackBy: trackModule">
+      <button
+        class="permission-module__trigger"
+        type="button"
+        [attr.data-module]="module.label"
+        [attr.aria-expanded]="isExpanded(module.label)"
+        [attr.aria-controls]="moduleId(module.label)"
+        (click)="toggleExpanded(module.label)">
+        <span class="permission-module__identity">
+          <strong>{{ module.label }}</strong>
+          <small>{{ module.selected }} de {{ module.total }} seleccionados</small>
+        </span>
+        <span class="permission-module__chevron" aria-hidden="true">⌄</span>
+      </button>
+
+      <div
+        *ngIf="isExpanded(module.label)"
+        class="permission-module__body"
+        [id]="moduleId(module.label)">
+        <div class="permission-module__actions">
+          <button type="button" (click)="toggleModule(module.codes)">
+            {{ areAllSelected(module) ? 'Quitar bloque' : 'Seleccionar bloque' }}
+          </button>
+          <button type="button" (click)="clearModule(module.codes)">Limpiar</button>
+        </div>
+
+        <div class="permission-module__permissions">
+          <label
+            class="permission-row"
+            *ngFor="let permission of module.permissions; trackBy: trackPermission"
+            [class.permission-row--selected]="permission.selected">
+            <input
+              type="checkbox"
+              [checked]="permission.selected"
+              (change)="togglePermission(permission.code)" />
+            <span class="permission-row__copy">
+              <strong>{{ permission.action }}</strong>
+              <small>{{ permission.description }}</small>
+            </span>
+          </label>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <ng-template #emptyResults>
+    <div class="permission-matrix__empty">
+      <strong>No hay permisos que coincidan</strong>
+      <span>Probá otra búsqueda o desactivá “Sólo seleccionados”.</span>
+    </div>
+  </ng-template>
+</section>
