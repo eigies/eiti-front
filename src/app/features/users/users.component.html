@@ -90,229 +90,17 @@
         </div>
         <button type="button" (click)="loadProfiles()">Reintentar</button>
       </article>
-      <div class="layout layout--profiles" [hidden]="!!profilesLoadError">
-        <article class="panel panel--profiles-editor">
-          <div class="panel__head">
-            <div class="panel__copy">
-              <span class="panel__kicker">Perfiles reutilizables</span>
-              <h2>{{ profileEditorTitle }}</h2>
-            </div>
-            <button class="btn btn--ghost" type="button" (click)="beginCreateProfile()">Nuevo perfil</button>
-          </div>
-
-          <form class="form form--profile" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-            <label class="field">
-              <span>Nombre</span>
-              <input class="control" type="text" formControlName="name" placeholder="Caja tarde" />
-            </label>
-            <label class="field field--wide">
-              <span>Descripción</span>
-              <textarea
-                class="control control--textarea"
-                formControlName="description"
-                placeholder="Define cuándo usar este perfil y qué cubre."></textarea>
-            </label>
-
-            <div class="form__section field--wide">
-              <div class="form__section-head">
-                <span class="panel__kicker">Matriz de permisos</span>
-                <span class="form__section-copy">
-                  Seleccioná el conjunto exacto de permisos que recibirán los usuarios asignados.
-                </span>
-              </div>
-              <div class="permission-filter" *ngIf="permissionCategories.length > 1">
-                <button
-                  *ngFor="let category of permissionCategories"
-                  type="button"
-                  class="permission-filter__chip"
-                  [class.permission-filter__chip--active]="activePermissionCategory === category"
-                  (click)="selectPermissionCategory(category)">
-                  {{ category }}
-                </button>
-              </div>
-              <div class="permission-toolbar">
-                <label class="permission-search">
-                  <span class="permission-search__label">Buscar permiso</span>
-                  <input
-                    class="control permission-search__input"
-                    type="text"
-                    [(ngModel)]="permissionSearchTerm"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="Caja, ventas, costo..." />
-                </label>
-                <button
-                  type="button"
-                  class="permission-filter__chip permission-filter__chip--ghost"
-                  [class.permission-filter__chip--active]="showSelectedPermissionsOnly"
-                  (click)="showSelectedPermissionsOnly = !showSelectedPermissionsOnly">
-                  Solo seleccionados
-                </button>
-              </div>
-              <div class="permission-summary">
-                <div class="permission-summary__count">
-                  <strong>{{ selectedProfilePermissionCodes.size }}</strong>
-                  <span>permisos activos</span>
-                </div>
-                <div
-                  class="permission-summary__chips"
-                  *ngIf="selectedPermissionLabels.length > 0; else noPermissionSummary">
-                  <span *ngFor="let label of selectedPermissionLabels | slice:0:6">{{ label }}</span>
-                  <span *ngIf="selectedPermissionLabels.length > 6">
-                    +{{ selectedPermissionLabels.length - 6 }} más
-                  </span>
-                </div>
-                <ng-template #noPermissionSummary>
-                  <div class="selection-copy">Todavía no hay permisos marcados.</div>
-                </ng-template>
-              </div>
-              <div
-                class="permission-modules"
-                *ngIf="permissionModules.length > 0; else noFilteredPermissions">
-                <article class="permission-module" *ngFor="let module of permissionModules">
-                  <button
-                    type="button"
-                    class="permission-module__toggle"
-                    (click)="togglePermissionModule(module.category)">
-                    <div class="permission-module__head">
-                      <div class="permission-module__title">
-                        <strong>{{ module.category }}</strong>
-                        <span>{{ module.selected }} de {{ module.total }} seleccionados</span>
-                      </div>
-                      <span
-                        class="card-toggle__chevron"
-                        [class.card-toggle__chevron--collapsed]="!isPermissionModuleExpanded(module.category)">
-                        &#9662;
-                      </span>
-                    </div>
-                  </button>
-
-                  <div class="permission-module__body" *ngIf="isPermissionModuleExpanded(module.category)">
-                    <div class="permission-module__actions">
-                      <button
-                        type="button"
-                        class="permission-filter__chip permission-filter__chip--ghost"
-                        [class.permission-filter__chip--active]="areAllModulePermissionsSelected(module.permissionCodes)"
-                        (click)="togglePermissionModuleSelection(module.permissionCodes)">
-                        {{ areAllModulePermissionsSelected(module.permissionCodes)
-                          ? 'Quitar bloque'
-                          : 'Seleccionar bloque' }}
-                      </button>
-                      <button
-                        type="button"
-                        class="permission-filter__chip permission-filter__chip--ghost"
-                        (click)="clearPermissionModuleSelection(module.permissionCodes)">
-                        Limpiar
-                      </button>
-                    </div>
-
-                    <div class="role-list">
-                      <button
-                        *ngFor="let permission of module.permissions"
-                        type="button"
-                        class="role-row"
-                        [class.role-row--active]="isProfilePermissionSelected(permission.code)"
-                        (click)="toggleProfilePermission(permission.code)">
-                        <span class="role-row__check"></span>
-                        <span class="role-row__copy">
-                          <strong>{{ permission.shortLabel }}</strong>
-                          <span>{{ permission.description }}</span>
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              </div>
-              <ng-template #noFilteredPermissions>
-                <div class="empty">No hay permisos que coincidan con el filtro actual.</div>
-              </ng-template>
-            </div>
-
-            <div class="form__actions">
-              <div class="form__actions-row">
-                <div class="selection-copy">{{ selectedProfilePermissionsLabel }}</div>
-                <div class="action-row">
-                  <button
-                    *ngIf="editingProfileId"
-                    class="btn btn--ghost"
-                    type="button"
-                    (click)="cancelProfileEditor()">
-                    Cancelar
-                  </button>
-                  <button class="btn" type="submit" [disabled]="savingProfile">
-                    {{ profileEditorActionLabel }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </article>
-
-        <article class="panel panel--profiles-list">
-          <div class="panel__head panel__head--list">
-            <div class="panel__copy">
-              <span class="panel__kicker">Perfiles cargados</span>
-              <h2>Catálogo operativo</h2>
-            </div>
-            <button class="btn btn--ghost" type="button" (click)="loadProfiles()">Actualizar</button>
-          </div>
-
-          <div class="empty" *ngIf="loadingProfiles">Cargando perfiles...</div>
-          <div class="empty" *ngIf="!loadingProfiles && profiles.length === 0">
-            Todavía no hay perfiles disponibles.
-          </div>
-
-          <div class="profile-stack" *ngIf="profiles.length > 0">
-            <article
-              class="profile-card"
-              *ngFor="let profile of profiles; trackBy: trackByProfile">
-              <button
-                class="card-toggle"
-                type="button"
-                (click)="toggleProfileCollapse(profile.id)">
-                <div class="profile-card__head">
-                  <div>
-                    <strong>{{ profile.name }}</strong>
-                    <div class="profile-card__meta">
-                      {{ profile.isSystem ? 'Perfil migrado del sistema' : 'Perfil personalizado' }}
-                    </div>
-                  </div>
-                  <div class="card-toggle__summary">
-                    <span>{{ profile.permissionCodes.length }} permisos</span>
-                    <span
-                      class="card-toggle__chevron"
-                      [class.card-toggle__chevron--collapsed]="isProfileCollapsed(profile.id)">
-                      &#9662;
-                    </span>
-                  </div>
-                </div>
-              </button>
-
-              <div class="profile-card__body" *ngIf="!isProfileCollapsed(profile.id)">
-                <div class="action-row action-row--card-actions">
-                  <button class="btn btn--ghost" type="button" (click)="beginEditProfile(profile)">
-                    Editar
-                  </button>
-                  <button
-                    class="btn btn--ghost btn--danger"
-                    type="button"
-                    (click)="deleteProfile(profile)">
-                    Eliminar
-                  </button>
-                </div>
-                <p class="profile-card__description">
-                  {{ profile.description || 'Sin descripción operativa.' }}
-                </p>
-                <div class="permission-list">
-                  <span class="permission-list__title">
-                    {{ profile.permissionCodes.length }} permisos
-                  </span>
-                  <span *ngFor="let permission of profile.permissionCodes">{{ permission }}</span>
-                </div>
-              </div>
-            </article>
-          </div>
-        </article>
-      </div>
+      <app-access-profile-list
+        [hidden]="!!profilesLoadError"
+        [profiles]="profiles"
+        [users]="users"
+        [loading]="loadingProfiles"
+        [selectedProfileId]="selectedProfile?.id ?? null"
+        (createRequested)="openProfileCreator()"
+        (profileSelected)="openProfileEditor($event)"
+        (deleteRequested)="deleteProfile($event)"
+        (reloadRequested)="loadProfiles()">
+      </app-access-profile-list>
     </section>
   </main>
 
@@ -327,4 +115,15 @@
     (saveRequested)="saveUserDraft($event)"
     (closeRequested)="requestUserPanelClose($event)">
   </app-user-access-panel>
+
+  <app-access-profile-panel
+    *ngIf="profilePanelMode !== 'closed'"
+    [mode]="profilePanelMode === 'create' ? 'create' : 'edit'"
+    [profile]="selectedProfile"
+    [permissionCatalog]="permissionCatalog"
+    [usageCount]="selectedProfile ? profileUsage(selectedProfile.id) : 0"
+    [saving]="profilePanelSaving"
+    (saveRequested)="saveProfileDraft($event)"
+    (closeRequested)="requestProfilePanelClose($event)">
+  </app-access-profile-panel>
 </div>

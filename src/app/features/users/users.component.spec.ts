@@ -11,7 +11,8 @@ import { BranchService } from '../../core/services/branch.service';
 import { UserService } from '../../core/services/user.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { ToastService } from '../../shared/services/toast.service';
-import { UserAccessDraft } from './users-ui.models';
+import { AccessProfileDraft, UserAccessDraft } from './users-ui.models';
+import { AccessProfileListComponent } from './components/access-profile-list/access-profile-list.component';
 import { UserAccessListComponent } from './components/user-access-list/user-access-list.component';
 import { UserAccessPanelComponent } from './components/user-access-panel/user-access-panel.component';
 import { UsersComponent } from './users.component';
@@ -371,7 +372,7 @@ describe('UsersComponent', () => {
     expect(tabs[0].getAttribute('aria-controls')).toBe('users-panel');
     expect(usersSection.hidden).toBeFalse();
     expect(profilesSection.hidden).toBeTrue();
-    expect(profilesSection.querySelector('.panel--profiles-editor')).not.toBeNull();
+    expect(profilesSection.querySelector('app-access-profile-list')).not.toBeNull();
 
     tabs[1].click();
     fixture.detectChanges();
@@ -380,6 +381,43 @@ describe('UsersComponent', () => {
     expect(usersSection.hidden).toBeTrue();
     expect(profilesSection.hidden).toBeFalse();
     expect(listComponent()).not.toBeNull();
+  });
+
+  it('preserves both list filter states while switching between users and profiles', () => {
+    render();
+    const usersList = listComponent();
+    usersList?.setQuery('ana');
+    component.selectSection('profiles');
+    fixture.detectChanges();
+    const profilesList = profileListComponent();
+    profilesList?.setQuery('operaciones');
+
+    component.selectSection('users');
+    fixture.detectChanges();
+    component.selectSection('profiles');
+    fixture.detectChanges();
+
+    expect(listComponent()).toBe(usersList);
+    expect(listComponent()?.filters.query).toBe('ana');
+    expect(profileListComponent()).toBe(profilesList);
+    expect(profileListComponent()?.filters.query).toBe('operaciones');
+  });
+
+  it('derives profile usage and keeps an errored profile editor open', () => {
+    profileService.updateAccessProfile.and.returnValue(throwError(() => ({
+      error: { message: 'falló' }
+    })));
+    render();
+    const selected = component.profiles.find(item => item.id === 'profile-a')!;
+    component.openProfileEditor(selected);
+
+    component.saveProfileDraft(profileDraft());
+
+    expect(component.profilePanelMode).toBe('edit');
+    expect(component.selectedProfile).toBe(selected);
+    expect(component.profilePanelSaving).toBeFalse();
+    expect(component.profileUsage(selected.id)).toBe(1);
+    expect(toast.error).toHaveBeenCalledWith('falló');
   });
 
   it('moves focus and selection between both tabs with horizontal arrow keys', () => {
@@ -501,23 +539,22 @@ describe('UsersComponent', () => {
     expect(listHost.hidden).toBeFalse();
   });
 
-  it('shows a persistent profile error before the hidden legacy catalog and retries profiles only', () => {
+  it('shows a persistent profile error before the hidden catalog and retries profiles only', () => {
     profileService.listAccessProfiles.and.returnValues(
       throwError(() => ({ error: { message: 'Falló perfiles' } })),
       of([...profiles])
     );
     render();
-    component.profileForm.controls.name.setValue('Borrador conservado');
-    component.profileForm.controls.name.markAsDirty();
+    profileListComponent()?.setQuery('borrador conservado');
     component.selectSection('profiles');
     fixture.detectChanges();
 
     const error = query('[data-testid="profiles-load-error"]') as HTMLElement;
-    const layout = query('.layout--profiles') as HTMLElement;
+    const catalog = query('app-access-profile-list') as HTMLElement;
     expect(error?.textContent).toContain('Falló perfiles');
-    expect(error?.compareDocumentPosition(layout) & Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(error?.compareDocumentPosition(catalog) & Node.DOCUMENT_POSITION_FOLLOWING)
       .toBeTruthy();
-    expect(layout.hidden).toBeTrue();
+    expect(catalog.hidden).toBeTrue();
 
     (error?.querySelector('button') as HTMLButtonElement | null)?.click();
     fixture.detectChanges();
@@ -525,9 +562,8 @@ describe('UsersComponent', () => {
     expect(profileService.listAccessProfiles).toHaveBeenCalledTimes(2);
     expect(userService.listUsers).toHaveBeenCalledTimes(1);
     expect(query('[data-testid="profiles-load-error"]')).toBeNull();
-    expect(layout.hidden).toBeFalse();
-    expect(component.profileForm.controls.name.value).toBe('Borrador conservado');
-    expect(component.profileForm.dirty).toBeTrue();
+    expect(catalog.hidden).toBeFalse();
+    expect(profileListComponent()?.filters.query).toBe('borrador conservado');
   });
 
   it('keeps existing error toasts while storing per-resource load errors', () => {
@@ -574,10 +610,9 @@ describe('UsersComponent', () => {
     expect(listComponent()?.loading).toBeFalse();
   });
 
-  it('reloads users only from the list and preserves hidden profile editor state', () => {
+  it('reloads users only from the list and preserves hidden profile catalog state', () => {
     render();
-    component.profileForm.controls.name.setValue('Perfil en progreso');
-    component.profileForm.controls.name.markAsDirty();
+    profileListComponent()?.setQuery('perfil en progreso');
     userService.listUsers.calls.reset();
     profileService.listAccessProfiles.calls.reset();
 
@@ -586,8 +621,7 @@ describe('UsersComponent', () => {
 
     expect(userService.listUsers).toHaveBeenCalledTimes(1);
     expect(profileService.listAccessProfiles).not.toHaveBeenCalled();
-    expect(component.profileForm.controls.name.value).toBe('Perfil en progreso');
-    expect(component.profileForm.dirty).toBeTrue();
+    expect(profileListComponent()?.filters.query).toBe('perfil en progreso');
   });
 
   function render(): void {
@@ -606,6 +640,10 @@ describe('UsersComponent', () => {
 
   function panelComponent(): UserAccessPanelComponent | null {
     return fixture.debugElement.query(By.directive(UserAccessPanelComponent))?.componentInstance ?? null;
+  }
+
+  function profileListComponent(): AccessProfileListComponent | null {
+    return fixture.debugElement.query(By.directive(AccessProfileListComponent))?.componentInstance ?? null;
   }
 
   function deferred<T>(): {
@@ -652,6 +690,15 @@ describe('UsersComponent', () => {
       password: 'secreto',
       profileId: 'profile-b',
       branchIds: ['branch-b'],
+      ...overrides
+    };
+  }
+
+  function profileDraft(overrides: Partial<AccessProfileDraft> = {}): AccessProfileDraft {
+    return {
+      name: 'Operaciones',
+      description: null,
+      permissionCodes: ['sales.access'],
       ...overrides
     };
   }
