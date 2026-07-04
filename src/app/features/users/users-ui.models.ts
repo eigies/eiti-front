@@ -45,18 +45,18 @@ export interface PermissionModuleView {
   }>;
 }
 
-export const EMPTY_USER_FILTERS: UserAccessFilters = {
+export const EMPTY_USER_FILTERS: Readonly<UserAccessFilters> = Object.freeze({
   query: '',
   status: 'all',
   profileId: '',
   branchId: ''
-};
+});
 
-export const EMPTY_PROFILE_FILTERS: AccessProfileFilters = {
+export const EMPTY_PROFILE_FILTERS: Readonly<AccessProfileFilters> = Object.freeze({
   query: '',
   type: 'all',
   usage: 'all'
-};
+});
 
 export function filterAccessUsers(
   users: readonly UserResponse[],
@@ -120,13 +120,18 @@ export function buildPermissionModules(
       continue;
     }
 
-    const separatorIndex = permission.label.indexOf(':');
+    const label = permission.label.trim();
+    const separatorIndex = label.indexOf(':');
+    const labelPrefix = separatorIndex >= 0
+      ? label.slice(0, separatorIndex).trim()
+      : label;
+    const labelSuffix = separatorIndex >= 0
+      ? label.slice(separatorIndex + 1).trim()
+      : label;
     const moduleLabel = separatorIndex >= 0
-      ? permission.label.slice(0, separatorIndex).trim()
-      : permission.label.trim();
-    const action = separatorIndex >= 0
-      ? permission.label.slice(separatorIndex + 1).trim()
-      : permission.label.trim();
+      ? labelPrefix || 'General'
+      : label || 'General';
+    const action = labelSuffix || labelPrefix || 'Permiso';
     const modulePermissions = modules.get(moduleLabel) ?? [];
 
     modulePermissions.push({
