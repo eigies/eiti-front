@@ -148,10 +148,12 @@ describe('AccessProfilePanelComponent', () => {
     fixture.detectChanges();
     const host = fixture.nativeElement as HTMLElement;
     const panel = fixture.nativeElement.querySelector('.profile-panel') as HTMLElement;
+    const body = fixture.nativeElement.querySelector('.profile-panel__body') as HTMLElement;
 
     host.style.width = '1000px';
     fixture.detectChanges();
-    expect(parseFloat(getComputedStyle(panel).width)).toBeLessThanOrEqual(560);
+    expect(parseFloat(getComputedStyle(panel).width)).toBeCloseTo(720, 0);
+    expect(parseFloat(getComputedStyle(body).paddingLeft)).toBeGreaterThanOrEqual(28);
     expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
   });
 });

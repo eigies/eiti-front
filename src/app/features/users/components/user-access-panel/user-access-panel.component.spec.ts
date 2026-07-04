@@ -418,7 +418,7 @@ describe('UserAccessPanelComponent', () => {
     expect(contrastRatio(style.color, style.backgroundColor)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('uses 440px desktop width, full host width through 900px, touch targets and no narrow overflow', async () => {
+  it('uses 720px desktop width, full host width through 900px, touch targets and no narrow overflow', async () => {
     render('edit', {
       ...existingUser,
       email: `${'verylongunbrokenaddress'.repeat(12)}@empresa.test`
@@ -426,7 +426,11 @@ describe('UserAccessPanelComponent', () => {
 
     await setHostWidth(1000);
     let panel = query('.access-panel') as HTMLElement;
-    expect(panel.getBoundingClientRect().width).toBeCloseTo(440, 0);
+    let body = query('.access-panel__body') as HTMLElement;
+    const profileTrigger = query('.search-select__trigger') as HTMLButtonElement;
+    expect(panel.getBoundingClientRect().width).toBeCloseTo(720, 0);
+    expect(parseFloat(getComputedStyle(body).paddingLeft)).toBeGreaterThanOrEqual(28);
+    expect(getComputedStyle(profileTrigger).borderTopLeftRadius).toBe('8px');
 
     await setHostWidth(900);
     panel = query('.access-panel') as HTMLElement;
@@ -435,7 +439,7 @@ describe('UserAccessPanelComponent', () => {
 
     await setHostWidth(375);
     panel = query('.access-panel') as HTMLElement;
-    const body = query('.access-panel__body') as HTMLElement;
+    body = query('.access-panel__body') as HTMLElement;
     expect(query('.access-panel__header')).not.toBeNull();
     expect(body).not.toBeNull();
     expect(query('.access-panel__footer')).not.toBeNull();
@@ -460,6 +464,7 @@ describe('UserAccessPanelComponent', () => {
     expect(Number.parseFloat(getComputedStyle(identityInput).minHeight))
       .withContext('identity input touch target')
       .toBeGreaterThanOrEqual(44);
+    expect(getComputedStyle(identityInput).borderTopLeftRadius).toBe('8px');
     expect((query('.access-panel') as HTMLElement).scrollWidth)
       .toBeLessThanOrEqual((query('.access-panel') as HTMLElement).clientWidth);
   });
