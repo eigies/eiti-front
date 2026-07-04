@@ -212,10 +212,12 @@ describe('UserAccessListComponent', () => {
     expect(bubbled).not.toHaveBeenCalled();
   });
 
-  it('uses stable desktop header and responsive card class structure', () => {
-    const list = fixture.nativeElement.querySelector('.user-list__table');
-    const head = fixture.nativeElement.querySelector('.user-list__head');
-    const row = fixture.nativeElement.querySelector('.user-list__row');
+  it('uses stable desktop header and responsive card class structure', async () => {
+    await setViewport(1280);
+    const list = fixture.nativeElement.querySelector('.user-list__table') as HTMLElement;
+    const head = fixture.nativeElement.querySelector('.user-list__head') as HTMLElement;
+    const row = fixture.nativeElement.querySelector('.user-list__row') as HTMLElement;
+    const edit = fixture.nativeElement.querySelector('.user-list__open') as HTMLButtonElement;
 
     expect(list).not.toBeNull();
     expect(head.textContent).toContain('Usuario');
@@ -226,6 +228,10 @@ describe('UserAccessListComponent', () => {
     expect(row.querySelector('.user-list__identity')).not.toBeNull();
     expect(row.querySelector('.user-list__access')).not.toBeNull();
     expect(row.querySelector('.user-list__actions')).not.toBeNull();
+    expect(getComputedStyle(head).borderTopWidth).toBe('1px');
+    expect(getComputedStyle(head).borderTopLeftRadius).toBe('10px');
+    expect(row.getBoundingClientRect().height).toBeLessThanOrEqual(72);
+    expect(getComputedStyle(edit).borderTopLeftRadius).toBe('8px');
   });
 
   it('caches visible users and uses OnPush change detection', () => {
