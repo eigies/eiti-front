@@ -5,6 +5,8 @@
   display: block;
   min-width: 0;
   color: var(--text);
+  container-name: user-access-panel-host;
+  container-type: inline-size;
 }
 
 * {
@@ -13,7 +15,7 @@
 }
 
 .access-panel__backdrop {
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: color-mix(in srgb, var(--overlay) 88%, #000 12%);
   backdrop-filter: blur(5px);
@@ -21,12 +23,12 @@
 }
 
 .access-panel {
-  position: fixed;
+  position: absolute;
   inset: 0 0 0 auto;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  width: min(440px, 100vw);
-  max-width: 100vw;
+  width: min(440px, 100vw, 100%);
+  max-width: 100%;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
@@ -174,6 +176,7 @@
 .access-panel__field input {
   width: 100%;
   height: 44px;
+  min-height: 44px;
   padding: 0 0.8rem;
   border: 1px solid var(--border-2);
   border-radius: 0;
@@ -458,9 +461,9 @@
   to { opacity: 1; }
 }
 
-@media (max-width: 899.98px) {
+@container user-access-panel-host (max-width: 900px) {
   .access-panel {
-    width: 100vw;
+    width: 100%;
     border-left: 0;
   }
 }

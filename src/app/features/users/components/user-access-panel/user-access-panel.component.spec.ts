@@ -149,6 +149,25 @@ describe('UserAccessPanelComponent', () => {
     expect(summary.textContent).not.toContain('cash.open');
   });
 
+  it('associates the profile group, label and error with the searchable select trigger', () => {
+    render('create');
+    component.form.controls.profileId.markAsTouched();
+    component.form.controls.profileId.setValue('');
+    fixture.detectChanges();
+
+    const group = query('.access-panel__profile-group') as HTMLElement | null;
+    const trigger = query('app-searchable-select .search-select__trigger') as HTMLButtonElement | null;
+    const error = query('#profile-error') as HTMLElement | null;
+
+    expect(group).not.toBeNull();
+    expect(group?.getAttribute('role')).toBe('group');
+    expect(group?.getAttribute('aria-labelledby')).toBe('profile-label');
+    expect(trigger).not.toBeNull();
+    expect(trigger?.getAttribute('aria-labelledby')).toBe('profile-label');
+    expect(trigger?.getAttribute('aria-describedby')).toBe('profile-error');
+    expect(error?.textContent).toContain('Seleccioná un perfil');
+  });
+
   it('reports pristine close as false and form or branch changes as dirty', () => {
     render('create');
     const close = jasmine.createSpy('close');
@@ -203,21 +222,63 @@ describe('UserAccessPanelComponent', () => {
     expect(close).toHaveBeenCalledOnceWith(false);
   }));
 
-  it('uses fixed header, scrolling body, fixed footer and contains narrow content without overflow', () => {
+  it('uses 440px desktop width, full host width through 900px, touch targets and no narrow overflow', async () => {
     render('edit', {
       ...existingUser,
       email: `${'verylongunbrokenaddress'.repeat(12)}@empresa.test`
     });
-    fixture.nativeElement.style.width = '375px';
-    fixture.detectChanges();
 
-    const panel = query('.access-panel') as HTMLElement;
+    await setHostWidth(1000);
+    let panel = query('.access-panel') as HTMLElement;
+    expect(panel.getBoundingClientRect().width).toBeCloseTo(440, 0);
+
+    await setHostWidth(900);
+    panel = query('.access-panel') as HTMLElement;
+    expect(fixture.nativeElement.getBoundingClientRect().width).toBeCloseTo(900, 0);
+    expect(panel.getBoundingClientRect().width).toBeCloseTo(900, 0);
+
+    await setHostWidth(375);
+    panel = query('.access-panel') as HTMLElement;
     const body = query('.access-panel__body') as HTMLElement;
     expect(query('.access-panel__header')).not.toBeNull();
     expect(body).not.toBeNull();
     expect(query('.access-panel__footer')).not.toBeNull();
+    expect(panel.getBoundingClientRect().width).toBeCloseTo(375, 0);
     expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
     expect(getComputedStyle(body).overflowY).toBe('auto');
+    for (const selector of [
+      '.access-panel__close',
+      '.search-select__trigger',
+      '.access-panel__branch',
+      '.access-panel__button'
+    ]) {
+      const target = query(selector) as HTMLElement;
+      expect(Number.parseFloat(getComputedStyle(target).minHeight))
+        .withContext(`${selector} touch target`)
+        .toBeGreaterThanOrEqual(44);
+    }
+
+    render('create');
+    await setHostWidth(375);
+    const identityInput = query('.access-panel__field input') as HTMLInputElement;
+    expect(Number.parseFloat(getComputedStyle(identityInput).minHeight))
+      .withContext('identity input touch target')
+      .toBeGreaterThanOrEqual(44);
+    expect((query('.access-panel') as HTMLElement).scrollWidth)
+      .toBeLessThanOrEqual((query('.access-panel') as HTMLElement).clientWidth);
+  });
+
+  it('disables panel motion when the user requests reduced motion', () => {
+    render('create');
+    const componentStyles = Array.from(document.head.querySelectorAll('style'))
+      .map(style => style.textContent ?? '')
+      .find(css => css.includes('.access-panel__backdrop') && css.includes('prefers-reduced-motion'));
+
+    expect(componentStyles).toBeDefined();
+    expect(componentStyles).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(componentStyles).toMatch(
+      /prefers-reduced-motion:\s*reduce[\s\S]*\.access-panel[^{]*\{[^}]*animation:\s*none/
+    );
   });
 
   function render(
@@ -240,6 +301,12 @@ describe('UserAccessPanelComponent', () => {
 
   function query(selector: string): Element | null {
     return fixture.nativeElement.querySelector(selector);
+  }
+
+  async function setHostWidth(width: number): Promise<void> {
+    fixture.nativeElement.style.width = `${width}px`;
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    fixture.detectChanges();
   }
 
   function profile(

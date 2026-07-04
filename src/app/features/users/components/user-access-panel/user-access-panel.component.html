@@ -97,19 +97,22 @@
           </div>
         </div>
 
-        <div class="access-panel__field">
-          <label for="profile-control">Perfil</label>
-          <div id="profile-control">
-            <app-searchable-select
-              formControlName="profileId"
-              [options]="profileOptions"
-              placeholder="Seleccioná un perfil"
-              searchPlaceholder="Buscar perfil…">
-            </app-searchable-select>
-          </div>
+        <div
+          class="access-panel__field access-panel__profile-group"
+          role="group"
+          aria-labelledby="profile-label">
+          <span id="profile-label">Perfil</span>
+          <app-searchable-select
+            #profileSelect
+            formControlName="profileId"
+            [options]="profileOptions"
+            placeholder="Seleccioná un perfil"
+            searchPlaceholder="Buscar perfil…">
+          </app-searchable-select>
           <small
             id="profile-error"
             class="access-panel__error"
+            role="alert"
             *ngIf="form.controls.profileId.touched && form.controls.profileId.invalid">
             Seleccioná un perfil para continuar.
           </small>

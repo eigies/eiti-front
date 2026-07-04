@@ -60,6 +60,8 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
   @Output() readonly closeRequested = new EventEmitter<boolean>();
 
   @ViewChild('panelTitle') private panelTitle?: ElementRef<HTMLElement>;
+  @ViewChild('profileSelect', { read: ElementRef })
+  private profileSelectElement?: ElementRef<HTMLElement>;
 
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.minLength(3)]],
@@ -144,6 +146,7 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    this.connectProfileSelectAccessibility();
     setTimeout(() => this.panelTitle?.nativeElement.focus());
   }
 
@@ -243,5 +246,17 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
 
   private branchSnapshot(branchIds: ReadonlySet<string>): string {
     return [...branchIds].sort().join('|');
+  }
+
+  private connectProfileSelectAccessibility(): void {
+    const trigger = this.profileSelectElement?.nativeElement
+      .querySelector<HTMLButtonElement>('.search-select__trigger');
+    if (!trigger) {
+      return;
+    }
+
+    trigger.setAttribute('aria-labelledby', 'profile-label');
+    trigger.setAttribute('aria-describedby', 'profile-error');
+    trigger.setAttribute('aria-required', 'true');
   }
 }
