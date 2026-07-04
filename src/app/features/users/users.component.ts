@@ -13,19 +13,29 @@ import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { UserAccessListComponent } from './components/user-access-list/user-access-list.component';
+import { UserAccessPanelComponent } from './components/user-access-panel/user-access-panel.component';
+import { AccessPanelMode, AccessSection, UserAccessDraft } from './users-ui.models';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, SearchableSelectComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    SearchableSelectComponent,
+    UserAccessListComponent,
+    UserAccessPanelComponent
+  ],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsersComponent implements OnInit {
   readonly sections = [
-    { id: 'admin', label: 'Administrador', eyebrow: 'ABM de usuarios' },
-    { id: 'profiles', label: 'Perfiles', eyebrow: 'ABM de perfiles' }
+    { id: 'users', label: 'Usuarios' },
+    { id: 'profiles', label: 'Perfiles' }
   ] as const;
 
   readonly createForm = this.fb.group({
@@ -49,7 +59,10 @@ export class UsersComponent implements OnInit {
   editBranchUserId: string | null = null;
   editBranchIds = new Set<string>();
   savingBranches = false;
-  activeSection: 'admin' | 'profiles' = 'admin';
+  activeSection: AccessSection = 'users';
+  userPanelMode: AccessPanelMode = 'closed';
+  selectedUser: UserResponse | null = null;
+  userPanelSaving = false;
   activePermissionCategory = 'Todas';
   permissionSearchTerm = '';
   showSelectedPermissionsOnly = false;
@@ -65,6 +78,7 @@ export class UsersComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private userPanelTrigger: HTMLElement | null = null;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -290,6 +304,116 @@ export class UsersComponent implements OnInit {
     this.selectedProfilePermissionCodes.add(permissionCode);
   }
 
+  openUserCreator(): void {
+    this.captureUserPanelTrigger();
+    this.selectedUser = null;
+    this.userPanelMode = 'create';
+    this.cdr.markForCheck();
+  }
+
+  openUserEditor(user: UserResponse): void {
+    this.captureUserPanelTrigger();
+    this.selectedUser = user;
+    this.userPanelMode = 'edit';
+    this.cdr.markForCheck();
+  }
+
+  saveUserDraft(draft: UserAccessDraft): void {
+    if (this.userPanelSaving || this.userPanelMode === 'closed') {
+      return;
+    }
+
+    this.userPanelSaving = true;
+    if (this.userPanelMode === 'create') {
+      this.userService.createUser({
+        ...draft,
+        employeeId: null
+      }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: created => {
+          this.users = [...this.users, created]
+            .sort((left, right) => left.username.localeCompare(right.username));
+          this.userPanelSaving = false;
+          this.closeUserPanel();
+          this.toast.success('Usuario creado');
+          this.cdr.markForCheck();
+        },
+        error: err => {
+          this.userPanelSaving = false;
+          this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el usuario');
+          this.cdr.markForCheck();
+        }
+      });
+      return;
+    }
+
+    const selected = this.selectedUser;
+    if (!selected) {
+      this.userPanelSaving = false;
+      return;
+    }
+
+    this.userService.updateProfile(selected.id, {
+      profileId: draft.profileId,
+      employeeId: selected.employeeId ?? null,
+      branchIds: draft.branchIds
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: updated => {
+        this.patchUser(updated);
+        this.userPanelSaving = false;
+        this.closeUserPanel();
+        this.toast.success('Acceso actualizado');
+        this.auth.refreshCurrentUserProfile();
+        this.cdr.markForCheck();
+      },
+      error: err => {
+        this.userPanelSaving = false;
+        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo actualizar el acceso');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  async requestUserPanelClose(dirty: boolean): Promise<void> {
+    if (this.userPanelSaving || this.userPanelMode === 'closed') {
+      return;
+    }
+
+    if (dirty) {
+      const confirmed = await this.confirmation.confirm({
+        eyebrow: 'Cambios sin guardar',
+        title: 'Descartar cambios',
+        message: 'Hay cambios en el acceso de este usuario.',
+        detail: 'Si cerrás el panel, los cambios no se guardarán.',
+        confirmLabel: 'Descartar cambios',
+        cancelLabel: 'Seguir editando',
+        tone: 'warning'
+      });
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    this.closeUserPanel();
+  }
+
+  async requestUserStatusChange(user: UserResponse): Promise<void> {
+    if (user.isActive) {
+      const confirmed = await this.confirmation.confirm({
+        eyebrow: 'Estado del usuario',
+        title: 'Desactivar usuario',
+        message: `Se desactivará el acceso de "${user.username}".`,
+        detail: 'La persona no podrá ingresar hasta que vuelvas a activarla.',
+        confirmLabel: 'Desactivar usuario',
+        tone: 'danger'
+      });
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    this.toggleStatus(user);
+  }
+
   createUser(): void {
     if (this.createForm.invalid) {
       this.createForm.markAllAsTouched();
@@ -451,7 +575,10 @@ export class UsersComponent implements OnInit {
     return this.collapsedProfileIds.has(profileId);
   }
 
-  selectSection(sectionId: 'admin' | 'profiles'): void {
+  selectSection(sectionId: AccessSection): void {
+    if (this.userPanelMode !== 'closed') {
+      return;
+    }
     this.activeSection = sectionId;
   }
 
@@ -543,6 +670,26 @@ export class UsersComponent implements OnInit {
     this.users = this.users
       .map(user => user.id === updated.id ? updated : user)
       .sort((left, right) => left.username.localeCompare(right.username));
+  }
+
+  private captureUserPanelTrigger(): void {
+    this.userPanelTrigger = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+  }
+
+  private closeUserPanel(): void {
+    const trigger = this.userPanelTrigger;
+    this.userPanelMode = 'closed';
+    this.selectedUser = null;
+    this.userPanelTrigger = null;
+    this.cdr.markForCheck();
+
+    setTimeout(() => {
+      if (trigger?.isConnected) {
+        trigger.focus();
+      }
+    });
   }
 
   private ensureCreateProfileSelection(preferredProfileId?: string): void {

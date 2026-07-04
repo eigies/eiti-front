@@ -165,7 +165,7 @@ describe('UserAccessPanelComponent', () => {
     expect(summary.textContent).not.toContain('cash.open');
   });
 
-  it('associates the profile group, label and error with the searchable select trigger', () => {
+  it('communicates the required profile visibly without unsupported aria-required on the group', () => {
     render('create');
     component.form.controls.profileId.markAsTouched();
     component.form.controls.profileId.setValue('');
@@ -178,7 +178,8 @@ describe('UserAccessPanelComponent', () => {
     expect(group).not.toBeNull();
     expect(group?.getAttribute('role')).toBe('group');
     expect(group?.getAttribute('aria-labelledby')).toBe('profile-label');
-    expect(group?.getAttribute('aria-required')).toBe('true');
+    expect(group?.getAttribute('aria-required')).toBeNull();
+    expect(query('#profile-label')?.textContent).toContain('(obligatorio)');
     expect(trigger).not.toBeNull();
     expect(trigger?.getAttribute('aria-label')).toBe('Perfil de acceso: Seleccioná un perfil');
     expect(trigger?.getAttribute('aria-describedby')).toBe('profile-error');

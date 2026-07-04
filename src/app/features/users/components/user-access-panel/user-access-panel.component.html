@@ -103,9 +103,8 @@
         <div
           class="access-panel__field access-panel__profile-group"
           role="group"
-          aria-required="true"
           aria-labelledby="profile-label">
-          <span id="profile-label">Perfil</span>
+          <span id="profile-label">Perfil <small>(obligatorio)</small></span>
           <app-searchable-select
             formControlName="profileId"
             [options]="profileOptions"

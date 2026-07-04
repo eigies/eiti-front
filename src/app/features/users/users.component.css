@@ -1,8 +1,11 @@
 .page {
+    box-sizing: border-box;
+    width: 100%;
     min-height: calc(100vh - 64px);
     padding: 2rem 1.75rem 3rem;
     max-width: 1320px;
     margin: 0 auto;
+    overflow-x: clip;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--amber) 9%, transparent), transparent 26%),
         linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
@@ -14,6 +17,8 @@
     gap: 1.1rem;
     align-items: flex-end;
     margin-bottom: 1.2rem;
+    padding: 1.2rem 0 1.4rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
     animation: hero-in .55s cubic-bezier(.22,1,.36,1) both;
 }
 
@@ -67,6 +72,94 @@ h2 {
     font-family: 'DM Mono', monospace;
     font-size: .76rem;
     box-shadow: inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+}
+
+.hero__panel span {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    color: var(--text-soft);
+}
+
+.hero__panel strong {
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.access-tabs {
+    display: flex;
+    align-items: end;
+    gap: .25rem;
+    min-width: 0;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.access-tabs__item {
+    position: relative;
+    display: inline-flex;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: .7rem 1rem;
+    border: 0;
+    background: transparent;
+    color: var(--text-soft);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color .18s ease, background .18s ease;
+}
+
+.access-tabs__item::after {
+    content: '';
+    position: absolute;
+    right: .7rem;
+    bottom: -1px;
+    left: .7rem;
+    height: 2px;
+    background: var(--amber);
+    opacity: 0;
+    transform: scaleX(.45);
+    transition: opacity .18s ease, transform .18s ease;
+}
+
+.access-tabs__item:hover {
+    background: color-mix(in srgb, var(--amber) 5%, transparent);
+    color: var(--text);
+}
+
+.access-tabs__item--active {
+    color: var(--text);
+}
+
+.access-tabs__item--active::after {
+    opacity: 1;
+    transform: scaleX(1);
+}
+
+.access-tabs__item:focus-visible {
+    z-index: 1;
+    outline: 2px solid color-mix(in srgb, var(--amber) 70%, transparent);
+    outline-offset: -3px;
+}
+
+.access-workspace,
+.access-section {
+    min-width: 0;
+}
+
+.access-section[hidden] {
+    display: none;
+}
+
+.access-section--users {
+    width: 100%;
 }
 
 .layout {
@@ -1044,6 +1137,17 @@ h2 {
 
     .section-switch {
         grid-template-columns: 1fr;
+    }
+
+    .access-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .access-tabs__item {
+        width: 100%;
+        padding-inline: .5rem;
+        letter-spacing: .06em;
     }
 
     .form__actions-row {
