@@ -79,6 +79,15 @@ describe('UserAccessListComponent', () => {
     expect(selected).toHaveBeenCalledOnceWith(users[0]);
   });
 
+  it('marks employee names for human-name typography', () => {
+    const employeeName = fixture.nativeElement.querySelector(
+      '[data-user-id="u1"] .user-list__employee'
+    ) as HTMLElement | null;
+
+    expect(employeeName).not.toBeNull();
+    expect(employeeName?.textContent).toContain('Ana Pérez');
+  });
+
   it('filters inactive users independently without mutating the users input', () => {
     const originalUsers = component.users;
     const originalSnapshot = component.users.map(item => ({ ...item, branchIds: [...item.branchIds] }));

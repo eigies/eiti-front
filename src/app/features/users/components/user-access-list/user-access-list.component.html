@@ -100,7 +100,7 @@
         <div class="user-list__identity">
           <strong>{{ user.username }}</strong>
           <a [href]="'mailto:' + user.email">{{ user.email }}</a>
-          <span>{{ user.employeeName || 'Sin empleado vinculado' }}</span>
+          <span class="user-list__employee">{{ user.employeeName || 'Sin empleado vinculado' }}</span>
         </div>
 
         <div class="user-list__profile">

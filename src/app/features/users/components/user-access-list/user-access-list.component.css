@@ -241,6 +241,10 @@ a:focus-visible {
   text-decoration: none;
 }
 
+.user-list__employee {
+  font-family: 'Crimson Pro', Georgia, serif;
+}
+
 .user-list__profile,
 .user-list__access,
 .user-list__state {
