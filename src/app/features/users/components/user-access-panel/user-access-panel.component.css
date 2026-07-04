@@ -109,6 +109,11 @@
   cursor: pointer;
 }
 
+.access-panel__close:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
 .access-panel__form {
   display: grid;
   min-height: 0;
@@ -316,7 +321,15 @@
 }
 
 .access-panel__branch--all {
+  width: 100%;
   border-top: 1px solid var(--border);
+  border-right: 0;
+  border-left: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  appearance: none;
 }
 
 .access-panel__branch input {
@@ -339,7 +352,21 @@
   background: var(--amber);
 }
 
+.access-panel__branch--all[aria-pressed="true"] .access-panel__check {
+  border-color: var(--amber);
+  background: var(--amber);
+}
+
 .access-panel__branch input:checked + .access-panel__check::after {
+  width: 0.48rem;
+  height: 0.26rem;
+  border: solid #1a1309;
+  border-width: 0 0 2px 2px;
+  content: '';
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.access-panel__branch--all[aria-pressed="true"] .access-panel__check::after {
   width: 0.48rem;
   height: 0.26rem;
   border: solid #1a1309;
@@ -351,6 +378,17 @@
 .access-panel__branch input:focus-visible + .access-panel__check {
   outline: 2px solid var(--amber);
   outline-offset: 3px;
+}
+
+.access-panel__branch--all:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.access-panel__branch--all:disabled,
+.access-panel__branch--disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .access-panel__branch strong,
@@ -414,6 +452,10 @@
   border-color: color-mix(in srgb, var(--amber) 75%, #fff 25%);
   color: #1c1409;
   background: var(--amber);
+}
+
+:host-context(.theme-light) .access-panel__button--primary {
+  color: #120c05;
 }
 
 .access-panel__button:disabled {

@@ -10,6 +10,7 @@ import {
   inject,
   Input,
   OnChanges,
+  OnDestroy,
   Output,
   SimpleChanges,
   ViewChild
@@ -45,7 +46,7 @@ type PermissionCatalogEntry = Readonly<{
   styleUrls: ['./user-access-panel.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
+export class UserAccessPanelComponent implements OnChanges, AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -59,9 +60,10 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
   @Output() readonly saveRequested = new EventEmitter<UserAccessDraft>();
   @Output() readonly closeRequested = new EventEmitter<boolean>();
 
+  @ViewChild('panel') private panel?: ElementRef<HTMLElement>;
   @ViewChild('panelTitle') private panelTitle?: ElementRef<HTMLElement>;
-  @ViewChild('profileSelect', { read: ElementRef })
-  private profileSelectElement?: ElementRef<HTMLElement>;
+  @ViewChild(SearchableSelectComponent)
+  private profileSelect?: SearchableSelectComponent;
 
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.minLength(3)]],
@@ -74,12 +76,11 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
 
   private loadedKey = '';
   private initialBranchSnapshot = '';
+  private previouslyFocusedElement: HTMLElement | null = null;
+  private inertSiblings: Array<{ element: HTMLElement; wasInert: boolean }> = [];
 
   constructor() {
-    this.form.valueChanges.subscribe(() => {
-      this.form.markAsDirty();
-      this.cdr.markForCheck();
-    });
+    this.form.valueChanges.subscribe(() => this.cdr.markForCheck());
   }
 
   get title(): string {
@@ -132,25 +133,42 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
     return this.form.dirty || this.branchScopeDirty;
   }
 
-  ngOnChanges(_: SimpleChanges): void {
+  ngOnChanges(changes: SimpleChanges): void {
     const nextLoadedKey = this.mode === 'edit'
       ? `edit:${this.user?.id ?? 'missing'}`
       : 'create';
 
-    if (nextLoadedKey === this.loadedKey) {
-      return;
+    if (
+      nextLoadedKey !== this.loadedKey
+      || (changes['user'] && !this.isDirty)
+    ) {
+      this.loadedKey = nextLoadedKey;
+      this.loadDraft();
+    } else if (changes['saving']) {
+      this.syncSavingState();
     }
-
-    this.loadedKey = nextLoadedKey;
-    this.loadDraft();
   }
 
   ngAfterViewInit(): void {
-    this.connectProfileSelectAccessibility();
+    this.previouslyFocusedElement = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    this.makeBackgroundInert();
     setTimeout(() => this.panelTitle?.nativeElement.focus());
   }
 
+  ngOnDestroy(): void {
+    this.restoreBackground();
+    if (this.previouslyFocusedElement?.isConnected) {
+      this.previouslyFocusedElement.focus();
+    }
+  }
+
   toggleBranch(branchId: string): void {
+    if (this.saving) {
+      return;
+    }
+
     const next = new Set(this.selectedBranchIds);
     if (next.has(branchId)) {
       next.delete(branchId);
@@ -158,10 +176,15 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
       next.add(branchId);
     }
     this.selectedBranchIds = next;
+    this.cdr.markForCheck();
   }
 
   selectAllBranches(): void {
+    if (this.saving) {
+      return;
+    }
     this.selectedBranchIds = new Set<string>();
+    this.cdr.markForCheck();
   }
 
   isBranchSelected(branchId: string): boolean {
@@ -169,11 +192,24 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
   }
 
   submit(): void {
-    if (this.mode === 'create') {
-      this.form.controls.username.setValue(this.form.controls.username.value.trim());
-      this.form.controls.email.setValue(this.form.controls.email.value.trim());
+    if (this.saving) {
+      return;
     }
-    this.form.controls.profileId.setValue(this.form.controls.profileId.value.trim());
+
+    if (this.mode === 'create') {
+      this.form.controls.username.setValue(
+        this.form.controls.username.value.trim(),
+        { emitEvent: false }
+      );
+      this.form.controls.email.setValue(
+        this.form.controls.email.value.trim(),
+        { emitEvent: false }
+      );
+    }
+    this.form.controls.profileId.setValue(
+      this.form.controls.profileId.value.trim(),
+      { emitEvent: false }
+    );
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -191,12 +227,53 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
   }
 
   requestClose(): void {
+    if (this.saving) {
+      return;
+    }
     this.closeRequested.emit(this.isDirty);
   }
 
   @HostListener('document:keydown.escape')
   handleEscape(): void {
+    if (this.saving || this.profileSelect?.open) {
+      return;
+    }
     this.requestClose();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleTab(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const panel = this.panel?.nativeElement;
+    if (!panel) {
+      return;
+    }
+
+    const focusable = Array.from(panel.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), '
+      + 'select:not([disabled]), textarea:not([disabled]), '
+      + '[tabindex]:not([tabindex="-1"])'
+    )).filter(element => !element.hidden && element.getAttribute('aria-hidden') !== 'true');
+
+    if (!focusable.length) {
+      event.preventDefault();
+      this.panelTitle?.nativeElement.focus();
+      return;
+    }
+
+    const active = document.activeElement;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && (active === first || !panel.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (active === last || !panel.contains(active))) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   trackByBranchId(_: number, branch: BranchResponse): string {
@@ -230,6 +307,7 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
     this.initialBranchSnapshot = this.branchSnapshot(this.selectedBranchIds);
     this.form.markAsPristine();
     this.form.markAsUntouched();
+    this.syncSavingState();
   }
 
   private normalizedBranchIds(): string[] {
@@ -248,15 +326,39 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit {
     return [...branchIds].sort().join('|');
   }
 
-  private connectProfileSelectAccessibility(): void {
-    const trigger = this.profileSelectElement?.nativeElement
-      .querySelector<HTMLButtonElement>('.search-select__trigger');
-    if (!trigger) {
+  private syncSavingState(): void {
+    if (this.saving) {
+      this.form.disable({ emitEvent: false });
       return;
     }
 
-    trigger.setAttribute('aria-labelledby', 'profile-label');
-    trigger.setAttribute('aria-describedby', 'profile-error');
-    trigger.setAttribute('aria-required', 'true');
+    this.form.enable({ emitEvent: false });
+    if (this.mode === 'edit') {
+      this.form.controls.username.disable({ emitEvent: false });
+      this.form.controls.email.disable({ emitEvent: false });
+      this.form.controls.password.disable({ emitEvent: false });
+    }
+  }
+
+  private makeBackgroundInert(): void {
+    const host = this.panel?.nativeElement.parentElement;
+    const parent = host?.parentElement;
+    if (!host || !parent) {
+      return;
+    }
+
+    this.inertSiblings = Array.from(parent.children)
+      .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== host)
+      .map(element => ({ element, wasInert: element.inert }));
+    for (const { element } of this.inertSiblings) {
+      element.inert = true;
+    }
+  }
+
+  private restoreBackground(): void {
+    for (const { element, wasInert } of this.inertSiblings) {
+      element.inert = wasInert;
+    }
+    this.inertSiblings = [];
   }
 }

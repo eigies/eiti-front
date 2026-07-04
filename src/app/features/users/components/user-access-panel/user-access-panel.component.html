@@ -1,9 +1,11 @@
 <div class="access-panel__backdrop" (click)="requestClose()" aria-hidden="true"></div>
 
 <aside
+  #panel
   class="access-panel"
   role="dialog"
   aria-modal="true"
+  [attr.aria-busy]="saving"
   aria-labelledby="user-access-panel-title">
   <header class="access-panel__header">
     <div>
@@ -14,6 +16,7 @@
       class="access-panel__close"
       type="button"
       aria-label="Cerrar panel de usuario"
+      [disabled]="saving"
       (click)="requestClose()">
       <span aria-hidden="true">×</span>
     </button>
@@ -103,9 +106,11 @@
           aria-labelledby="profile-label">
           <span id="profile-label">Perfil</span>
           <app-searchable-select
-            #profileSelect
             formControlName="profileId"
             [options]="profileOptions"
+            ariaLabel="Perfil de acceso"
+            ariaDescribedBy="profile-error"
+            [ariaRequired]="true"
             placeholder="Seleccioná un perfil"
             searchPlaceholder="Buscar perfil…">
           </app-searchable-select>
@@ -165,25 +170,29 @@
 
         <fieldset class="access-panel__branches">
           <legend class="sr-only">Alcance por sucursal</legend>
-          <label class="access-panel__branch access-panel__branch--all">
-            <input
-              type="checkbox"
-              [checked]="allBranchesSelected"
-              (change)="selectAllBranches()" />
+          <button
+            class="access-panel__branch access-panel__branch--all"
+            data-testid="all-branches"
+            type="button"
+            [attr.aria-pressed]="allBranchesSelected"
+            [disabled]="saving"
+            (click)="selectAllBranches()">
             <span class="access-panel__check" aria-hidden="true"></span>
             <span>
               <strong>Todas las sucursales</strong>
               <small>Puede operar sin restricciones de ubicación.</small>
             </span>
-          </label>
+          </button>
 
           <label
             class="access-panel__branch"
+            [class.access-panel__branch--disabled]="saving"
             *ngFor="let branch of branches; trackBy: trackByBranchId"
             [class.access-panel__branch--selected]="isBranchSelected(branch.id)">
             <input
               type="checkbox"
               [checked]="isBranchSelected(branch.id)"
+              [disabled]="saving"
               (change)="toggleBranch(branch.id)" />
             <span class="access-panel__check" aria-hidden="true"></span>
             <span>

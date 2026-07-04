@@ -33,6 +33,10 @@ describe('UserAccessPanelComponent', () => {
     }).compileComponents();
   });
 
+  afterEach(() => {
+    document.body.classList.remove('theme-light');
+  });
+
   it('shows create identity fields, while edit hides them and presents the exact user identity', () => {
     render('create');
 
@@ -83,6 +87,18 @@ describe('UserAccessPanelComponent', () => {
     expect(component.form.controls.email.disabled).toBeTrue();
     expect(component.form.controls.password.disabled).toBeTrue();
     expect(editSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a pristine invalid submit pristine and reports a pristine close', () => {
+    render('create');
+    const close = jasmine.createSpy('close');
+    component.closeRequested.subscribe(close);
+
+    component.submit();
+    component.requestClose();
+
+    expect(component.form.pristine).toBeTrue();
+    expect(close).toHaveBeenCalledOnceWith(false);
   });
 
   it('emits an exact normalized profile and branch draft', () => {
@@ -163,8 +179,9 @@ describe('UserAccessPanelComponent', () => {
     expect(group?.getAttribute('role')).toBe('group');
     expect(group?.getAttribute('aria-labelledby')).toBe('profile-label');
     expect(trigger).not.toBeNull();
-    expect(trigger?.getAttribute('aria-labelledby')).toBe('profile-label');
+    expect(trigger?.getAttribute('aria-label')).toBe('Perfil de acceso: Seleccioná un perfil');
     expect(trigger?.getAttribute('aria-describedby')).toBe('profile-error');
+    expect(trigger?.getAttribute('aria-required')).toBe('true');
     expect(error?.textContent).toContain('Seleccioná un perfil');
   });
 
@@ -177,6 +194,7 @@ describe('UserAccessPanelComponent', () => {
     expect(close).toHaveBeenCalledOnceWith(false);
 
     component.form.controls.username.setValue('nuevo.usuario');
+    component.form.controls.username.markAsDirty();
     component.requestClose();
     expect(close.calls.mostRecent().args).toEqual([true]);
 
@@ -191,6 +209,7 @@ describe('UserAccessPanelComponent', () => {
   it('does not reset a dirty draft when only saving changes', () => {
     render('edit', existingUser);
     component.form.controls.profileId.setValue('supervision');
+    component.form.controls.profileId.markAsDirty();
     component.toggleBranch('center');
     const selectedBefore = component.selectedBranchIds;
 
@@ -202,6 +221,33 @@ describe('UserAccessPanelComponent', () => {
     expect(component.selectedBranchIds).toBe(selectedBefore);
     expect(component.selectedBranchIds).toEqual(new Set(['north', 'center']));
     expect(component.isDirty).toBeTrue();
+  });
+
+  it('refreshes same-ID user inputs while pristine and preserves a dirty draft', () => {
+    render('edit', existingUser);
+    fixture.componentRef.setInput('user', {
+      ...existingUser,
+      username: 'ana.actualizada',
+      profileId: 'supervision',
+      branchIds: ['center']
+    });
+    fixture.detectChanges();
+
+    expect(component.form.controls.profileId.value).toBe('supervision');
+    expect(component.selectedBranchIds).toEqual(new Set(['center']));
+
+    component.form.controls.profileId.setValue('operations');
+    component.form.controls.profileId.markAsDirty();
+    component.toggleBranch('north');
+    fixture.componentRef.setInput('user', {
+      ...existingUser,
+      profileId: 'supervision',
+      branchIds: []
+    });
+    fixture.detectChanges();
+
+    expect(component.form.controls.profileId.value).toBe('operations');
+    expect(component.selectedBranchIds).toEqual(new Set(['center', 'north']));
   });
 
   it('requests close on Escape and exposes an initially focused, named modal dialog', fakeAsync(() => {
@@ -221,6 +267,150 @@ describe('UserAccessPanelComponent', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(close).toHaveBeenCalledOnceWith(false);
   }));
+
+  it('traps forward and backward focus, makes background inert, then restores both on destroy', fakeAsync(() => {
+    fixture = TestBed.createComponent(UserAccessPanelComponent);
+    component = fixture.componentInstance;
+    setInputs('create');
+    const background = document.createElement('button');
+    background.type = 'button';
+    background.textContent = 'Background action';
+    fixture.nativeElement.parentElement?.insertBefore(background, fixture.nativeElement);
+    background.focus();
+
+    fixture.detectChanges();
+    tick();
+    expect(background.inert).toBeTrue();
+
+    const first = query('.access-panel__close') as HTMLButtonElement;
+    const last = query('.access-panel__button--primary') as HTMLButtonElement;
+    first.focus();
+    first.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true
+    }));
+    expect(document.activeElement).toBe(last);
+
+    last.focus();
+    last.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Tab',
+      bubbles: true,
+      cancelable: true
+    }));
+    expect(document.activeElement).toBe(first);
+
+    fixture.destroy();
+    expect(background.inert).toBeFalse();
+    expect(document.activeElement).toBe(background);
+    background.remove();
+  }));
+
+  it('lets an open profile select own the first Escape and closes the panel on the next Escape', fakeAsync(() => {
+    render('create');
+    const close = jasmine.createSpy('close');
+    component.closeRequested.subscribe(close);
+    const trigger = query('.search-select__trigger') as HTMLButtonElement;
+    trigger.click();
+    fixture.detectChanges();
+    tick();
+
+    const filter = query('.search-select__input') as HTMLInputElement;
+    filter.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true
+    }));
+    tick();
+    fixture.detectChanges();
+
+    expect(close).not.toHaveBeenCalled();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(trigger);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(close).toHaveBeenCalledOnceWith(false);
+  }));
+
+  it('blocks submit, close and branch mutation while saving, then restores mode controls', () => {
+    render('create');
+    component.form.setValue({
+      username: 'operador',
+      email: 'operador@empresa.test',
+      password: 'secreto',
+      profileId: 'operations'
+    });
+    const save = jasmine.createSpy('save');
+    const close = jasmine.createSpy('close');
+    component.saveRequested.subscribe(save);
+    component.closeRequested.subscribe(close);
+
+    fixture.componentRef.setInput('saving', true);
+    fixture.detectChanges();
+    const branchesBefore = component.selectedBranchIds;
+    component.submit();
+    component.submit();
+    component.requestClose();
+    (query('.access-panel__backdrop') as HTMLElement).click();
+    (query('.access-panel__close') as HTMLButtonElement).click();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    component.toggleBranch('north');
+    component.selectAllBranches();
+
+    expect(save).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
+    expect(component.selectedBranchIds).toBe(branchesBefore);
+    expect(component.form.disabled).toBeTrue();
+    expect((query('.search-select__trigger') as HTMLButtonElement).disabled).toBeTrue();
+    expect((query('[data-testid="all-branches"]') as HTMLButtonElement).disabled).toBeTrue();
+    expect((query('.access-panel__branch input') as HTMLInputElement).disabled).toBeTrue();
+    expect((query('.access-panel__close') as HTMLButtonElement).disabled).toBeTrue();
+
+    fixture.componentRef.setInput('saving', false);
+    fixture.detectChanges();
+    expect(component.form.controls.username.enabled).toBeTrue();
+    expect(component.form.controls.email.enabled).toBeTrue();
+    expect(component.form.controls.password.enabled).toBeTrue();
+    expect(component.form.controls.profileId.enabled).toBeTrue();
+    expect((query('.search-select__trigger') as HTMLButtonElement).disabled).toBeFalse();
+
+    render('edit', existingUser);
+    fixture.componentRef.setInput('saving', true);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('saving', false);
+    fixture.detectChanges();
+    expect(component.form.controls.username.disabled).toBeTrue();
+    expect(component.form.controls.email.disabled).toBeTrue();
+    expect(component.form.controls.password.disabled).toBeTrue();
+    expect(component.form.controls.profileId.enabled).toBeTrue();
+  });
+
+  it('uses a pressed all-branches control instead of a misleading checkbox', () => {
+    render('create');
+    let allBranches = query('[data-testid="all-branches"]') as HTMLButtonElement;
+    expect(allBranches.tagName).toBe('BUTTON');
+    expect(allBranches.getAttribute('aria-pressed')).toBe('true');
+
+    component.toggleBranch('north');
+    fixture.detectChanges();
+    allBranches = query('[data-testid="all-branches"]') as HTMLButtonElement;
+    expect(allBranches.getAttribute('aria-pressed')).toBe('false');
+
+    allBranches.click();
+    fixture.detectChanges();
+    expect(component.selectedBranchIds).toEqual(new Set());
+    expect(allBranches.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('keeps light-theme primary action text above WCAG AA contrast', () => {
+    document.body.classList.add('theme-light');
+    render('create');
+    const primary = query('.access-panel__button--primary') as HTMLButtonElement;
+    const style = getComputedStyle(primary);
+
+    expect(contrastRatio(style.color, style.backgroundColor)).toBeGreaterThanOrEqual(4.5);
+  });
 
   it('uses 440px desktop width, full host width through 900px, touch targets and no narrow overflow', async () => {
     render('edit', {
@@ -287,6 +477,14 @@ describe('UserAccessPanelComponent', () => {
   ): void {
     fixture = TestBed.createComponent(UserAccessPanelComponent);
     component = fixture.componentInstance;
+    setInputs(mode, selectedUser);
+    fixture.detectChanges();
+  }
+
+  function setInputs(
+    mode: 'create' | 'edit',
+    selectedUser: UserResponse | null = null
+  ): void {
     fixture.componentRef.setInput('mode', mode);
     fixture.componentRef.setInput('user', selectedUser);
     fixture.componentRef.setInput('profiles', profiles);
@@ -296,7 +494,6 @@ describe('UserAccessPanelComponent', () => {
       { code: 'cash.open', label: 'Caja: abrir', description: 'Puede abrir la caja.' },
       { code: 'reports.audit', label: 'Reportería: auditoría', description: 'Puede auditar.' }
     ]);
-    fixture.detectChanges();
   }
 
   function query(selector: string): Element | null {
@@ -307,6 +504,24 @@ describe('UserAccessPanelComponent', () => {
     fixture.nativeElement.style.width = `${width}px`;
     await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
     fixture.detectChanges();
+  }
+
+  function contrastRatio(foreground: string, background: string): number {
+    const lighter = Math.max(relativeLuminance(foreground), relativeLuminance(background));
+    const darker = Math.min(relativeLuminance(foreground), relativeLuminance(background));
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  function relativeLuminance(color: string): number {
+    const channelRange = color.startsWith('color(srgb') ? 1 : 255;
+    const channels = (color.match(/\d+(?:\.\d+)?/g) ?? [])
+      .slice(0, 3)
+      .map(value => Number(value) / channelRange)
+      .map(value => value <= 0.03928
+        ? value / 12.92
+        : Math.pow((value + 0.055) / 1.055, 2.4));
+
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
   }
 
   function profile(

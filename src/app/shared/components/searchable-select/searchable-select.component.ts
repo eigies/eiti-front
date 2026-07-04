@@ -28,6 +28,9 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
     @Input() placeholder = 'Seleccionar';
     @Input() searchPlaceholder = 'Filtrar opciones...';
     @Input() emptyMessage = 'No hay coincidencias.';
+    @Input() ariaLabel = 'Selección';
+    @Input() ariaDescribedBy: string | null = null;
+    @Input() ariaRequired = false;
     @Input() compact = false;
     @Input() disabled = false;
     @Input() panelInline = false;
@@ -36,6 +39,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
     @Input() clearValue: string | number | null = null;
     @Output() valueChange = new EventEmitter<string | number | null>();
 
+    @ViewChild('trigger') trigger?: ElementRef<HTMLButtonElement>;
     @ViewChild('filterInput') filterInput?: ElementRef<HTMLInputElement>;
 
     open = false;
@@ -62,6 +66,10 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
 
     get selectedOption(): SearchableSelectOption | null {
         return this.options.find(option => this.valuesMatch(option.value, this.value)) ?? null;
+    }
+
+    get triggerAriaLabel(): string {
+        return `${this.ariaLabel}: ${this.selectedOption?.label ?? this.placeholder}`;
     }
 
     writeValue(value: string | number | null): void {
@@ -95,23 +103,26 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
         }
     }
 
-    close(): void {
+    close(refocus = false): void {
         this.open = false;
         this.query = '';
+        if (refocus) {
+            setTimeout(() => this.trigger?.nativeElement.focus(), 0);
+        }
     }
 
     selectOption(option: SearchableSelectOption): void {
         this.value = option.value;
         this.onChange(option.value);
         this.valueChange.emit(option.value);
-        this.close();
+        this.close(true);
     }
 
     clearSelection(): void {
         this.value = this.clearValue;
         this.onChange(this.clearValue);
         this.valueChange.emit(this.clearValue);
-        this.close();
+        this.close(true);
     }
 
     trackByValue(_: number, option: SearchableSelectOption): string {
@@ -130,6 +141,17 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
         if (!this.host.nativeElement.contains(event.target as Node)) {
             this.close();
         }
+    }
+
+    @HostListener('document:keydown.escape', ['$event'])
+    handleEscape(event: KeyboardEvent): void {
+        if (!this.open) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.close(true);
     }
 
     private focusFilter(): void {
