@@ -22,6 +22,7 @@
       [attr.aria-selected]="activeSection === 'users'"
       aria-controls="users-panel"
       [attr.tabindex]="activeSection === 'users' ? 0 : -1"
+      (keydown)="onSectionTabKeydown($event)"
       (click)="selectSection('users')">
       Usuarios <span aria-hidden="true">·</span> {{ users.length }}
     </button>
@@ -34,6 +35,7 @@
       [attr.aria-selected]="activeSection === 'profiles'"
       aria-controls="profiles-panel"
       [attr.tabindex]="activeSection === 'profiles' ? 0 : -1"
+      (keydown)="onSectionTabKeydown($event)"
       (click)="selectSection('profiles')">
       Perfiles <span aria-hidden="true">·</span> {{ profiles.length }}
     </button>

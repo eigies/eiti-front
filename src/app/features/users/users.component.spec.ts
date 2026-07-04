@@ -274,6 +274,58 @@ describe('UsersComponent', () => {
     expect(listComponent()).not.toBeNull();
   });
 
+  it('moves focus and selection between both tabs with horizontal arrow keys', () => {
+    render();
+    const tabs = Array.from(
+      fixture.nativeElement.querySelectorAll('[role="tab"]')
+    ) as HTMLButtonElement[];
+    tabs[0].focus();
+
+    tabs[0].dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      bubbles: true
+    }));
+    fixture.detectChanges();
+
+    expect(component.activeSection).toBe('profiles');
+    expect(document.activeElement).toBe(tabs[1]);
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+
+    tabs[1].dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'ArrowLeft',
+      bubbles: true
+    }));
+    fixture.detectChanges();
+
+    expect(component.activeSection).toBe('users');
+    expect(document.activeElement).toBe(tabs[0]);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('moves focus and selection to the first or last tab with Home and End', () => {
+    render();
+    const tabs = Array.from(
+      fixture.nativeElement.querySelectorAll('[role="tab"]')
+    ) as HTMLButtonElement[];
+    tabs[0].focus();
+
+    tabs[0].dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'End',
+      bubbles: true
+    }));
+    fixture.detectChanges();
+    expect(component.activeSection).toBe('profiles');
+    expect(document.activeElement).toBe(tabs[1]);
+
+    tabs[1].dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Home',
+      bubbles: true
+    }));
+    fixture.detectChanges();
+    expect(component.activeSection).toBe('users');
+    expect(document.activeElement).toBe(tabs[0]);
+  });
+
   it('keeps tabs touch-friendly, visibly focusable, and the shell free of narrow overflow', async () => {
     render();
     const tab = query('.access-tabs__item') as HTMLButtonElement;

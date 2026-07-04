@@ -582,6 +582,41 @@ export class UsersComponent implements OnInit {
     this.activeSection = sectionId;
   }
 
+  onSectionTabKeydown(event: KeyboardEvent): void {
+    const tabs = Array.from(
+      (event.currentTarget as HTMLElement | null)
+        ?.parentElement
+        ?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []
+    );
+    const currentIndex = tabs.indexOf(event.currentTarget as HTMLElement);
+    if (currentIndex < 0 || tabs.length === 0) {
+      return;
+    }
+
+    let targetIndex: number;
+    switch (event.key) {
+      case 'ArrowRight':
+        targetIndex = (currentIndex + 1) % tabs.length;
+        break;
+      case 'ArrowLeft':
+        targetIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        break;
+      case 'Home':
+        targetIndex = 0;
+        break;
+      case 'End':
+        targetIndex = tabs.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    const target = tabs[targetIndex];
+    this.selectSection(target.id === 'profiles-tab' ? 'profiles' : 'users');
+    target.focus();
+  }
+
   selectPermissionCategory(category: string): void {
     this.activePermissionCategory = category;
     if (category !== 'Todas') {
