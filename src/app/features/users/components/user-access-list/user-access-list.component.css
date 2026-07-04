@@ -1,9 +1,14 @@
 :host {
+  --user-list-accent-text: color-mix(in srgb, var(--amber) 72%, var(--text));
+
   display: block;
   min-width: 0;
+  container-type: inline-size;
 }
 
 .user-list {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   color: var(--text);
 }
@@ -21,7 +26,7 @@
 .user-list__filter > span,
 .user-list__mobile-label,
 .user-list__empty-index {
-  color: var(--amber);
+  color: var(--user-list-accent-text);
   font-family: 'DM Mono', monospace;
   font-size: 0.68rem;
   letter-spacing: 0.13em;
@@ -92,7 +97,7 @@ a:focus-visible {
 }
 
 .user-list__create span {
-  color: var(--amber);
+  color: var(--user-list-accent-text);
   font-size: 1.2rem;
 }
 
@@ -114,7 +119,7 @@ a:focus-visible {
   position: absolute;
   top: 50%;
   left: 0.9rem;
-  color: var(--amber);
+  color: var(--user-list-accent-text);
   font-family: 'DM Mono', monospace;
   transform: translateY(-50%);
 }
@@ -134,7 +139,7 @@ a:focus-visible {
 }
 
 .user-list__search input::placeholder {
-  color: var(--text-mute);
+  color: var(--text-dim);
 }
 
 .user-list__filter {
@@ -160,7 +165,7 @@ a:focus-visible {
 
 .user-list__clear {
   border-color: transparent;
-  color: var(--amber);
+  color: var(--user-list-accent-text);
 }
 
 .user-list__reload:disabled {
@@ -169,6 +174,8 @@ a:focus-visible {
 }
 
 .user-list__table {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -183,7 +190,7 @@ a:focus-visible {
 
 .user-list__head {
   min-height: 46px;
-  color: var(--text-soft);
+  color: var(--text-dim);
   font-family: 'DM Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
@@ -192,6 +199,8 @@ a:focus-visible {
 
 .user-list__row {
   position: relative;
+  width: 100%;
+  max-width: 100%;
   min-height: 92px;
   padding: 0.95rem 0;
   border-top: 1px solid var(--border);
@@ -219,6 +228,11 @@ a:focus-visible {
   gap: 0.16rem;
 }
 
+.user-list__row > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
 .user-list__identity strong {
   overflow: hidden;
   font-size: 1.18rem;
@@ -237,7 +251,10 @@ a:focus-visible {
 }
 
 .user-list__identity a {
-  width: fit-content;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   text-decoration: none;
 }
 
@@ -301,16 +318,18 @@ a:focus-visible {
   display: flex;
   justify-content: flex-end;
   gap: 0.45rem;
+  min-width: 0;
 }
 
 .user-list__open,
 .user-list__status-action {
+  min-width: 0;
   padding: 0 0.7rem;
 }
 
 .user-list__open {
   border-color: color-mix(in srgb, var(--amber) 40%, var(--border));
-  color: var(--amber);
+  color: var(--user-list-accent-text);
 }
 
 .user-list__status-action--danger {
@@ -355,7 +374,7 @@ a:focus-visible {
 .user-list__empty button {
   padding: 0 0.85rem;
   border-color: color-mix(in srgb, var(--amber) 40%, var(--border));
-  color: var(--amber);
+  color: var(--user-list-accent-text);
 }
 
 .sr-only {
@@ -382,7 +401,7 @@ a:focus-visible {
   }
 }
 
-@media (max-width: 900px) {
+@container (max-width: 900px) {
   .user-list__toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -434,7 +453,7 @@ a:focus-visible {
   }
 }
 
-@media (max-width: 560px) {
+@container (max-width: 560px) {
   .user-list__header {
     align-items: stretch;
     flex-direction: column;

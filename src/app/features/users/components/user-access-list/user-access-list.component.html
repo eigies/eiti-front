@@ -96,25 +96,32 @@
         *ngFor="let user of visibleUsers; trackBy: trackByUserId"
         class="user-list__row"
         [class.user-list__row--selected]="selectedUserId === user.id"
+        [attr.aria-labelledby]="'user-name-' + user.id"
         [attr.data-user-id]="user.id">
         <div class="user-list__identity">
-          <strong>{{ user.username }}</strong>
+          <strong [id]="'user-name-' + user.id">
+            <span class="user-list__field-label sr-only">Usuario:</span>
+            {{ user.username }}
+          </strong>
           <a [href]="'mailto:' + user.email">{{ user.email }}</a>
           <span class="user-list__employee">{{ user.employeeName || 'Sin empleado vinculado' }}</span>
         </div>
 
         <div class="user-list__profile">
-          <span class="user-list__mobile-label">Perfil</span>
+          <span class="user-list__field-label sr-only">Perfil:</span>
+          <span class="user-list__mobile-label" aria-hidden="true">Perfil</span>
           <strong>{{ user.profileName || 'Sin perfil asignado' }}</strong>
         </div>
 
         <div class="user-list__access">
-          <span class="user-list__mobile-label">Sucursales</span>
+          <span class="user-list__field-label sr-only">Sucursales:</span>
+          <span class="user-list__mobile-label" aria-hidden="true">Sucursales</span>
           <strong>{{ branchSummary(user) }}</strong>
         </div>
 
         <div class="user-list__state">
-          <span class="user-list__mobile-label">Estado</span>
+          <span class="user-list__field-label sr-only">Estado:</span>
+          <span class="user-list__mobile-label" aria-hidden="true">Estado</span>
           <span
             class="user-list__status"
             [class.user-list__status--active]="user.isActive"
@@ -127,6 +134,7 @@
           <button
             class="user-list__open"
             type="button"
+            [attr.aria-label]="'Editar usuario ' + user.username"
             (click)="selectUser($event, user)">
             Editar usuario
           </button>
@@ -134,6 +142,7 @@
             class="user-list__status-action"
             [class.user-list__status-action--danger]="user.isActive"
             type="button"
+            [attr.aria-label]="(user.isActive ? 'Desactivar usuario ' : 'Activar usuario ') + user.username"
             (click)="requestStatus($event, user)">
             {{ user.isActive ? 'Desactivar' : 'Activar' }}
           </button>

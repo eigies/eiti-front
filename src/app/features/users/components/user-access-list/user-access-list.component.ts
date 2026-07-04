@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AccessProfileResponse } from '../../../../core/models/access-profile.models';
@@ -16,10 +22,22 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './user-access-list.component.html',
-  styleUrls: ['./user-access-list.component.css']
+  styleUrls: ['./user-access-list.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserAccessListComponent {
-  @Input() users: UserResponse[] = [];
+  private _users: UserResponse[] = [];
+
+  @Input()
+  set users(users: UserResponse[]) {
+    this._users = users;
+    this.refreshVisibleUsers();
+  }
+
+  get users(): UserResponse[] {
+    return this._users;
+  }
+
   @Input() profiles: AccessProfileResponse[] = [];
   @Input() branches: BranchResponse[] = [];
   @Input() loading = false;
@@ -31,10 +49,7 @@ export class UserAccessListComponent {
   @Output() readonly reloadRequested = new EventEmitter<void>();
 
   filters: UserAccessFilters = { ...EMPTY_USER_FILTERS };
-
-  get visibleUsers(): UserResponse[] {
-    return filterAccessUsers(this.users, this.filters);
-  }
+  visibleUsers: UserResponse[] = [];
 
   get hasActiveFilters(): boolean {
     return this.filters.query.trim().length > 0
@@ -45,6 +60,7 @@ export class UserAccessListComponent {
 
   updateFilters(filters: Partial<UserAccessFilters>): void {
     this.filters = { ...this.filters, ...filters };
+    this.refreshVisibleUsers();
   }
 
   setQuery(query: string): void {
@@ -65,6 +81,7 @@ export class UserAccessListComponent {
 
   clearFilters(): void {
     this.filters = { ...EMPTY_USER_FILTERS };
+    this.refreshVisibleUsers();
   }
 
   branchSummary(user: UserResponse): string {
@@ -91,5 +108,9 @@ export class UserAccessListComponent {
 
   trackByUserId(_: number, user: UserResponse): string {
     return user.id;
+  }
+
+  private refreshVisibleUsers(): void {
+    this.visibleUsers = filterAccessUsers(this._users, this.filters);
   }
 }
