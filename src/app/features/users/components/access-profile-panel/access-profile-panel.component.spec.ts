@@ -43,6 +43,12 @@ describe('AccessProfilePanelComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('2 usuarios afectados');
   });
 
+  it('renders above the persistent navigation bar', () => {
+    fixture.detectChanges();
+
+    expect(Number(getComputedStyle(fixture.nativeElement).zIndex)).toBeGreaterThan(200);
+  });
+
   it('emits normalized friendly profile data', () => {
     fixture.detectChanges();
     component.form.patchValue({ name: '  Caja tarde  ', description: '  Turno tarde  ' });
