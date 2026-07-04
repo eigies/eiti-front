@@ -341,22 +341,37 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit, OnDes
   }
 
   private makeBackgroundInert(): void {
-    const host = this.panel?.nativeElement.parentElement;
-    const parent = host?.parentElement;
-    if (!host || !parent) {
+    let overlayPathElement: HTMLElement | null =
+      this.panel?.nativeElement.parentElement ?? null;
+    if (!overlayPathElement) {
       return;
     }
 
-    this.inertSiblings = Array.from(parent.children)
-      .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== host)
-      .map(element => ({ element, wasInert: element.inert }));
-    for (const { element } of this.inertSiblings) {
-      element.inert = true;
+    this.inertSiblings = [];
+    while (true) {
+      const parentElement: HTMLElement | null = overlayPathElement.parentElement;
+      if (!parentElement) {
+        break;
+      }
+
+      const siblings = Array.from(parentElement.children)
+        .filter((element): element is HTMLElement =>
+          element instanceof HTMLElement && element !== overlayPathElement
+        );
+      for (const element of siblings) {
+        this.inertSiblings.push({ element, wasInert: element.inert });
+        element.inert = true;
+      }
+
+      if (parentElement === document.body) {
+        break;
+      }
+      overlayPathElement = parentElement;
     }
   }
 
   private restoreBackground(): void {
-    for (const { element, wasInert } of this.inertSiblings) {
+    for (const { element, wasInert } of [...this.inertSiblings].reverse()) {
       element.inert = wasInert;
     }
     this.inertSiblings = [];

@@ -103,6 +103,7 @@
         <div
           class="access-panel__field access-panel__profile-group"
           role="group"
+          aria-required="true"
           aria-labelledby="profile-label">
           <span id="profile-label">Perfil</span>
           <app-searchable-select
@@ -110,7 +111,6 @@
             [options]="profileOptions"
             ariaLabel="Perfil de acceso"
             ariaDescribedBy="profile-error"
-            [ariaRequired]="true"
             placeholder="Seleccioná un perfil"
             searchPlaceholder="Buscar perfil…">
           </app-searchable-select>

@@ -178,10 +178,11 @@ describe('UserAccessPanelComponent', () => {
     expect(group).not.toBeNull();
     expect(group?.getAttribute('role')).toBe('group');
     expect(group?.getAttribute('aria-labelledby')).toBe('profile-label');
+    expect(group?.getAttribute('aria-required')).toBe('true');
     expect(trigger).not.toBeNull();
     expect(trigger?.getAttribute('aria-label')).toBe('Perfil de acceso: Seleccioná un perfil');
     expect(trigger?.getAttribute('aria-describedby')).toBe('profile-error');
-    expect(trigger?.getAttribute('aria-required')).toBe('true');
+    expect(trigger?.getAttribute('aria-required')).toBeNull();
     expect(error?.textContent).toContain('Seleccioná un perfil');
   });
 
@@ -272,10 +273,14 @@ describe('UserAccessPanelComponent', () => {
     fixture = TestBed.createComponent(UserAccessPanelComponent);
     component = fixture.componentInstance;
     setInputs('create');
+    const overlayRoot = document.createElement('div');
+    const overlayBranch = document.createElement('div');
     const background = document.createElement('button');
     background.type = 'button';
     background.textContent = 'Background action';
-    fixture.nativeElement.parentElement?.insertBefore(background, fixture.nativeElement);
+    overlayRoot.append(background, overlayBranch);
+    overlayBranch.appendChild(fixture.nativeElement);
+    document.body.appendChild(overlayRoot);
     background.focus();
 
     fixture.detectChanges();
@@ -304,7 +309,7 @@ describe('UserAccessPanelComponent', () => {
     fixture.destroy();
     expect(background.inert).toBeFalse();
     expect(document.activeElement).toBe(background);
-    background.remove();
+    overlayRoot.remove();
   }));
 
   it('lets an open profile select own the first Escape and closes the panel on the next Escape', fakeAsync(() => {

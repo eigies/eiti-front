@@ -1,4 +1,4 @@
-<div class="search-select" [class.search-select--open]="open" [class.search-select--compact]="compact" [class.search-select--disabled]="disabled" [class.search-select--inline]="panelInline">
+<div class="search-select" [class.search-select--open]="open" [class.search-select--compact]="compact" [class.search-select--disabled]="disabled" [class.search-select--inline]="panelInline" (keydown)="handleKeydown($event)">
   <button
     #trigger
     type="button"
@@ -7,9 +7,8 @@
     [disabled]="disabled"
     [attr.aria-label]="triggerAriaLabel"
     [attr.aria-describedby]="ariaDescribedBy"
-    [attr.aria-required]="ariaRequired ? 'true' : null"
     [attr.aria-expanded]="open"
-    aria-haspopup="listbox"
+    aria-haspopup="dialog"
     (click)="toggle()">
     <span class="search-select__copy" [class.search-select__copy--placeholder]="!selectedOption">
       {{ selectedOption?.label || placeholder }}
@@ -17,7 +16,7 @@
     <span class="search-select__caret" aria-hidden="true">▾</span>
   </button>
 
-  <div class="search-select__panel" role="listbox" *ngIf="open">
+  <div class="search-select__panel" role="dialog" [attr.aria-label]="popupAriaLabel" *ngIf="open">
     <div class="search-select__filter">
       <input
         #filterInput
@@ -33,24 +32,22 @@
     <button
       *ngIf="allowClear"
       type="button"
-      role="option"
       class="search-select__option search-select__option--clear"
       [class.search-select__option--selected]="selectedOption == null"
-      [attr.aria-selected]="selectedOption == null"
       (click)="clearSelection()">
       <span class="search-select__label">{{ clearLabel }}</span>
+      <span class="search-select__selected-mark" *ngIf="selectedOption == null" aria-hidden="true">✓</span>
     </button>
 
     <button
       type="button"
-      role="option"
       class="search-select__option"
       *ngFor="let option of filteredOptions; trackBy: trackByValue"
       [class.search-select__option--selected]="isSelected(option)"
-      [attr.aria-selected]="isSelected(option)"
       (click)="selectOption(option)">
       <span class="search-select__label">{{ option.label }}</span>
       <span class="search-select__meta" *ngIf="option.meta">{{ option.meta }}</span>
+      <span class="search-select__selected-mark" *ngIf="isSelected(option)" aria-hidden="true">✓</span>
     </button>
 
     <div class="search-select__empty" *ngIf="filteredOptions.length === 0">

@@ -14,15 +14,14 @@ describe('SearchableSelectComponent', () => {
     const component = fixture.componentInstance;
     fixture.componentRef.setInput('ariaLabel', 'Perfil de acceso');
     fixture.componentRef.setInput('ariaDescribedBy', 'profile-help profile-error');
-    fixture.componentRef.setInput('ariaRequired', true);
     fixture.detectChanges();
 
     let trigger = fixture.nativeElement.querySelector('.search-select__trigger') as HTMLButtonElement;
     expect(trigger.getAttribute('aria-label')).toBe('Perfil de acceso: Seleccionar perfil');
     expect(trigger.getAttribute('aria-describedby')).toBe('profile-help profile-error');
-    expect(trigger.getAttribute('aria-required')).toBe('true');
+    expect(trigger.getAttribute('aria-required')).toBeNull();
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
-    expect(trigger.getAttribute('aria-haspopup')).toBe('listbox');
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
 
     component.writeValue('operations');
     fixture.detectChanges();
@@ -30,8 +29,24 @@ describe('SearchableSelectComponent', () => {
     expect(trigger.getAttribute('aria-label')).toBe('Perfil de acceso: Operaciones');
   });
 
-  it('renders the open menu and options with listbox semantics and selection state', () => {
+  it('leaves the native visible trigger name intact when no contextual label is supplied', () => {
     const fixture = createSelect();
+    fixture.detectChanges();
+
+    let trigger = fixture.nativeElement.querySelector('.search-select__trigger') as HTMLButtonElement;
+    expect(trigger.getAttribute('aria-label')).toBeNull();
+    expect(trigger.textContent).toContain('Seleccionar perfil');
+
+    fixture.componentInstance.writeValue('operations');
+    fixture.detectChanges();
+    trigger = fixture.nativeElement.querySelector('.search-select__trigger');
+    expect(trigger.getAttribute('aria-label')).toBeNull();
+    expect(trigger.textContent).toContain('Operaciones');
+  });
+
+  it('renders the searchable popup as a labelled dialog with ordinary option buttons', () => {
+    const fixture = createSelect();
+    fixture.componentRef.setInput('ariaLabel', 'Perfil de acceso');
     fixture.componentInstance.writeValue('operations');
     fixture.detectChanges();
 
@@ -39,29 +54,32 @@ describe('SearchableSelectComponent', () => {
     trigger.click();
     fixture.detectChanges();
 
-    const listbox = fixture.nativeElement.querySelector('.search-select__panel') as HTMLElement;
+    const popup = fixture.nativeElement.querySelector('.search-select__panel') as HTMLElement;
     const options = Array.from(
       fixture.nativeElement.querySelectorAll('.search-select__option')
     ) as HTMLElement[];
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
-    expect(listbox.getAttribute('role')).toBe('listbox');
-    expect(options.map(option => option.getAttribute('role'))).toEqual(['option', 'option']);
-    expect(options.map(option => option.getAttribute('aria-selected'))).toEqual(['true', 'false']);
+    expect(popup.getAttribute('role')).toBe('dialog');
+    expect(popup.getAttribute('aria-label')).toBe('Opciones de Perfil de acceso');
+    expect(options.map(option => option.tagName)).toEqual(['BUTTON', 'BUTTON']);
+    expect(options.map(option => option.getAttribute('role'))).toEqual([null, null]);
+    expect(options.map(option => option.getAttribute('aria-selected'))).toEqual([null, null]);
+    expect(options[0].querySelector('.search-select__selected-mark')).not.toBeNull();
   });
 
-  it('owns the first Escape while open, closes and refocuses without reaching later dialog listeners', fakeAsync(() => {
-    const fixture = createSelect();
-    const component = fixture.componentInstance;
-    fixture.detectChanges();
-    const trigger = fixture.nativeElement.querySelector('.search-select__trigger') as HTMLButtonElement;
-    trigger.click();
-    fixture.detectChanges();
-    tick();
-    expect(component.open).toBeTrue();
-
-    const laterDialogListener = jasmine.createSpy('laterDialogListener');
-    document.addEventListener('keydown', laterDialogListener);
+  it('owns Escape at the component before the event reaches a surrounding document listener', fakeAsync(() => {
+    const surroundingDocumentListener = jasmine.createSpy('surroundingDocumentListener');
+    document.addEventListener('keydown', surroundingDocumentListener);
     try {
+      const fixture = createSelect();
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      const trigger = fixture.nativeElement.querySelector('.search-select__trigger') as HTMLButtonElement;
+      trigger.click();
+      fixture.detectChanges();
+      tick();
+      expect(component.open).toBeTrue();
+
       const filter = fixture.nativeElement.querySelector('.search-select__input') as HTMLInputElement;
       const event = new KeyboardEvent('keydown', {
         key: 'Escape',
@@ -73,10 +91,10 @@ describe('SearchableSelectComponent', () => {
 
       expect(component.open).toBeFalse();
       expect(event.defaultPrevented).toBeTrue();
-      expect(laterDialogListener).not.toHaveBeenCalled();
+      expect(surroundingDocumentListener).not.toHaveBeenCalled();
       expect(document.activeElement).toBe(trigger);
     } finally {
-      document.removeEventListener('keydown', laterDialogListener);
+      document.removeEventListener('keydown', surroundingDocumentListener);
     }
   }));
 

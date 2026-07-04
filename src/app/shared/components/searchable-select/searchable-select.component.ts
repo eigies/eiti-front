@@ -28,9 +28,8 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
     @Input() placeholder = 'Seleccionar';
     @Input() searchPlaceholder = 'Filtrar opciones...';
     @Input() emptyMessage = 'No hay coincidencias.';
-    @Input() ariaLabel = 'Selección';
+    @Input() ariaLabel: string | null = null;
     @Input() ariaDescribedBy: string | null = null;
-    @Input() ariaRequired = false;
     @Input() compact = false;
     @Input() disabled = false;
     @Input() panelInline = false;
@@ -68,8 +67,14 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
         return this.options.find(option => this.valuesMatch(option.value, this.value)) ?? null;
     }
 
-    get triggerAriaLabel(): string {
-        return `${this.ariaLabel}: ${this.selectedOption?.label ?? this.placeholder}`;
+    get triggerAriaLabel(): string | null {
+        return this.ariaLabel
+            ? `${this.ariaLabel}: ${this.selectedOption?.label ?? this.placeholder}`
+            : null;
+    }
+
+    get popupAriaLabel(): string {
+        return `Opciones de ${this.ariaLabel ?? this.placeholder}`;
     }
 
     writeValue(value: string | number | null): void {
@@ -143,14 +148,13 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
         }
     }
 
-    @HostListener('document:keydown.escape', ['$event'])
-    handleEscape(event: KeyboardEvent): void {
-        if (!this.open) {
+    handleKeydown(event: KeyboardEvent): void {
+        if (event.key !== 'Escape' || !this.open) {
             return;
         }
 
         event.preventDefault();
-        event.stopImmediatePropagation();
+        event.stopPropagation();
         this.close(true);
     }
 
