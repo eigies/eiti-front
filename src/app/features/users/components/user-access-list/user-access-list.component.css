@@ -209,7 +209,7 @@ a:focus-visible {
     minmax(120px, .75fr)
     minmax(110px, .7fr)
     minmax(90px, .55fr)
-    minmax(180px, auto);
+    minmax(200px, .9fr);
   gap: .8rem;
   align-items: center;
 }
@@ -226,6 +226,12 @@ a:focus-visible {
   font-size: .62rem;
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+.user-list__head > span:not(:first-child),
+.user-list__profile,
+.user-list__access {
+  text-align: center;
 }
 
 .user-list__row {
@@ -309,6 +315,11 @@ a:focus-visible {
   min-width: 0;
 }
 
+.user-list__state {
+  display: flex;
+  justify-content: center;
+}
+
 .user-list__profile strong,
 .user-list__access strong {
   display: block;
@@ -357,7 +368,7 @@ a:focus-visible {
 
 .user-list__actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 0.45rem;
   min-width: 0;
 }
@@ -471,6 +482,15 @@ a:focus-visible {
   .user-list__identity,
   .user-list__actions {
     grid-column: 1 / -1;
+  }
+
+  .user-list__profile,
+  .user-list__access {
+    text-align: left;
+  }
+
+  .user-list__state {
+    display: block;
   }
 
   .user-list__mobile-label {

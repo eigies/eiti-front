@@ -242,6 +242,33 @@ describe('UserAccessListComponent', () => {
     expect(row.querySelector('.user-list__identity')).not.toBeNull();
     expect(row.querySelector('.user-list__access')).not.toBeNull();
     expect(row.querySelector('.user-list__actions')).not.toBeNull();
+
+    const headings = head.querySelectorAll(':scope > span');
+    const profileCell = row.querySelector('.user-list__profile') as HTMLElement;
+    const accessCell = row.querySelector('.user-list__access') as HTMLElement;
+    const stateCell = row.querySelector('.user-list__state') as HTMLElement;
+    const actionsCell = row.querySelector('.user-list__actions') as HTMLElement;
+
+    for (const heading of Array.from(headings).slice(1)) {
+      expect(getComputedStyle(heading).textAlign).toBe('center');
+    }
+    expect(getComputedStyle(profileCell).textAlign).toBe('center');
+    expect(getComputedStyle(accessCell).textAlign).toBe('center');
+    expect(getComputedStyle(stateCell).justifyContent).toBe('center');
+    expect(getComputedStyle(actionsCell).justifyContent).toBe('center');
+
+    const rowCells = [profileCell, accessCell, stateCell, actionsCell];
+    for (const [index, heading] of Array.from(headings).slice(1).entries()) {
+      const headingRect = heading.getBoundingClientRect();
+      const cellRect = rowCells[index].getBoundingClientRect();
+      const headingCenter = headingRect.left + headingRect.width / 2;
+      const cellCenter = cellRect.left + cellRect.width / 2;
+
+      expect(cellCenter)
+        .withContext(`desktop column ${index + 2} shares one axis`)
+        .toBeCloseTo(headingCenter, 0);
+    }
+
     expect(getComputedStyle(head).borderTopWidth).toBe('1px');
     expect(getComputedStyle(head).borderTopLeftRadius).toBe('10px');
     expect(row.getBoundingClientRect().height).toBeLessThanOrEqual(72);
