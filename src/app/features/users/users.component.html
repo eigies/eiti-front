@@ -106,6 +106,7 @@
 
   <app-user-access-panel
     *ngIf="userPanelMode !== 'closed'"
+    [class.access-panel-host--closing]="userPanelClosing"
     [mode]="userPanelMode === 'create' ? 'create' : 'edit'"
     [user]="selectedUser"
     [profiles]="profiles"
@@ -118,6 +119,7 @@
 
   <app-access-profile-panel
     *ngIf="profilePanelMode !== 'closed'"
+    [class.profile-panel-host--closing]="profilePanelClosing"
     [mode]="profilePanelMode === 'create' ? 'create' : 'edit'"
     [profile]="selectedProfile"
     [permissionCatalog]="permissionCatalog"

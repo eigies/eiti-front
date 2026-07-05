@@ -123,7 +123,7 @@ describe('UsersComponent', () => {
     createTrigger.remove();
   });
 
-  it('creates with the exact request, patches and sorts the list, then closes', () => {
+  it('creates with the exact request, patches and sorts the list, then closes', fakeAsync(() => {
     const created = user({ id: 'created', username: 'beto', profileId: 'profile-a' });
     userService.createUser.and.returnValue(of(created));
     render();
@@ -137,12 +137,17 @@ describe('UsersComponent', () => {
       employeeId: null
     });
     expect(component.users.map(item => item.username)).toEqual(['ana', 'beto', 'zoe']);
+    expect(component.userPanelClosing).toBeTrue();
+    expect(component.userPanelMode).toBe('create');
+
+    tick(240);
+
     expect(component.userPanelMode).toBe('closed');
     expect(component.selectedUser).toBeNull();
     expect(component.userPanelSaving).toBeFalse();
     expect(toast.success).toHaveBeenCalledOnceWith('Usuario creado');
     expect(auth.refreshCurrentUserProfile).not.toHaveBeenCalled();
-  });
+  }));
 
   it('focuses the created user edit action when the empty-state opener disappears', fakeAsync(() => {
     const created = user({ id: 'created', username: 'beto', profileId: 'profile-a' });
@@ -156,6 +161,8 @@ describe('UsersComponent', () => {
     tick();
 
     component.saveUserDraft(accessDraft({ username: 'beto' }));
+    fixture.detectChanges();
+    tick(240, { processNewMacroTasksSynchronously: false });
     fixture.detectChanges();
     tick();
 
@@ -177,13 +184,15 @@ describe('UsersComponent', () => {
 
     component.requestUserPanelClose(false);
     fixture.detectChanges();
+    tick(240);
+    fixture.detectChanges();
     tick();
 
     expect(document.activeElement).toBe(createButton);
     expect(focus).toHaveBeenCalledTimes(1);
   }));
 
-  it('edits with the exact preserved employee and draft access, patches the user, and refreshes auth', () => {
+  it('edits with the exact preserved employee and draft access, patches the user, and refreshes auth', fakeAsync(() => {
     const selected = users.find(item => item.employeeId === 'employee-7')!;
     const updated = user({
       ...selected,
@@ -210,11 +219,16 @@ describe('UsersComponent', () => {
       branchIds: ['branch-a', 'branch-b']
     });
     expect(component.users.find(item => item.id === selected.id)).toEqual(updated);
+    expect(component.userPanelClosing).toBeTrue();
+    expect(component.userPanelMode).toBe('edit');
+
+    tick(240);
+
     expect(component.userPanelMode).toBe('closed');
     expect(component.userPanelSaving).toBeFalse();
     expect(toast.success).toHaveBeenCalledOnceWith('Acceso actualizado');
     expect(auth.refreshCurrentUserProfile).toHaveBeenCalledTimes(1);
-  });
+  }));
 
   it('keeps the same create or edit panel open and clears saving after save errors', () => {
     userService.createUser.and.returnValue(throwError(() => ({
@@ -255,14 +269,55 @@ describe('UsersComponent', () => {
     confirmation.confirm.and.resolveTo(true);
     component.requestUserPanelClose(true);
     tick();
+    expect(component.userPanelClosing).toBeTrue();
+    tick(240);
     expect(component.userPanelMode).toBe('closed');
 
     confirmation.confirm.calls.reset();
     component.openUserCreator();
     component.requestUserPanelClose(false);
-    tick();
+    expect(component.userPanelClosing).toBeTrue();
+    tick(240);
     expect(confirmation.confirm).not.toHaveBeenCalled();
     expect(component.userPanelMode).toBe('closed');
+  }));
+
+  it('keeps the user panel mounted during its exit animation', fakeAsync(() => {
+    render();
+    component.openUserCreator();
+
+    component.requestUserPanelClose(false);
+    tick();
+    fixture.detectChanges();
+
+    expect(component.userPanelClosing).toBeTrue();
+    expect(component.userPanelMode).toBe('create');
+    expect(query('app-user-access-panel')?.classList)
+      .toContain('access-panel-host--closing');
+
+    tick(240);
+
+    expect(component.userPanelMode).toBe('closed');
+    expect(component.userPanelClosing).toBeFalse();
+  }));
+
+  it('keeps the profile panel mounted during its exit animation', fakeAsync(() => {
+    render();
+    component.openProfileEditor(component.profiles[0]);
+
+    component.requestProfilePanelClose(false);
+    tick();
+    fixture.detectChanges();
+
+    expect(component.profilePanelClosing).toBeTrue();
+    expect(component.profilePanelMode).toBe('edit');
+    expect(query('app-access-profile-panel')?.classList)
+      .toContain('profile-panel-host--closing');
+
+    tick(240);
+
+    expect(component.profilePanelMode).toBe('closed');
+    expect(component.profilePanelClosing).toBeFalse();
   }));
 
   it('ignores a dirty-close confirmation after the component is destroyed', fakeAsync(() => {

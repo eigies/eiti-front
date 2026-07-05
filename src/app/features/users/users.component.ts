@@ -61,9 +61,11 @@ export class UsersComponent implements OnInit, OnDestroy {
   userPanelMode: AccessPanelMode = 'closed';
   selectedUser: UserResponse | null = null;
   userPanelSaving = false;
+  userPanelClosing = false;
   profilePanelMode: AccessPanelMode = 'closed';
   selectedProfile: AccessProfileResponse | null = null;
   profilePanelSaving = false;
+  profilePanelClosing = false;
 
   loadingUsers = true;
   loadingProfiles = true;
@@ -78,6 +80,9 @@ export class UsersComponent implements OnInit, OnDestroy {
   private profilePanelCloseRequestId = 0;
   private statusRequestId = 0;
   private profileDeleteRequestId = 0;
+  private userPanelCloseTimer: ReturnType<typeof setTimeout> | null = null;
+  private profilePanelCloseTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly panelExitDuration = 240;
 
   constructor(
     private readonly userService: UserService,
@@ -103,6 +108,8 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.clearUserPanelCloseTimer();
+    this.clearProfilePanelCloseTimer();
     this.userPanelCloseRequestId++;
     this.profilePanelCloseRequestId++;
     this.statusRequestId++;
@@ -171,6 +178,8 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   openUserCreator(): void {
+    this.clearUserPanelCloseTimer();
+    this.userPanelClosing = false;
     this.userPanelCloseRequestId++;
     this.selectedUser = null;
     this.userPanelMode = 'create';
@@ -178,6 +187,8 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   openUserEditor(user: UserResponse): void {
+    this.clearUserPanelCloseTimer();
+    this.userPanelClosing = false;
     this.userPanelCloseRequestId++;
     this.selectedUser = user;
     this.userPanelMode = 'edit';
@@ -185,7 +196,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   saveUserDraft(draft: UserAccessDraft): void {
-    if (this.userPanelSaving || this.userPanelMode === 'closed') return;
+    if (this.userPanelSaving || this.userPanelClosing || this.userPanelMode === 'closed') return;
 
     this.userPanelSaving = true;
     if (this.userPanelMode === 'create') {
@@ -197,7 +208,7 @@ export class UsersComponent implements OnInit, OnDestroy {
           this.users = [...this.users, created]
             .sort((left, right) => left.username.localeCompare(right.username));
           this.userPanelSaving = false;
-          this.closeUserPanel(created.id);
+          this.beginUserPanelClose(created.id);
           this.toast.success('Usuario creado');
           this.cdr.markForCheck();
         },
@@ -226,7 +237,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       next: updated => {
         this.patchUser(updated);
         this.userPanelSaving = false;
-        this.closeUserPanel();
+        this.beginUserPanelClose();
         this.toast.success('Acceso actualizado');
         this.auth.refreshCurrentUserProfile();
         this.cdr.markForCheck();
@@ -242,7 +253,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   async requestUserPanelClose(dirty: boolean): Promise<void> {
-    if (this.userPanelSaving || this.userPanelMode === 'closed') return;
+    if (this.userPanelSaving || this.userPanelClosing || this.userPanelMode === 'closed') return;
 
     const requestId = ++this.userPanelCloseRequestId;
     const expectedMode = this.userPanelMode;
@@ -264,7 +275,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     if (!this.isCurrentUserPanelRequest(requestId, expectedMode, expectedUserId)) return;
-    this.closeUserPanel();
+    this.beginUserPanelClose();
   }
 
   async requestUserStatusChange(user: UserResponse): Promise<void> {
@@ -306,6 +317,8 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   openProfileCreator(): void {
+    this.clearProfilePanelCloseTimer();
+    this.profilePanelClosing = false;
     this.profilePanelCloseRequestId++;
     this.selectedProfile = null;
     this.profilePanelMode = 'create';
@@ -313,6 +326,8 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   openProfileEditor(profile: AccessProfileResponse): void {
+    this.clearProfilePanelCloseTimer();
+    this.profilePanelClosing = false;
     this.profilePanelCloseRequestId++;
     this.selectedProfile = profile;
     this.profilePanelMode = 'edit';
@@ -324,7 +339,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   async requestProfilePanelClose(dirty: boolean): Promise<void> {
-    if (this.profilePanelSaving || this.profilePanelMode === 'closed') return;
+    if (this.profilePanelSaving || this.profilePanelClosing || this.profilePanelMode === 'closed') return;
 
     const requestId = ++this.profilePanelCloseRequestId;
     const expectedMode = this.profilePanelMode;
@@ -345,11 +360,11 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     if (!this.isCurrentProfilePanelRequest(requestId, expectedMode, expectedProfileId)) return;
-    this.closeProfilePanel();
+    this.beginProfilePanelClose();
   }
 
   saveProfileDraft(draft: AccessProfileDraft): void {
-    if (this.profilePanelSaving || this.profilePanelMode === 'closed') return;
+    if (this.profilePanelSaving || this.profilePanelClosing || this.profilePanelMode === 'closed') return;
 
     const editingProfileId = this.selectedProfile?.id;
     this.profilePanelSaving = true;
@@ -362,7 +377,7 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.profiles = [...this.profiles.filter(item => item.id !== profile.id), profile]
           .sort((left, right) => left.name.localeCompare(right.name));
         this.profilePanelSaving = false;
-        this.closeProfilePanel();
+        this.beginProfilePanelClose();
         this.toast.success(editingProfileId ? 'Perfil actualizado' : 'Perfil creado');
         this.loadUsers();
         this.auth.refreshCurrentUserProfile();
@@ -400,7 +415,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.profiles = this.profiles.filter(item => item.id !== profile.id);
-          if (this.selectedProfile?.id === profile.id) this.closeProfilePanel();
+          if (this.selectedProfile?.id === profile.id) this.beginProfilePanelClose();
           this.toast.success('Perfil eliminado');
           this.cdr.markForCheck();
         },
@@ -457,7 +472,19 @@ export class UsersComponent implements OnInit, OnDestroy {
       .sort((left, right) => left.username.localeCompare(right.username));
   }
 
-  private closeUserPanel(preferredUserId?: string): void {
+  private beginUserPanelClose(preferredUserId?: string): void {
+    if (this.userPanelClosing || this.userPanelMode === 'closed') return;
+    this.userPanelCloseRequestId++;
+    this.userPanelClosing = true;
+    this.cdr.markForCheck();
+    this.userPanelCloseTimer = setTimeout(() => {
+      this.userPanelCloseTimer = null;
+      this.userPanelClosing = false;
+      this.finalizeUserPanelClose(preferredUserId);
+    }, this.panelExitDuration);
+  }
+
+  private finalizeUserPanelClose(preferredUserId?: string): void {
     this.userPanelCloseRequestId++;
     this.userPanelMode = 'closed';
     this.selectedUser = null;
@@ -482,11 +509,35 @@ export class UsersComponent implements OnInit, OnDestroy {
     });
   }
 
-  private closeProfilePanel(): void {
+  private beginProfilePanelClose(): void {
+    if (this.profilePanelClosing || this.profilePanelMode === 'closed') return;
+    this.profilePanelCloseRequestId++;
+    this.profilePanelClosing = true;
+    this.cdr.markForCheck();
+    this.profilePanelCloseTimer = setTimeout(() => {
+      this.profilePanelCloseTimer = null;
+      this.profilePanelClosing = false;
+      this.finalizeProfilePanelClose();
+    }, this.panelExitDuration);
+  }
+
+  private finalizeProfilePanelClose(): void {
     this.profilePanelCloseRequestId++;
     this.profilePanelMode = 'closed';
     this.selectedProfile = null;
     this.cdr.markForCheck();
+  }
+
+  private clearUserPanelCloseTimer(): void {
+    if (this.userPanelCloseTimer === null) return;
+    clearTimeout(this.userPanelCloseTimer);
+    this.userPanelCloseTimer = null;
+  }
+
+  private clearProfilePanelCloseTimer(): void {
+    if (this.profilePanelCloseTimer === null) return;
+    clearTimeout(this.profilePanelCloseTimer);
+    this.profilePanelCloseTimer = null;
   }
 
   private isCurrentUserPanelRequest(
@@ -496,6 +547,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   ): boolean {
     return !this.destroyed
       && requestId === this.userPanelCloseRequestId
+      && !this.userPanelClosing
       && this.userPanelMode === expectedMode
       && (this.selectedUser?.id ?? null) === expectedUserId;
   }
@@ -507,6 +559,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   ): boolean {
     return !this.destroyed
       && requestId === this.profilePanelCloseRequestId
+      && !this.profilePanelClosing
       && this.profilePanelMode === expectedMode
       && (this.selectedProfile?.id ?? null) === expectedProfileId;
   }

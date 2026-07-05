@@ -19,7 +19,7 @@
   inset: 0;
   background: color-mix(in srgb, var(--overlay) 88%, #000 12%);
   backdrop-filter: blur(5px);
-  animation: panel-backdrop-in 160ms ease-out both;
+  animation: access-backdrop-in .28s ease both;
 }
 
 .access-panel {
@@ -37,7 +37,20 @@
     linear-gradient(145deg, color-mix(in srgb, var(--amber) 5%, transparent), transparent 22%),
     var(--bg-panel);
   box-shadow: -28px 0 72px rgba(0, 0, 0, 0.34);
-  animation: panel-enter 220ms cubic-bezier(.2, .8, .2, 1) both;
+  will-change: transform, opacity;
+  animation: access-drawer-in .42s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+:host(.access-panel-host--closing) {
+  pointer-events: none;
+}
+
+:host(.access-panel-host--closing) .access-panel {
+  animation: access-drawer-out .24s cubic-bezier(.4, 0, 1, 1) both;
+}
+
+:host(.access-panel-host--closing) .access-panel__backdrop {
+  animation: access-backdrop-out .22s ease both;
 }
 
 .access-panel__header {
@@ -506,20 +519,25 @@
   border: 0;
 }
 
-@keyframes panel-enter {
-  from {
-    opacity: 0;
-    transform: translateX(2rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+@keyframes access-drawer-in {
+  0% { opacity: 0; transform: translateX(42px); }
+  58% { opacity: 1; }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes panel-backdrop-in {
+@keyframes access-drawer-out {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(28px); }
+}
+
+@keyframes access-backdrop-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes access-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @container user-access-panel-host (max-width: 900px) {
@@ -546,5 +564,10 @@
   .access-panel,
   .access-panel__backdrop {
     animation: none;
+  }
+
+  .access-panel__check,
+  .access-panel__branch {
+    transition: none;
   }
 }
