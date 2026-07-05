@@ -1,0 +1,573 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: block;
+  min-width: 0;
+  color: var(--text);
+  container-name: user-access-panel-host;
+  container-type: inline-size;
+}
+
+* {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.access-panel__backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--overlay) 88%, #000 12%);
+  backdrop-filter: blur(5px);
+  animation: access-backdrop-in .28s ease both;
+}
+
+.access-panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(720px, 100vw, 100%);
+  max-width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  border-left: 1px solid color-mix(in srgb, var(--amber) 20%, var(--border));
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--amber) 5%, transparent), transparent 22%),
+    var(--bg-panel);
+  box-shadow: -28px 0 72px rgba(0, 0, 0, 0.34);
+  will-change: transform, opacity;
+  animation: access-drawer-in .42s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+:host(.access-panel-host--closing) {
+  pointer-events: none;
+}
+
+:host(.access-panel-host--closing) .access-panel {
+  animation: access-drawer-out .24s cubic-bezier(.4, 0, 1, 1) both;
+}
+
+:host(.access-panel-host--closing) .access-panel__backdrop {
+  animation: access-backdrop-out .22s ease both;
+}
+
+.access-panel__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 2rem 1.35rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+}
+
+.access-panel__eyebrow,
+.access-panel__field > span,
+.access-panel__field > label,
+.access-panel__index,
+.access-panel__scope-status strong,
+.access-panel__module-heading,
+.access-panel__button {
+  font-family: 'DM Mono', monospace;
+}
+
+.access-panel__eyebrow {
+  margin: 0 0 0.38rem;
+  color: color-mix(in srgb, var(--amber) 72%, var(--text));
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.access-panel h2,
+.access-panel h3,
+.access-panel__identity > strong,
+.access-panel__human-name {
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-weight: 400;
+}
+
+.access-panel h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 2.3rem);
+  line-height: 0.95;
+}
+
+.access-panel h2:focus {
+  outline: none;
+}
+
+.access-panel h2:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 5px;
+}
+
+.access-panel__close {
+  display: grid;
+  flex: 0 0 auto;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--border-2);
+  border-radius: 50%;
+  color: var(--text-dim);
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.access-panel__close:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.access-panel__form {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.access-panel__body {
+  min-height: 0;
+  padding: 0 2rem 2.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.access-panel__section {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.access-panel__section:last-child {
+  border-bottom: 0;
+}
+
+.access-panel__section-heading {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.65rem;
+  margin-bottom: 1.35rem;
+}
+
+.access-panel__index {
+  color: color-mix(in srgb, var(--amber) 76%, var(--text));
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+}
+
+.access-panel h3 {
+  margin: -0.12rem 0 0.12rem;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.access-panel__section-heading p,
+.access-panel__empty {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.access-panel__field {
+  display: grid;
+  gap: .5rem;
+  margin-top: 1.1rem;
+}
+
+.access-panel__field > span,
+.access-panel__field > label {
+  color: color-mix(in srgb, var(--text-dim) 88%, var(--text));
+  font-size: 0.67rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.access-panel__field input {
+  width: 100%;
+  min-height: 46px;
+  padding: .75rem .85rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg) 32%, var(--bg-panel));
+  font: inherit;
+}
+
+.access-panel__field input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.72;
+}
+
+.access-panel__error {
+  color: var(--danger);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.access-panel__identity {
+  display: grid;
+  gap: 0.25rem;
+  margin: 1.4rem 0 0;
+  padding: 1rem 0 1.2rem 1rem;
+  border-left: 2px solid var(--amber);
+  overflow-wrap: anywhere;
+}
+
+.access-panel__identity > strong {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.access-panel__identity a,
+.access-panel__identity span {
+  color: var(--text-dim);
+  text-decoration: none;
+}
+
+.access-panel__human-name {
+  margin-top: 0.15rem;
+  font-size: 1.02rem;
+}
+
+.access-panel__permissions {
+  margin-top: 1rem;
+}
+
+.access-panel__permission-summary {
+  display: grid;
+  grid-template-columns: 2.7rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.access-panel__permission-count {
+  color: color-mix(in srgb, var(--amber) 78%, var(--text));
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 2.25rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.access-panel__permission-summary strong,
+.access-panel__permission-summary span {
+  display: block;
+}
+
+.access-panel__permission-summary strong {
+  font-size: 0.92rem;
+}
+
+.access-panel__permission-summary div span {
+  margin-top: 0.1rem;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.access-panel__modules {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.access-panel__module-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.access-panel__module-heading span {
+  color: color-mix(in srgb, var(--amber) 76%, var(--text));
+}
+
+.access-panel__module ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+  margin: 0.48rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.access-panel__module li {
+  padding: .38rem .65rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
+  border-radius: 999px;
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+  font-size: 0.75rem;
+}
+
+.access-panel__branches {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.access-panel__branch {
+  position: relative;
+  display: grid;
+  min-height: 56px;
+  grid-template-columns: 1.15rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .16s ease;
+}
+
+.access-panel__branch:hover:not(.access-panel__branch--disabled) {
+  background: color-mix(in srgb, var(--amber) 4%, transparent);
+}
+
+.access-panel__branch--all {
+  width: 100%;
+  border-top: 1px solid var(--border);
+  border-right: 0;
+  border-left: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  appearance: none;
+}
+
+.access-panel__branch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.access-panel__check {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg) 70%, var(--bg-panel));
+  transition:
+    border-color .16s ease,
+    background .16s ease,
+    box-shadow .16s ease,
+    transform .16s ease;
+}
+
+.access-panel__branch:hover:not(.access-panel__branch--disabled) .access-panel__check {
+  border-color: color-mix(in srgb, var(--amber) 42%, var(--border-2));
+}
+
+.access-panel__branch input:checked + .access-panel__check {
+  border-color: var(--amber);
+  background: var(--amber);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+.access-panel__branch--all[aria-pressed="true"] .access-panel__check {
+  border-color: var(--amber);
+  background: var(--amber);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+.access-panel__branch input:checked + .access-panel__check::after {
+  width: 0.48rem;
+  height: 0.26rem;
+  border: solid #1a1309;
+  border-width: 0 0 2px 2px;
+  content: '';
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.access-panel__branch--all[aria-pressed="true"] .access-panel__check::after {
+  width: 0.48rem;
+  height: 0.26rem;
+  border: solid #1a1309;
+  border-width: 0 0 2px 2px;
+  content: '';
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.access-panel__branch input:focus-visible + .access-panel__check {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.access-panel__branch--all:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.access-panel__branch--all:disabled,
+.access-panel__branch--disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.access-panel__branch strong,
+.access-panel__branch small {
+  display: block;
+}
+
+.access-panel__branch strong {
+  font-size: 0.9rem;
+}
+
+.access-panel__branch small {
+  margin-top: 0.14rem;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.access-panel__scope-status {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.8rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.access-panel__scope-status strong {
+  color: color-mix(in srgb, var(--amber) 72%, var(--text));
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.access-panel__footer {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: 0.85fr 1.25fr;
+  gap: 0.65rem;
+  padding: 1rem 2rem max(1rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-panel) 98%, transparent);
+}
+
+.access-panel__button {
+  min-height: 44px;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.access-panel__button--ghost {
+  color: var(--text-dim);
+  background: transparent;
+}
+
+.access-panel__button--primary {
+  border-color: color-mix(in srgb, var(--amber) 75%, #fff 25%);
+  color: #1c1409;
+  background: var(--amber);
+}
+
+:host-context(.theme-light) .access-panel__button--primary {
+  color: #120c05;
+}
+
+.access-panel__button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.access-panel__close:focus-visible,
+.access-panel__button:focus-visible,
+.access-panel__field input:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+:host ::ng-deep app-searchable-select .search-select__trigger {
+  min-height: 46px;
+  border-radius: 8px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes access-drawer-in {
+  0% { opacity: 0; transform: translateX(42px); }
+  58% { opacity: 1; }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes access-drawer-out {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(28px); }
+}
+
+@keyframes access-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes access-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@container user-access-panel-host (max-width: 900px) {
+  .access-panel {
+    width: 100%;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .access-panel__header,
+  .access-panel__body,
+  .access-panel__footer {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .access-panel__footer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .access-panel,
+  .access-panel__backdrop {
+    animation: none;
+  }
+
+  .access-panel__check,
+  .access-panel__branch {
+    transition: none;
+  }
+}

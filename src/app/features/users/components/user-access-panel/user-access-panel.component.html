@@ -1,0 +1,235 @@
+<div class="access-panel__backdrop" (click)="requestClose()" aria-hidden="true"></div>
+
+<aside
+  #panel
+  class="access-panel"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-busy]="saving"
+  aria-labelledby="user-access-panel-title">
+  <header class="access-panel__header">
+    <div>
+      <p class="access-panel__eyebrow">{{ mode === 'create' ? 'Alta interna' : 'Acceso individual' }}</p>
+      <h2 #panelTitle id="user-access-panel-title" tabindex="-1">{{ title }}</h2>
+    </div>
+    <button
+      class="access-panel__close"
+      type="button"
+      aria-label="Cerrar panel de usuario"
+      [disabled]="saving"
+      (click)="requestClose()">
+      <span aria-hidden="true">×</span>
+    </button>
+  </header>
+
+  <form class="access-panel__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="access-panel__body">
+      <section class="access-panel__section" *ngIf="mode === 'create'" data-testid="create-identity">
+        <div class="access-panel__section-heading">
+          <span class="access-panel__index">01</span>
+          <div>
+            <h3>Identidad de ingreso</h3>
+            <p>Datos que la persona usará para acceder al sistema.</p>
+          </div>
+        </div>
+
+        <label class="access-panel__field">
+          <span>Usuario</span>
+          <input
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            aria-describedby="username-error"
+            placeholder="operador.caja" />
+          <small
+            id="username-error"
+            class="access-panel__error"
+            *ngIf="form.controls.username.touched && form.controls.username.invalid">
+            Ingresá un usuario de al menos 3 caracteres.
+          </small>
+        </label>
+
+        <label class="access-panel__field">
+          <span>Email</span>
+          <input
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            aria-describedby="email-error"
+            placeholder="persona@empresa.com" />
+          <small
+            id="email-error"
+            class="access-panel__error"
+            *ngIf="form.controls.email.touched && form.controls.email.invalid">
+            Ingresá un email válido.
+          </small>
+        </label>
+
+        <label class="access-panel__field">
+          <span>Contraseña inicial</span>
+          <input
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+            aria-describedby="password-error"
+            placeholder="Mínimo 6 caracteres" />
+          <small
+            id="password-error"
+            class="access-panel__error"
+            *ngIf="form.controls.password.touched && form.controls.password.invalid">
+            Usá al menos 6 caracteres.
+          </small>
+        </label>
+      </section>
+
+      <section class="access-panel__identity" *ngIf="mode === 'edit' && user" data-testid="edit-identity">
+        <p class="access-panel__eyebrow">Usuario seleccionado</p>
+        <strong>{{ user.username.trim() }}</strong>
+        <a [href]="'mailto:' + user.email.trim()">{{ user.email.trim() }}</a>
+        <span class="access-panel__human-name">
+          {{ user.employeeName || 'Sin empleado vinculado' }}
+        </span>
+      </section>
+
+      <section class="access-panel__section">
+        <div class="access-panel__section-heading">
+          <span class="access-panel__index">{{ mode === 'create' ? '02' : '01' }}</span>
+          <div>
+            <h3>Perfil de acceso</h3>
+            <p>Define el conjunto de permisos heredados.</p>
+          </div>
+        </div>
+
+        <div
+          class="access-panel__field access-panel__profile-group"
+          role="group"
+          aria-labelledby="profile-label">
+          <span id="profile-label">Perfil <small>(obligatorio)</small></span>
+          <app-searchable-select
+            formControlName="profileId"
+            [options]="profileOptions"
+            ariaLabel="Perfil de acceso"
+            ariaDescribedBy="profile-error"
+            placeholder="Seleccioná un perfil"
+            searchPlaceholder="Buscar perfil…">
+          </app-searchable-select>
+          <small
+            id="profile-error"
+            class="access-panel__error"
+            role="alert"
+            *ngIf="form.controls.profileId.touched && form.controls.profileId.invalid">
+            Seleccioná un perfil para continuar.
+          </small>
+        </div>
+
+        <div class="access-panel__permissions" aria-live="polite">
+          <ng-container *ngIf="selectedProfile; else noProfileSelected">
+            <div class="access-panel__permission-summary">
+              <span class="access-panel__permission-count">{{ inheritedPermissionCount }}</span>
+              <div>
+                <strong>
+                  {{ inheritedPermissionCount }}
+                  {{ inheritedPermissionCount === 1 ? 'permiso heredado' : 'permisos heredados' }}
+                </strong>
+                <span>Incluidos en {{ selectedProfile.name }}</span>
+              </div>
+            </div>
+
+            <div class="access-panel__modules" *ngIf="permissionModules.length; else noPermissions">
+              <article
+                class="access-panel__module"
+                *ngFor="let module of permissionModules; trackBy: trackByModuleLabel">
+                <div class="access-panel__module-heading">
+                  <strong>{{ module.label }}</strong>
+                  <span>{{ module.permissions.length }}</span>
+                </div>
+                <ul>
+                  <li *ngFor="let permission of module.permissions">{{ permission.action }}</li>
+                </ul>
+              </article>
+            </div>
+            <ng-template #noPermissions>
+              <p class="access-panel__empty">Este perfil no tiene permisos catalogados.</p>
+            </ng-template>
+          </ng-container>
+          <ng-template #noProfileSelected>
+            <p class="access-panel__empty">Elegí un perfil para revisar sus permisos.</p>
+          </ng-template>
+        </div>
+      </section>
+
+      <section class="access-panel__section">
+        <div class="access-panel__section-heading">
+          <span class="access-panel__index">{{ mode === 'create' ? '03' : '02' }}</span>
+          <div>
+            <h3>Sucursales</h3>
+            <p>El acceso total se representa sin restricciones guardadas.</p>
+          </div>
+        </div>
+
+        <fieldset class="access-panel__branches">
+          <legend class="sr-only">Alcance por sucursal</legend>
+          <button
+            class="access-panel__branch access-panel__branch--all"
+            data-testid="all-branches"
+            type="button"
+            [attr.aria-pressed]="allBranchesSelected"
+            [disabled]="saving"
+            (click)="selectAllBranches()">
+            <span class="access-panel__check" aria-hidden="true"></span>
+            <span>
+              <strong>Todas las sucursales</strong>
+              <small>Puede operar sin restricciones de ubicación.</small>
+            </span>
+          </button>
+
+          <label
+            class="access-panel__branch"
+            [class.access-panel__branch--disabled]="saving"
+            *ngFor="let branch of branches; trackBy: trackByBranchId"
+            [class.access-panel__branch--selected]="isBranchSelected(branch.id)">
+            <input
+              type="checkbox"
+              [checked]="isBranchSelected(branch.id)"
+              [disabled]="saving"
+              (change)="toggleBranch(branch.id)" />
+            <span class="access-panel__check" aria-hidden="true"></span>
+            <span>
+              <strong>{{ branch.name }}</strong>
+              <small *ngIf="branch.code || branch.address">
+                {{ branch.code }}<ng-container *ngIf="branch.code && branch.address"> · </ng-container>{{ branch.address }}
+              </small>
+            </span>
+          </label>
+        </fieldset>
+
+        <p class="access-panel__scope-status">
+          <strong>{{ allBranchesSelected ? 'Acceso total' : 'Acceso restringido' }}</strong>
+          <span *ngIf="allBranchesSelected">Todas las sucursales están incluidas.</span>
+          <span *ngIf="!allBranchesSelected">
+            {{ selectedBranchIds.size }}
+            {{ selectedBranchIds.size === 1 ? 'sucursal seleccionada' : 'sucursales seleccionadas' }}.
+          </span>
+        </p>
+      </section>
+    </div>
+
+    <footer class="access-panel__footer">
+      <button
+        class="access-panel__button access-panel__button--ghost"
+        type="button"
+        aria-label="Cerrar sin guardar"
+        [disabled]="saving"
+        (click)="requestClose()">
+        Cancelar
+      </button>
+      <button
+        class="access-panel__button access-panel__button--primary"
+        type="submit"
+        [disabled]="saving">
+        {{ actionLabel }}
+      </button>
+      <span class="sr-only" aria-live="polite">{{ saving ? 'Guardando cambios' : '' }}</span>
+    </footer>
+  </form>
+</aside>

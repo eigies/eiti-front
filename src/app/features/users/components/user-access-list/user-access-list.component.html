@@ -1,0 +1,173 @@
+<section class="user-list" aria-labelledby="user-list-title">
+  <header class="user-list__header">
+    <div>
+      <p class="user-list__eyebrow">Directorio de acceso</p>
+      <h2 id="user-list-title">Usuarios</h2>
+      <p class="user-list__intro">Perfiles, sucursales y estado operativo del equipo.</p>
+    </div>
+
+    <button class="user-list__create" type="button" (click)="createRequested.emit()">
+      <span aria-hidden="true">+</span>
+      Nuevo usuario
+    </button>
+  </header>
+
+  <div class="user-list__toolbar" role="search" aria-label="Filtrar usuarios">
+    <label class="user-list__search">
+      <span class="sr-only">Buscar por usuario, email o empleado</span>
+      <span class="user-list__search-mark" aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        placeholder="Buscar usuario, email o empleado"
+        [ngModel]="filters.query"
+        (ngModelChange)="setQuery($event)" />
+    </label>
+
+    <div class="user-list__filter">
+      <span>Estado</span>
+      <app-searchable-select
+        [ngModel]="filters.status"
+        (ngModelChange)="setStatus($event)"
+        [options]="statusFilterOptions"
+        ariaLabel="Filtrar por estado"
+        placeholder="Todos"
+        searchPlaceholder="Buscar estado...">
+      </app-searchable-select>
+    </div>
+
+    <div class="user-list__filter">
+      <span>Perfil</span>
+      <app-searchable-select
+        [ngModel]="filters.profileId"
+        (ngModelChange)="setProfile($event)"
+        [options]="profileFilterOptions"
+        ariaLabel="Filtrar por perfil"
+        placeholder="Todos"
+        searchPlaceholder="Buscar perfil...">
+      </app-searchable-select>
+    </div>
+
+    <div class="user-list__filter">
+      <span>Sucursal</span>
+      <app-searchable-select
+        [ngModel]="filters.branchId"
+        (ngModelChange)="setBranch($event)"
+        [options]="branchFilterOptions"
+        ariaLabel="Filtrar por sucursal"
+        placeholder="Todas"
+        searchPlaceholder="Buscar sucursal...">
+      </app-searchable-select>
+    </div>
+
+    <button
+      *ngIf="hasActiveFilters"
+      class="user-list__clear"
+      type="button"
+      (click)="clearFilters()">
+      Limpiar
+    </button>
+
+    <button
+      class="user-list__reload"
+      type="button"
+      [disabled]="loading"
+      (click)="reloadRequested.emit()">
+      <span aria-hidden="true">↻</span>
+      {{ loading ? 'Actualizando' : 'Actualizar' }}
+    </button>
+  </div>
+
+  <div class="user-list__table" aria-live="polite" [attr.aria-busy]="loading">
+    <div class="user-list__head" aria-hidden="true">
+      <span>Usuario</span>
+      <span>Perfil</span>
+      <span>Sucursales</span>
+      <span>Estado</span>
+      <span>Acciones</span>
+    </div>
+
+    <ng-container *ngIf="loading">
+      <div class="user-list__skeleton" *ngFor="let row of [1, 2, 3, 4]" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <span class="sr-only">Cargando usuarios</span>
+    </ng-container>
+
+    <ng-container *ngIf="!loading">
+      <article
+        *ngFor="let user of visibleUsers; trackBy: trackByUserId"
+        class="user-list__row"
+        [class.user-list__row--selected]="selectedUserId === user.id"
+        [attr.aria-labelledby]="'user-name-' + user.id"
+        [attr.data-user-id]="user.id">
+        <div class="user-list__identity">
+          <strong [id]="'user-name-' + user.id">
+            <span class="user-list__field-label sr-only">Usuario:</span>
+            {{ user.username }}
+          </strong>
+          <a [href]="'mailto:' + user.email">{{ user.email }}</a>
+          <span class="user-list__employee">{{ user.employeeName || 'Sin empleado vinculado' }}</span>
+        </div>
+
+        <div class="user-list__profile">
+          <span class="user-list__field-label sr-only">Perfil:</span>
+          <span class="user-list__mobile-label" aria-hidden="true">Perfil</span>
+          <strong>{{ user.profileName || 'Sin perfil asignado' }}</strong>
+        </div>
+
+        <div class="user-list__access">
+          <span class="user-list__field-label sr-only">Sucursales:</span>
+          <span class="user-list__mobile-label" aria-hidden="true">Sucursales</span>
+          <strong>{{ branchSummary(user) }}</strong>
+        </div>
+
+        <div class="user-list__state">
+          <span class="user-list__field-label sr-only">Estado:</span>
+          <span class="user-list__mobile-label" aria-hidden="true">Estado</span>
+          <span
+            class="user-list__status"
+            [class.user-list__status--active]="user.isActive"
+            [class.user-list__status--inactive]="!user.isActive">
+            {{ user.isActive ? 'Activo' : 'Inactivo' }}
+          </span>
+        </div>
+
+        <div class="user-list__actions">
+          <button
+            class="user-list__open"
+            type="button"
+            [attr.aria-label]="'Editar usuario ' + user.username"
+            (click)="selectUser($event, user)">
+            Editar usuario
+          </button>
+          <button
+            class="user-list__status-action"
+            [class.user-list__status-action--danger]="user.isActive"
+            type="button"
+            [attr.aria-label]="(user.isActive ? 'Desactivar usuario ' : 'Activar usuario ') + user.username"
+            (click)="requestStatus($event, user)">
+            {{ user.isActive ? 'Desactivar' : 'Activar' }}
+          </button>
+        </div>
+      </article>
+
+      <div
+        *ngIf="users.length === 0"
+        class="user-list__empty user-list__empty--catalog">
+        <span class="user-list__empty-index">00</span>
+        <h3>Todavía no hay usuarios</h3>
+        <p>Creá el primer acceso para empezar a organizar el equipo.</p>
+        <button type="button" (click)="createRequested.emit()">Nuevo usuario</button>
+      </div>
+
+      <div
+        *ngIf="users.length > 0 && visibleUsers.length === 0"
+        class="user-list__empty user-list__empty--filtered">
+        <span class="user-list__empty-index">Sin coincidencias</span>
+        <h3>No encontramos usuarios</h3>
+        <p>Probá con otros criterios o volvé a ver el directorio completo.</p>
+        <button class="user-list__clear" type="button" (click)="clearFilters()">Limpiar filtros</button>
+      </div>
+    </ng-container>
+  </div>
+</section>

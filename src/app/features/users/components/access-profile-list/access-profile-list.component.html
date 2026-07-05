@@ -1,0 +1,140 @@
+<section class="profile-list" aria-labelledby="profile-list-title">
+  <header class="profile-list__header">
+    <div>
+      <p class="profile-list__eyebrow">Biblioteca de acceso</p>
+      <h2 id="profile-list-title">Perfiles</h2>
+      <p class="profile-list__intro">Definí qué puede hacer cada grupo de usuarios.</p>
+    </div>
+    <button class="profile-list__create" type="button" (click)="createRequested.emit()">
+      <span aria-hidden="true">+</span>
+      Nuevo perfil
+    </button>
+  </header>
+
+  <div class="profile-list__toolbar">
+    <label class="profile-list__filter profile-list__filter--search">
+      <span>Buscar</span>
+      <input
+        type="search"
+        [ngModel]="filters.query"
+        (ngModelChange)="setQuery($event)"
+        placeholder="Nombre o descripción..." />
+    </label>
+    <div class="profile-list__filter">
+      <span>Tipo</span>
+      <app-searchable-select
+        [ngModel]="filters.type"
+        (ngModelChange)="setType($event)"
+        [options]="typeFilterOptions"
+        ariaLabel="Filtrar por tipo"
+        placeholder="Todos"
+        searchPlaceholder="Buscar tipo...">
+      </app-searchable-select>
+    </div>
+    <div class="profile-list__filter">
+      <span>Uso</span>
+      <app-searchable-select
+        [ngModel]="filters.usage"
+        (ngModelChange)="setUsage($event)"
+        [options]="usageFilterOptions"
+        ariaLabel="Filtrar por uso"
+        placeholder="Todos"
+        searchPlaceholder="Buscar uso...">
+      </app-searchable-select>
+    </div>
+    <button
+      *ngIf="hasActiveFilters"
+      class="profile-list__clear"
+      type="button"
+      (click)="clearFilters()">
+      Limpiar
+    </button>
+    <button
+      class="profile-list__reload"
+      type="button"
+      aria-label="Actualizar perfiles"
+      (click)="reloadRequested.emit()">
+      Actualizar
+    </button>
+  </div>
+
+  <div class="profile-list__head" aria-hidden="true">
+    <span>Perfil</span>
+    <span>Tipo</span>
+    <span>Permisos</span>
+    <span>Usuarios</span>
+    <span>Acciones</span>
+  </div>
+
+  <div class="profile-list__skeleton" *ngIf="loading" aria-label="Cargando perfiles">
+    <span class="profile-list__skeleton-row" *ngFor="let row of [1, 2, 3, 4]"></span>
+  </div>
+
+  <div *ngIf="!loading && visibleProfiles.length > 0">
+    <article
+      class="profile-list__row"
+      *ngFor="let profile of visibleProfiles; trackBy: trackByProfileId"
+      [class.profile-list__row--selected]="profile.id === selectedProfileId"
+      [attr.data-profile-id]="profile.id"
+      [attr.aria-labelledby]="'profile-name-' + profile.id">
+      <div class="profile-list__identity">
+        <strong [id]="'profile-name-' + profile.id">{{ profile.name }}</strong>
+        <span>{{ profile.description || 'Sin descripción operativa.' }}</span>
+      </div>
+      <div>
+        <span class="profile-list__mobile-label">Tipo</span>
+        <span
+          class="profile-list__badge"
+          [class.profile-list__badge--system]="profile.isSystem">
+          {{ profile.isSystem ? 'Sistema' : 'Personalizado' }}
+        </span>
+      </div>
+      <div>
+        <span class="profile-list__mobile-label">Permisos</span>
+        <span>{{ profile.permissionCodes.length }} permisos</span>
+      </div>
+      <div>
+        <span class="profile-list__mobile-label">Usuarios</span>
+        <span>{{ usage(profile.id) }} {{ usage(profile.id) === 1 ? 'usuario' : 'usuarios' }}</span>
+      </div>
+      <div class="profile-list__actions">
+        <button
+          class="profile-list__open"
+          type="button"
+          [attr.aria-label]="'Editar perfil ' + profile.name"
+          (click)="selectProfile($event, profile)">
+          Editar
+        </button>
+        <button
+          class="profile-list__delete"
+          type="button"
+          [attr.aria-label]="'Eliminar perfil ' + profile.name"
+          (click)="requestDelete($event, profile)">
+          Eliminar
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <div class="profile-list__empty" *ngIf="!loading && profiles.length === 0">
+    <svg class="profile-list__empty-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path>
+      <path d="M12 11v4M10 13h4"></path>
+    </svg>
+    <strong>Todavía no hay perfiles</strong>
+    <span>Creá el primero para reutilizar permisos entre usuarios.</span>
+    <button type="button" (click)="createRequested.emit()">Crear perfil</button>
+  </div>
+
+  <div
+    class="profile-list__empty"
+    *ngIf="!loading && profiles.length > 0 && visibleProfiles.length === 0">
+    <svg class="profile-list__empty-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="m20 20-3.5-3.5"></path>
+    </svg>
+    <strong>No hay perfiles que coincidan</strong>
+    <span>Probá otra búsqueda o limpiá los filtros.</span>
+    <button type="button" (click)="clearFilters()">Limpiar filtros</button>
+  </div>
+</section>

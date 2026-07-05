@@ -1,0 +1,99 @@
+<div class="profile-panel__backdrop" aria-hidden="true" (click)="requestClose()"></div>
+
+<aside
+  #panel
+  class="profile-panel"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="access-profile-panel-title"
+  [attr.aria-busy]="saving">
+  <header class="profile-panel__header">
+    <div>
+      <p class="profile-panel__eyebrow">{{ mode === 'create' ? 'Nuevo acceso' : 'Perfil seleccionado' }}</p>
+      <h2 #panelTitle id="access-profile-panel-title" tabindex="-1">{{ title }}</h2>
+      <p *ngIf="mode === 'edit'" class="profile-panel__impact">
+        {{ usageCount }} {{ usageCount === 1 ? 'usuario afectado' : 'usuarios afectados' }}
+      </p>
+    </div>
+    <button
+      class="profile-panel__close"
+      type="button"
+      aria-label="Cerrar panel de perfil"
+      [disabled]="saving"
+      (click)="requestClose()">
+      <span aria-hidden="true">×</span>
+    </button>
+  </header>
+
+  <form class="profile-panel__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <fieldset class="profile-panel__fieldset" [disabled]="saving">
+      <div class="profile-panel__body">
+        <section class="profile-panel__section">
+          <div class="profile-panel__section-heading">
+            <span>01</span>
+            <div>
+              <h3>Identidad del perfil</h3>
+              <p>Un nombre reconocible y una explicación breve de su uso.</p>
+            </div>
+          </div>
+
+          <label class="profile-panel__field">
+            <span>Nombre</span>
+            <input
+              type="text"
+              formControlName="name"
+              maxlength="120"
+              aria-describedby="profile-name-error"
+              placeholder="Caja tarde" />
+            <small
+              id="profile-name-error"
+              class="profile-panel__error"
+              *ngIf="form.controls.name.touched && form.controls.name.invalid">
+              Ingresá un nombre de hasta 120 caracteres.
+            </small>
+          </label>
+
+          <label class="profile-panel__field">
+            <span>Descripción</span>
+            <textarea
+              formControlName="description"
+              maxlength="500"
+              rows="3"
+              placeholder="Cuándo usar este perfil y qué cubre."></textarea>
+          </label>
+        </section>
+
+        <section class="profile-panel__section">
+          <div class="profile-panel__section-heading">
+            <span>02</span>
+            <div>
+              <h3>Permisos</h3>
+              <p>Seleccioná el alcance operativo por módulo.</p>
+            </div>
+          </div>
+
+          <app-permission-matrix
+            [permissions]="permissionCatalog"
+            [selectedCodes]="selectedCodes"
+            (selectedCodesChange)="updateSelectedCodes($event)">
+          </app-permission-matrix>
+
+          <p
+            class="profile-panel__error"
+            role="alert"
+            *ngIf="permissionsTouched && selectedCodes.length === 0">
+            Seleccioná al menos un permiso.
+          </p>
+        </section>
+      </div>
+    </fieldset>
+
+    <footer class="profile-panel__footer">
+      <button type="button" [disabled]="saving" (click)="requestClose()">Cancelar</button>
+      <button class="profile-panel__primary" type="submit" [disabled]="saving">
+        {{ actionLabel }}
+      </button>
+      <span class="sr-only" aria-live="polite">{{ saving ? 'Guardando perfil' : '' }}</span>
+    </footer>
+  </form>
+</aside>
