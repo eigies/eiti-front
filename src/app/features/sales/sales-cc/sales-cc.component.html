@@ -182,53 +182,10 @@
   </section>
 
   <!-- Product modal -->
-  <div class="modal-backdrop" *ngIf="productModalOpen" (click)="closeProductModal()"></div>
-  <section class="modal-panel" *ngIf="productModalOpen">
-    <div class="modal-panel__card modal-panel__card--wide" (click)="$event.stopPropagation()">
-      <div class="modal-panel__head">
-        <strong>Selector de productos</strong>
-        <button class="modal-panel__close" type="button" (click)="closeProductModal()">x</button>
-      </div>
-      <div class="modal-panel__toolbar">
-        <input class="control" type="text" [value]="productQuery"
-               (input)="handleProductInput($any($event.target).value)"
-               placeholder="Buscar por codigo, SKU, marca o producto" autocomplete="off" />
-      </div>
-      <div class="modal-products-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Sel.</th>
-              <th>Producto</th>
-              <th>Disponible</th>
-              <th>Cantidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let stock of productSuggestions">
-              <td><input type="checkbox"
-                         [disabled]="availableForProduct(stock.productId) <= 0 && !isProductSelected(stock.productId)"
-                         [checked]="isProductSelected(stock.productId)"
-                         (change)="toggleProductSelection(stock, $any($event.target).checked)" /></td>
-              <td>{{ stock.code }} | {{ stock.brand }} - {{ stock.name }}</td>
-              <td>{{ availableForProduct(stock.productId) }}</td>
-              <td><input class="control control--compact" type="number" min="1"
-                         [max]="availableForProduct(stock.productId)"
-                         [value]="selectionQuantity(stock.productId)"
-                         [disabled]="!isProductSelected(stock.productId)"
-                         (input)="setSelectionQuantity(stock.productId, $any($event.target).value)" /></td>
-            </tr>
-            <tr *ngIf="productSuggestions.length === 0">
-              <td colspan="4">No hay coincidencias.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-panel__actions">
-        <button class="btn btn--ghost" type="button" (click)="closeProductModal()">Cancelar</button>
-        <button class="btn" type="button" [disabled]="selectedProductsCount === 0"
-                (click)="addSelectedItems()">Agregar seleccionados ({{ selectedProductsCount }})</button>
-      </div>
-    </div>
-  </section>
+  <app-product-picker-modal
+    *ngIf="productModalOpen"
+    [rows]="pickerRows"
+    (confirm)="onPickerConfirm($event)"
+    (cancel)="closeProductModal()">
+  </app-product-picker-modal>
 </div>

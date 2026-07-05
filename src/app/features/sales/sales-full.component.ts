@@ -29,6 +29,8 @@ import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import { SALE_SOURCE_CHANNELS, SaleSourceChannel } from '../../core/models/sale.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { ProductPickerModalComponent } from '../../shared/components/product-picker-modal/product-picker-modal.component';
+import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../shared/components/product-picker-modal/product-picker-modal.models';
 import {
   SalePaymentDraftState,
   createEmptySalePaymentDraftState,
@@ -43,7 +45,7 @@ import {
 @Component({
   selector: 'app-sales-full',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, SalePaymentInlineComponent, SearchableSelectComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, SalePaymentInlineComponent, SearchableSelectComponent, ProductPickerModalComponent],
   templateUrl: './sales-full.component.html',
   styleUrls: ['./sales-full.component.css']
 })
@@ -62,10 +64,8 @@ export class SalesFullComponent implements OnInit {
   vehicles: VehicleResponse[] = [];
   banks: BankResponse[] = [];
   draftItems: DraftItem[] = [];
-  productQuery = '';
   productModalOpen = false;
-  selectedProductIds = new Set<string>();
-  selectionQuantityByProductId = new Map<string, number>();
+  pickerRows: ProductPickerRow[] = [];
   paymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
   whatsAppEnabled = false;
   showDrawerOverrideConfirm = false;
@@ -122,8 +122,6 @@ export class SalesFullComponent implements OnInit {
   get driverOptions(): SearchableSelectOption[] { return this.activeDrivers.map(driver => ({ value: driver.employeeId, label: driver.fullName })); }
   get vehicleOptions(): SearchableSelectOption[] { return this.activeVehicles.map(vehicle => ({ value: vehicle.id, label: `${vehicle.plate} / ${vehicle.model}` })); }
   get total(): number { return this.draftItems.reduce((sum, item) => sum + item.total, 0); }
-  get productSuggestions(): ProductResponse[] { return this.filterProducts(this.productQuery); }
-  get selectedProductsCount(): number { return this.selectedProductIds.size; }
   availableForProduct(productId: string): number {
     const base = this.stockByProductId.get(productId)?.availableQuantity ?? 0;
     const current = this.draftItems.find(item => item.product.id === productId)?.quantity ?? 0;
@@ -183,8 +181,7 @@ export class SalesFullComponent implements OnInit {
     const branchId = this.saleForm.get('branchId')?.value || '';
     this.saleForm.patchValue({ cashDrawerId: '' });
     this.stockByProductId.clear();
-    this.selectedProductIds.clear();
-    this.selectionQuantityByProductId.clear();
+    this.pickerRows = [];
 
     if (!branchId) {
       this.cashDrawers = [];
@@ -219,29 +216,25 @@ export class SalesFullComponent implements OnInit {
     });
   }
   handleDeliveryToggle(): void { if (this.requiresDelivery) { return; } this.transportForm.reset({ driverEmployeeId: '', vehicleId: '', notes: '' }); if (this.step === 5) { this.step = 4; } if (this.step > this.confirmationStepNumber) { this.step = this.confirmationStepNumber; } }
-  openProductModal(): void { this.productModalOpen = true; }
-  closeProductModal(): void { this.productModalOpen = false; }
-  handleProductInput(query: string): void { this.productQuery = query; }
-  isProductSelected(productId: string): boolean { return this.selectedProductIds.has(productId); }
-  selectionQuantity(productId: string): number { return this.selectionQuantityByProductId.get(productId) ?? 1; }
-  setSelectionQuantity(productId: string, rawValue: string): void { const parsed = Number(rawValue); const max = Math.max(1, this.availableForProduct(productId)); this.selectionQuantityByProductId.set(productId, Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), max) : 1); }
-  toggleProductSelection(product: ProductResponse, checked: boolean): void {
-    if (checked && this.availableForProduct(product.id) <= 0) { this.toast.error(`Sin stock disponible para ${product.brand} / ${product.name}.`); return; }
-    if (checked) { this.selectedProductIds.add(product.id); if (!this.selectionQuantityByProductId.has(product.id)) { this.selectionQuantityByProductId.set(product.id, 1); } return; }
-    this.selectedProductIds.delete(product.id);
-    this.selectionQuantityByProductId.delete(product.id);
+  openProductModal(): void {
+    this.pickerRows = this.products.map(product =>
+      toProductPickerRow(product, this.availableForProduct(product.id))
+    );
+    this.productModalOpen = true;
   }
-  addSelectedItems(): void {
-    if (this.selectedProductIds.size === 0) { return; }
+  closeProductModal(): void {
+    this.productModalOpen = false;
+    this.pickerRows = [];
+  }
+  onPickerConfirm(selection: ProductPickerSelection[]): void {
     let added = 0;
-    for (const productId of [...this.selectedProductIds]) {
-      const product = this.products.find(item => item.id === productId);
+    for (const { id, quantity } of selection) {
+      const product = this.products.find(item => item.id === id);
       if (!product) { continue; }
-      const quantity = this.selectionQuantity(product.id);
       const maxAllowed = this.stockByProductId.get(product.id)?.availableQuantity ?? 0;
       if (this.upsertDraftItem(product, quantity, maxAllowed)) { added += 1; }
     }
-    if (added > 0) { this.selectedProductIds.clear(); this.selectionQuantityByProductId.clear(); this.productModalOpen = false; }
+    if (added > 0) { this.closeProductModal(); }
   }
   get canOverridePrice(): boolean { return this.auth.hasPermission(PermissionCodes.salesPriceOverride); }
   setDraftItemPrice(item: DraftItem, price: number): void { item.unitPriceOverride = price; item.total = price * item.quantity; }
@@ -495,7 +488,6 @@ export class SalesFullComponent implements OnInit {
   }
 
   private nullIfEmpty(value: string | null | undefined): string | null { return value && value.trim().length > 0 ? value.trim() : null; }
-  private filterProducts(query: string): ProductResponse[] { const normalized = query.trim().toLowerCase(); return this.products.filter(product => !normalized || `${product.code} ${product.sku} ${product.brand} ${product.name} ${product.description || ''} ${product.id}`.toLowerCase().includes(normalized)).slice(0, 20); }
   private productLabel(product: ProductResponse): string { return `${product.code} · ${product.brand} / ${product.name}`; }
 }
 

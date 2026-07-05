@@ -54,6 +54,8 @@ import {
     roundMoney
 } from '../../core/models/sale-payment.models';
 import { QuickSaleStage, SalesPageMode, SaleUiAction } from './sales-page-ui.models';
+import { ProductPickerModalComponent } from '../../shared/components/product-picker-modal/product-picker-modal.component';
+import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../shared/components/product-picker-modal/product-picker-modal.models';
 
 function localDateString(date = new Date()): string {
     const y = date.getFullYear();
@@ -77,7 +79,8 @@ function localDateString(date = new Date()): string {
         QuickSaleSummaryComponent,
         SaleActionsMenuComponent,
         SalesManagementComponent,
-        SaleListItemComponent
+        SaleListItemComponent,
+        ProductPickerModalComponent
     ],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
@@ -119,10 +122,10 @@ export class SalesPageComponent implements OnInit {
     cancelingSaleId: string | null = null;
     quickPayingSaleId: string | null = null;
     sendingSaleWhatsAppId: string | null = null;
-    createProductQuery = '';
     editProductQuery = '';
     showEditProductResults = false;
     createProductModalOpen = false;
+    createPickerRows: ProductPickerRow[] = [];
     createCustomerId: string | null = null;
     createCustomerQuery = '';
     createCustomerSuggestions: CustomerSearchItem[] = [];
@@ -137,8 +140,6 @@ export class SalesPageComponent implements OnInit {
     quickCreateCustomerSaving = false;
     deliveryAddressSuggestions: string[] = [];
     showDeliveryAddressSuggestions = false;
-    createSelectedProductIds = new Set<string>();
-    createSelectionQuantityByProductId = new Map<string, number>();
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     editPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     defaultNoDeliverySurcharge = 0;
@@ -351,14 +352,6 @@ export class SalesPageComponent implements OnInit {
             value: option,
             label: String(option)
         }));
-    }
-
-    get createProductSuggestions(): ProductResponse[] {
-        return this.filterProducts(this.createProductQuery);
-    }
-
-    get createSelectedProductsCount(): number {
-        return this.createSelectedProductIds.size;
     }
 
     get editProductSuggestions(): ProductResponse[] {
@@ -668,80 +661,33 @@ selectDeliveryAddress(form: FormGroup, address: string): void {
     this.showDeliveryAddressSuggestions = false;
 }
 
-handleCreateProductInput(query: string): void {
-        this.createProductQuery = query;
-    }
-
-    selectCreateProduct(product: ProductResponse): void {
-        this.createProductQuery = this.productLabel(product);
-        this.toggleCreateProductSelection(product, true);
-    }
-
     openCreateProductModal(): void {
+        this.createPickerRows = this.products.map(product =>
+            toProductPickerRow(product, this.availableForCreate(product.id))
+        );
         this.createProductModalOpen = true;
     }
 
     closeCreateProductModal(): void {
         this.createProductModalOpen = false;
+        this.createPickerRows = [];
     }
 
-    isCreateProductSelected(productId: string): boolean {
-        return this.createSelectedProductIds.has(productId);
-    }
-
-    createSelectionQuantity(productId: string): number {
-        return this.createSelectionQuantityByProductId.get(productId) ?? 1;
-    }
-
-    setCreateSelectionQuantity(productId: string, rawValue: string): void {
-        const parsed = Number(rawValue);
-        const max = Math.max(1, this.availableForCreate(productId));
-        const quantity = Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), max) : 1;
-        this.createSelectionQuantityByProductId.set(productId, quantity);
-    }
-
-    toggleCreateProductSelection(product: ProductResponse, checked: boolean): void {
-        if (checked && this.availableForCreate(product.id) <= 0) {
-            this.toast.error(`Sin stock disponible para ${ product.brand } / ${product.name}.`);
-return;
+    onCreatePickerConfirm(selection: ProductPickerSelection[]): void {
+        let added = 0;
+        for (const { id, quantity } of selection) {
+            const product = this.findProduct(id);
+            if (!product) {
+                continue;
+            }
+            const maxAllowed = this.createStockByProductId.get(product.id)?.availableQuantity ?? 0;
+            if (this.upsertItem(this.draftItems, product, quantity, maxAllowed)) {
+                added += 1;
+            }
         }
-
-if (checked) {
-    this.createSelectedProductIds.add(product.id);
-    if (!this.createSelectionQuantityByProductId.has(product.id)) {
-        this.createSelectionQuantityByProductId.set(product.id, 1);
-    }
-    return;
-}
-
-this.createSelectedProductIds.delete(product.id);
-this.createSelectionQuantityByProductId.delete(product.id);
-    }
-
-addSelectedCreateProducts(): void {
-    if(this.createSelectedProductIds.size === 0) {
-    return;
-}
-
-let added = 0;
-for (const productId of [...this.createSelectedProductIds]) {
-    const product = this.findProduct(productId);
-    if (!product) {
-        continue;
-    }
-
-    const requestedQuantity = this.createSelectionQuantity(product.id);
-    const maxAllowed = this.createStockByProductId.get(product.id)?.availableQuantity ?? 0;
-    if (this.upsertItem(this.draftItems, product, requestedQuantity, maxAllowed)) {
-        added += 1;
-    }
-}
-
-if (added > 0) {
-    this.createSelectedProductIds.clear();
-    this.createSelectionQuantityByProductId.clear();
-    this.createProductModalOpen = false;
-}
+        if (added > 0) {
+            this.closeCreateProductModal();
+        }
     }
 
 handleEditProductInput(query: string): void {
@@ -794,10 +740,8 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.draftItems = [];
         this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '' });
         this.createPaymentState = createEmptySalePaymentDraftState();
-        this.createProductQuery = '';
         this.createProductModalOpen = false;
-        this.createSelectedProductIds.clear();
-        this.createSelectionQuantityByProductId.clear();
+        this.createPickerRows = [];
         this.createCustomerId = null;
         this.createCustomerQuery = '';
         this.createCustomerSuggestions = [];
@@ -1691,10 +1635,6 @@ if (!this.upsertItem(target, product, quantity, maxAllowed)) {
 }
 
 form.patchValue({ productId: '', quantity: 1 });
-
-if (form === this.lineForm) {
-    this.createProductQuery = '';
-}
 
 if (form === this.editLineForm) {
     this.editProductQuery = '';

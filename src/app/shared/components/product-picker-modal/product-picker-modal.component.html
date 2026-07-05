@@ -1,0 +1,119 @@
+<div class="picker-backdrop" (click)="onCancel()">
+  <div
+    class="picker"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="title"
+    (click)="$event.stopPropagation()">
+    <header class="picker__head">
+      <strong class="picker__title">{{ title }}</strong>
+      <button class="picker__close" type="button" aria-label="Cerrar" (click)="onCancel()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+      </button>
+    </header>
+
+    <div class="picker__search">
+      <svg class="picker__search-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3.5-3.5"></path>
+      </svg>
+      <input
+        #searchInput
+        class="picker__search-input"
+        type="text"
+        [(ngModel)]="query"
+        [ngModelOptions]="{ standalone: true }"
+        placeholder="Buscar por código, SKU, marca o producto"
+        autocomplete="off"
+        (keydown.enter)="onConfirm()" />
+      <button
+        *ngIf="query"
+        class="picker__search-clear"
+        type="button"
+        aria-label="Limpiar búsqueda"
+        (click)="clearSearch()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+      </button>
+    </div>
+
+    <div class="picker__meta" aria-live="polite">
+      Mostrando {{ filteredRows.length }} de {{ totalRows }}
+    </div>
+
+    <div class="picker__body">
+      <div class="picker__row picker__row--head" aria-hidden="true">
+        <span>Producto</span>
+        <span class="picker__col-stock">Stock</span>
+        <span class="picker__col-qty">Cantidad</span>
+      </div>
+
+      <label
+        *ngFor="let row of filteredRows; trackBy: trackById"
+        class="picker__row"
+        [class.picker__row--selected]="isSelected(row.id)"
+        [class.picker__row--disabled]="!isSelectable(row)">
+        <span class="picker__cell-product">
+          <input
+            type="checkbox"
+            class="picker__check"
+            [checked]="isSelected(row.id)"
+            [disabled]="!isSelectable(row)"
+            (change)="toggleRow(row)" />
+          <span class="picker__product">
+            <strong>{{ row.title }}</strong>
+            <small>{{ row.subtitle }}</small>
+          </span>
+        </span>
+
+        <span class="picker__col-stock">
+          <span class="picker__chip" [class]="'picker__chip--' + stockLevel(row.available)">
+            {{ row.available > 0 ? row.available : 'Sin stock' }}
+          </span>
+        </span>
+
+        <span class="picker__col-qty" (click)="$event.preventDefault()">
+          <span class="picker__stepper" [class.picker__stepper--off]="!isSelectable(row)">
+            <button
+              type="button"
+              aria-label="Restar"
+              [disabled]="!isSelected(row.id) || quantityOf(row.id) <= 1"
+              (click)="stepQuantity(row, -1)">−</button>
+            <input
+              type="number"
+              min="1"
+              [max]="row.available"
+              [value]="quantityOf(row.id)"
+              [disabled]="!isSelectable(row)"
+              [class.picker__qty--muted]="!isSelected(row.id)"
+              (input)="setQuantity(row, $any($event.target).value)" />
+            <button
+              type="button"
+              aria-label="Sumar"
+              [disabled]="!isSelectable(row) || quantityOf(row.id) >= row.available"
+              (click)="stepQuantity(row, 1)">+</button>
+          </span>
+        </span>
+      </label>
+
+      <div class="picker__empty" *ngIf="filteredRows.length === 0">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <strong>No hay coincidencias</strong>
+        <span>Probá con otro código, SKU o marca.</span>
+      </div>
+    </div>
+
+    <footer class="picker__actions">
+      <button class="picker__btn picker__btn--ghost" type="button" (click)="onCancel()">Cancelar</button>
+      <button
+        class="picker__btn picker__btn--primary"
+        type="button"
+        [disabled]="selectedCount === 0"
+        (click)="onConfirm()">
+        Agregar seleccionados ({{ selectedCount }})<span *ngIf="totalUnits > 0"> · {{ totalUnits }} u.</span>
+      </button>
+    </footer>
+  </div>
+</div>

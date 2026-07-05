@@ -135,7 +135,6 @@
             <div class="toolbar__actions">
               <button class="btn btn--secondary btn--feature" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreate)" (click)="openCreateProductModal()">Buscar y agregar productos</button>
               <div class="toolbar__status">
-                <span class="picker-summary" *ngIf="createSelectedProductsCount > 0">{{ createSelectedProductsCount }} producto(s) seleccionado(s)</span>
                 <span class="picker-summary" *ngIf="loadingProducts">Cargando catalogo...</span>
               </div>
             </div>
@@ -705,48 +704,12 @@
   </div>
 </div>
 
-<div class="modal-backdrop" *ngIf="createProductModalOpen" (click)="closeCreateProductModal()"></div>
-<section class="modal-panel" *ngIf="createProductModalOpen">
-  <div class="modal-panel__card modal-panel__card--wide" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head">
-      <strong>Selector de productos</strong>
-      <button class="modal-panel__close" type="button" (click)="closeCreateProductModal()">x</button>
-    </div>
-
-    <div class="modal-panel__toolbar">
-      <input class="control" type="text" [value]="createProductQuery" (input)="handleCreateProductInput($any($event.target).value)" placeholder="Buscar por codigo, SKU, marca o producto" autocomplete="off" />
-    </div>
-
-    <div class="modal-products-table">
-      <table class="table table--picker">
-        <thead>
-          <tr>
-            <th>Sel.</th>
-            <th>Producto</th>
-            <th>Disponible</th>
-            <th>Cantidad</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let product of createProductSuggestions">
-            <td><input type="checkbox" [checked]="isCreateProductSelected(product.id)" [disabled]="availableForCreate(product.id) <= 0 && !isCreateProductSelected(product.id)" (change)="toggleCreateProductSelection(product, $any($event.target).checked)" /></td>
-            <td>{{ product.code }} | {{ product.brand }} - {{ product.name }}</td>
-            <td>{{ availableForCreate(product.id) }}</td>
-            <td><input class="control control--compact" type="number" min="1" [max]="availableForCreate(product.id)" [value]="createSelectionQuantity(product.id)" [disabled]="!isCreateProductSelected(product.id)" (input)="setCreateSelectionQuantity(product.id, $any($event.target).value)" /></td>
-          </tr>
-          <tr *ngIf="createProductSuggestions.length === 0">
-            <td colspan="4">No hay coincidencias.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="modal-panel__actions">
-      <button class="btn btn--ghost" type="button" (click)="closeCreateProductModal()">Cancelar</button>
-      <button class="btn" type="button" [disabled]="createSelectedProductsCount === 0" (click)="addSelectedCreateProducts()">Agregar seleccionados ({{ createSelectedProductsCount }})</button>
-    </div>
-  </div>
-</section>
+<app-product-picker-modal
+  *ngIf="createProductModalOpen"
+  [rows]="createPickerRows"
+  (confirm)="onCreatePickerConfirm($event)"
+  (cancel)="closeCreateProductModal()">
+</app-product-picker-modal>
 
 <div class="modal-backdrop" *ngIf="transportingSale" (click)="closeTransport()"></div>
 <section class="modal-panel" *ngIf="transportingSale">

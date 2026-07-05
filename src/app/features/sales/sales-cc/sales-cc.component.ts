@@ -15,6 +15,8 @@ import { CustomerSearchItem } from '../../../core/models/customer.models';
 import { BranchProductStockResponse } from '../../../core/models/stock.models';
 import { CreateSaleDetailRequest } from '../../../core/models/sale.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { ProductPickerModalComponent } from '../../../shared/components/product-picker-modal/product-picker-modal.component';
+import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../../shared/components/product-picker-modal/product-picker-modal.models';
 
 interface DraftItem {
   stock: BranchProductStockResponse;
@@ -35,7 +37,7 @@ interface TradeInDraft {
 @Component({
   selector: 'app-sales-cc',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent, ProductPickerModalComponent],
   templateUrl: './sales-cc.component.html',
   styleUrls: ['./sales-cc.component.css']
 })
@@ -54,11 +56,9 @@ export class SalesCcComponent implements OnInit {
   manualOverridePrice: number | null = null;
 
   productModalOpen = false;
-  productQuery = '';
+  pickerRows: ProductPickerRow[] = [];
   stockItems: BranchProductStockResponse[] = [];
   stockByProductId = new Map<string, BranchProductStockResponse>();
-  selectedProductIds = new Set<string>();
-  selectionQuantityByProductId = new Map<string, number>();
 
   // Canje (igual que en la venta normal): suma al stock y descuenta de la deuda.
   tradeInDrafts: TradeInDraft[] = [];
@@ -110,14 +110,6 @@ export class SalesCcComponent implements OnInit {
     return this.manualOverridePrice !== null && this.manualOverridePrice >= 0;
   }
 
-  get selectedProductsCount(): number {
-    return this.selectedProductIds.size;
-  }
-
-  get productSuggestions(): BranchProductStockResponse[] {
-    return this.filterStock(this.productQuery);
-  }
-
   get canSubmit(): boolean {
     return !this.saving && this.selectedCustomer !== null && this.draftItems.length > 0 && !!this.selectedBranchId;
   }
@@ -137,8 +129,7 @@ export class SalesCcComponent implements OnInit {
     this.draftItems = [];
     this.stockItems = [];
     this.stockByProductId.clear();
-    this.selectedProductIds.clear();
-    this.selectionQuantityByProductId.clear();
+    this.pickerRows = [];
     this.tradeInDrafts = [];
     this.canjeProductId = null;
     this.canjeQuantity = 1;
@@ -177,13 +168,11 @@ export class SalesCcComponent implements OnInit {
       this.toast.error('Selecciona una sucursal primero');
       return;
     }
-    this.productQuery = '';
-    this.selectedProductIds.clear();
-    this.selectionQuantityByProductId.clear();
 
     if (this.stockItems.length === 0) {
       this.loadStock();
     } else {
+      this.buildPickerRows();
       this.productModalOpen = true;
     }
   }
@@ -197,6 +186,7 @@ export class SalesCcComponent implements OnInit {
           this.stockByProductId.set(item.productId, item);
         }
         if (openModal) {
+          this.buildPickerRows();
           this.productModalOpen = true;
         }
       },
@@ -204,12 +194,18 @@ export class SalesCcComponent implements OnInit {
     });
   }
 
-  closeProductModal(): void {
-    this.productModalOpen = false;
+  private buildPickerRows(): void {
+    this.pickerRows = this.stockItems.map(stock =>
+      toProductPickerRow(
+        { id: stock.productId, code: stock.code, sku: stock.sku, brand: stock.brand, name: stock.name },
+        this.availableForProduct(stock.productId)
+      )
+    );
   }
 
-  handleProductInput(query: string): void {
-    this.productQuery = query;
+  closeProductModal(): void {
+    this.productModalOpen = false;
+    this.pickerRows = [];
   }
 
   availableForProduct(productId: string): number {
@@ -218,53 +214,15 @@ export class SalesCcComponent implements OnInit {
     return Math.max(base - inDraft, 0);
   }
 
-  isProductSelected(productId: string): boolean {
-    return this.selectedProductIds.has(productId);
-  }
-
-  selectionQuantity(productId: string): number {
-    return this.selectionQuantityByProductId.get(productId) ?? 1;
-  }
-
-  setSelectionQuantity(productId: string, rawValue: string): void {
-    const parsed = Number(rawValue);
-    const max = Math.max(1, this.availableForProduct(productId));
-    this.selectionQuantityByProductId.set(
-      productId,
-      Number.isFinite(parsed) && parsed > 0 ? Math.min(Math.floor(parsed), max) : 1
-    );
-  }
-
-  toggleProductSelection(stock: BranchProductStockResponse, checked: boolean): void {
-    if (checked && this.availableForProduct(stock.productId) <= 0) {
-      this.toast.error(`Sin stock disponible para ${stock.brand} / ${stock.name}.`);
-      return;
-    }
-    if (checked) {
-      this.selectedProductIds.add(stock.productId);
-      if (!this.selectionQuantityByProductId.has(stock.productId)) {
-        this.selectionQuantityByProductId.set(stock.productId, 1);
-      }
-      return;
-    }
-    this.selectedProductIds.delete(stock.productId);
-    this.selectionQuantityByProductId.delete(stock.productId);
-  }
-
-  addSelectedItems(): void {
-    if (this.selectedProductIds.size === 0) { return; }
+  onPickerConfirm(selection: ProductPickerSelection[]): void {
     let added = 0;
-    for (const productId of [...this.selectedProductIds]) {
-      const stock = this.stockByProductId.get(productId);
+    for (const { id, quantity } of selection) {
+      const stock = this.stockByProductId.get(id);
       if (!stock) { continue; }
-      const quantity = this.selectionQuantity(productId);
-      const maxAllowed = stock.availableQuantity;
-      if (this.upsertDraftItem(stock, quantity, maxAllowed)) { added += 1; }
+      if (this.upsertDraftItem(stock, quantity, stock.availableQuantity)) { added += 1; }
     }
     if (added > 0) {
-      this.selectedProductIds.clear();
-      this.selectionQuantityByProductId.clear();
-      this.productModalOpen = false;
+      this.closeProductModal();
     }
   }
 
@@ -421,8 +379,7 @@ export class SalesCcComponent implements OnInit {
         this.canjeAmount = null;
         this.generalDiscountPercent = 0;
         this.manualOverridePrice = null;
-        this.selectedProductIds.clear();
-        this.selectionQuantityByProductId.clear();
+        this.pickerRows = [];
       },
       error: err => {
         this.saving = false;
@@ -460,18 +417,5 @@ export class SalesCcComponent implements OnInit {
       this.draftItems.unshift(item);
     }
     return true;
-  }
-
-  private filterStock(query: string): BranchProductStockResponse[] {
-    const normalized = query.trim().toLowerCase();
-    return this.stockItems
-      .filter(item =>
-        item.availableQuantity > 0 || this.isProductSelected(item.productId)
-      )
-      .filter(item =>
-        !normalized ||
-        `${item.code} ${item.sku} ${item.brand} ${item.name}`.toLowerCase().includes(normalized)
-      )
-      .slice(0, 30);
   }
 }

@@ -23,6 +23,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
   clientsMenuOpen = false;
   cashMenuOpen = false;
   purchasesMenuOpen = false;
+  reportsSalesMenuOpen = false;
+  reportsStockMenuOpen = false;
+  reportsFinanceMenuOpen = false;
+  reportsAuditMenuOpen = false;
 
   private readonly destroyRef = inject(DestroyRef);
 
@@ -38,6 +42,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
     this.cashMenuOpen = this.router.url.startsWith('/cash');
     this.purchasesMenuOpen = this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
+    this.syncReportSubmenus(this.router.url);
 
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -54,6 +59,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (event.url.startsWith('/purchases') || event.url.startsWith('/suppliers')) {
           this.purchasesMenuOpen = true;
         }
+        this.syncReportSubmenus(event.url);
       }
     });
 
@@ -106,6 +112,78 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   togglePurchasesMenu(): void {
     this.purchasesMenuOpen = !this.purchasesMenuOpen;
+  }
+
+  toggleReportsSalesMenu(): void {
+    this.reportsSalesMenuOpen = !this.reportsSalesMenuOpen;
+  }
+
+  toggleReportsStockMenu(): void {
+    this.reportsStockMenuOpen = !this.reportsStockMenuOpen;
+  }
+
+  toggleReportsFinanceMenu(): void {
+    this.reportsFinanceMenuOpen = !this.reportsFinanceMenuOpen;
+  }
+
+  toggleReportsAuditMenu(): void {
+    this.reportsAuditMenuOpen = !this.reportsAuditMenuOpen;
+  }
+
+  get isReportsSalesRouteActive(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/reportes/ventas') || url.startsWith('/reportes/comparativo');
+  }
+
+  get isReportsStockRouteActive(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/reportes/stock') || url.startsWith('/reportes/movimientos-stock');
+  }
+
+  get isReportsFinanceRouteActive(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/reportes/deudores') || url.startsWith('/reportes/caja') || url.startsWith('/reportes/medios-pago');
+  }
+
+  get isReportsAuditRouteActive(): boolean {
+    return this.router.url.startsWith('/auditoria');
+  }
+
+  get hasAnyReportsSalesPermission(): boolean {
+    const p = this.permissionCodes;
+    return [
+      p.reportsSalesDailyControl, p.reportsSalesModel, p.reportsSalesBrand, p.reportsSalesChannel,
+      p.reportsSalesChannelBrand, p.reportsSalesTransport, p.reportsSalesRanking, p.reportsSalesComparison
+    ].some(code => this.auth.hasPermission(code));
+  }
+
+  get hasAnyReportsStockPermission(): boolean {
+    return this.auth.hasPermission(this.permissionCodes.reportsStock);
+  }
+
+  get hasAnyReportsFinancePermission(): boolean {
+    const p = this.permissionCodes;
+    return [p.reportsDebtors, p.reportsCash, p.reportsPayments].some(code => this.auth.hasPermission(code));
+  }
+
+  get hasReportsAuditPermission(): boolean {
+    return this.auth.hasPermission(this.permissionCodes.reportsAudit);
+  }
+
+  /** Abre el subgrupo de reportería que contiene la ruta activa (mantiene los demás como estén). */
+  private syncReportSubmenus(url: string): void {
+    if (url.startsWith('/reportes/ventas') || url.startsWith('/reportes/comparativo')) {
+      this.reportsSalesMenuOpen = true;
+    }
+    if (url.startsWith('/reportes/stock') || url.startsWith('/reportes/movimientos-stock')) {
+      this.reportsStockMenuOpen = true;
+    }
+    if (url.startsWith('/reportes/deudores') || url.startsWith('/reportes/caja') || url.startsWith('/reportes/medios-pago')) {
+      this.reportsFinanceMenuOpen = true;
+    }
+    if (url.startsWith('/auditoria')) {
+      this.reportsAuditMenuOpen = true;
+    }
   }
 
   get isCashRouteActive(): boolean {
