@@ -12,6 +12,10 @@ import { AccessProfileResponse } from '../../../../core/models/access-profile.mo
 import { BranchResponse } from '../../../../core/models/branch.models';
 import { UserResponse } from '../../../../core/models/user.models';
 import {
+  SearchableSelectComponent,
+  SearchableSelectOption
+} from '../../../../shared/components/searchable-select/searchable-select.component';
+import {
   EMPTY_USER_FILTERS,
   filterAccessUsers,
   UserAccessFilters
@@ -20,13 +24,19 @@ import {
 @Component({
   selector: 'app-user-access-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SearchableSelectComponent],
   templateUrl: './user-access-list.component.html',
   styleUrls: ['./user-access-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserAccessListComponent {
   private _users: UserResponse[] = [];
+
+  readonly statusFilterOptions: SearchableSelectOption[] = [
+    { value: 'all', label: 'Todos' },
+    { value: 'active', label: 'Activos' },
+    { value: 'inactive', label: 'Inactivos' }
+  ];
 
   @Input()
   set users(users: UserResponse[]) {
@@ -50,6 +60,26 @@ export class UserAccessListComponent {
 
   filters: UserAccessFilters = { ...EMPTY_USER_FILTERS };
   visibleUsers: UserResponse[] = [];
+
+  get profileFilterOptions(): SearchableSelectOption[] {
+    return [
+      { value: '', label: 'Todos' },
+      ...this.profiles.map(profile => ({
+        value: profile.id,
+        label: profile.name
+      }))
+    ];
+  }
+
+  get branchFilterOptions(): SearchableSelectOption[] {
+    return [
+      { value: '', label: 'Todas' },
+      ...this.branches.map(branch => ({
+        value: branch.id,
+        label: branch.name
+      }))
+    ];
+  }
 
   get hasActiveFilters(): boolean {
     return this.filters.query.trim().length > 0

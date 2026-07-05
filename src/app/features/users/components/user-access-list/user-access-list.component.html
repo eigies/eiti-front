@@ -23,39 +23,41 @@
         (ngModelChange)="setQuery($event)" />
     </label>
 
-    <label class="user-list__filter">
+    <div class="user-list__filter">
       <span>Estado</span>
-      <select
-        aria-label="Filtrar por estado"
+      <app-searchable-select
         [ngModel]="filters.status"
-        (ngModelChange)="setStatus($event)">
-        <option value="all">Todos</option>
-        <option value="active">Activos</option>
-        <option value="inactive">Inactivos</option>
-      </select>
-    </label>
+        (ngModelChange)="setStatus($event)"
+        [options]="statusFilterOptions"
+        ariaLabel="Filtrar por estado"
+        placeholder="Todos"
+        searchPlaceholder="Buscar estado...">
+      </app-searchable-select>
+    </div>
 
-    <label class="user-list__filter">
+    <div class="user-list__filter">
       <span>Perfil</span>
-      <select
-        aria-label="Filtrar por perfil"
+      <app-searchable-select
         [ngModel]="filters.profileId"
-        (ngModelChange)="setProfile($event)">
-        <option value="">Todos</option>
-        <option *ngFor="let profile of profiles" [value]="profile.id">{{ profile.name }}</option>
-      </select>
-    </label>
+        (ngModelChange)="setProfile($event)"
+        [options]="profileFilterOptions"
+        ariaLabel="Filtrar por perfil"
+        placeholder="Todos"
+        searchPlaceholder="Buscar perfil...">
+      </app-searchable-select>
+    </div>
 
-    <label class="user-list__filter">
+    <div class="user-list__filter">
       <span>Sucursal</span>
-      <select
-        aria-label="Filtrar por sucursal"
+      <app-searchable-select
         [ngModel]="filters.branchId"
-        (ngModelChange)="setBranch($event)">
-        <option value="">Todas</option>
-        <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
-      </select>
-    </label>
+        (ngModelChange)="setBranch($event)"
+        [options]="branchFilterOptions"
+        ariaLabel="Filtrar por sucursal"
+        placeholder="Todas"
+        searchPlaceholder="Buscar sucursal...">
+      </app-searchable-select>
+    </div>
 
     <button
       *ngIf="hasActiveFilters"

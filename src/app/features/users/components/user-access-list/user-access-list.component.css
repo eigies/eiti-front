@@ -157,6 +157,14 @@ a:focus-visible {
   min-width: 0;
 }
 
+.user-list__filter app-searchable-select {
+  min-width: 0;
+}
+
+:host ::ng-deep .user-list__filter .search-select__trigger {
+  min-height: 44px;
+}
+
 .user-list__filter select {
   padding: .7rem 2.9rem .7rem .8rem;
 }
@@ -359,11 +367,11 @@ a:focus-visible {
 }
 
 .user-list__status--inactive {
-  color: var(--text-dim);
+  color: var(--danger);
 }
 
 .user-list__status--inactive::before {
-  border: 1px solid currentColor;
+  background: var(--danger);
 }
 
 .user-list__actions {

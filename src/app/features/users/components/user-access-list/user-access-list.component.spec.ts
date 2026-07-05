@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
 import { AccessProfileResponse } from '../../../../core/models/access-profile.models';
 import { BranchResponse } from '../../../../core/models/branch.models';
 import { UserResponse } from '../../../../core/models/user.models';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { UserAccessListComponent } from './user-access-list.component';
 
 describe('UserAccessListComponent', () => {
@@ -179,18 +181,45 @@ describe('UserAccessListComponent', () => {
     expect(component.visibleUsers).toEqual(users);
   });
 
-  it('uses the application control geometry for search and filters', () => {
+  it('uses the application searchable selects for every catalog filter', () => {
     const input = fixture.nativeElement.querySelector(
       'input[type="search"]'
     ) as HTMLInputElement;
-    const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+    const selectors = fixture.debugElement.queryAll(By.directive(SearchableSelectComponent));
 
-    for (const control of [input, select]) {
+    expect(selectors.length).toBe(3);
+    expect(fixture.nativeElement.querySelector('select')).toBeNull();
+
+    const status = selectors[0].componentInstance as SearchableSelectComponent;
+    expect(status.options.map(option => option.value)).toEqual(['all', 'active', 'inactive']);
+    status.selectOption(status.options[2]);
+    expect(component.filters.status).toBe('inactive');
+
+    const trigger = selectors[0].nativeElement.querySelector(
+      '.search-select__trigger'
+    ) as HTMLButtonElement;
+    for (const control of [input, trigger]) {
       const style = getComputedStyle(control);
       expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
       expect(style.borderTopLeftRadius).toBe('8px');
     }
     expect(getComputedStyle(input).fontFamily).toContain('Crimson Pro');
+  });
+
+  it('renders inactive status with the same solid danger treatment as active status', () => {
+    const inactive = fixture.nativeElement.querySelector(
+      '[data-user-id="u2"] .user-list__status--inactive'
+    ) as HTMLElement;
+    const active = fixture.nativeElement.querySelector(
+      '[data-user-id="u1"] .user-list__status--active'
+    ) as HTMLElement;
+    const inactiveDot = getComputedStyle(inactive, '::before');
+    const activeDot = getComputedStyle(active, '::before');
+
+    expect(getComputedStyle(inactive).color).not.toBe(getComputedStyle(active).color);
+    expect(inactiveDot.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+    expect(inactiveDot.borderTopWidth).toBe('0px');
+    expect(activeDot.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
   });
 
   it('emits create and reload requests from the toolbar', () => {
