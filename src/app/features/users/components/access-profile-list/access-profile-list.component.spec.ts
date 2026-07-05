@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { AccessProfileResponse } from '../../../../core/models/access-profile.models';
 import { UserResponse } from '../../../../core/models/user.models';
+import { SearchableSelectComponent } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { AccessProfileListComponent } from './access-profile-list.component';
 
 describe('AccessProfileListComponent', () => {
@@ -83,14 +85,25 @@ describe('AccessProfileListComponent', () => {
     expect(component.visibleProfiles.length).toBe(2);
   });
 
-  it('uses the application control geometry for search and filters', () => {
+  it('uses the application searchable selects for every catalog filter', () => {
     fixture.detectChanges();
     const input = fixture.nativeElement.querySelector(
       'input[type="search"]'
     ) as HTMLInputElement;
-    const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+    const selectors = fixture.debugElement.queryAll(By.directive(SearchableSelectComponent));
 
-    for (const control of [input, select]) {
+    expect(selectors.length).toBe(2);
+    expect(fixture.nativeElement.querySelector('select')).toBeNull();
+
+    const type = selectors[0].componentInstance as SearchableSelectComponent;
+    expect(type.options.map(option => option.value)).toEqual(['all', 'system', 'custom']);
+    type.selectOption(type.options[2]);
+    expect(component.filters.type).toBe('custom');
+
+    const trigger = selectors[0].nativeElement.querySelector(
+      '.search-select__trigger'
+    ) as HTMLButtonElement;
+    for (const control of [input, trigger]) {
       const style = getComputedStyle(control);
       expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
       expect(style.borderTopLeftRadius).toBe('8px');

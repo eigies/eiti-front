@@ -24,7 +24,7 @@
       [attr.tabindex]="activeSection === 'users' ? 0 : -1"
       (keydown)="onSectionTabKeydown($event)"
       (click)="selectSection('users')">
-      Usuarios <span aria-hidden="true">·</span> {{ users.length }}
+      Usuarios
     </button>
     <button
       id="profiles-tab"
@@ -37,7 +37,7 @@
       [attr.tabindex]="activeSection === 'profiles' ? 0 : -1"
       (keydown)="onSectionTabKeydown($event)"
       (click)="selectSection('profiles')">
-      Perfiles <span aria-hidden="true">·</span> {{ profiles.length }}
+      Perfiles
     </button>
   </nav>
 

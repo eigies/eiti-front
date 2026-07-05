@@ -420,8 +420,8 @@ describe('UsersComponent', () => {
 
     expect(tablist).not.toBeNull();
     expect(tabs.map(tab => tab.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
-      'Usuarios · 2',
-      'Perfiles · 2'
+      'Usuarios',
+      'Perfiles'
     ]);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(tabs[0].getAttribute('aria-controls')).toBe('users-panel');

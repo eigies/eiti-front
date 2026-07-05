@@ -11,6 +11,10 @@ import { FormsModule } from '@angular/forms';
 import { AccessProfileResponse } from '../../../../core/models/access-profile.models';
 import { UserResponse } from '../../../../core/models/user.models';
 import {
+  SearchableSelectComponent,
+  SearchableSelectOption
+} from '../../../../shared/components/searchable-select/searchable-select.component';
+import {
   AccessProfileFilters,
   EMPTY_PROFILE_FILTERS,
   filterAccessProfiles,
@@ -20,7 +24,7 @@ import {
 @Component({
   selector: 'app-access-profile-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SearchableSelectComponent],
   templateUrl: './access-profile-list.component.html',
   styleUrls: ['./access-profile-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -28,6 +32,18 @@ import {
 export class AccessProfileListComponent {
   private _profiles: AccessProfileResponse[] = [];
   private _users: UserResponse[] = [];
+
+  readonly typeFilterOptions: SearchableSelectOption[] = [
+    { value: 'all', label: 'Todos' },
+    { value: 'system', label: 'Sistema' },
+    { value: 'custom', label: 'Personalizados' }
+  ];
+
+  readonly usageFilterOptions: SearchableSelectOption[] = [
+    { value: 'all', label: 'Todos' },
+    { value: 'used', label: 'Asignados' },
+    { value: 'unused', label: 'Sin usuarios' }
+  ];
 
   @Input()
   set profiles(profiles: AccessProfileResponse[]) {

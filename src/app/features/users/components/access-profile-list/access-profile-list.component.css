@@ -105,6 +105,14 @@ button {
   min-width: 0;
 }
 
+.profile-list__filter app-searchable-select {
+  min-width: 0;
+}
+
+:host ::ng-deep .profile-list__filter .search-select__trigger {
+  min-height: 44px;
+}
+
 .profile-list__filter input,
 .profile-list__filter select {
   width: 100%;

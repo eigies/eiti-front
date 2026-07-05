@@ -20,22 +20,28 @@
         (ngModelChange)="setQuery($event)"
         placeholder="Nombre o descripción..." />
     </label>
-    <label class="profile-list__filter">
+    <div class="profile-list__filter">
       <span>Tipo</span>
-      <select [ngModel]="filters.type" (ngModelChange)="setType($event)">
-        <option value="all">Todos</option>
-        <option value="system">Sistema</option>
-        <option value="custom">Personalizados</option>
-      </select>
-    </label>
-    <label class="profile-list__filter">
+      <app-searchable-select
+        [ngModel]="filters.type"
+        (ngModelChange)="setType($event)"
+        [options]="typeFilterOptions"
+        ariaLabel="Filtrar por tipo"
+        placeholder="Todos"
+        searchPlaceholder="Buscar tipo...">
+      </app-searchable-select>
+    </div>
+    <div class="profile-list__filter">
       <span>Uso</span>
-      <select [ngModel]="filters.usage" (ngModelChange)="setUsage($event)">
-        <option value="all">Todos</option>
-        <option value="used">Asignados</option>
-        <option value="unused">Sin usuarios</option>
-      </select>
-    </label>
+      <app-searchable-select
+        [ngModel]="filters.usage"
+        (ngModelChange)="setUsage($event)"
+        [options]="usageFilterOptions"
+        ariaLabel="Filtrar por uso"
+        placeholder="Todos"
+        searchPlaceholder="Buscar uso...">
+      </app-searchable-select>
+    </div>
     <button
       *ngIf="hasActiveFilters"
       class="profile-list__clear"
