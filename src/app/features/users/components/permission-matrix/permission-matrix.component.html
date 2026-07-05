@@ -49,7 +49,9 @@
           <strong>{{ module.label }}</strong>
           <small>{{ module.selected }} de {{ module.total }} seleccionados</small>
         </span>
-        <span class="permission-module__chevron" aria-hidden="true">⌄</span>
+        <svg class="permission-module__chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
       </button>
 
       <div
@@ -84,6 +86,10 @@
 
   <ng-template #emptyResults>
     <div class="permission-matrix__empty">
+      <svg class="permission-matrix__empty-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3.5-3.5"></path>
+      </svg>
       <strong>No hay permisos que coincidan</strong>
       <span>Probá otra búsqueda o desactivá “Sólo seleccionados”.</span>
     </div>

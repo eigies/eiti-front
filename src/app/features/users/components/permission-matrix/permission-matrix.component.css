@@ -115,12 +115,12 @@
 
 .permission-matrix__selected-only input::before,
 .permission-row input::before {
-  width: .58rem;
-  height: .32rem;
+  width: .5rem;
+  height: .27rem;
   border: solid #1a1309;
   border-width: 0 0 2px 2px;
   content: '';
-  transform: rotate(-45deg) scale(0);
+  transform: translateY(-1px) rotate(-45deg) scale(0);
   transition: transform .14s ease;
 }
 
@@ -133,7 +133,7 @@
 
 .permission-matrix__selected-only input:checked::before,
 .permission-row input:checked::before {
-  transform: rotate(-45deg) scale(1);
+  transform: translateY(-1px) rotate(-45deg) scale(1);
 }
 
 .permission-matrix__modules {
@@ -185,8 +185,15 @@
 }
 
 .permission-module__chevron {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
   color: color-mix(in srgb, var(--amber) 58%, var(--text));
-  font-size: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   transition: transform .18s ease;
 }
 
@@ -210,14 +217,52 @@
 
 .permission-module__actions button {
   min-height: 36px;
-  padding: .45rem .65rem;
+  padding: .45rem .75rem;
   border: 1px solid var(--border-2);
   border-radius: 7px;
-  color: var(--text-dim);
-  background: transparent;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
   font-family: 'DM Mono', monospace;
   font-size: .62rem;
   cursor: pointer;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text) 9%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    background .15s ease,
+    box-shadow .15s ease;
+}
+
+/* Primaria: "Seleccionar bloque" / "Quitar bloque" (primer botón) */
+.permission-module__actions button:first-child {
+  border-color: color-mix(in srgb, var(--amber) 34%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 9%, var(--bg-panel));
+  color: color-mix(in srgb, var(--amber) 82%, var(--text));
+}
+
+.permission-module__actions button:first-child:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--amber) 56%, var(--border));
+  background: color-mix(in srgb, var(--amber) 16%, var(--bg-panel));
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--amber) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+}
+
+/* Secundaria: "Limpiar" */
+.permission-module__actions button:last-child:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--border));
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--text) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+}
+
+.permission-module__actions button:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .permission-module__permissions {
@@ -240,7 +285,21 @@
   transition: border-color .16s ease, background .16s ease, transform .16s ease;
 }
 
-.permission-row--selected {
+.permission-row:hover {
+  border-color: color-mix(in srgb, var(--amber) 22%, var(--border-2));
+  background: color-mix(in srgb, var(--bg-panel) 60%, var(--bg));
+}
+
+.permission-row:hover input:not(:checked) {
+  border-color: color-mix(in srgb, var(--amber) 42%, var(--border-2));
+}
+
+.permission-row:active {
+  transform: translateY(1px);
+}
+
+.permission-row--selected,
+.permission-row--selected:hover {
   border-color: color-mix(in srgb, var(--amber) 18%, var(--border));
   background: color-mix(in srgb, var(--amber) 7%, var(--bg-panel));
   box-shadow: none;
@@ -271,12 +330,28 @@
 
 .permission-matrix__empty {
   display: grid;
-  gap: .25rem;
-  padding: 1.25rem;
+  justify-items: center;
+  gap: .3rem;
+  padding: 1.75rem 1.25rem;
   border: 1px dashed var(--border-2);
   border-radius: 10px;
   color: var(--text-dim);
   text-align: center;
+}
+
+.permission-matrix__empty-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  margin-bottom: .4rem;
+  padding: .55rem;
+  border-radius: 12px;
+  color: color-mix(in srgb, var(--amber) 70%, var(--text));
+  background: color-mix(in srgb, var(--amber) 10%, var(--bg-panel));
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .permission-matrix__empty strong {
@@ -289,7 +364,7 @@
 }
 
 .permission-matrix :is(button, input):focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--amber) 72%, white);
+  outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
 

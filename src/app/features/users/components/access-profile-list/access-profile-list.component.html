@@ -83,7 +83,11 @@
       </div>
       <div>
         <span class="profile-list__mobile-label">Tipo</span>
-        <span>{{ profile.isSystem ? 'Sistema' : 'Personalizado' }}</span>
+        <span
+          class="profile-list__badge"
+          [class.profile-list__badge--system]="profile.isSystem">
+          {{ profile.isSystem ? 'Sistema' : 'Personalizado' }}
+        </span>
       </div>
       <div>
         <span class="profile-list__mobile-label">Permisos</span>
@@ -113,6 +117,10 @@
   </div>
 
   <div class="profile-list__empty" *ngIf="!loading && profiles.length === 0">
+    <svg class="profile-list__empty-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path>
+      <path d="M12 11v4M10 13h4"></path>
+    </svg>
     <strong>Todavía no hay perfiles</strong>
     <span>Creá el primero para reutilizar permisos entre usuarios.</span>
     <button type="button" (click)="createRequested.emit()">Crear perfil</button>
@@ -121,6 +129,10 @@
   <div
     class="profile-list__empty"
     *ngIf="!loading && profiles.length > 0 && visibleProfiles.length === 0">
+    <svg class="profile-list__empty-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="m20 20-3.5-3.5"></path>
+    </svg>
     <strong>No hay perfiles que coincidan</strong>
     <span>Probá otra búsqueda o limpiá los filtros.</span>
     <button type="button" (click)="clearFilters()">Limpiar filtros</button>

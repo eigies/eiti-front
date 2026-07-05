@@ -71,12 +71,42 @@ button {
 .profile-list__delete,
 .profile-list__empty button {
   min-height: 40px;
-  padding: .55rem .75rem;
+  padding: .55rem .8rem;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  background: transparent;
+  background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
+  color: var(--text);
   font-family: 'DM Mono', monospace;
   font-size: .68rem;
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text) 9%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    background .15s ease,
+    box-shadow .15s ease;
+}
+
+.profile-list__create:hover,
+.profile-list__reload:hover,
+.profile-list__clear:hover,
+.profile-list__empty button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--text) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+}
+
+.profile-list__create:active,
+.profile-list__reload:active,
+.profile-list__clear:active,
+.profile-list__open:active,
+.profile-list__delete:active,
+.profile-list__empty button:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .profile-list__create {
@@ -84,7 +114,7 @@ button {
   align-items: center;
   gap: .5rem;
   border-color: color-mix(in srgb, var(--amber) 52%, var(--border));
-  background: var(--amber-dim);
+  background: color-mix(in srgb, var(--amber) 12%, var(--bg-panel));
 }
 
 .profile-list__create span {
@@ -182,9 +212,38 @@ button {
   border-radius: 0 0 10px 10px;
 }
 
+.profile-list__row:not(.profile-list__row--selected):hover {
+  background: color-mix(in srgb, var(--amber) 5%, var(--bg-panel));
+  box-shadow: inset 3px 0 color-mix(in srgb, var(--amber) 45%, transparent);
+}
+
+.profile-list__row {
+  transition: background .15s ease, box-shadow .15s ease;
+}
+
 .profile-list__row--selected {
   background: color-mix(in srgb, var(--amber) 7%, var(--bg-panel));
   box-shadow: inset 3px 0 var(--amber);
+}
+
+.profile-list__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: .22rem .55rem;
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 55%, var(--bg-panel));
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .56rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.profile-list__badge--system {
+  border-color: color-mix(in srgb, var(--amber) 40%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 11%, var(--bg-panel));
+  color: color-mix(in srgb, var(--amber) 82%, var(--text));
 }
 
 .profile-list__identity {
@@ -224,13 +283,33 @@ button {
   gap: .4rem;
 }
 
+.profile-list__open {
+  border-color: color-mix(in srgb, var(--amber) 34%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 9%, var(--bg-panel));
+  color: color-mix(in srgb, var(--amber) 82%, var(--text));
+}
+
 .profile-list__open:hover {
-  border-color: color-mix(in srgb, var(--amber) 46%, var(--border));
-  background: var(--amber-dim);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--amber) 56%, var(--border));
+  background: color-mix(in srgb, var(--amber) 16%, var(--bg-panel));
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--amber) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
 }
 
 .profile-list__delete {
-  color: color-mix(in srgb, var(--danger) 72%, var(--text));
+  color: color-mix(in srgb, var(--danger) 78%, var(--text));
+}
+
+.profile-list__delete:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--bg-panel));
+  color: var(--danger);
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--danger) 20%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
 }
 
 .profile-list__mobile-label {
@@ -263,10 +342,25 @@ button {
   display: grid;
   justify-items: start;
   gap: .35rem;
-  padding: 1.25rem;
+  padding: 1.75rem 1.25rem;
   border: 1px dashed var(--border-2);
   border-radius: 10px;
   color: var(--text-dim);
+}
+
+.profile-list__empty-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  margin-bottom: .5rem;
+  padding: .55rem;
+  border-radius: 12px;
+  color: color-mix(in srgb, var(--amber) 70%, var(--text));
+  background: color-mix(in srgb, var(--amber) 10%, var(--bg-panel));
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .profile-list__empty strong {

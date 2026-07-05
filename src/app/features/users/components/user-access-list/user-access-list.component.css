@@ -80,22 +80,52 @@ a:focus-visible {
 .user-list__open,
 .user-list__status-action {
   min-height: 40px;
-  padding: .55rem .75rem;
+  padding: .55rem .8rem;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  background: transparent;
+  background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
+  color: var(--text);
   font-family: 'DM Mono', monospace;
   font-size: 0.68rem;
   letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text) 9%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    background .15s ease,
+    box-shadow .15s ease;
+}
+
+.user-list__create:hover,
+.user-list__reload:not(:disabled):hover,
+.user-list__clear:hover,
+.user-list__empty button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--text) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+}
+
+.user-list__create:active,
+.user-list__reload:not(:disabled):active,
+.user-list__clear:active,
+.user-list__empty button:active,
+.user-list__open:active,
+.user-list__status-action:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .user-list__create {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  padding: .55rem .75rem;
+  padding: .55rem .8rem;
   border-color: color-mix(in srgb, var(--amber) 55%, var(--border));
-  background: var(--amber-dim);
+  background: color-mix(in srgb, var(--amber) 12%, var(--bg-panel));
 }
 
 .user-list__create span {
@@ -266,6 +296,18 @@ a:focus-visible {
   border-radius: 0 0 10px 10px;
 }
 
+.user-list__row {
+  transition: background .15s ease;
+}
+
+.user-list__row:not(.user-list__row--selected):hover {
+  background: color-mix(in srgb, var(--amber) 4%, var(--bg-panel));
+}
+
+.user-list__row:not(.user-list__row--selected):hover::before {
+  background: color-mix(in srgb, var(--amber) 45%, transparent);
+}
+
 .user-list__row--selected {
   background: linear-gradient(90deg, var(--amber-dim), transparent 70%);
 }
@@ -345,21 +387,27 @@ a:focus-visible {
 .user-list__status {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
+  padding: .22rem .6rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
   font-family: 'DM Mono', monospace;
-  font-size: 0.68rem;
+  font-size: 0.6rem;
+  letter-spacing: .05em;
   text-transform: uppercase;
 }
 
 .user-list__status::before {
-  width: 0.45rem;
-  height: 0.45rem;
+  width: 0.4rem;
+  height: 0.4rem;
   border-radius: 50%;
   content: '';
 }
 
 .user-list__status--active {
-  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 32%, var(--border-2));
+  background: color-mix(in srgb, var(--success) 12%, var(--bg-panel));
+  color: color-mix(in srgb, var(--success) 78%, var(--text));
 }
 
 .user-list__status--active::before {
@@ -367,7 +415,9 @@ a:focus-visible {
 }
 
 .user-list__status--inactive {
-  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border-2));
+  background: color-mix(in srgb, var(--danger) 10%, var(--bg-panel));
+  color: color-mix(in srgb, var(--danger) 80%, var(--text));
 }
 
 .user-list__status--inactive::before {
@@ -388,13 +438,40 @@ a:focus-visible {
 }
 
 .user-list__open {
-  border-color: color-mix(in srgb, var(--amber) 40%, var(--border));
+  border-color: color-mix(in srgb, var(--amber) 34%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 9%, var(--bg-panel));
   color: var(--user-list-accent-text);
+}
+
+.user-list__open:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--amber) 56%, var(--border));
+  background: color-mix(in srgb, var(--amber) 16%, var(--bg-panel));
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--amber) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+}
+
+.user-list__status-action:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--border));
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--text) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
 }
 
 .user-list__status-action--danger {
   border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
   color: var(--danger);
+}
+
+.user-list__status-action--danger:hover {
+  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--bg-panel));
+  color: var(--danger);
+  box-shadow:
+    0 3px 8px color-mix(in srgb, var(--danger) 20%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
 }
 
 .user-list__skeleton {
