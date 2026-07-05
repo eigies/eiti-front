@@ -110,4 +110,21 @@ describe('PermissionMatrixComponent', () => {
     expect(moduleTrigger.getAttribute('aria-controls')).toBe('permission-module-ventas');
     expect(parseFloat(getComputedStyle(moduleTrigger).minHeight)).toBeGreaterThanOrEqual(44);
   });
+
+  it('uses soft custom checks and selected permission cards', () => {
+    component.toggleExpanded('Ventas');
+    fixture.detectChanges();
+
+    const check = fixture.nativeElement.querySelector(
+      '.permission-row input'
+    ) as HTMLInputElement;
+    const row = fixture.nativeElement.querySelector(
+      '.permission-row--selected'
+    ) as HTMLElement;
+
+    expect(getComputedStyle(check).appearance).toBe('none');
+    expect(getComputedStyle(check).borderTopLeftRadius).toBe('5px');
+    expect(getComputedStyle(row).borderTopWidth).toBe('1px');
+    expect(getComputedStyle(row).borderTopLeftRadius).toBe('10px');
+  });
 });

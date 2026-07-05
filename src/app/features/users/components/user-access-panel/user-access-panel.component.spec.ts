@@ -418,6 +418,16 @@ describe('UserAccessPanelComponent', () => {
     expect(contrastRatio(style.color, style.backgroundColor)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('uses pill permission tags and soft branch checks', () => {
+    render('edit', existingUser);
+    const permission = query('.access-panel__module li') as HTMLElement;
+    const check = query('.access-panel__check') as HTMLElement;
+
+    expect(getComputedStyle(permission).borderTopLeftRadius).toBe('999px');
+    expect(getComputedStyle(check).borderTopLeftRadius).toBe('6px');
+    expect(parseFloat(getComputedStyle(check).width)).toBeGreaterThanOrEqual(20);
+  });
+
   it('uses 720px desktop width, full host width through 900px, touch targets and no narrow overflow', async () => {
     render('edit', {
       ...existingUser,
