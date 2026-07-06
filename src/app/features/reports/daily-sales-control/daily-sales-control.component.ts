@@ -126,12 +126,18 @@ export class DailySalesControlComponent implements OnInit {
       .join(' | ');
   }
 
+  hasCombinedPayments(payments: DailySalesPaymentItem[]): boolean {
+    return payments.length > 1;
+  }
+
   paymentsText(payments: DailySalesPaymentItem[]): string {
     if (payments.length === 0) return 'Sin pago registrado';
+    const combined = this.hasCombinedPayments(payments);
     return payments.map(payment => {
       const reference = payment.reference ? ` · Ref. ${payment.reference}` : '';
-      return `${this.paymentMethodLabel(payment)}${reference}`;
-    }).join(' | ');
+      const amount = combined ? ` · $ ${this.money(payment.amount)}` : '';
+      return `${this.paymentMethodLabel(payment)}${amount}${reference}`;
+    }).join(combined ? '\n' : ' | ');
   }
 
   tradeInsText(tradeIns: DailySalesTradeInItem[]): string {

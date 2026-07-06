@@ -210,6 +210,16 @@
             </div>
           </div>
 
+          <div class="stacked-picker">
+            <label class="field">
+              <span class="field__label">Teléfono de contacto <span class="field__optional">(opcional)</span></span>
+              <input class="control" type="tel" inputmode="tel"
+                [value]="lineForm.get('contactPhone')?.value || ''"
+                (input)="lineForm.get('contactPhone')?.setValue($any($event.target).value)"
+                placeholder="Ej: +54 9 11 1234-5678" autocomplete="off" />
+            </label>
+          </div>
+
           <div class="customer-picker stacked-picker" [class.empty]="createCustomerId" [class.empty--soft]="createCustomerId">
             <label class="field">
               <span class="field__label">Cliente <span class="field__optional">(opcional)</span></span>
@@ -375,6 +385,16 @@
               <strong>{{ addr }}</strong>
             </button>
           </div>
+        </div>
+
+        <div style="grid-column: 1 / -1">
+          <label class="field">
+            <span class="field__label">Teléfono de contacto <span style="font-weight:400;opacity:.6">(opcional)</span></span>
+            <input class="control" type="tel" inputmode="tel"
+              [value]="editMetaForm.get('contactPhone')?.value || ''"
+              (input)="editMetaForm.get('contactPhone')?.setValue($any($event.target).value)"
+              placeholder="Ej: +54 9 11 1234-5678" autocomplete="off" />
+          </label>
         </div>
       </form>
     </div>
@@ -608,7 +628,7 @@
 
             <div class="sale-card__customer">
               <strong>{{ sale.customerFullName || 'Consumidor final' }}</strong>
-              <span>{{ sale.customerPhone || sale.customerDocument || salePaymentRefs(sale) || 'Venta de mostrador' }}</span>
+              <span>{{ sale.customerPhone || sale.contactPhone || sale.customerDocument || salePaymentRefs(sale) || 'Venta de mostrador' }}</span>
             </div>
 
             <div class="sale-card__status">
@@ -625,6 +645,22 @@
             <div class="sale-card__amount-block">
               <span class="sale-card__amount-label">Total</span>
               <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>
+              <span class="sale-card__payment"
+                    [class.sale-card__payment--cc]="sale.isCuentaCorriente"
+                    [class.sale-card__payment--combined]="saleHasCombinedPayments(sale)"
+                    [class.sale-card__payment--none]="!sale.isCuentaCorriente && salePaymentBadge(sale) === 'Sin pagos'">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                <span class="sale-card__payment-copy">
+                  <ng-container *ngIf="saleHasCombinedPayments(sale); else simplePayment">
+                    <span class="sale-card__payment-line" *ngFor="let payment of salePaymentBreakdown(sale)">
+                      <span class="sale-card__payment-method">{{ payment.method }}</span>
+                      <span class="sale-card__payment-separator" aria-hidden="true">·</span>
+                      <strong class="sale-card__payment-amount">{{ payment.amount }}</strong>
+                    </span>
+                  </ng-container>
+                  <ng-template #simplePayment>{{ salePaymentBadge(sale) }}</ng-template>
+                </span>
+              </span>
             </div>
 
             <div class="sale-card__actions">

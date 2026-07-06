@@ -32,6 +32,7 @@ export interface CreateSaleRequest {
     noDeliverySurchargeTotal?: number | null;
     sourceChannel?: SaleSourceChannel | null;
     deliveryAddress?: string | null;
+    contactPhone?: string | null;
 }
 
 export interface CreateSaleDetailRequest {
@@ -52,6 +53,7 @@ export interface SaleResponse {
     customerAddress?: string | null;
     customerPhone?: string | null;
     deliveryAddress?: string | null;
+    contactPhone?: string | null;
     cashDrawerId?: string | null;
     cashSessionId?: string | null;
     hasDelivery: boolean;

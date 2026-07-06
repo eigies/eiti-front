@@ -104,6 +104,22 @@
   border-top: 1px dashed color-mix(in srgb, var(--border) 86%, transparent);
 }
 
+.daily-payment__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .2rem .5rem;
+}
+
+.daily-payment__amount {
+  color: var(--amber);
+  font-family: 'DM Mono', monospace;
+  font-size: .76rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .daily-empty {
   color: var(--text-soft);
   font-size: .72rem;

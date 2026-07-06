@@ -263,4 +263,57 @@ describe('SalesPageComponent (price override)', () => {
         expect(component.createChannelLabel).toBe('WhatsApp');
         expect(component.saleChannelLabel(sale)).toBe('WhatsApp');
     });
+
+    it('shows one amount line per method for combined payments', () => {
+        fixture.detectChanges();
+        component.activeMode = 'manage';
+        component.loadingSales = false;
+        component.sales = [{
+            id: 'sale-combined',
+            code: 'SUCU-123-144',
+            branchId: 'branch-1',
+            customerFullName: 'Consumidor final',
+            hasDelivery: false,
+            idSaleStatus: 2,
+            saleStatus: 'Pagada',
+            totalAmount: 99000,
+            createdAt: '2026-07-05T12:13:00Z',
+            isModified: false,
+            isCuentaCorriente: false,
+            payments: [
+                { idPaymentMethod: 1, paymentMethodName: 'Efectivo', amount: 49000 },
+                { idPaymentMethod: 2, paymentMethodName: 'Transferencia', amount: 50000 }
+            ],
+            tradeIns: [],
+            details: [{ productId: 'p1', productName: 'Producto', productBrand: 'Marca', quantity: 1, unitPrice: 99000, totalAmount: 99000, discountPercent: 0 }]
+        }];
+
+        fixture.detectChanges();
+
+        const badge = fixture.nativeElement.querySelector('.sale-card__payment--combined');
+        const lines = Array.from(
+            fixture.nativeElement.querySelectorAll('.sale-card__payment-line')
+        ).map((line: any) => line.textContent.replace(/\s+/g, ' ').trim());
+
+        expect(badge).not.toBeNull();
+        expect(lines).toEqual([
+            'Efectivo·$49.000',
+            'Transferencia·$50.000'
+        ]);
+        const method = badge.querySelector('.sale-card__payment-method') as HTMLElement;
+        const amount = badge.querySelector('.sale-card__payment-amount') as HTMLElement;
+        expect(method).not.toBeNull();
+        expect(amount).not.toBeNull();
+        if (!method || !amount) {
+            return;
+        }
+        expect(parseFloat(getComputedStyle(amount).fontSize))
+            .toBeGreaterThan(parseFloat(getComputedStyle(method).fontSize));
+        expect(parseInt(getComputedStyle(amount).fontWeight, 10)).toBeGreaterThanOrEqual(600);
+        expect(getComputedStyle(badge.querySelector('svg')).display).toBe('none');
+        for (const line of Array.from(badge.querySelectorAll('.sale-card__payment-line')) as HTMLElement[]) {
+            expect(getComputedStyle(line).whiteSpace).toBe('nowrap');
+        }
+        expect(badge.scrollWidth).toBeLessThanOrEqual(badge.clientWidth);
+    });
 });

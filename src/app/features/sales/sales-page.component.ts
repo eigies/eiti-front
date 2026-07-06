@@ -206,6 +206,7 @@ export class SalesPageComponent implements OnInit {
             cashDrawerId: [''],
             sourceChannel: [null, Validators.required],
             deliveryAddress: [''],
+            contactPhone: [''],
             productId: ['', Validators.required],
             quantity: [1, [Validators.required, Validators.min(1)]]
         });
@@ -219,7 +220,8 @@ export class SalesPageComponent implements OnInit {
             hasDelivery: [false],
             cashDrawerId: [''],
             sourceChannel: [null],
-            deliveryAddress: ['']
+            deliveryAddress: [''],
+            contactPhone: ['']
         });
         this.transportForm = this.fb.group({
             driverEmployeeId: ['', Validators.required],
@@ -738,7 +740,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
-        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '' });
+        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '' });
         this.createPaymentState = createEmptySalePaymentDraftState();
         this.createProductModalOpen = false;
         this.createPickerRows = [];
@@ -809,7 +811,8 @@ loadSales(): void {
             const phoneQuery = (this.filterForm.get('phone')?.value || '').replace(/\D/g, '');
             if (phoneQuery) {
                 filtered = filtered.filter(sale =>
-                    (sale.customerPhone || '').replace(/\D/g, '').includes(phoneQuery)
+                    (sale.customerPhone || '').replace(/\D/g, '').includes(phoneQuery) ||
+                    (sale.contactPhone || '').replace(/\D/g, '').includes(phoneQuery)
                 );
             }
             const addressQuery = (this.filterForm.get('deliveryAddress')?.value || '').trim().toLowerCase();
@@ -837,7 +840,7 @@ beginEdit(sale: SaleResponse, presetPaid = false): void {
 }
 
 this.editingSale = sale;
-this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: sale.cashDrawerId ?? '', sourceChannel: sale.sourceChannel ?? null, deliveryAddress: sale.deliveryAddress ?? '' });
+this.editMetaForm.patchValue({ branchId: sale.branchId, idSaleStatus: presetPaid ? 2 : sale.idSaleStatus, hasDelivery: sale.hasDelivery, cashDrawerId: sale.cashDrawerId ?? '', sourceChannel: sale.sourceChannel ?? null, deliveryAddress: sale.deliveryAddress ?? '', contactPhone: sale.contactPhone ?? '' });
 this.editItems = sale.details
     .map(detail => {
         const product = this.findProduct(detail.productId);
@@ -952,6 +955,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                     noDeliverySurchargeTotal: sale.noDeliverySurchargeTotal ?? null,
                     sourceChannel: sale.sourceChannel ?? null,
                     deliveryAddress: sale.deliveryAddress ?? null,
+                    contactPhone: sale.contactPhone ?? null,
                     payments: pendingAmount > 0
                         ? [
                             ...existingPayments,
@@ -1428,6 +1432,14 @@ salePaymentMethodSummary(sale: SaleResponse): string {
     return paymentMethodSummary(sale.payments, sale.tradeIns);
 }
 
+/** Método(s) de pago para mostrar en la fila de gestión: CC muestra "Cuenta corriente". */
+salePaymentBadge(sale: SaleResponse): string {
+    if (sale.isCuentaCorriente) {
+        return 'Cuenta corriente';
+    }
+    return this.salePaymentMethodSummary(sale);
+}
+
 salePaymentDetailSummary(sale: SaleResponse): string {
     const parts: string[] = [];
     for (const p of (sale.payments ?? []).filter(p => Number(p.amount) > 0)) {
@@ -1440,6 +1452,29 @@ salePaymentDetailSummary(sale: SaleResponse): string {
         parts.push(`Canje: ${formatted}`);
     }
     return parts.length > 0 ? parts.join(' | ') : 'Sin pagos';
+}
+
+salePaymentBreakdown(sale: SaleResponse): Array<{ method: string; amount: string }> {
+    const summary = this.salePaymentDetailSummary(sale);
+    if (summary === 'Sin pagos') {
+        return [];
+    }
+
+    return summary
+        .split(' | ')
+        .map(part => {
+            const separatorIndex = part.lastIndexOf(': ');
+            return separatorIndex >= 0
+                ? {
+                    method: part.slice(0, separatorIndex),
+                    amount: part.slice(separatorIndex + 2)
+                }
+                : { method: part, amount: '' };
+        });
+}
+
+saleHasCombinedPayments(sale: SaleResponse): boolean {
+    return !sale.isCuentaCorriente && this.salePaymentBreakdown(sale).length > 1;
 }
 
 salePaymentRefs(sale: SaleResponse): string {
@@ -1703,6 +1738,7 @@ if (form === this.editLineForm) {
         noDeliverySurchargeTotal: surcharge > 0 ? surcharge : null,
         sourceChannel: (rawChannel !== null && rawChannel !== '' && rawChannel !== undefined) ? Number(rawChannel) as SaleSourceChannel : null,
         deliveryAddress: raw.deliveryAddress || null,
+        contactPhone: (raw.contactPhone || '').trim() || null,
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,

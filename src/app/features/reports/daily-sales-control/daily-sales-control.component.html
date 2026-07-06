@@ -124,8 +124,13 @@
               </td>
               <td>
                 <div class="daily-list" *ngIf="row.payments.length > 0; else noPayments">
-                  <div *ngFor="let payment of row.payments">
-                    <strong>{{ paymentMethodLabel(payment) }}</strong>
+                  <div class="daily-payment" *ngFor="let payment of row.payments">
+                    <div class="daily-payment__heading">
+                      <strong>{{ paymentMethodLabel(payment) }}</strong>
+                      <strong class="daily-payment__amount" *ngIf="hasCombinedPayments(row.payments)">
+                        $ {{ money(payment.amount) }}
+                      </strong>
+                    </div>
                     <span *ngIf="payment.reference">Ref. {{ payment.reference }}</span>
                     <span *ngIf="!payment.reference">Sin referencia</span>
                   </div>
