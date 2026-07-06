@@ -1489,7 +1489,21 @@ export class CashComponent implements OnInit {
                     Number(sale.idSaleStatus) === 1
                 );
 
+                // Ventas de esta caja despachadas y aún no entregadas (transportStatus 2 = En tránsito):
+                // no se puede cerrar hasta confirmar la entrega. El backend lo valida también como red de seguridad.
+                const inTransitSales = sales.filter(sale =>
+                    sale.cashDrawerId === this.selectedDrawerId &&
+                    Number(sale.transportStatus) === 2
+                );
+
                 this.checkingPendingCloseSales = false;
+
+                if (inTransitSales.length > 0) {
+                    this.toast.error(
+                        `No podés cerrar la caja: hay ${inTransitSales.length} venta${inTransitSales.length > 1 ? 's' : ''} en tránsito sin entregar. Confirmá la entrega antes de cerrar.`
+                    );
+                    return;
+                }
 
                 if (pendingSales.length > 0) {
                     this.pendingCloseSales = pendingSales.sort((a, b) => Number(b.pendingAmount ?? 0) - Number(a.pendingAmount ?? 0));
