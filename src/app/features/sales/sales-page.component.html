@@ -627,7 +627,10 @@
             </div>
 
             <div class="sale-card__customer">
-              <strong>{{ sale.customerFullName || 'Consumidor final' }}</strong>
+              <strong>
+                <img *ngIf="saleChannelAsset(sale)" class="sale-card__channel-icon" [src]="'assets/channels/' + saleChannelAsset(sale)" [alt]="saleChannelLabel(sale)" [title]="saleChannelLabel(sale)" />
+                {{ sale.customerFullName || 'Consumidor final' }}
+              </strong>
               <span>{{ sale.customerPhone || sale.contactPhone || sale.customerDocument || salePaymentRefs(sale) || 'Venta de mostrador' }}</span>
             </div>
 

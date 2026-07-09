@@ -74,6 +74,7 @@
               <th>Fecha / hora</th>
               <th>Usuario</th>
               <th>Accion</th>
+              <th>Identificador</th>
               <th>Resultado</th>
               <th>Detalle</th>
             </tr>
@@ -92,6 +93,7 @@
                     <span class="cell-hint">{{ item.actionType }}</span>
                   </div>
                 </td>
+                <td class="cell">{{ item.succeeded ? rowIdentifier(item) : '-' }}</td>
                 <td>
                   <span class="badge" [class.badge--ok]="item.succeeded" [class.badge--err]="!item.succeeded">
                     {{ item.succeeded ? 'OK' : 'Error' }}
@@ -105,7 +107,7 @@
                 </td>
               </tr>
               <tr class="detail-row" *ngIf="expandedId === item.id">
-                <td colspan="5">
+                <td colspan="6">
                   <ng-container *ngIf="changeRows(item) as changes">
                     <section class="audit-block audit-changes" *ngIf="changes.length > 0">
                       <div class="audit-block__title">Cambios</div>

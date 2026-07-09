@@ -482,7 +482,7 @@ export class AuditComponent implements OnInit {
       'Acción (técnica)': item.actionType,
       'Resultado': item.succeeded ? 'OK' : 'Error',
       'Código error': item.errorCode || '',
-      'Identificador': this.exportIdentifier(item),
+      'Identificador': this.rowIdentifier(item),
       'Cambios': this.exportChangeSummary(item)
     }));
 
@@ -561,7 +561,7 @@ export class AuditComponent implements OnInit {
       const userLabel = item.userName || (item.userId ? item.userId.slice(0, 8) : 'Sistema');
       const changeSummary = this.exportChangeSummary(item);
       const detail = item.succeeded
-        ? `${this.exportIdentifier(item)}${changeSummary === '-' ? '' : ' / ' + changeSummary}`
+        ? `${this.rowIdentifier(item)}${changeSummary === '-' ? '' : ' / ' + changeSummary}`
         : (item.errorCode || 'Error');
 
       const values = [
@@ -669,7 +669,10 @@ export class AuditComponent implements OnInit {
       .join(' | ');
   }
 
-  private exportIdentifier(item: AuditLogItem): string {
+  // Identificador legible de la fila (código de venta/compra/producto, etc.) para
+  // mostrar en la tabla sin tener que abrir el detalle. Misma resolución que usan
+  // las exportaciones, para no duplicar lógica.
+  rowIdentifier(item: AuditLogItem): string {
     const payload = this.parseJsonObject(item.afterJson)
       ?? this.parseJsonObject(item.beforeJson)
       ?? this.parseJsonObject(item.payloadJson);

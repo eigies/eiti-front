@@ -1751,6 +1751,10 @@ saleChannelLabel(sale: SaleResponse): string {
     return this.saleSourceChannels.find(item => item.value === sale.sourceChannel)?.label ?? '';
 }
 
+saleChannelAsset(sale: SaleResponse): string | null {
+    return this.saleSourceChannels.find(item => item.value === sale.sourceChannel)?.assetPath ?? null;
+}
+
 openChannelPopup(sale: SaleResponse): void {
     this.channelPopupSale = sale;
     this.channelPopupValue = sale.sourceChannel ?? null;

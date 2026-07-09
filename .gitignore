@@ -60,3 +60,6 @@ Thumbs.db
 agent/
 skills-lock.json
 .claude/skills/
+
+# Graphify (grafo de conocimiento del repo, regenerable via `graphify --update .`)
+graphify-out/

@@ -2667,6 +2667,15 @@
     white-space: nowrap;
 }
 
+.sale-card__channel-icon {
+    display: inline-block;
+    width: .95rem;
+    height: .95rem;
+    margin-right: .3rem;
+    vertical-align: -.15rem;
+    flex-shrink: 0;
+}
+
 .sale-card__identity span,
 .sale-card__identity small,
 .sale-card__customer span,
