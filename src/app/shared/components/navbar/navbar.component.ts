@@ -23,6 +23,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   clientsMenuOpen = false;
   cashMenuOpen = false;
   purchasesMenuOpen = false;
+  payrollMenuOpen = false;
   reportsSalesMenuOpen = false;
   reportsStockMenuOpen = false;
   reportsFinanceMenuOpen = false;
@@ -42,6 +43,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
     this.cashMenuOpen = this.router.url.startsWith('/cash');
     this.purchasesMenuOpen = this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
+    this.payrollMenuOpen = this.router.url.startsWith('/payroll') || this.router.url.startsWith('/employees');
     this.syncReportSubmenus(this.router.url);
 
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
@@ -58,6 +60,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (event.url.startsWith('/purchases') || event.url.startsWith('/suppliers')) {
           this.purchasesMenuOpen = true;
+        }
+        if (event.url.startsWith('/payroll') || event.url.startsWith('/employees')) {
+          this.payrollMenuOpen = true;
         }
         this.syncReportSubmenus(event.url);
       }
@@ -89,6 +94,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.salesMenuOpen = this.router.url.startsWith('/sales');
       this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
       this.purchasesMenuOpen = this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
+      this.payrollMenuOpen = this.router.url.startsWith('/payroll') || this.router.url.startsWith('/employees');
     }
     document.body.classList.toggle('sidebar-open', this.sidebarOpen);
   }
@@ -112,6 +118,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   togglePurchasesMenu(): void {
     this.purchasesMenuOpen = !this.purchasesMenuOpen;
+  }
+
+  togglePayrollMenu(): void {
+    this.payrollMenuOpen = !this.payrollMenuOpen;
   }
 
   toggleReportsSalesMenu(): void {
@@ -200,6 +210,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   get isPurchasesRouteActive(): boolean {
     return this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
+  }
+
+  get isPayrollRouteActive(): boolean {
+    return this.router.url.startsWith('/payroll') || this.router.url.startsWith('/employees');
+  }
+
+  get hasAnyPayrollPermission(): boolean {
+    const p = this.permissionCodes;
+    return [
+      p.payrollManage,
+      p.payrollAdvancesManage,
+      p.payrollLiquidationsGenerate,
+      p.payrollLiquidationsPay
+    ].some(code => this.auth.hasPermission(code));
   }
 
   get hasAnyReportsPermission(): boolean {

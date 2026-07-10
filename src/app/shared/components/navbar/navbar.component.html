@@ -217,6 +217,62 @@
         <span>Transporte</span>
       </a>
 
+      <div *ngIf="hasAnyPayrollPermission" class="sidebar__group">
+        <button class="sidebar__link sidebar__link--parent"
+                type="button"
+                [class.is-active]="isPayrollRouteActive"
+                (click)="togglePayrollMenu()">
+          <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+            <path d="M12 11v6"/>
+            <path d="M9 14h6"/>
+          </svg>
+          <span>Sueldos</span>
+          <svg class="sidebar__chevron" [class.is-open]="payrollMenuOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="sidebar__submenu" [class.is-open]="payrollMenuOpen">
+          <a *ngIf="auth.hasPermission(permissionCodes.payrollManage)"
+             class="sidebar__submenu-item" routerLink="/employees" routerLinkActive="is-active">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+              <path d="M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+            <span>Empleados</span>
+          </a>
+          <a *ngIf="auth.hasPermission(permissionCodes.payrollManage)"
+             class="sidebar__submenu-item" routerLink="/payroll/deduction-concepts" routerLinkActive="is-active">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+            <span>Conceptos de descuento</span>
+          </a>
+          <a *ngIf="auth.hasPermission(permissionCodes.payrollAdvancesManage)"
+             class="sidebar__submenu-item" routerLink="/payroll/advances" routerLinkActive="is-active">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+              <path d="M12 14h.01"/>
+            </svg>
+            <span>Adelantos</span>
+          </a>
+          <a *ngIf="auth.hasPermission(permissionCodes.payrollManage)"
+             class="sidebar__submenu-item" routerLink="/payroll/liquidations" routerLinkActive="is-active">
+            <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            <span>Liquidaciones</span>
+          </a>
+        </div>
+      </div>
+
       <div *ngIf="auth.hasPermission(permissionCodes.purchasesAccess) || auth.hasPermission(permissionCodes.suppliersManage)" class="sidebar__group">
         <button class="sidebar__link sidebar__link--parent"
                 type="button"

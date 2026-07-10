@@ -119,11 +119,39 @@ export const routes: Routes = [
             import('./features/users/users.component').then(m => m.UsersComponent)
     },
     {
+        path: 'employees',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.payrollManage },
+        loadComponent: () =>
+            import('./features/employees/employees.component').then(m => m.EmployeesComponent)
+    },
+    {
         path: 'banks',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.banksManage },
         loadComponent: () =>
             import('./features/banks/banks.component').then(m => m.BanksComponent)
+    },
+    {
+        path: 'payroll/deduction-concepts',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.payrollManage },
+        loadComponent: () =>
+            import('./features/payroll/deduction-concepts/deduction-concepts.component').then(m => m.DeductionConceptsComponent)
+    },
+    {
+        path: 'payroll/advances',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.payrollAdvancesManage },
+        loadComponent: () =>
+            import('./features/payroll/advances/advances.component').then(m => m.AdvancesComponent)
+    },
+    {
+        path: 'payroll/liquidations',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.payrollManage },
+        loadComponent: () =>
+            import('./features/payroll/liquidations/liquidations.component').then(m => m.LiquidationsComponent)
     },
     {
         path: 'cheques',
