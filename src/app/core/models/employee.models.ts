@@ -9,6 +9,8 @@ export interface EmployeeResponse {
     email?: string | null;
     employeeRole: number;
     employeeRoleName: string;
+    baseSalary: number | null;
+    payrollPeriodicity: number | null;
     isActive: boolean;
     createdAt: string;
     updatedAt?: string | null;
