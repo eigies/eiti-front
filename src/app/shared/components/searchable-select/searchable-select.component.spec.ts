@@ -67,6 +67,23 @@ describe('SearchableSelectComponent', () => {
     expect(options[0].querySelector('.search-select__selected-mark')).not.toBeNull();
   });
 
+  it('marks its host while the popup is open so surrounding panels can lift above following content', () => {
+    const fixture = createSelect();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const trigger = fixture.nativeElement.querySelector('.search-select__trigger') as HTMLButtonElement;
+    expect(host.classList.contains('search-select-host--open')).toBeFalse();
+
+    trigger.click();
+    fixture.detectChanges();
+    expect(host.classList.contains('search-select-host--open')).toBeTrue();
+
+    fixture.componentInstance.close();
+    fixture.detectChanges();
+    expect(host.classList.contains('search-select-host--open')).toBeFalse();
+  });
+
   it('owns Escape at the component before the event reaches a surrounding document listener', fakeAsync(() => {
     const surroundingDocumentListener = jasmine.createSpy('surroundingDocumentListener');
     document.addEventListener('keydown', surroundingDocumentListener);

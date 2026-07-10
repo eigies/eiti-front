@@ -89,6 +89,11 @@
   background: linear-gradient(180deg, color-mix(in srgb, var(--amber) 4%, transparent), transparent 8rem), color-mix(in srgb, var(--bg-panel) 94%, transparent);
 }
 
+.panel:has(app-searchable-select.search-select-host--open) {
+  position: relative;
+  z-index: 20;
+}
+
 .panel__header {
   justify-content: space-between;
   color: var(--text-dim);

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, EventEmitter, forwardRef, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, forwardRef, HostBinding, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface SearchableSelectOption {
@@ -43,6 +43,12 @@ export class SearchableSelectComponent implements ControlValueAccessor, AfterVie
 
     open = false;
     query = '';
+
+    @HostBinding('class.search-select-host--open')
+    get hostOpenClass(): boolean {
+        return this.open;
+    }
+
     private value: string | number | null = null;
     private onChange: (value: string | number | null) => void = () => {};
     private onTouched: () => void = () => {};
