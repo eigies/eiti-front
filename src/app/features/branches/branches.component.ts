@@ -13,9 +13,11 @@ import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/
 import { AuthService } from '../../core/services/auth.service';
 import { ProductService } from '../../core/services/product.service';
 import { StockService } from '../../core/services/stock.service';
+import { TransferStockResponse } from '../../core/models/stock.models';
 import { ProductResponse } from '../../core/models/product.models';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { StockTransferPdfService } from '../../shared/services/stock-transfer-pdf.service';
 
 type BranchView = {
   branch: BranchResponse;
@@ -57,7 +59,8 @@ export class BranchesComponent implements OnInit {
     private readonly auth: AuthService,
     private readonly productService: ProductService,
     private readonly stockService: StockService,
-    private readonly confirmation: ConfirmationService
+    private readonly confirmation: ConfirmationService,
+    private readonly stockTransferPdf: StockTransferPdfService
   ) {
     this.createForm = this.fb.group({
       name: ['', Validators.required],
@@ -226,23 +229,61 @@ export class BranchesComponent implements OnInit {
     }
 
     this.savingTransfer = true;
+    const description = raw.description || null;
     this.stockService.transferStock({
       sourceBranchId: raw.sourceBranchId,
       destinationBranchId: raw.destinationBranchId,
       items,
-      description: raw.description || null
+      description
     }).subscribe({
       next: result => {
         this.savingTransfer = false;
         this.toast.success(`Traspaso realizado: ${result.items.length} producto(s)`);
         this.resetTransferForm();
         this.loadSourceAvailability();
+        this.offerTransferReceiptDownload(result, description);
       },
       error: err => {
         this.savingTransfer = false;
         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo transferir el stock');
       }
     });
+  }
+
+  // Post-traspaso: ofrece descargar una constancia en PDF, reutilizando el modal de
+  // confirmacion global (ConfirmationService) en vez de armar un dialogo propio.
+  private async offerTransferReceiptDownload(
+    result: TransferStockResponse,
+    description: string | null
+  ): Promise<void> {
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Traspaso realizado',
+      title: 'Descargar constancia',
+      message: 'Queres descargar un PDF dejando constancia de este traspaso de stock?',
+      confirmLabel: 'Descargar PDF',
+      cancelLabel: 'No, gracias',
+      tone: 'neutral'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const sourceBranchName = this.branchNameById(result.sourceBranchId);
+    const destinationBranchName = this.branchNameById(result.destinationBranchId);
+
+    this.stockTransferPdf.generate({
+      sourceBranchName,
+      destinationBranchName,
+      description,
+      items: result.items.map(item => ({ code: item.code, name: item.name, quantity: item.quantity }))
+    }).catch(() => {
+      this.toast.error('No se pudo generar el PDF del traspaso');
+    });
+  }
+
+  private branchNameById(branchId: string): string {
+    return this.branches.find(view => view.branch.id === branchId)?.branch.name ?? 'Sucursal';
   }
 
   private resetTransferForm(): void {
