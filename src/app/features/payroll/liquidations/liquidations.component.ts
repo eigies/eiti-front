@@ -510,7 +510,7 @@ export class LiquidationsComponent implements OnInit {
   }
 
   private money(value: number): string {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
+    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(value || 0));
   }
 
   private fileSafe(value: string): string {

@@ -66,7 +66,7 @@
     <div class="result-box" *ngIf="generateResult">
       <strong>{{ generateResult.generatedCount }} liquidaciones generadas</strong>
       <div class="result-grid" *ngIf="generateResult.generated.length > 0">
-        <span *ngFor="let item of generateResult.generated">{{ item.employeeName }} · {{ item.netAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+        <span *ngFor="let item of generateResult.generated">{{ item.employeeName }} · {{ item.netAmount | currency:'ARS':'symbol':'1.2-2' }}</span>
       </div>
       <div class="result-grid result-grid--skipped" *ngIf="generateResult.skipped.length > 0">
         <span *ngFor="let item of generateResult.skipped">{{ item.employeeName }} · {{ item.reason }}</span>
@@ -97,8 +97,8 @@
             <span [class]="statusBadgeClass(liquidation.status)">{{ statusLabel(liquidation.status) }}</span>
           </div>
           <div class="money-pair">
-            <span>Bruto <strong>{{ liquidation.grossAmount | currency:'USD':'symbol':'1.2-2' }}</strong></span>
-            <span>Neto <strong>{{ liquidation.netAmount | currency:'USD':'symbol':'1.2-2' }}</strong></span>
+            <span>Bruto <strong>{{ liquidation.grossAmount | currency:'ARS':'symbol':'1.2-2' }}</strong></span>
+            <span>Neto <strong>{{ liquidation.netAmount | currency:'ARS':'symbol':'1.2-2' }}</strong></span>
           </div>
           <span class="paid-at">{{ liquidation.paidAt ? (liquidation.paidAt | date:'short') : 'Sin pago' }}</span>
           <div class="liquidation-row__actions">
@@ -114,20 +114,20 @@
               <div>
                 <span class="expand-section__eyebrow">Descuentos</span>
                 <p *ngIf="liquidation.deductionLines.length === 0">Sin descuentos.</p>
-                <p *ngFor="let line of liquidation.deductionLines">{{ line.label }} · {{ line.amount | currency:'USD':'symbol':'1.2-2' }}</p>
-                <strong>Total descuentos: {{ lineTotal(liquidation.deductionLines) | currency:'USD':'symbol':'1.2-2' }}</strong>
+                <p *ngFor="let line of liquidation.deductionLines">{{ line.label }} · {{ line.amount | currency:'ARS':'symbol':'1.2-2' }}</p>
+                <strong>Total descuentos: {{ lineTotal(liquidation.deductionLines) | currency:'ARS':'symbol':'1.2-2' }}</strong>
               </div>
               <div>
                 <span class="expand-section__eyebrow">Adelantos</span>
                 <p *ngIf="liquidation.advanceLines.length === 0">Sin adelantos.</p>
-                <p *ngFor="let line of liquidation.advanceLines">{{ line.label }} · {{ line.amount | currency:'USD':'symbol':'1.2-2' }}</p>
-                <strong>Total adelantos: {{ lineTotal(liquidation.advanceLines) | currency:'USD':'symbol':'1.2-2' }}</strong>
+                <p *ngFor="let line of liquidation.advanceLines">{{ line.label }} · {{ line.amount | currency:'ARS':'symbol':'1.2-2' }}</p>
+                <strong>Total adelantos: {{ lineTotal(liquidation.advanceLines) | currency:'ARS':'symbol':'1.2-2' }}</strong>
               </div>
               <div>
                 <span class="expand-section__eyebrow">Totales</span>
                 <div class="total-stack">
-                  <p class="total-line">Bruto: {{ liquidation.grossAmount | currency:'USD':'symbol':'1.2-2' }}</p>
-                  <strong class="total-line total-line--net">Neto: {{ liquidation.netAmount | currency:'USD':'symbol':'1.2-2' }}</strong>
+                  <p class="total-line">Bruto: {{ liquidation.grossAmount | currency:'ARS':'symbol':'1.2-2' }}</p>
+                  <strong class="total-line total-line--net">Neto: {{ liquidation.netAmount | currency:'ARS':'symbol':'1.2-2' }}</strong>
                 </div>
                 <div class="receipt-actions">
                   <button class="btn btn--ghost btn--sm receipt-btn" type="button" [disabled]="liquidation.status !== 2" (click)="exportReceiptPdf(liquidation)">
@@ -154,7 +154,7 @@
     <div class="pay-modal__header">
       <div>
         <span class="panel__eyebrow">Pago</span>
-        <strong>{{ employeeName(payTarget.employeeId) }} · {{ payTarget.netAmount | currency:'USD':'symbol':'1.2-2' }}</strong>
+        <strong>{{ employeeName(payTarget.employeeId) }} · {{ payTarget.netAmount | currency:'ARS':'symbol':'1.2-2' }}</strong>
       </div>
       <button class="btn btn--ghost btn--sm" type="button" (click)="closePayForm()">Cerrar</button>
     </div>
