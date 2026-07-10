@@ -788,7 +788,8 @@ loadSales(): void {
     this.saleService.listSales({
         dateFrom: this.filterForm.get('dateFrom')?.value || undefined,
         dateTo: this.filterForm.get('dateTo')?.value || undefined,
-        idSaleStatus: selectedStatus
+        idSaleStatus: selectedStatus,
+        includeCuentaCorriente: true
     }).subscribe({
         next: sales => {
             let filtered = sales;
