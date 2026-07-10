@@ -1,0 +1,174 @@
+<div class="page">
+  <header class="hero">
+    <div class="hero__copy">
+      <div class="eyebrow">_ SUELDOS</div>
+      <span class="hero__kicker">Liquidaciones</span>
+      <h1>Liquidaciones de sueldo</h1>
+      <p>Genera periodos, paga liquidaciones, revisa descuentos y adelantos aplicados.</p>
+    </div>
+  </header>
+
+  <section class="panel panel--create">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Filtros</span>
+        <span>Busqueda</span>
+      </div>
+      <button class="btn btn--primary btn--sm" type="button" *ngIf="canGenerate" (click)="openGenerateForm()">Generar liquidaciones</button>
+    </div>
+    <form [formGroup]="filterForm" class="inline-form" (ngSubmit)="applyFilters()">
+      <label class="field field--grow">
+        <span class="field__label">Empleado</span>
+        <app-searchable-select formControlName="employeeId" [options]="employeeOptions" [allowClear]="true" clearLabel="Todos" clearValue="" placeholder="Todos" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+      </label>
+      <label class="field">
+        <span class="field__label">Periodo</span>
+        <input class="control" type="text" placeholder="2026-07" formControlName="periodLabel" />
+      </label>
+      <label class="field">
+        <span class="field__label">Estado</span>
+        <select class="control" formControlName="status">
+          <option value="">Todos</option>
+          <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+        </select>
+      </label>
+      <button class="btn btn--ghost" type="submit">Aplicar</button>
+    </form>
+  </section>
+
+  <section class="panel panel--create" *ngIf="showGenerate && canGenerate">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Periodo</span>
+        <span>Generar liquidaciones</span>
+      </div>
+    </div>
+    <form [formGroup]="generateForm" class="inline-form" (ngSubmit)="submitGenerate()">
+      <label class="field">
+        <span class="field__label">Periodicidad</span>
+        <select class="control" formControlName="periodicity" (change)="syncMonthlyPeriodDates()">
+          <option *ngFor="let periodicity of periodicities" [ngValue]="periodicity.value">{{ periodicity.label }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">Periodo</span>
+        <input class="control" type="text" formControlName="periodLabel" (change)="syncMonthlyPeriodDates()" />
+      </label>
+      <label class="field">
+        <span class="field__label">Desde</span>
+        <input class="control" type="date" formControlName="periodStart" />
+      </label>
+      <label class="field">
+        <span class="field__label">Hasta</span>
+        <input class="control" type="date" formControlName="periodEnd" />
+      </label>
+      <div class="edit-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="generateForm.invalid || generating">{{ generating ? 'Generando...' : 'Generar' }}</button>
+        <button class="btn btn--ghost" type="button" (click)="closeGenerateForm()">Cerrar</button>
+      </div>
+    </form>
+
+    <div class="result-box" *ngIf="generateResult">
+      <strong>{{ generateResult.generatedCount }} liquidaciones generadas</strong>
+      <div class="result-grid" *ngIf="generateResult.generated.length > 0">
+        <span *ngFor="let item of generateResult.generated">{{ item.employeeName }} · {{ item.netAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+      <div class="result-grid result-grid--skipped" *ngIf="generateResult.skipped.length > 0">
+        <span *ngFor="let item of generateResult.skipped">{{ item.employeeName }} · {{ item.reason }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel panel--list">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Listado</span>
+        <span>Liquidaciones</span>
+      </div>
+      <span class="panel__count">{{ totalCount }}</span>
+    </div>
+
+    <div class="empty" *ngIf="loading">Cargando liquidaciones...</div>
+    <div class="empty" *ngIf="!loading && liquidations.length === 0">No hay liquidaciones registradas.</div>
+
+    <div class="liquidation-list" *ngIf="!loading && liquidations.length > 0">
+      <article class="liquidation-item" *ngFor="let liquidation of liquidations; trackBy: trackById" [class.liquidation-item--expanded]="expandedId === liquidation.id">
+        <div class="liquidation-row">
+          <div class="liquidation-row__info">
+            <div class="liquidation-row__primary">
+              <span class="liquidation-row__name">{{ employeeName(liquidation.employeeId) }}</span>
+              <span class="liquidation-row__plans">{{ liquidation.periodLabel }} · {{ paymentMethodLabel(liquidation.paymentMethod) }}</span>
+            </div>
+            <span [class]="statusBadgeClass(liquidation.status)">{{ statusLabel(liquidation.status) }}</span>
+          </div>
+          <div class="money-pair">
+            <span>Bruto <strong>{{ liquidation.grossAmount | currency:'USD':'symbol':'1.2-2' }}</strong></span>
+            <span>Neto <strong>{{ liquidation.netAmount | currency:'USD':'symbol':'1.2-2' }}</strong></span>
+          </div>
+          <span class="paid-at">{{ liquidation.paidAt ? (liquidation.paidAt | date:'short') : 'Sin pago' }}</span>
+          <div class="liquidation-row__actions">
+            <button class="btn btn--ghost btn--sm" type="button" *ngIf="canPay" [disabled]="liquidation.status !== 1" (click)="openPayForm(liquidation)">Pagar</button>
+            <button class="btn btn--ghost btn--sm" type="button" *ngIf="canPay" [disabled]="liquidation.status === 3 || cancellingId === liquidation.id" (click)="cancelLiquidation(liquidation)">Cancelar</button>
+            <button class="btn btn--ghost btn--sm" type="button" (click)="toggleDetail(liquidation)">Ver detalle</button>
+          </div>
+        </div>
+
+        <div class="liquidation-expand" *ngIf="expandedId === liquidation.id">
+          <section class="expand-section">
+            <div class="detail-grid">
+              <div>
+                <span class="expand-section__eyebrow">Descuentos</span>
+                <p *ngIf="liquidation.deductionLines.length === 0">Sin descuentos.</p>
+                <p *ngFor="let line of liquidation.deductionLines">{{ line.label }} · {{ line.amount | currency:'USD':'symbol':'1.2-2' }}</p>
+                <strong>Total descuentos: {{ lineTotal(liquidation.deductionLines) | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+              <div>
+                <span class="expand-section__eyebrow">Adelantos</span>
+                <p *ngIf="liquidation.advanceLines.length === 0">Sin adelantos.</p>
+                <p *ngFor="let line of liquidation.advanceLines">{{ line.label }} · {{ line.amount | currency:'USD':'symbol':'1.2-2' }}</p>
+                <strong>Total adelantos: {{ lineTotal(liquidation.advanceLines) | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+              <div>
+                <span class="expand-section__eyebrow">Totales</span>
+                <p>Bruto: {{ liquidation.grossAmount | currency:'USD':'symbol':'1.2-2' }}</p>
+                <strong>Neto: {{ liquidation.netAmount | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+            </div>
+          </section>
+        </div>
+      </article>
+    </div>
+
+    <div class="pager" *ngIf="totalPages > 1">
+      <button class="btn btn--ghost btn--sm" type="button" (click)="previousPage()" [disabled]="page <= 1">Anterior</button>
+      <span>Pagina {{ page }} de {{ totalPages }}</span>
+      <button class="btn btn--ghost btn--sm" type="button" (click)="nextPage()" [disabled]="page >= totalPages">Siguiente</button>
+    </div>
+  </section>
+</div>
+
+<div class="pay-modal-backdrop" *ngIf="payTarget" (click)="closePayForm()">
+  <section class="pay-modal" (click)="$event.stopPropagation()">
+    <div class="pay-modal__header">
+      <div>
+        <span class="panel__eyebrow">Pago</span>
+        <strong>{{ employeeName(payTarget.employeeId) }} · {{ payTarget.netAmount | currency:'USD':'symbol':'1.2-2' }}</strong>
+      </div>
+      <button class="btn btn--ghost btn--sm" type="button" (click)="closePayForm()">Cerrar</button>
+    </div>
+    <form [formGroup]="payForm" (ngSubmit)="submitPay()" class="inline-form">
+      <label class="field">
+        <span class="field__label">Medio de pago</span>
+        <select class="control" formControlName="paymentMethod">
+          <option *ngFor="let method of paymentMethods" [ngValue]="method.value">{{ method.label }}</option>
+        </select>
+      </label>
+      <label class="field field--grow" *ngIf="usesCashForPay">
+        <span class="field__label">Caja abierta</span>
+        <app-searchable-select formControlName="cashDrawerId" [options]="cashDrawerOptions" placeholder="Seleccionar caja" searchPlaceholder="Buscar caja..."></app-searchable-select>
+      </label>
+      <button class="btn btn--primary" type="submit" [disabled]="payForm.invalid || paying">{{ paying ? 'Pagando...' : 'Pagar' }}</button>
+    </form>
+    <div class="empty" *ngIf="usesCashForPay && cashDrawerOptions.length === 0">No hay cajas abiertas disponibles.</div>
+  </section>
+</div>

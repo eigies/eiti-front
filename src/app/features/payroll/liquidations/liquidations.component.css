@@ -1,0 +1,449 @@
+.page {
+  min-height: calc(100vh - 64px);
+  background: radial-gradient(circle at top right, var(--page-radial), transparent 32%), linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+  padding: 2.7rem 2rem 3rem;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.hero,
+.panel__header,
+.inline-form,
+.liquidation-row,
+.liquidation-row__info,
+.liquidation-row__actions,
+.edit-form__actions,
+.pager,
+.pay-modal__header {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+}
+
+.hero {
+  margin-bottom: 1.6rem;
+  animation: hero-in .55s cubic-bezier(.22,1,.36,1) both;
+}
+
+.hero__copy,
+.panel,
+.expand-section,
+.result-box,
+.result-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.eyebrow,
+.hero__kicker,
+.panel__eyebrow,
+.field__label,
+.expand-section__eyebrow {
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  color: var(--amber);
+  margin-bottom: .15rem;
+  font-size: .68rem;
+  letter-spacing: .16em;
+}
+
+.hero__kicker,
+.panel__eyebrow,
+.expand-section__eyebrow {
+  color: var(--amber);
+  font-size: .66rem;
+  letter-spacing: .14em;
+}
+
+.hero h1,
+.panel__header,
+.liquidation-row__name,
+.money-pair,
+.pay-modal__header strong {
+  font-family: 'DM Mono', monospace;
+}
+
+.hero h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.7rem, 3.2vw, 2.4rem);
+}
+
+.hero p {
+  margin: .25rem 0 0;
+  color: var(--text-soft);
+  font-family: 'Crimson Pro', serif;
+  font-size: .95rem;
+  max-width: 42rem;
+  line-height: 1.55;
+}
+
+.panel {
+  background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+  opacity: 0;
+  animation: card-in .5s cubic-bezier(.22,1,.36,1) .15s both;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, .06);
+}
+
+.panel--create {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--amber) 4%, transparent), transparent 8rem), color-mix(in srgb, var(--bg-panel) 94%, transparent);
+}
+
+.panel__header {
+  justify-content: space-between;
+  color: var(--text-dim);
+  font-size: .74rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  padding-bottom: .85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel__header > div,
+.liquidation-row__primary,
+.pay-modal__header > div {
+  display: grid;
+  gap: .12rem;
+}
+
+.panel__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 .55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--amber) 26%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  color: color-mix(in srgb, var(--amber) 72%, var(--text) 28%);
+}
+
+.field {
+  display: grid;
+  gap: .42rem;
+}
+
+.field--grow {
+  flex: 1 1 14rem;
+}
+
+.field__label {
+  color: var(--text-dim);
+  font-size: .66rem;
+  letter-spacing: .12em;
+}
+
+.inline-form {
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.control,
+.btn,
+.badge,
+.liquidation-item,
+.pager {
+  font-family: 'DM Mono', monospace;
+}
+
+.control {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border-2);
+  background: var(--bg);
+  color: var(--text);
+  padding: .8rem .9rem;
+  font-size: .84rem;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.control:hover {
+  border-color: color-mix(in srgb, var(--amber) 26%, var(--border-2));
+}
+
+.control:focus {
+  border-color: color-mix(in srgb, var(--amber) 42%, var(--border-2));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+.btn {
+  border-radius: 8px;
+  padding: .8rem 1rem;
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform .15s ease, border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.btn--primary {
+  border: 1px solid color-mix(in srgb, var(--amber) 38%, var(--border-2));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--amber) 82%, white 18%) 0%, color-mix(in srgb, var(--amber) 68%, black 32%) 100%);
+  color: var(--bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 18%, transparent);
+}
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border-2);
+  color: var(--text-dim);
+}
+
+.btn--sm {
+  padding: .5rem .8rem;
+  font-size: .66rem;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
+  color: var(--text);
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.empty {
+  color: var(--text-soft);
+  font-family: 'DM Mono', monospace;
+  font-size: .78rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .2rem .58rem;
+  border-radius: 999px;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge--in {
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+.badge--out {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+.badge--pending {
+  background: color-mix(in srgb, var(--text-dim) 16%, transparent);
+  color: var(--text-dim);
+  border: 1px solid color-mix(in srgb, var(--text-dim) 35%, transparent);
+}
+
+.liquidation-list {
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+}
+
+.liquidation-item {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 10px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bg-panel) 72%, var(--bg) 28%);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.liquidation-item--expanded {
+  border-color: color-mix(in srgb, var(--amber) 20%, var(--border));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, .06);
+}
+
+.liquidation-row {
+  justify-content: space-between;
+  padding: .95rem 1rem;
+}
+
+.liquidation-row__info {
+  flex: 1 1 16rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.liquidation-row__name {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.liquidation-row__plans,
+.paid-at {
+  font-size: .7rem;
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.money-pair {
+  display: grid;
+  gap: .18rem;
+  min-width: 9rem;
+  color: var(--text-dim);
+  font-size: .66rem;
+  text-transform: uppercase;
+}
+
+.money-pair strong {
+  color: var(--text);
+}
+
+.liquidation-expand {
+  padding: .85rem 1rem 1rem;
+  background: color-mix(in srgb, var(--bg-panel) 48%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+}
+
+.expand-section {
+  padding: .95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 60%, var(--bg-panel) 40%);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.detail-grid p,
+.result-box span {
+  margin: .35rem 0;
+  color: var(--text-soft);
+  font-family: 'Crimson Pro', serif;
+}
+
+.detail-grid strong,
+.result-box strong {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .78rem;
+}
+
+.result-box {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--bg) 60%, var(--bg-panel) 40%);
+}
+
+.result-grid {
+  gap: .35rem;
+}
+
+.result-grid--skipped {
+  border-top: 1px solid var(--border);
+  padding-top: .75rem;
+}
+
+.pager {
+  justify-content: flex-end;
+  margin-top: 1rem;
+  color: var(--text-dim);
+  font-size: .72rem;
+  text-transform: uppercase;
+}
+
+.pay-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: color-mix(in srgb, black 48%, transparent);
+}
+
+.pay-modal {
+  width: min(620px, 100%);
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-panel) 96%, var(--bg) 4%);
+  padding: 1.1rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .24);
+  animation: card-in .22s cubic-bezier(.22,1,.36,1) both;
+}
+
+.pay-modal__header {
+  justify-content: space-between;
+  padding-bottom: .85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pay-modal__header strong {
+  color: var(--text);
+  font-size: .9rem;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 2rem 1rem;
+  }
+
+  .panel {
+    padding: 1rem;
+  }
+
+  .inline-form,
+  .liquidation-row,
+  .liquidation-row__info,
+  .liquidation-row__actions,
+  .edit-form__actions,
+  .pager,
+  .pay-modal__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .liquidation-row__info .badge {
+    align-self: flex-start;
+  }
+}
+
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
