@@ -7,6 +7,8 @@ import { CashService } from '../../../core/services/cash.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
+import { PdfLayoutService } from '../../../shared/services/pdf-layout.service';
 import { LiquidationsComponent } from './liquidations.component';
 
 describe('LiquidationsComponent', () => {
@@ -22,6 +24,8 @@ describe('LiquidationsComponent', () => {
     const auth = jasmine.createSpyObj('AuthService', ['hasPermission'], { currentUser: { assignedCashDrawerId: 'drawer-1' } });
     const toast = jasmine.createSpyObj('ToastService', ['success', 'error']);
     const confirmation = jasmine.createSpyObj('ConfirmationService', ['confirm']);
+    const pdfBranding = jasmine.createSpyObj('PdfBrandingService', ['prepare', 'drawWatermark', 'drawHeader', 'drawFooter']);
+    const pdfLayout = jasmine.createSpyObj('PdfLayoutService', ['resolveColumns', 'drawTableHeader', 'drawTableRow', 'ensurePageSpace']);
 
     employees.listEmployees.and.returnValue(of([
       {
@@ -50,7 +54,9 @@ describe('LiquidationsComponent', () => {
         { provide: CashService, useValue: cash },
         { provide: AuthService, useValue: auth },
         { provide: ToastService, useValue: toast },
-        { provide: ConfirmationService, useValue: confirmation }
+        { provide: ConfirmationService, useValue: confirmation },
+        { provide: PdfBrandingService, useValue: pdfBranding },
+        { provide: PdfLayoutService, useValue: pdfLayout }
       ]
     }).compileComponents();
 
@@ -83,5 +89,9 @@ describe('LiquidationsComponent', () => {
       periodEnd: '2026-07-31'
     });
     expect(component.generateResult?.generatedCount).toBe(1);
+  });
+
+  it('exposes receipt PDF export for a liquidation', () => {
+    expect(typeof component.exportReceiptPdf).toBe('function');
   });
 });

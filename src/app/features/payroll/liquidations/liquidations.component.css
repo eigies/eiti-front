@@ -348,6 +348,10 @@
   font-size: .78rem;
 }
 
+.receipt-btn {
+  margin-top: .75rem;
+}
+
 .result-box {
   border: 1px solid var(--border);
   border-radius: 10px;
