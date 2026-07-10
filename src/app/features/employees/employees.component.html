@@ -72,10 +72,7 @@
       </label>
       <label class="edit-field edit-field--grow">
         <span class="edit-field__label">Periodicidad</span>
-        <select class="control" formControlName="payrollPeriodicity">
-          <option [ngValue]="null">Sin periodicidad</option>
-          <option *ngFor="let periodicity of periodicities" [ngValue]="periodicity.value">{{ periodicity.label }}</option>
-        </select>
+        <app-searchable-select formControlName="payrollPeriodicity" [options]="periodicities" [allowClear]="true" clearLabel="Sin periodicidad" [clearValue]="null" placeholder="Sin periodicidad" searchPlaceholder="Buscar periodicidad..."></app-searchable-select>
       </label>
       <div class="edit-form__actions">
         <button class="btn btn--primary" type="submit" [disabled]="payrollForm.invalid || savingPayroll">

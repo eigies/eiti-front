@@ -7,12 +7,13 @@ import { PermissionCodes } from '../../core/models/permission.models';
 import { AuthService } from '../../core/services/auth.service';
 import { EmployeePayrollConfigService } from '../../core/services/employee-payroll-config.service';
 import { EmployeeService } from '../../core/services/employee.service';
+import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-employees',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
   templateUrl: './employees.component.html',
   styleUrls: ['./employees.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

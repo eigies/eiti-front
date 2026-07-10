@@ -81,4 +81,12 @@ describe('EmployeesComponent', () => {
     expect(component.employees[0].payrollPeriodicity).toBe(1);
     expect(toast.success).toHaveBeenCalledWith('Configuracion salarial actualizada');
   });
+
+  it('uses the searchable dropdown for payroll periodicity instead of a native select', () => {
+    component.openPayrollConfig(component.employees[0]);
+    fixture.detectChanges();
+
+    expect(component.selectedEmployee).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('select').length).toBe(0);
+  });
 });

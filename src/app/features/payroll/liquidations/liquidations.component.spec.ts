@@ -94,4 +94,24 @@ describe('LiquidationsComponent', () => {
   it('exposes receipt PDF export for a liquidation', () => {
     expect(typeof component.exportReceiptPdf).toBe('function');
   });
+
+  it('uses the searchable dropdown for every select-like payroll field', () => {
+    component.openGenerateForm();
+    component.payTarget = {
+      id: 'liq-1',
+      employeeId: 'employee-1',
+      periodLabel: '2026-07',
+      grossAmount: 1000,
+      netAmount: 900,
+      status: 1,
+      paymentMethod: null,
+      paidAt: null,
+      deductionLines: [],
+      advanceLines: []
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('select').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.search-select__trigger').length).toBeGreaterThanOrEqual(2);
+  });
 });

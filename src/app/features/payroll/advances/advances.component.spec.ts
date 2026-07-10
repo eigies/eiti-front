@@ -96,4 +96,12 @@ describe('AdvancesComponent', () => {
       cashSessionId: null
     });
   });
+
+  it('uses the searchable dropdown for every select-like payroll field', () => {
+    component.openCreateForm();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('select').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.search-select__trigger').length).toBeGreaterThanOrEqual(2);
+  });
 });
