@@ -38,6 +38,20 @@
                     <span class="field__error" *ngIf="isInvalid('username')">Minimo 3 caracteres</span>
                 </div>
 
+                <div class="field" [class.field--error]="isInvalid('firstName')">
+                    <label class="field__label">Nombre</label>
+                    <input class="field__input" type="text" formControlName="firstName" placeholder="Tu nombre"
+                        autocomplete="given-name" />
+                    <span class="field__error" *ngIf="isInvalid('firstName')">Requerido</span>
+                </div>
+
+                <div class="field" [class.field--error]="isInvalid('lastName')">
+                    <label class="field__label">Apellido</label>
+                    <input class="field__input" type="text" formControlName="lastName" placeholder="Tu apellido"
+                        autocomplete="family-name" />
+                    <span class="field__error" *ngIf="isInvalid('lastName')">Requerido</span>
+                </div>
+
                 <div class="field" [class.field--error]="isInvalid('email')">
                     <label class="field__label">Email</label>
                     <input class="field__input" type="email" formControlName="email" placeholder="correo@empresa.com"

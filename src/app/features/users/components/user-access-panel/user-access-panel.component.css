@@ -207,6 +207,35 @@
   opacity: 0.72;
 }
 
+.access-panel__field--checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: .6rem;
+}
+
+.access-panel__field--checkbox input {
+  width: 18px;
+  min-height: 0;
+  height: 18px;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.access-panel__field--checkbox span {
+  text-transform: none;
+  font-size: .8rem;
+  color: var(--text);
+  letter-spacing: normal;
+}
+
+.access-panel__field--checkbox span small {
+  display: block;
+  color: var(--text-dim);
+  font-size: .68rem;
+  margin-top: .1rem;
+}
+
 .access-panel__error {
   color: var(--danger);
   font-size: 0.78rem;

@@ -67,9 +67,12 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit, OnDes
 
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.minLength(3)]],
+    firstName: ['', [Validators.required, Validators.maxLength(80)]],
+    lastName: ['', [Validators.required, Validators.maxLength(80)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
-    profileId: ['', Validators.required]
+    profileId: ['', Validators.required],
+    isEmployee: [false]
   });
 
   selectedBranchIds = new Set<string>();
@@ -219,9 +222,12 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit, OnDes
     const raw = this.form.getRawValue();
     this.saveRequested.emit({
       username: (this.mode === 'edit' ? this.user?.username ?? '' : raw.username).trim(),
+      firstName: raw.firstName.trim(),
+      lastName: raw.lastName.trim(),
       email: (this.mode === 'edit' ? this.user?.email ?? '' : raw.email).trim(),
       password: this.mode === 'edit' ? '' : raw.password,
       profileId: raw.profileId.trim(),
+      isEmployee: raw.isEmployee,
       branchIds: this.normalizedBranchIds()
     });
   }
@@ -292,9 +298,12 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit, OnDes
 
     this.form.reset({
       username: editing ? this.user?.username ?? '' : '',
+      firstName: editing ? this.user?.firstName ?? '' : '',
+      lastName: editing ? this.user?.lastName ?? '' : '',
       email: editing ? this.user?.email ?? '' : '',
       password: '',
-      profileId: editing ? this.user?.profileId ?? '' : ''
+      profileId: editing ? this.user?.profileId ?? '' : '',
+      isEmployee: editing ? !!this.user?.employeeId : false
     }, { emitEvent: false });
 
     if (editing) {

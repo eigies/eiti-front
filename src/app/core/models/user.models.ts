@@ -1,6 +1,9 @@
 export interface UserResponse {
     id: string;
     username: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
     email: string;
     isActive: boolean;
     employeeId?: string | null;
@@ -15,16 +18,22 @@ export interface UserResponse {
 
 export interface CreateUserRequest {
     username: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
     profileId: string;
     employeeId?: string | null;
+    isEmployee?: boolean;
     branchIds?: string[];
 }
 
 export interface UpdateUserProfileRequest {
+    firstName: string;
+    lastName: string;
     profileId: string;
     employeeId?: string | null;
+    isEmployee?: boolean;
     branchIds?: string[];
 }
 

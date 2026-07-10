@@ -24,6 +24,53 @@
 
   <form class="access-panel__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <div class="access-panel__body">
+      <section class="access-panel__section" data-testid="personal-data">
+        <div class="access-panel__section-heading">
+          <span class="access-panel__index">{{ mode === 'create' ? '01' : '01' }}</span>
+          <div>
+            <h3>Datos personales</h3>
+            <p>Nombre y apellido de la persona.</p>
+          </div>
+        </div>
+
+        <label class="access-panel__field">
+          <span>Nombre</span>
+          <input
+            type="text"
+            formControlName="firstName"
+            autocomplete="given-name"
+            aria-describedby="firstName-error"
+            placeholder="Nombre" />
+          <small
+            id="firstName-error"
+            class="access-panel__error"
+            *ngIf="form.controls.firstName.touched && form.controls.firstName.invalid">
+            Ingresá el nombre.
+          </small>
+        </label>
+
+        <label class="access-panel__field">
+          <span>Apellido</span>
+          <input
+            type="text"
+            formControlName="lastName"
+            autocomplete="family-name"
+            aria-describedby="lastName-error"
+            placeholder="Apellido" />
+          <small
+            id="lastName-error"
+            class="access-panel__error"
+            *ngIf="form.controls.lastName.touched && form.controls.lastName.invalid">
+            Ingresá el apellido.
+          </small>
+        </label>
+
+        <label class="access-panel__field access-panel__field--checkbox">
+          <input type="checkbox" formControlName="isEmployee" />
+          <span>Es empleado <small>(habilita configurar sueldo y liquidaciones)</small></span>
+        </label>
+      </section>
+
       <section class="access-panel__section" *ngIf="mode === 'create'" data-testid="create-identity">
         <div class="access-panel__section-heading">
           <span class="access-panel__index">01</span>

@@ -230,8 +230,11 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
 
     this.userService.updateProfile(selected.id, {
+      firstName: draft.firstName,
+      lastName: draft.lastName,
       profileId: draft.profileId,
-      employeeId: selected.employeeId ?? null,
+      employeeId: null,
+      isEmployee: draft.isEmployee,
       branchIds: draft.branchIds
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: updated => {

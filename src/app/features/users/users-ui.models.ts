@@ -20,9 +20,12 @@ export interface AccessProfileFilters {
 
 export interface UserAccessDraft {
   username: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   profileId: string;
+  isEmployee: boolean;
   branchIds: string[];
 }
 
