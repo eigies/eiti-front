@@ -1,0 +1,88 @@
+<div class="page">
+  <header class="hero">
+    <div class="hero__copy">
+      <div class="eyebrow">_ EMPLEADOS</div>
+      <span class="hero__kicker">Configuracion salarial</span>
+      <h1>Empleados</h1>
+      <p>Consulta empleados y define sueldo base y periodicidad para el calculo de liquidaciones.</p>
+    </div>
+  </header>
+
+  <section class="panel panel--list">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Nomina</span>
+        <span>Empleados</span>
+      </div>
+      <span class="panel__count">{{ employees.length }}</span>
+    </div>
+
+    <div class="empty" *ngIf="loading">Cargando empleados...</div>
+    <div class="empty" *ngIf="!loading && employees.length === 0">No hay empleados registrados.</div>
+
+    <div class="employee-list" *ngIf="!loading && employees.length > 0">
+      <article class="employee-item" *ngFor="let employee of employees; trackBy: trackById">
+        <div class="employee-row">
+          <div class="employee-row__info">
+            <div class="employee-row__primary">
+              <span class="employee-row__name">{{ employee.fullName }}</span>
+              <span class="employee-row__plans">{{ employee.employeeRoleName }}</span>
+            </div>
+            <span [class]="employee.isActive ? 'badge badge--in' : 'badge badge--out'">
+              {{ employee.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+
+          <div class="employee-payroll">
+            <span>
+              <strong>Sueldo base</strong>
+              <em>{{ employee.baseSalary !== null ? (employee.baseSalary | currency:'USD':'symbol':'1.2-2') : '—' }}</em>
+            </span>
+            <span>
+              <strong>Periodicidad</strong>
+              <em>{{ periodicityLabel(employee.payrollPeriodicity) }}</em>
+            </span>
+          </div>
+
+          <div class="employee-row__actions">
+            <button class="btn btn--ghost btn--sm" type="button" *ngIf="canManagePayroll" (click)="openPayrollConfig(employee)">
+              Configurar sueldo
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
+
+<div class="payroll-modal-backdrop" *ngIf="selectedEmployee" (click)="closePayrollConfig()">
+  <section class="payroll-modal" (click)="$event.stopPropagation()">
+    <div class="payroll-modal__header">
+      <div>
+        <span class="panel__eyebrow">Sueldo</span>
+        <strong>{{ selectedEmployee.fullName }}</strong>
+      </div>
+      <button class="btn btn--ghost btn--sm" type="button" (click)="closePayrollConfig()">Cerrar</button>
+    </div>
+
+    <form [formGroup]="payrollForm" (ngSubmit)="savePayrollConfig()" class="edit-form">
+      <label class="edit-field edit-field--grow">
+        <span class="edit-field__label">Sueldo base</span>
+        <input class="control" type="number" min="0" step="0.01" formControlName="baseSalary" />
+      </label>
+      <label class="edit-field edit-field--grow">
+        <span class="edit-field__label">Periodicidad</span>
+        <select class="control" formControlName="payrollPeriodicity">
+          <option [ngValue]="null">Sin periodicidad</option>
+          <option *ngFor="let periodicity of periodicities" [ngValue]="periodicity.value">{{ periodicity.label }}</option>
+        </select>
+      </label>
+      <div class="edit-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="payrollForm.invalid || savingPayroll">
+          {{ savingPayroll ? 'Guardando...' : 'Guardar' }}
+        </button>
+        <button class="btn btn--ghost" type="button" (click)="closePayrollConfig()">Cancelar</button>
+      </div>
+    </form>
+  </section>
+</div>
