@@ -23,6 +23,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { StockTransferPdfService } from '../../shared/services/stock-transfer-pdf.service';
 import { extractApiError } from '../../shared/utils/api-error.util';
 import { forkJoin, Subscription } from 'rxjs';
 import * as XLSX from 'xlsx';
@@ -179,7 +180,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     private purchaseService: PurchaseService,
     public auth: AuthService,
     private confirmation: ConfirmationService,
-    private productCategoryService: ProductCategoryService
+    private productCategoryService: ProductCategoryService,
+    private stockTransferPdf: StockTransferPdfService
   ) {
     this.createForm = this.buildForm();
     this.editForm = this.buildForm();
@@ -1324,6 +1326,20 @@ export class ProductsComponent implements OnInit, OnDestroy {
   closeSalePopup(): void { this.salePopupSale = null; this.salePopupLoading = false; }
   closePurchasePopup(): void { this.purchasePopup = null; this.purchasePopupLoading = false; }
   closeTransferPopup(): void { this.transferPopup = null; this.transferPopupLoading = false; }
+
+  // Descarga puntual de la constancia de un traspaso ya realizado, para cuando el usuario
+  // cerro sin querer el popup de confirmacion posterior al traspaso (o simplemente la
+  // necesita despues). Mismo servicio que arma ese PDF automaticamente.
+  downloadTransferPdf(tr: TransferDetailResponse): void {
+    this.stockTransferPdf.generate({
+      sourceBranchName: tr.fromBranchName || 'Sucursal',
+      destinationBranchName: tr.toBranchName || 'Sucursal',
+      description: tr.description ?? null,
+      items: tr.items.map(item => ({ code: item.code, name: `${item.brand} ${item.name}`.trim(), quantity: item.quantity }))
+    }).catch(() => {
+      this.toast.error('No se pudo generar el PDF del traspaso');
+    });
+  }
 
   get selectedStockBranchName(): string {
     const match = this.branches.find(b => b.id === this.selectedStockBranchId);
