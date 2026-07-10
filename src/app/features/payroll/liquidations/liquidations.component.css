@@ -353,8 +353,32 @@
   font-size: .78rem;
 }
 
+.total-stack {
+  display: grid;
+  gap: .38rem;
+  margin-top: .35rem;
+}
+
+.total-line {
+  display: block;
+}
+
+.total-line--net {
+  font-size: .9rem;
+}
+
+.receipt-actions {
+  display: flex;
+  margin-top: 1rem;
+  padding-top: .85rem;
+  border-top: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
+}
+
 .receipt-btn {
-  margin-top: .75rem;
+  border-color: color-mix(in srgb, var(--amber) 34%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  color: color-mix(in srgb, var(--amber) 72%, var(--text));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
 }
 
 .result-box {

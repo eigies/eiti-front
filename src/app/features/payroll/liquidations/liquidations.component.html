@@ -125,11 +125,15 @@
               </div>
               <div>
                 <span class="expand-section__eyebrow">Totales</span>
-                <p>Bruto: {{ liquidation.grossAmount | currency:'USD':'symbol':'1.2-2' }}</p>
-                <strong>Neto: {{ liquidation.netAmount | currency:'USD':'symbol':'1.2-2' }}</strong>
-                <button class="btn btn--ghost btn--sm receipt-btn" type="button" [disabled]="liquidation.status !== 2" (click)="exportReceiptPdf(liquidation)">
-                  Descargar recibo
-                </button>
+                <div class="total-stack">
+                  <p class="total-line">Bruto: {{ liquidation.grossAmount | currency:'USD':'symbol':'1.2-2' }}</p>
+                  <strong class="total-line total-line--net">Neto: {{ liquidation.netAmount | currency:'USD':'symbol':'1.2-2' }}</strong>
+                </div>
+                <div class="receipt-actions">
+                  <button class="btn btn--ghost btn--sm receipt-btn" type="button" [disabled]="liquidation.status !== 2" (click)="exportReceiptPdf(liquidation)">
+                    Descargar recibo
+                  </button>
+                </div>
               </div>
             </div>
           </section>

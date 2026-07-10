@@ -114,4 +114,27 @@ describe('LiquidationsComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('select').length).toBe(0);
     expect(fixture.nativeElement.querySelectorAll('.search-select__trigger').length).toBeGreaterThanOrEqual(2);
   });
+
+  it('renders the receipt action separated from the net total in the detail panel', () => {
+    component.liquidations = [{
+      id: 'liq-1',
+      employeeId: 'employee-1',
+      periodLabel: '2026-07',
+      grossAmount: 1000,
+      netAmount: 900,
+      status: 2,
+      paymentMethod: 2,
+      paidAt: '2026-07-10T12:00:00Z',
+      deductionLines: [],
+      advanceLines: []
+    }];
+    component.expandedId = 'liq-1';
+    component.loading = false;
+    component.totalCount = 1;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.receipt-actions')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.total-line--net')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.total-line--net .receipt-btn')).toBeNull();
+  });
 });
