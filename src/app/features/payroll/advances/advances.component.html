@@ -1,0 +1,119 @@
+<div class="page">
+  <header class="hero">
+    <div class="hero__copy">
+      <div class="eyebrow">_ SUELDOS</div>
+      <span class="hero__kicker">Adelantos</span>
+      <h1>Adelantos de sueldo</h1>
+      <p>Registra adelantos, consulta su aplicacion en liquidaciones y cancela pendientes cuando corresponda.</p>
+    </div>
+  </header>
+
+  <section class="panel panel--create">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Filtros</span>
+        <span>Busqueda</span>
+      </div>
+      <button class="btn btn--primary btn--sm" type="button" *ngIf="canManageAdvances" (click)="openCreateForm()">Nuevo adelanto</button>
+    </div>
+
+    <form [formGroup]="filterForm" class="inline-form" (ngSubmit)="applyFilters()">
+      <label class="field field--grow">
+        <span class="field__label">Empleado</span>
+        <app-searchable-select formControlName="employeeId" [options]="employeeOptions" [allowClear]="true" clearLabel="Todos" clearValue="" placeholder="Todos" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+      </label>
+      <label class="field">
+        <span class="field__label">Estado</span>
+        <select class="control" formControlName="status">
+          <option value="">Todos</option>
+          <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+        </select>
+      </label>
+      <button class="btn btn--ghost" type="submit">Aplicar</button>
+    </form>
+  </section>
+
+  <section class="panel panel--create" *ngIf="showCreate && canManageAdvances">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Alta</span>
+        <span>Nuevo adelanto</span>
+      </div>
+    </div>
+    <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="advance-form">
+      <label class="field field--grow">
+        <span class="field__label">Empleado</span>
+        <app-searchable-select formControlName="employeeId" [options]="employeeOptions" placeholder="Seleccionar empleado" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+      </label>
+      <label class="field">
+        <span class="field__label">Monto</span>
+        <input class="control" type="number" min="0.01" step="0.01" formControlName="amount" />
+      </label>
+      <label class="field">
+        <span class="field__label">Fecha</span>
+        <input class="control" type="date" formControlName="date" />
+      </label>
+      <label class="field">
+        <span class="field__label">Medio de pago</span>
+        <select class="control" formControlName="paymentMethod">
+          <option *ngFor="let method of paymentMethods" [ngValue]="method.value">{{ method.label }}</option>
+        </select>
+      </label>
+      <label class="field field--grow" *ngIf="usesCash">
+        <span class="field__label">Caja abierta</span>
+        <app-searchable-select formControlName="cashDrawerId" [options]="cashDrawerOptions" placeholder="Seleccionar caja" searchPlaceholder="Buscar caja..."></app-searchable-select>
+      </label>
+      <label class="field field--grow">
+        <span class="field__label">Notas</span>
+        <input class="control" type="text" formControlName="notes" />
+      </label>
+      <div class="edit-form__actions">
+        <button class="btn btn--primary" type="submit" [disabled]="createForm.invalid || savingCreate">
+          {{ savingCreate ? 'Guardando...' : 'Crear adelanto' }}
+        </button>
+        <button class="btn btn--ghost" type="button" (click)="closeCreateForm()">Cancelar</button>
+      </div>
+    </form>
+    <div class="empty" *ngIf="usesCash && cashDrawerOptions.length === 0">No hay cajas abiertas disponibles.</div>
+  </section>
+
+  <section class="panel panel--list">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Listado</span>
+        <span>Adelantos</span>
+      </div>
+      <span class="panel__count">{{ advances.length }}</span>
+    </div>
+
+    <div class="empty" *ngIf="loading">Cargando adelantos...</div>
+    <div class="empty" *ngIf="!loading && advances.length === 0">No hay adelantos registrados.</div>
+
+    <div class="advance-list" *ngIf="!loading && advances.length > 0">
+      <article class="advance-item" *ngFor="let advance of advances; trackBy: trackById">
+        <div class="advance-row">
+          <div class="advance-row__info">
+            <div class="advance-row__primary">
+              <span class="advance-row__name">{{ employeeName(advance.employeeId) }}</span>
+              <span class="advance-row__plans">{{ advance.date | date:'shortDate' }} · {{ wasCash(advance) }}</span>
+            </div>
+            <span [class]="statusBadgeClass(advance.status)">{{ statusLabel(advance.status) }}</span>
+          </div>
+
+          <div class="advance-amount">{{ advance.amount | currency:'USD':'symbol':'1.2-2' }}</div>
+
+          <p class="advance-notes">{{ advance.notes || 'Sin notas' }}</p>
+
+          <div class="advance-row__actions">
+            <button class="btn btn--ghost btn--sm" type="button"
+                    *ngIf="canManageAdvances"
+                    [disabled]="advance.status !== 1 || cancellingId === advance.id"
+                    (click)="cancelAdvance(advance)">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
