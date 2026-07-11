@@ -1,6 +1,6 @@
 import { SalePaymentRequest, SalePaymentResponse, SaleTradeInRequest, SaleTradeInResponse } from './sale-payment.models';
 
-export type SaleSourceChannel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+export type SaleSourceChannel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
 export const SALE_SOURCE_CHANNELS: { value: SaleSourceChannel; label: string; icon: string; assetPath: string }[] = [
     { value: 1,  label: 'Referido',         icon: '👥', assetPath: 'ch-referido.svg'      },
@@ -13,6 +13,7 @@ export const SALE_SOURCE_CHANNELS: { value: SaleSourceChannel; label: string; ic
     { value: 8,  label: 'Mercado Libre',    icon: '🛒', assetPath: 'ch-mercadolibre.svg'  },
     { value: 9,  label: 'Google',           icon: '🔍', assetPath: 'ch-google.svg'        },
     { value: 10, label: 'Sin canal',        icon: '—',  assetPath: 'ch-phone-off.png'    },
+    { value: 11, label: 'No contesta',      icon: '🚫', assetPath: 'ch-no-contesta.svg'  },
 ];
 
 export function saleSourceChannelLabel(channel: SaleSourceChannel | null | undefined): string {

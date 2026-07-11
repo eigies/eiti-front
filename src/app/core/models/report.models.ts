@@ -223,5 +223,6 @@ export const SALE_CHANNELS: { value: number; label: string }[] = [
     { value: 7, label: 'Cliente anterior' },
     { value: 8, label: 'MercadoLibre' },
     { value: 9, label: 'Google' },
-    { value: 10, label: 'Sin canal' }
+    { value: 10, label: 'Sin canal' },
+    { value: 11, label: 'No contesta' }
 ];
