@@ -125,6 +125,10 @@
   flex: 1 1 auto;
 }
 
+.edit-field:has(app-searchable-select) {
+  min-width: 13rem;
+}
+
 .edit-field__label {
   color: var(--text-dim);
   font-size: .66rem;

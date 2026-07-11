@@ -141,6 +141,10 @@
   flex: 1 1 14rem;
 }
 
+.field:has(app-searchable-select) {
+  min-width: 13rem;
+}
+
 .field__label {
   color: var(--text-dim);
   font-size: .66rem;
