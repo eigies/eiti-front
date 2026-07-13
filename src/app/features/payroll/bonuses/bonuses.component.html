@@ -1,0 +1,93 @@
+<div class="page">
+  <header class="hero">
+    <div class="hero__copy">
+      <div class="eyebrow">_ SUELDOS</div>
+      <span class="hero__kicker">Bonificaciones</span>
+      <h1>Bonificaciones</h1>
+      <p>Asigná presentismo, bonificación por venta u otro concepto a un empleado. Se suman automáticamente al generar su próxima liquidación.</p>
+    </div>
+  </header>
+
+  <section class="panel panel--list">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Filtros</span>
+        <span>Bonificaciones registradas</span>
+      </div>
+      <button class="btn btn--primary btn--sm" type="button" *ngIf="canManageBonuses && !showCreate" (click)="openCreateForm()">Nueva bonificación</button>
+    </div>
+
+    <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="inline-form">
+      <label class="field field--grow">
+        <span class="field__label">Empleado</span>
+        <app-searchable-select formControlName="employeeId" [options]="employeeOptions" placeholder="Todos" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+      </label>
+      <label class="field">
+        <span class="field__label">Estado</span>
+        <select class="control" formControlName="status">
+          <option value="">Todos</option>
+          <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+      <button class="btn btn--ghost" type="submit">Filtrar</button>
+    </form>
+  </section>
+
+  <section class="panel panel--create" *ngIf="showCreate && canManageBonuses">
+    <div class="panel__header panel__header--create">
+      <div>
+        <span class="panel__eyebrow">Nueva</span>
+        <span>Cargar bonificación</span>
+      </div>
+      <button class="btn btn--ghost btn--sm" type="button" (click)="closeCreateForm()">Cerrar</button>
+    </div>
+
+    <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="advance-form">
+      <label class="field field--grow">
+        <span class="field__label">Empleado</span>
+        <app-searchable-select formControlName="employeeId" [options]="employeeOptions" placeholder="Seleccionar empleado" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+      </label>
+      <label class="field field--grow">
+        <span class="field__label">Concepto</span>
+        <app-searchable-select formControlName="conceptId" [options]="conceptOptions" placeholder="Seleccionar concepto" searchPlaceholder="Buscar concepto..."></app-searchable-select>
+      </label>
+      <label class="field">
+        <span class="field__label">Tipo</span>
+        <select class="control" formControlName="amountType">
+          <option *ngFor="let type of amountTypes" [value]="type.value">{{ type.label }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">{{ isPercentage ? 'Porcentaje (%)' : 'Monto ($)' }}</span>
+        <input class="control" type="number" step="0.01" min="0" [max]="isPercentage ? 100 : null" formControlName="value" />
+      </label>
+      <p class="field-hint" *ngIf="percentagePreview">{{ percentagePreview }}</p>
+      <label class="field field--grow">
+        <span class="field__label">Notas</span>
+        <input class="control" type="text" maxlength="500" formControlName="notes" />
+      </label>
+      <button class="btn btn--primary" type="submit" [disabled]="createForm.invalid || savingCreate">
+        {{ savingCreate ? 'Guardando...' : 'Crear bonificación' }}
+      </button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="empty" *ngIf="!loading && bonuses.length === 0">No hay bonificaciones registradas.</div>
+
+    <div class="advance-list" *ngIf="bonuses.length > 0">
+      <article class="advance-row" *ngFor="let bonus of bonuses; trackBy: trackById">
+        <div class="advance-row__info">
+          <div class="advance-row__primary">
+            <span class="advance-row__name">{{ employeeName(bonus.employeeId) }} · {{ conceptName(bonus.conceptId) }}</span>
+            <span class="advance-amount">{{ amountLabel(bonus) }}</span>
+          </div>
+          <span [class]="statusBadgeClass(bonus.status)">{{ statusLabel(bonus.status) }}</span>
+        </div>
+        <div class="advance-row__actions">
+          <button class="btn btn--ghost btn--sm" type="button" *ngIf="canManageBonuses" [disabled]="bonus.status !== 1 || cancellingId === bonus.id" (click)="cancelBonus(bonus)">Cancelar</button>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
