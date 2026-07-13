@@ -458,7 +458,7 @@
 }
 
 .sidebar__submenu.is-open {
-  max-height: 240px;
+  max-height: 480px;
   padding-top: 0.1rem;
 }
 

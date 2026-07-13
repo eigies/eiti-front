@@ -63,3 +63,4 @@ skills-lock.json
 
 # Graphify (grafo de conocimiento del repo, regenerable via `graphify --update .`)
 graphify-out/
+tools/
