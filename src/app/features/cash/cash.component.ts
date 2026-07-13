@@ -1283,7 +1283,7 @@ export class CashComponent implements OnInit {
     ngOnInit(): void {
         this.refreshOnboarding();
         this.loadBranches();
-        this.bankService.listBanks().subscribe({
+        this.bankService.listBanks(false, 'all').subscribe({
             next: banks => {
                 this.bankNamesById = new Map(banks.map((b: BankResponse) => [b.id, b.name]));
             }

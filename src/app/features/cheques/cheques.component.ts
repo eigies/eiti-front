@@ -94,6 +94,7 @@ export class ChequesComponent implements OnInit {
     this.filterForm = this.fb.group({
       estado: [null],
       bankId: [null],
+      numero: [''],
       fechaVencFrom: [''],
       fechaVencTo: ['']
     });
@@ -105,7 +106,7 @@ export class ChequesComponent implements OnInit {
   }
 
   loadBanks(): void {
-    this.bankService.listBanks(false).subscribe({
+    this.bankService.listBanks(false, 'cheque').subscribe({
       next: banks => this.banks = banks,
       error: () => {}
     });
@@ -117,6 +118,7 @@ export class ChequesComponent implements OnInit {
     const filters: ChequeFilters = {
       estado: f.estado ? Number(f.estado) : null,
       bankId: f.bankId ? Number(f.bankId) : null,
+      numero: f.numero?.trim() || null,
       fechaVencFrom: f.fechaVencFrom || null,
       fechaVencTo: f.fechaVencTo || null
     };

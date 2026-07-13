@@ -117,13 +117,13 @@
           <span class="cheque-block__title">Cheque recibido del cliente</span>
           <div class="cheque-grid">
             <div class="field">
-              <label class="field__label">Banco</label>
+              <label class="field__label">Banco emisor</label>
               <app-searchable-select
                 [(ngModel)]="newCheque.bankId"
                 [ngModelOptions]="{ standalone: true }"
                 [options]="chequeBankOptions"
                 placeholder="Banco del cheque"
-                searchPlaceholder="Buscar banco...">
+                searchPlaceholder="Buscar banco emisor...">
               </app-searchable-select>
             </div>
             <div class="field">

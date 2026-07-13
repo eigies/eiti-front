@@ -44,6 +44,7 @@ export interface ChequeFilters {
   bankId?: number | null;
   fechaVencFrom?: string | null;
   fechaVencTo?: string | null;
+  numero?: string | null;
 }
 
 // Entregado se alcanza solo al endosar el cheque a un proveedor (pago de compra), no desde el cambio manual de estado.

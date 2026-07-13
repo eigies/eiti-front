@@ -257,7 +257,7 @@ export class SalesPageComponent implements OnInit {
         this.loadDrivers();
         this.loadVehicles();
         this.loadWhatsAppConfig();
-        this.bankService.listBanks(true).subscribe({ next: banks => this.banks = banks, error: () => {} });
+        this.bankService.listBanks(true, 'all').subscribe({ next: banks => this.banks = banks, error: () => {} });
     }
 
     get selectedProduct(): ProductResponse | null {

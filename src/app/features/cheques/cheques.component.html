@@ -37,7 +37,7 @@
     <div class="panel__header panel__header--filters">
       <div>
         <span>Filtros</span>
-        <p>Refina por estado, banco o rango de vencimiento.</p>
+        <p>Refina por estado, banco emisor, numero o rango de vencimiento.</p>
       </div>
       <span class="panel__counter">{{ activeFilterCount }} activos</span>
     </div>
@@ -55,7 +55,7 @@
         </app-searchable-select>
       </label>
       <label class="field">
-        <span>Banco</span>
+        <span>Banco emisor</span>
         <app-searchable-select
           formControlName="bankId"
           [options]="bankOptions"
@@ -63,8 +63,12 @@
           clearLabel="Todos"
           [clearValue]="null"
           placeholder="Todos"
-          searchPlaceholder="Buscar banco...">
+          searchPlaceholder="Buscar banco emisor...">
         </app-searchable-select>
+      </label>
+      <label class="field">
+        <span>Numero de cheque</span>
+        <input class="control" type="text" formControlName="numero" placeholder="Buscar numero" />
       </label>
       <label class="field">
         <span>Venc. desde</span>
@@ -198,7 +202,7 @@
           </div>
           <div class="cheque-detail__grid">
             <div class="detail-field">
-              <span class="detail-field__label">Banco</span>
+              <span class="detail-field__label">Banco emisor</span>
               <span>{{ c.bankName }}</span>
             </div>
             <div class="detail-field">

@@ -25,4 +25,16 @@ describe('SalePaymentInlineComponent layout', () => {
 
         expect(getComputedStyle(block).containerType).toBe('inline-size');
     });
+
+    it('filters bank options by payment capability', () => {
+        fixture.componentInstance.banks = [
+            { id: 1, name: 'Card Bank', active: true, useForCard: true, useForTransfer: false, useForCheque: false, plans: [{ id: 1, cuotas: 1, surchargePct: 0, active: true }] },
+            { id: 2, name: 'Transfer Bank', active: true, useForCard: false, useForTransfer: true, useForCheque: false, plans: [] },
+            { id: 3, name: 'Cheque Bank', active: true, useForCard: false, useForTransfer: false, useForCheque: true, plans: [] }
+        ];
+
+        expect(fixture.componentInstance.activeBanksWithPlansOptions.map(o => o.label)).toEqual(['Card Bank']);
+        expect(fixture.componentInstance.activeBanksOptions.map(o => o.label)).toEqual(['Transfer Bank']);
+        expect(fixture.componentInstance.bankOptions.map(o => o.label)).toEqual(['Cheque Bank']);
+    });
 });
