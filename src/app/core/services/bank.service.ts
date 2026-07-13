@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { BankResponse } from '../models/bank.models';
+import { BankResponse, BankUpsertRequest, BankUsage } from '../models/bank.models';
 
 @Injectable({ providedIn: 'root' })
 export class BankService {
@@ -10,15 +10,20 @@ export class BankService {
 
   constructor(private readonly http: HttpClient) {}
 
-  listBanks(activeOnly = false): Observable<BankResponse[]> {
-    return this.http.get<BankResponse[]>(this.base, { params: { activeOnly: String(activeOnly) } });
+  listBanks(activeOnly = false, usage: BankUsage = 'all'): Observable<BankResponse[]> {
+    return this.http.get<BankResponse[]>(this.base, {
+      params: {
+        activeOnly: String(activeOnly),
+        usage
+      }
+    });
   }
 
-  createBank(name: string): Observable<BankResponse> {
-    return this.http.post<BankResponse>(this.base, { name });
+  createBank(data: BankUpsertRequest): Observable<BankResponse> {
+    return this.http.post<BankResponse>(this.base, data);
   }
 
-  updateBank(id: number, data: { name: string; active: boolean }): Observable<BankResponse> {
+  updateBank(id: number, data: BankUpsertRequest & { active: boolean }): Observable<BankResponse> {
     return this.http.put<BankResponse>(`${this.base}/${id}`, data);
   }
 

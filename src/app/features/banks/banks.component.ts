@@ -35,8 +35,19 @@ export class BanksComponent implements OnInit {
     private readonly bankService: BankService,
     private readonly toast: ToastService
   ) {
-    this.createForm = this.fb.group({ name: ['', Validators.required] });
-    this.editForm = this.fb.group({ name: ['', Validators.required], active: [true] });
+    this.createForm = this.fb.group({
+      name: ['', Validators.required],
+      useForCard: [true],
+      useForTransfer: [true],
+      useForCheque: [true]
+    });
+    this.editForm = this.fb.group({
+      name: ['', Validators.required],
+      active: [true],
+      useForCard: [true],
+      useForTransfer: [true],
+      useForCheque: [true]
+    });
   }
 
   ngOnInit(): void { this.loadBanks(); }
@@ -67,7 +78,13 @@ export class BanksComponent implements OnInit {
 
   startEdit(view: BankView): void {
     this.editingBank = view.bank;
-    this.editForm.setValue({ name: view.bank.name, active: view.bank.active });
+    this.editForm.setValue({
+      name: view.bank.name,
+      active: view.bank.active,
+      useForCard: view.bank.useForCard,
+      useForTransfer: view.bank.useForTransfer,
+      useForCheque: view.bank.useForCheque
+    });
     view.expanded = true;
     if (!this.planForms.has(view.bank.id)) {
       this.initPlanForm(view.bank);
@@ -77,7 +94,13 @@ export class BanksComponent implements OnInit {
   cancelEdit(): void { this.editingBank = null; }
 
   toggleActive(view: BankView): void {
-    this.bankService.updateBank(view.bank.id, { name: view.bank.name, active: !view.bank.active }).subscribe({
+    this.bankService.updateBank(view.bank.id, {
+      name: view.bank.name,
+      active: !view.bank.active,
+      useForCard: view.bank.useForCard,
+      useForTransfer: view.bank.useForTransfer,
+      useForCheque: view.bank.useForCheque
+    }).subscribe({
       next: () => {
         view.bank.active = !view.bank.active;
         this.toast.success(view.bank.active ? 'Banco activado' : 'Banco desactivado');
@@ -89,9 +112,20 @@ export class BanksComponent implements OnInit {
   submitCreate(): void {
     if (this.createForm.invalid || this.savingCreate) return;
     this.savingCreate = true;
-    this.bankService.createBank(this.createForm.value.name).subscribe({
+    const value = this.createForm.value;
+    this.bankService.createBank({
+      name: value.name,
+      useForCard: !!value.useForCard,
+      useForTransfer: !!value.useForTransfer,
+      useForCheque: !!value.useForCheque
+    }).subscribe({
       next: () => {
-        this.createForm.reset();
+        this.createForm.reset({
+          name: '',
+          useForCard: true,
+          useForTransfer: true,
+          useForCheque: true
+        });
         this.savingCreate = false;
         this.loadBanks();
         this.toast.success('Banco creado');
@@ -103,7 +137,14 @@ export class BanksComponent implements OnInit {
   submitEdit(): void {
     if (!this.editingBank || this.editForm.invalid || this.savingEdit) return;
     this.savingEdit = true;
-    this.bankService.updateBank(this.editingBank.id, this.editForm.value).subscribe({
+    const value = this.editForm.value;
+    this.bankService.updateBank(this.editingBank.id, {
+      name: value.name,
+      active: !!value.active,
+      useForCard: !!value.useForCard,
+      useForTransfer: !!value.useForTransfer,
+      useForCheque: !!value.useForCheque
+    }).subscribe({
       next: () => {
         this.editingBank = null;
         this.savingEdit = false;
