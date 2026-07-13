@@ -154,6 +154,20 @@ export const routes: Routes = [
             import('./features/payroll/liquidations/liquidations.component').then(m => m.LiquidationsComponent)
     },
     {
+        path: 'payroll/bonus-concepts',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.payrollManage },
+        loadComponent: () =>
+            import('./features/payroll/bonus-concepts/bonus-concepts.component').then(m => m.BonusConceptsComponent)
+    },
+    {
+        path: 'payroll/bonuses',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.payrollManage },
+        loadComponent: () =>
+            import('./features/payroll/bonuses/bonuses.component').then(m => m.BonusesComponent)
+    },
+    {
         path: 'cheques',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.chequesManage },
