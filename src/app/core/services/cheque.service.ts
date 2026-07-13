@@ -16,6 +16,7 @@ export class ChequeService {
     if (filters.bankId != null) params = params.set('bankId', String(filters.bankId));
     if (filters.fechaVencFrom) params = params.set('fechaVencFrom', filters.fechaVencFrom);
     if (filters.fechaVencTo) params = params.set('fechaVencTo', filters.fechaVencTo);
+    if (filters.numero) params = params.set('numero', filters.numero);
     return this.http.get<ChequeListItem[]>(this.base, { params });
   }
 

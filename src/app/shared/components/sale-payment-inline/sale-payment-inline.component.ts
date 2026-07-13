@@ -68,10 +68,12 @@ export class SalePaymentInlineComponent implements OnChanges {
     }
 
     get bankOptions(): SearchableSelectOption[] {
-        return this.banks.map(bank => ({
-            value: bank.id,
-            label: bank.name
-        }));
+        return this.banks
+            .filter(bank => bank.active && bank.useForCheque)
+            .map(bank => ({
+                value: bank.id,
+                label: bank.name
+            }));
     }
 
     get tradeInProductOptions(): SearchableSelectOption[] {
@@ -309,11 +311,11 @@ export class SalePaymentInlineComponent implements OnChanges {
     }
 
     get activeBanks(): BankResponse[] {
-        return this.banks.filter(b => b.active);
+        return this.banks.filter(b => b.active && b.useForTransfer);
     }
 
     get activeBanksWithPlans(): BankResponse[] {
-        return this.banks.filter(b => b.active && b.plans.some(p => p.active));
+        return this.banks.filter(b => b.active && b.useForCard && b.plans.some(p => p.active));
     }
 
     activePlansForBank(bankId: number | null | undefined): BankInstallmentPlanResponse[] {

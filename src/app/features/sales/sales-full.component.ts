@@ -99,7 +99,7 @@ export class SalesFullComponent implements OnInit {
         this.whatsAppEnabled = Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled);
       }
     });
-    this.bankService.listBanks(true).subscribe({ next: banks => this.banks = banks, error: () => {} });
+    this.bankService.listBanks(true, 'all').subscribe({ next: banks => this.banks = banks, error: () => {} });
   }
 
   get requiresDelivery(): boolean { return Boolean(this.saleForm.get('hasDelivery')?.value); }

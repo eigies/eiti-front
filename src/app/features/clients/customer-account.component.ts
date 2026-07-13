@@ -91,7 +91,7 @@ export class CustomerAccountComponent implements OnInit {
   ngOnInit(): void {
     this.newDate = this.todayIso();
     this.customerId = this.route.snapshot.paramMap.get('customerId') ?? '';
-    this.bankService.listBanks(true).subscribe({
+    this.bankService.listBanks(true, 'all').subscribe({
       next: banks => { this.banks = banks; this.cdr.markForCheck(); },
       error: () => {} // non-blocking — el cobro funciona sin datos de banco
     });
@@ -132,7 +132,7 @@ export class CustomerAccountComponent implements OnInit {
 
   // ── Tarjeta ────────────────────────────────────────────────
   get activeBanksWithPlans(): BankResponse[] {
-    return this.banks.filter(b => b.active && b.plans.some(p => p.active));
+    return this.banks.filter(b => b.active && b.useForCard && b.plans.some(p => p.active));
   }
 
   get bankOptions(): SearchableSelectOption[] {
@@ -200,7 +200,9 @@ export class CustomerAccountComponent implements OnInit {
   }
 
   get chequeBankOptions(): SearchableSelectOption[] {
-    return this.banks.filter(b => b.active).map(b => ({ value: b.id, label: b.name }));
+    return this.banks
+      .filter(b => b.active && b.useForCheque)
+      .map(b => ({ value: b.id, label: b.name }));
   }
 
   get isChequeComplete(): boolean {
