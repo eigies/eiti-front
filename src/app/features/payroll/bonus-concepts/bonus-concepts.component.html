@@ -1,0 +1,85 @@
+<div class="page">
+  <header class="hero">
+    <div class="hero__copy">
+      <div class="eyebrow">_ SUELDOS</div>
+      <span class="hero__kicker">Conceptos de bonificación</span>
+      <h1>Conceptos de bonificación</h1>
+      <p>Gestiona los tipos de bonificación disponibles para asignar a los empleados (presentismo, bonificación por venta, etc.).</p>
+    </div>
+  </header>
+
+  <section class="panel panel--create" *ngIf="canManage">
+    <div class="panel__header panel__header--create">
+      <div>
+        <span class="panel__eyebrow">Etapa 1</span>
+        <span>Nuevo concepto</span>
+      </div>
+    </div>
+    <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="inline-form">
+      <label class="field field--grow">
+        <span class="field__label">Nombre</span>
+        <input class="control" type="text" maxlength="150" placeholder="Presentismo" formControlName="name" />
+      </label>
+      <button class="btn btn--primary" type="submit" [disabled]="createForm.invalid || savingCreate">
+        {{ savingCreate ? 'Guardando...' : 'Crear concepto' }}
+      </button>
+    </form>
+  </section>
+
+  <section class="panel panel--list">
+    <div class="panel__header">
+      <div>
+        <span class="panel__eyebrow">Etapa 2</span>
+        <span>Conceptos</span>
+      </div>
+      <span class="panel__count">{{ concepts.length }}</span>
+    </div>
+
+    <div class="empty" *ngIf="concepts.length === 0">No hay conceptos registrados.</div>
+
+    <div class="concept-list" *ngIf="concepts.length > 0">
+      <article class="concept-item" *ngFor="let view of concepts; trackBy: trackById" [class.concept-item--expanded]="view.expanded">
+        <div class="concept-row" (click)="toggleExpand(view)">
+          <div class="concept-row__info">
+            <div class="concept-row__primary">
+              <span class="concept-row__name">{{ view.concept.name }}</span>
+            </div>
+            <span [class]="view.concept.isActive ? 'badge badge--in' : 'badge badge--out'"
+                  [class.badge--toggle]="canManage"
+                  title="Clic para cambiar estado"
+                  (click)="$event.stopPropagation(); toggleActive(view)">
+              {{ view.concept.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+
+          <div class="concept-row__actions" (click)="$event.stopPropagation()">
+            <button class="btn btn--ghost btn--sm" type="button" *ngIf="canManage" (click)="startEdit(view)">Editar</button>
+            <svg class="chevron" [class.chevron--open]="view.expanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="concept-expand" *ngIf="view.expanded">
+          <section class="expand-section concept-edit" *ngIf="editingConcept?.id === view.concept.id">
+            <div class="expand-section__head">
+              <span class="expand-section__eyebrow">Concepto</span>
+              <strong>Editar nombre</strong>
+            </div>
+
+            <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="edit-form">
+              <label class="edit-field edit-field--grow">
+                <span class="edit-field__label">Nombre</span>
+                <input class="control" type="text" maxlength="150" formControlName="name" />
+              </label>
+              <div class="edit-form__actions">
+                <button class="btn btn--primary" type="submit" [disabled]="editForm.invalid || savingEdit">Guardar</button>
+                <button class="btn btn--ghost" type="button" (click)="cancelEdit()">Cancelar</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
