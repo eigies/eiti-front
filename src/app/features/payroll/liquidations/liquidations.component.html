@@ -118,6 +118,12 @@
                 <strong>Total descuentos: {{ lineTotal(liquidation.deductionLines) | currency:'ARS':'symbol':'1.2-2' }}</strong>
               </div>
               <div>
+                <span class="expand-section__eyebrow">Bonificaciones</span>
+                <p *ngIf="liquidation.bonusLines.length === 0">Sin bonificaciones.</p>
+                <p *ngFor="let line of liquidation.bonusLines">{{ line.label }} · {{ line.amount | currency:'ARS':'symbol':'1.2-2' }}</p>
+                <strong>Total bonificaciones: {{ lineTotal(liquidation.bonusLines) | currency:'ARS':'symbol':'1.2-2' }}</strong>
+              </div>
+              <div>
                 <span class="expand-section__eyebrow">Adelantos</span>
                 <p *ngIf="liquidation.advanceLines.length === 0">Sin adelantos.</p>
                 <p *ngFor="let line of liquidation.advanceLines">{{ line.label }} · {{ line.amount | currency:'ARS':'symbol':'1.2-2' }}</p>

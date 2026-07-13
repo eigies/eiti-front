@@ -467,6 +467,7 @@ export class LiquidationsComponent implements OnInit {
       drawHeader();
       drawInfo();
       drawTable('Descuentos', liquidation.deductionLines);
+      drawTable('Bonificaciones', liquidation.bonusLines);
       drawTable('Adelantos', liquidation.advanceLines);
 
       y = this.pdfLayout.ensurePageSpace(doc, y, 24, pageHeight, () => {
