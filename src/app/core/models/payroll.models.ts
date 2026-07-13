@@ -39,6 +39,38 @@ export interface CreatePayrollAdvanceRequest {
   cashSessionId: string | null;
 }
 
+export interface BonusConceptResponse {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+export interface CreateBonusConceptRequest { name: string; }
+export interface UpdateBonusConceptRequest { name: string; }
+
+export type PayrollBonusAmountType = 1 | 2; // 1 FixedAmount, 2 Percentage
+export const PAYROLL_BONUS_AMOUNT_TYPES: { value: PayrollBonusAmountType; label: string }[] = [
+  { value: 1, label: 'Monto fijo' },
+  { value: 2, label: 'Porcentaje del sueldo base' },
+];
+
+export interface PayrollBonusResponse {
+  id: string;
+  employeeId: string;
+  conceptId: string;
+  amountType: PayrollBonusAmountType;
+  value: number;
+  notes: string | null;
+  status: number; // 1 Pending, 2 Applied, 3 Cancelled
+  payrollLiquidationId: string | null;
+}
+export interface CreatePayrollBonusRequest {
+  employeeId: string;
+  conceptId: string;
+  amountType: PayrollBonusAmountType;
+  value: number;
+  notes: string | null;
+}
+
 export interface PayrollLiquidationLineResponse { label: string; amount: number; }
 export interface PayrollLiquidationResponse {
   id: string;
@@ -51,6 +83,7 @@ export interface PayrollLiquidationResponse {
   paidAt: string | null;
   deductionLines: PayrollLiquidationLineResponse[];
   advanceLines: PayrollLiquidationLineResponse[];
+  bonusLines: PayrollLiquidationLineResponse[];
 }
 export interface ListLiquidationsResponse {
   items: PayrollLiquidationResponse[];
