@@ -1,11 +1,13 @@
 // src/app/features/quotes/quotes-list/quotes-list.component.ts
-import { Component, OnInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { QuoteService } from '../../../core/services/quote.service';
 import { QuoteListItem, QuoteStatusCode } from '../../../core/models/quote.models';
 import { ToastService } from '../../../shared/services/toast.service';
 import { extractApiError } from '../../../shared/utils/api-error.util';
+import { AuthService } from '../../../core/services/auth.service';
+import { PermissionCodes } from '../../../core/models/permission.models';
 
 @Component({
     selector: 'app-quotes-list',
@@ -25,7 +27,9 @@ export class QuotesListComponent implements OnInit {
 
     constructor(
         private readonly quoteService: QuoteService,
-        private readonly toast: ToastService
+        private readonly toast: ToastService,
+        private readonly auth: AuthService,
+        private readonly cdr: ChangeDetectorRef
     ) {}
 
     ngOnInit(): void {
@@ -38,10 +42,12 @@ export class QuotesListComponent implements OnInit {
             next: quotes => {
                 this.quotes = quotes;
                 this.loading = false;
+                this.cdr.markForCheck();
             },
             error: err => {
                 this.loading = false;
                 this.toast.error(extractApiError(err, 'No se pudieron cargar los presupuestos'));
+                this.cdr.markForCheck();
             }
         });
     }
@@ -66,7 +72,7 @@ export class QuotesListComponent implements OnInit {
     }
 
     canConvert(quote: QuoteListItem): boolean {
-        return quote.idQuoteStatus === 1 && !quote.isExpired;
+        return quote.idQuoteStatus === 1 && !quote.isExpired && this.auth.hasPermission(PermissionCodes.quotesConvert);
     }
 
     cancelQuote(quote: QuoteListItem): void {
@@ -74,8 +80,12 @@ export class QuotesListComponent implements OnInit {
             next: () => {
                 this.toast.success('Presupuesto cancelado');
                 this.reload();
+                this.cdr.markForCheck();
             },
-            error: err => this.toast.error(extractApiError(err, 'No se pudo cancelar el presupuesto'))
+            error: err => {
+                this.toast.error(extractApiError(err, 'No se pudo cancelar el presupuesto'));
+                this.cdr.markForCheck();
+            }
         });
     }
 }
