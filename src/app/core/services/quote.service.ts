@@ -7,6 +7,7 @@ import {
     QuoteListItem,
     QuoteDetailResponse,
     CreateQuoteRequest,
+    CreateQuoteResponse,
     ConvertQuoteRequest,
     ConvertQuoteResponse,
     ListQuotesFilters
@@ -31,8 +32,8 @@ export class QuoteService {
         return this.http.get<QuoteDetailResponse>(`${this.base}/${id}`);
     }
 
-    createQuote(request: CreateQuoteRequest): Observable<QuoteDetailResponse> {
-        return this.http.post<QuoteDetailResponse>(this.base, request);
+    createQuote(request: CreateQuoteRequest): Observable<CreateQuoteResponse> {
+        return this.http.post<CreateQuoteResponse>(this.base, request);
     }
 
     cancelQuote(id: string): Observable<void> {

@@ -78,6 +78,23 @@ export interface ConvertQuoteRequest {
 
 export type ConvertQuoteResponse = CreateCcSaleResponse;
 
+export interface CreateQuoteResponse {
+    id: string;
+    code?: string | null;
+    branchId: string;
+    customerId?: string | null;
+    customerFullName?: string | null;
+    prospectName?: string | null;
+    prospectContact?: string | null;
+    generalDiscountPercent: number;
+    totalAmount: number;
+    expiresAt: string;
+    idQuoteStatus: QuoteStatusCode;
+    status: string;
+    createdAt: string;
+    details: QuoteDetailItem[];
+}
+
 export interface ListQuotesFilters {
     idQuoteStatus?: QuoteStatusCode;
     dateFrom?: string;
