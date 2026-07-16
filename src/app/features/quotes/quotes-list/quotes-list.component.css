@@ -1,0 +1,9 @@
+/* src/app/features/quotes/quotes-list/quotes-list.component.css */
+.quotes-list__table { width: 100%; border-collapse: collapse; }
+.quotes-list__table th, .quotes-list__table td { padding: 0.5rem; border-bottom: 1px solid var(--border-2); text-align: left; }
+.quotes-list__actions { display: flex; gap: 0.5rem; }
+.chip { padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.8rem; }
+.chip--quote-pending { background: var(--bg-panel); color: var(--text); }
+.chip--quote-expired { background: #5a1f1f; color: #ffb4b4; }
+.chip--quote-converted { background: #1f4d2b; color: #b8f0c4; }
+.chip--quote-cancelled { background: var(--bg-panel); color: var(--text-dim); }

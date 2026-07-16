@@ -1,0 +1,40 @@
+<!-- src/app/features/quotes/quotes-list/quotes-list.component.html -->
+<div class="quotes-list">
+  <div class="quotes-list__filters">
+    <select (change)="onStatusFilterChange($any($event.target).value)">
+      <option value="">Todos</option>
+      <option value="1">Pendiente</option>
+      <option value="2">Convertido</option>
+      <option value="3">Cancelado</option>
+    </select>
+  </div>
+
+  <p *ngIf="loading">Cargando presupuestos...</p>
+
+  <table class="quotes-list__table" *ngIf="!loading">
+    <thead>
+      <tr>
+        <th>Codigo</th>
+        <th>Cliente</th>
+        <th>Total</th>
+        <th>Vence</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let quote of quotes">
+        <td>{{ quote.code }}</td>
+        <td>{{ quote.customerFullName ?? quote.prospectName }}</td>
+        <td>{{ quote.totalAmount | number: '1.2-2' }}</td>
+        <td>{{ quote.expiresAt | date: 'dd/MM/yyyy' }}</td>
+        <td><span class="chip" [ngClass]="statusClass(quote)">{{ statusLabel(quote) }}</span></td>
+        <td class="quotes-list__actions">
+          <button type="button" (click)="openDetail.emit(quote.id)">Ver</button>
+          <button type="button" *ngIf="canConvert(quote)" (click)="convertRequested.emit(quote)">Convertir</button>
+          <button type="button" *ngIf="quote.idQuoteStatus === 1" (click)="cancelQuote(quote)">Cancelar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
