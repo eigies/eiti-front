@@ -108,6 +108,14 @@ export class QuoteFormComponent implements OnInit {
         this.pickerRows = [];
     }
 
+    onCustomerModeChange(): void {
+        this.selectedCustomer = null;
+        this.prospectName = '';
+        this.prospectContact = '';
+        this.customerQuery = '';
+        this.searchResults = [];
+    }
+
     searchCustomers(): void {
         const query = this.customerQuery.trim();
         if (!query) { this.toast.error('Ingresa un termino de busqueda'); return; }

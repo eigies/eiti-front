@@ -7,8 +7,8 @@
   </label>
 
   <div class="quote-form__customer-toggle">
-    <label><input type="radio" name="customerMode" value="existing" [(ngModel)]="customerMode"> Cliente existente</label>
-    <label><input type="radio" name="customerMode" value="prospect" [(ngModel)]="customerMode"> Cliente sin cargar</label>
+    <label><input type="radio" name="customerMode" value="existing" [(ngModel)]="customerMode" (ngModelChange)="onCustomerModeChange()"> Cliente existente</label>
+    <label><input type="radio" name="customerMode" value="prospect" [(ngModel)]="customerMode" (ngModelChange)="onCustomerModeChange()"> Cliente sin cargar</label>
   </div>
 
   <ng-container *ngIf="customerMode === 'existing'">
