@@ -1,0 +1,27 @@
+<!-- src/app/features/quotes/quote-detail-modal/quote-detail-modal.component.html -->
+<div class="modal-backdrop" (click)="close.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <p *ngIf="loading">Cargando...</p>
+    <ng-container *ngIf="quote as q">
+      <h3>Presupuesto {{ q.code }}</h3>
+      <p>Cliente: {{ q.customerFullName ?? q.prospectName }}</p>
+      <p>Valido hasta: {{ q.expiresAt | date: 'dd/MM/yyyy' }}</p>
+      <table>
+        <tbody>
+          <tr *ngFor="let detail of q.details">
+            <td>{{ detail.productBrand }} {{ detail.productName }}</td>
+            <td>{{ detail.quantity }}</td>
+            <td>{{ detail.unitPrice | number: '1.2-2' }}</td>
+            <td>{{ detail.lineTotal | number: '1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Total: {{ q.totalAmount | number: '1.2-2' }}</p>
+      <div class="modal__actions">
+        <button type="button" (click)="downloadPdf()">Descargar PDF</button>
+        <button type="button" *ngIf="canConvert" (click)="requestConvert()">Convertir a venta</button>
+        <button type="button" (click)="close.emit()">Cerrar</button>
+      </div>
+    </ng-container>
+  </div>
+</div>

@@ -1,0 +1,4 @@
+/* src/app/features/quotes/quote-detail-modal/quote-detail-modal.component.css */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--bg-panel); padding: 1.5rem; border-radius: 8px; max-width: 640px; width: 100%; }
+.modal__actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
