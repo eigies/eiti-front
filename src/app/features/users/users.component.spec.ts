@@ -208,14 +208,18 @@ describe('UsersComponent', () => {
       email: selected.email,
       password: '',
       profileId: 'profile-a',
+      isEmployee: true,
       branchIds: ['branch-a', 'branch-b']
     });
 
     component.saveUserDraft(draft);
 
     expect(userService.updateProfile).toHaveBeenCalledOnceWith(selected.id, {
+      firstName: draft.firstName,
+      lastName: draft.lastName,
       profileId: 'profile-a',
-      employeeId: 'employee-7',
+      employeeId: null,
+      isEmployee: true,
       branchIds: ['branch-a', 'branch-b']
     });
     expect(component.users.find(item => item.id === selected.id)).toEqual(updated);
@@ -741,9 +745,12 @@ describe('UsersComponent', () => {
   function accessDraft(overrides: Partial<UserAccessDraft> = {}): UserAccessDraft {
     return {
       username: 'nuevo.usuario',
+      firstName: 'Nuevo',
+      lastName: 'Usuario',
       email: 'nuevo@empresa.test',
       password: 'secreto',
       profileId: 'profile-b',
+      isEmployee: false,
       branchIds: ['branch-b'],
       ...overrides
     };
@@ -762,6 +769,9 @@ describe('UsersComponent', () => {
     return {
       id: 'user',
       username: 'usuario',
+      firstName: 'Usuario',
+      lastName: 'Demo',
+      fullName: 'Usuario Demo',
       email: 'usuario@empresa.test',
       isActive: true,
       employeeId: null,

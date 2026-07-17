@@ -107,9 +107,12 @@ describe('UserAccessPanelComponent', () => {
     component.saveRequested.subscribe(save);
     component.form.setValue({
       username: '  operador.norte  ',
+      firstName: '  Operador  ',
+      lastName: '  Norte  ',
       email: '  norte@empresa.test  ',
       password: 'clave segura',
-      profileId: 'operations'
+      profileId: 'operations',
+      isEmployee: false
     });
     component.toggleBranch('center');
     component.toggleBranch('north');
@@ -118,9 +121,12 @@ describe('UserAccessPanelComponent', () => {
 
     expect(save).toHaveBeenCalledOnceWith({
       username: 'operador.norte',
+      firstName: 'Operador',
+      lastName: 'Norte',
       email: 'norte@empresa.test',
       password: 'clave segura',
       profileId: 'operations',
+      isEmployee: false,
       branchIds: ['north', 'center']
     });
   });
@@ -131,9 +137,12 @@ describe('UserAccessPanelComponent', () => {
     component.saveRequested.subscribe(save);
     component.form.setValue({
       username: 'operador',
+      firstName: 'Operador',
+      lastName: 'General',
       email: 'operador@empresa.test',
       password: 'secreto',
-      profileId: 'operations'
+      profileId: 'operations',
+      isEmployee: false
     });
 
     expect(component.allBranchesSelected).toBeTrue();
@@ -343,9 +352,12 @@ describe('UserAccessPanelComponent', () => {
     render('create');
     component.form.setValue({
       username: 'operador',
+      firstName: 'Operador',
+      lastName: 'General',
       email: 'operador@empresa.test',
       password: 'secreto',
-      profileId: 'operations'
+      profileId: 'operations',
+      isEmployee: false
     });
     const save = jasmine.createSpy('save');
     const close = jasmine.createSpy('close');
@@ -577,6 +589,9 @@ describe('UserAccessPanelComponent', () => {
     return {
       id: 'user',
       username: 'usuario',
+      firstName: 'Usuario',
+      lastName: 'Demo',
+      fullName: 'Usuario Demo',
       email: 'usuario@empresa.test',
       isActive: true,
       employeeId: null,

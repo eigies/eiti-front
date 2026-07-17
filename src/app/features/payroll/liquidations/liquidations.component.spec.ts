@@ -107,7 +107,8 @@ describe('LiquidationsComponent', () => {
       paymentMethod: null,
       paidAt: null,
       deductionLines: [],
-      advanceLines: []
+      advanceLines: [],
+      bonusLines: []
     };
     fixture.detectChanges();
 
@@ -116,7 +117,7 @@ describe('LiquidationsComponent', () => {
   });
 
   it('renders the receipt action separated from the net total in the detail panel', () => {
-    component.liquidations = [{
+    const paidLiquidation = {
       id: 'liq-1',
       employeeId: 'employee-1',
       periodLabel: '2026-07',
@@ -126,11 +127,18 @@ describe('LiquidationsComponent', () => {
       paymentMethod: 2,
       paidAt: '2026-07-10T12:00:00Z',
       deductionLines: [],
-      advanceLines: []
-    }];
+      advanceLines: [],
+      bonusLines: []
+    };
+    liquidations.list.and.returnValue(of({
+      items: [paidLiquidation],
+      page: 1,
+      pageSize: 20,
+      totalCount: 1,
+      totalPages: 1
+    }));
+    component.applyFilters();
     component.expandedId = 'liq-1';
-    component.loading = false;
-    component.totalCount = 1;
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.receipt-actions')).not.toBeNull();

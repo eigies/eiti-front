@@ -422,6 +422,9 @@ describe('UserAccessListComponent', () => {
     return {
       id: 'user',
       username: 'usuario',
+      firstName: 'Usuario',
+      lastName: 'Demo',
+      fullName: 'Usuario Demo',
       email: 'usuario@empresa.test',
       isActive: true,
       employeeId: null,
