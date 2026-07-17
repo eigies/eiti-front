@@ -14,6 +14,7 @@ import { BranchProductStockResponse } from '../../../core/models/stock.models';
 import { CreateQuoteRequest } from '../../../core/models/quote.models';
 import { ProductPickerModalComponent } from '../../../shared/components/product-picker-modal/product-picker-modal.component';
 import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../../shared/components/product-picker-modal/product-picker-modal.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 // Los presupuestos no reservan stock: el picker se abre con un "available" grande
 // (no tiene sentido de negocio limitar la cantidad cotizada al stock actual).
@@ -30,7 +31,7 @@ interface QuoteDraftItem {
 @Component({
     selector: 'app-quote-form',
     standalone: true,
-    imports: [CommonModule, FormsModule, ProductPickerModalComponent],
+    imports: [CommonModule, FormsModule, ProductPickerModalComponent, SearchableSelectComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './quote-form.component.html',
     styleUrls: ['./quote-form.component.css']
@@ -99,6 +100,19 @@ export class QuoteFormComponent implements OnInit {
     get canSubmit(): boolean {
         const hasClient = this.customerMode === 'existing' ? !!this.selectedCustomer : this.prospectName.trim().length > 0;
         return !this.saving && hasClient && this.draftItems.length > 0 && !!this.selectedBranchId && !!this.expiresAt;
+    }
+
+    get branchOptions(): SearchableSelectOption[] {
+        return this.branches.map(branch => ({ value: branch.id, label: branch.name }));
+    }
+
+    get isProspectMode(): boolean {
+        return this.customerMode === 'prospect';
+    }
+
+    set isProspectMode(value: boolean) {
+        this.customerMode = value ? 'prospect' : 'existing';
+        this.onCustomerModeChange();
     }
 
     onBranchChange(): void {

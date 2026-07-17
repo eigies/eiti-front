@@ -1,9 +1,108 @@
 /* src/app/features/quotes/quotes-list/quotes-list.component.css */
-.quotes-list__table { width: 100%; border-collapse: collapse; }
-.quotes-list__table th, .quotes-list__table td { padding: 0.5rem; border-bottom: 1px solid var(--border-2); text-align: left; }
-.quotes-list__actions { display: flex; gap: 0.5rem; }
-.chip { padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.8rem; }
-.chip--quote-pending { background: var(--bg-panel); color: var(--text); }
-.chip--quote-expired { background: #5a1f1f; color: #ffb4b4; }
-.chip--quote-converted { background: #1f4d2b; color: #b8f0c4; }
-.chip--quote-cancelled { background: var(--bg-panel); color: var(--text-dim); }
+.quotes-list {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    box-shadow: 0 16px 34px -28px rgba(0, 0, 0, .22), inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+}
+
+.quotes-list__filters {
+    display: flex;
+    justify-content: flex-end;
+    gap: .75rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.quotes-list__filters select {
+    min-width: 180px;
+    border: 1px solid var(--border-2);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+}
+
+.quotes-list p {
+    padding: 1.1rem;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .75rem;
+}
+
+.quotes-list__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.quotes-list__table th,
+.quotes-list__table td {
+    padding: .8rem 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+    text-align: left;
+}
+
+.quotes-list__table th {
+    color: var(--text-subtle);
+    font-family: 'DM Mono', monospace;
+    font-size: .64rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.quotes-list__table td {
+    color: var(--text);
+    font-size: .88rem;
+}
+
+.quotes-list__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.quotes-list__actions button {
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    padding: .48rem .7rem;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.quotes-list__actions button:hover {
+    border-color: color-mix(in srgb, var(--amber) 36%, var(--border-2));
+    color: var(--text);
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.65rem;
+    padding: .24rem .55rem;
+    border-radius: 999px;
+    font-family: 'DM Mono', monospace;
+    font-size: .66rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.chip--quote-pending { background: color-mix(in srgb, var(--amber) 13%, transparent); color: var(--amber); }
+.chip--quote-expired { background: color-mix(in srgb, var(--danger) 15%, transparent); color: #ffb4b4; }
+.chip--quote-converted { background: color-mix(in srgb, var(--success) 14%, transparent); color: #b8f0c4; }
+.chip--quote-cancelled { background: color-mix(in srgb, var(--bg) 88%, transparent); color: var(--text-dim); }
+
+@media (max-width: 760px) {
+    .quotes-list {
+        overflow-x: auto;
+    }
+
+    .quotes-list__table {
+        min-width: 720px;
+    }
+}

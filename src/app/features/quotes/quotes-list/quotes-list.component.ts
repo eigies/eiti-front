@@ -8,11 +8,12 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { extractApiError } from '../../../shared/utils/api-error.util';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionCodes } from '../../../core/models/permission.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
     selector: 'app-quotes-list',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, SearchableSelectComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './quotes-list.component.html',
     styleUrls: ['./quotes-list.component.css']
@@ -20,7 +21,14 @@ import { PermissionCodes } from '../../../core/models/permission.models';
 export class QuotesListComponent implements OnInit {
     quotes: QuoteListItem[] = [];
     loading = false;
-    statusFilter: QuoteStatusCode | '' = '';
+    statusFilter: QuoteStatusCode | null = null;
+
+    readonly statusOptions: SearchableSelectOption[] = [
+        { value: null, label: 'Todos' },
+        { value: 1, label: 'Pendiente' },
+        { value: 2, label: 'Convertido' },
+        { value: 3, label: 'Cancelado' }
+    ];
 
     @Output() openDetail = new EventEmitter<string>();
     @Output() convertRequested = new EventEmitter<QuoteListItem>();
@@ -52,8 +60,7 @@ export class QuotesListComponent implements OnInit {
         });
     }
 
-    onStatusFilterChange(value: string): void {
-        this.statusFilter = value ? (Number(value) as QuoteStatusCode) : '';
+    onStatusFilterChange(): void {
         this.reload();
     }
 

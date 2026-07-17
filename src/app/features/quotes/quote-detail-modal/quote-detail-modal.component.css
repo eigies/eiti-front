@@ -1,4 +1,95 @@
 /* src/app/features/quotes/quote-detail-modal/quote-detail-modal.component.css */
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
-.modal { background: var(--bg-panel); padding: 1.5rem; border-radius: 8px; max-width: 640px; width: 100%; }
-.modal__actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: var(--overlay);
+}
+
+.modal {
+    width: min(100%, 760px);
+    max-height: min(88vh, 760px);
+    overflow: auto;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bg-panel) 98%, transparent);
+    color: var(--text);
+    box-shadow: 0 24px 54px rgba(0, 0, 0, .28), inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+}
+
+.modal h3 {
+    margin: 0 0 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+    letter-spacing: .04em;
+}
+
+.modal p {
+    margin: .4rem 0;
+    color: var(--text-dim);
+    font-size: .95rem;
+}
+
+.modal table {
+    width: 100%;
+    margin: 1rem 0;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.modal td {
+    padding: .75rem .8rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.modal td:not(:first-child) {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: .76rem;
+}
+
+.modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .65rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.modal__actions button {
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    padding: .7rem .9rem;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.modal__actions button:hover {
+    border-color: color-mix(in srgb, var(--amber) 36%, var(--border-2));
+    color: var(--text);
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+}
+
+@media (max-width: 640px) {
+    .modal {
+        padding: 1rem;
+    }
+
+    .modal__actions button {
+        width: 100%;
+    }
+}

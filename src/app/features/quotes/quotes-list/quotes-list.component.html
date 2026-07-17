@@ -1,12 +1,9 @@
 <!-- src/app/features/quotes/quotes-list/quotes-list.component.html -->
 <div class="quotes-list">
   <div class="quotes-list__filters">
-    <select (change)="onStatusFilterChange($any($event.target).value)">
-      <option value="">Todos</option>
-      <option value="1">Pendiente</option>
-      <option value="2">Convertido</option>
-      <option value="3">Cancelado</option>
-    </select>
+    <app-searchable-select [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()"
+      [options]="statusOptions" placeholder="Filtrar por estado" searchPlaceholder="Buscar estado...">
+    </app-searchable-select>
   </div>
 
   <p *ngIf="loading">Cargando presupuestos...</p>

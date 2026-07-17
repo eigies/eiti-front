@@ -14,7 +14,8 @@ import { ToastService } from '../../shared/services/toast.service';
     selector: 'app-quotes',
     standalone: true,
     imports: [CommonModule, QuotesListComponent, QuoteFormComponent, QuoteDetailModalComponent],
-    templateUrl: './quotes.component.html'
+    templateUrl: './quotes.component.html',
+    styleUrls: ['./quotes.component.css']
 })
 export class QuotesComponent {
     showForm = false;
