@@ -28,6 +28,7 @@ import { forkJoin } from 'rxjs';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../shared/services/pdf-branding.service';
 import { PdfLayoutService, PdfTableColumn } from '../../shared/services/pdf-layout.service';
+import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
 
 type CashSessionView = {
     session: CashSessionResponse;
@@ -587,6 +588,9 @@ type CashDisplayRow = {
                   <span class="cc-popup-payments__title">Historial de pagos</span>
                   <strong>{{ ccPopupPayments.length }} registro{{ ccPopupPayments.length === 1 ? '' : 's' }}</strong>
                 </div>
+                <button type="button" class="btn btn--ghost btn--pdf" *ngIf="ccPopupPayments.length > 0" (click)="downloadAllCcReceipts()">
+                  Descargar todos los recibos
+                </button>
               </div>
               <div *ngIf="ccPopupPayments.length === 0" class="cc-popup-payments__empty">Sin pagos registrados</div>
               <div *ngFor="let p of ccPopupPayments" class="cc-popup-payment" [class.cc-popup-payment--cancelled]="p.status === 2">
@@ -613,7 +617,12 @@ type CashDisplayRow = {
             <span class="cc-popup-head__eyebrow">Movimiento vinculado</span>
             <span class="modal__title">Detalle cobro cuenta corriente</span>
           </div>
-          <button class="modal__close" type="button" (click)="closeCustomerPaymentPopup()">&#x2715;</button>
+          <div class="cc-popup-head__actions">
+            <button type="button" class="btn btn--ghost btn--pdf" *ngIf="customerPaymentPopupLink" (click)="downloadCustomerPaymentReceipt()">
+              Descargar recibo
+            </button>
+            <button class="modal__close" type="button" (click)="closeCustomerPaymentPopup()">&#x2715;</button>
+          </div>
         </div>
         <div class="modal__body modal__body--cc-popup" *ngIf="customerPaymentPopupLoading">
           <div class="cc-popup-loading">
@@ -961,6 +970,7 @@ type CashDisplayRow = {
       radial-gradient(circle at top right,color-mix(in srgb,#14b8a6 10%, transparent),transparent 34%),
       linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 98%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%)}
     .modal__head--cc-popup{align-items:flex-start;padding-bottom:1rem}
+    .cc-popup-head__actions{display:flex;align-items:center;gap:.5rem}
     .cc-popup-head{display:grid;gap:.28rem}
     .cc-popup-head__eyebrow{color:color-mix(in srgb,#14b8a6 72%, var(--text-dim) 28%);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase}
     .modal__body--cc-popup{padding:1.35rem}
@@ -1270,6 +1280,7 @@ export class CashComponent implements OnInit {
         private router: Router,
         private pdfBranding: PdfBrandingService,
         private pdfLayout: PdfLayoutService,
+        private paymentReceiptPdf: PaymentReceiptPdfService,
         public auth: AuthService
     ) {
         this.drawerForm = this.fb.group({ name: ['', Validators.required] });
@@ -2760,6 +2771,45 @@ export class CashComponent implements OnInit {
 
     paymentMethodLabel(idPaymentMethod: number): string {
         return SALE_PAYMENT_METHODS.find(m => m.id === idPaymentMethod)?.label ?? 'Otro';
+    }
+
+    // Descarga TODOS los recibos de pagos activos de esta venta en un solo PDF (una pagina por pago).
+    downloadAllCcReceipts(): void {
+        const sale = this.ccPopupSale;
+        if (!sale) { return; }
+        const activePayments = this.ccPopupPayments.filter(p => p.status === 1);
+        if (activePayments.length === 0) {
+            this.toast.error('No hay pagos activos para generar recibos');
+            return;
+        }
+        const receipts: PaymentReceiptData[] = activePayments.map(p => ({
+            kind: 'cobro',
+            partyLabel: 'Cliente',
+            partyName: sale.customerFullName || 'Sin cliente',
+            amount: p.amount,
+            date: p.date,
+            methodLabel: this.paymentMethodLabel(p.idPaymentMethod),
+            notes: p.notes,
+            coverage: [{ code: sale.code || 'S/N', amount: p.amount }]
+        }));
+        this.paymentReceiptPdf.generateBatch(receipts, `recibos-${sale.code || sale.id}.pdf`)
+            .catch(() => this.toast.error('No se pudieron generar los recibos'));
+    }
+
+    downloadCustomerPaymentReceipt(): void {
+        const payment = this.customerPaymentPopupLink;
+        if (!payment) { return; }
+        const data: PaymentReceiptData = {
+            kind: 'cobro',
+            partyLabel: 'Cliente',
+            partyName: this.customerPaymentPopupAccount?.customerName ?? '-',
+            amount: payment.amount,
+            date: payment.date,
+            methodLabel: this.paymentMethodLabel(payment.method),
+            coverage: this.customerPaymentPopupImputaciones.map(item => ({ code: item.code, amount: item.amount })),
+            creditAdded: this.customerPaymentPopupCredit
+        };
+        this.paymentReceiptPdf.generate(data).catch(() => this.toast.error('No se pudo generar el recibo'));
     }
 
     openPurchasePopup(purchaseId: string): void {
