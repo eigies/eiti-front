@@ -27,7 +27,7 @@
           {{ statusLabel(purchase.status) }}
         </span>
         <button
-          class="btn-cancel-payment"
+          class="btn-receipt"
           type="button"
           *ngIf="purchase.payments.length > 0"
           (click)="downloadAllReceipts()">

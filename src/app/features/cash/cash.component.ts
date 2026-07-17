@@ -588,7 +588,7 @@ type CashDisplayRow = {
                   <span class="cc-popup-payments__title">Historial de pagos</span>
                   <strong>{{ ccPopupPayments.length }} registro{{ ccPopupPayments.length === 1 ? '' : 's' }}</strong>
                 </div>
-                <button type="button" class="btn btn--ghost btn--pdf" *ngIf="ccPopupPayments.length > 0" (click)="downloadAllCcReceipts()">
+                <button type="button" class="cc-popup-receipt-btn" *ngIf="ccPopupPayments.length > 0" (click)="downloadAllCcReceipts()">
                   Descargar todos los recibos
                 </button>
               </div>
@@ -618,7 +618,7 @@ type CashDisplayRow = {
             <span class="modal__title">Detalle cobro cuenta corriente</span>
           </div>
           <div class="cc-popup-head__actions">
-            <button type="button" class="btn btn--ghost btn--pdf" *ngIf="customerPaymentPopupLink" (click)="downloadCustomerPaymentReceipt()">
+            <button type="button" class="cc-popup-receipt-btn" *ngIf="customerPaymentPopupLink" (click)="downloadCustomerPaymentReceipt()">
               Descargar recibo
             </button>
             <button class="modal__close" type="button" (click)="closeCustomerPaymentPopup()">&#x2715;</button>
@@ -971,6 +971,9 @@ type CashDisplayRow = {
       linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 98%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%)}
     .modal__head--cc-popup{align-items:flex-start;padding-bottom:1rem}
     .cc-popup-head__actions{display:flex;align-items:center;gap:.5rem}
+    .cc-popup-receipt-btn{min-height:0;border:1px solid color-mix(in srgb,var(--danger) 32%, var(--border-2));border-radius:8px;padding:.5rem .8rem;background:color-mix(in srgb,var(--danger) 7%, transparent);color:var(--danger);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .15s,transform .15s}
+    .cc-popup-receipt-btn:hover{background:color-mix(in srgb,var(--danger) 13%, transparent);transform:translateY(-1px)}
+    .cc-popup-receipt-btn::before{content:'PDF';display:inline-block;margin-right:.4rem;padding:.06rem .2rem;border:1px solid currentColor;border-radius:4px;font-size:.54rem;line-height:1;font-weight:700;letter-spacing:.04em}
     .cc-popup-head{display:grid;gap:.28rem}
     .cc-popup-head__eyebrow{color:color-mix(in srgb,#14b8a6 72%, var(--text-dim) 28%);font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase}
     .modal__body--cc-popup{padding:1.35rem}
@@ -1094,7 +1097,7 @@ type CashDisplayRow = {
     .btn--transfer-confirm{font-size:.72rem;letter-spacing:.12em}
     .btn--deposit{background:color-mix(in srgb,var(--success) 8%, transparent);border:1px solid color-mix(in srgb,var(--success) 38%, var(--border-2));color:var(--success);white-space:nowrap}
     .btn--deposit:hover:not(:disabled){background:color-mix(in srgb,var(--success) 14%, transparent);border-color:color-mix(in srgb,var(--success) 58%, var(--border-2));transform:translateY(-1px)}
-    .modal-backdrop{position:fixed;inset:0;background:color-mix(in srgb,black 58%, transparent);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+    .modal-backdrop{position:fixed;inset:0;background:color-mix(in srgb,black 58%, transparent);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:2.5rem 1rem;overflow-y:auto}
     .modal{background:linear-gradient(180deg,color-mix(in srgb,var(--bg-panel) 96%, transparent) 0%,color-mix(in srgb,var(--bg) 98%, transparent) 100%);border:1px solid color-mix(in srgb,var(--amber) 14%, var(--border));border-radius:28px;width:100%;max-width:480px;box-shadow:inset 0 1px 0 color-mix(in srgb,white 10%, transparent),0 24px 64px rgba(0,0,0,.24)}
     .modal__head{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.25rem;border-bottom:1px solid var(--border)}
     .modal__title{color:var(--text);font-family:'DM Mono',monospace;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase}

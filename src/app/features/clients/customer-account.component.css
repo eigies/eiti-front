@@ -420,7 +420,10 @@
 }
 
 .col-remove {
-  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: .5rem;
 }
 
 .empty-payments {
@@ -537,6 +540,25 @@
 .btn-cancel-payment:disabled {
   opacity: .4;
   cursor: not-allowed;
+}
+
+.btn-receipt {
+  padding: .3rem .65rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 36%, var(--border-2));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  color: color-mix(in srgb, var(--amber) 80%, var(--text) 20%);
+  font-family: 'DM Mono', monospace;
+  font-size: .61rem;
+  letter-spacing: .04em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, transform .15s;
+}
+
+.btn-receipt:hover {
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+  transform: translateY(-1px);
 }
 
 .loading-state {
