@@ -93,8 +93,8 @@
 }
 
 .chip--quote-pending { background: color-mix(in srgb, var(--amber) 13%, transparent); color: var(--amber); }
-.chip--quote-expired { background: color-mix(in srgb, var(--danger) 15%, transparent); color: #ffb4b4; }
-.chip--quote-converted { background: color-mix(in srgb, var(--success) 14%, transparent); color: #b8f0c4; }
+.chip--quote-expired { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+.chip--quote-converted { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
 .chip--quote-cancelled { background: color-mix(in srgb, var(--bg) 88%, transparent); color: var(--text-dim); }
 
 @media (max-width: 760px) {
