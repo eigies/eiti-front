@@ -55,6 +55,30 @@
     border-bottom: 1px solid var(--border);
 }
 
+.quote-conversion-banner {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    margin-top: 1rem;
+    padding: .82rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 36%, var(--border));
+    border-radius: 10px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--amber) 12%, transparent), color-mix(in srgb, var(--bg) 92%, transparent));
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .76rem;
+}
+
+.quote-conversion-banner strong {
+    color: var(--amber);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+
+.quote-conversion-banner span {
+    color: var(--text-dim);
+}
+
 .eyebrow {
     margin: 0 0 .32rem;
     color: var(--amber);

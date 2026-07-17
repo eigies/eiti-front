@@ -7,13 +7,14 @@ import { BranchService } from '../../../core/services/branch.service';
 import { CustomerService } from '../../../core/services/customer.service';
 import { StockService } from '../../../core/services/stock.service';
 import { SaleService } from '../../../core/services/sale.service';
+import { QuoteService } from '../../../core/services/quote.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionCodes } from '../../../core/models/permission.models';
 import { ToastService } from '../../../shared/services/toast.service';
 import { BranchResponse } from '../../../core/models/branch.models';
-import { CustomerSearchItem } from '../../../core/models/customer.models';
+import { CustomerResponse, CustomerSearchItem } from '../../../core/models/customer.models';
 import { BranchProductStockResponse } from '../../../core/models/stock.models';
-import { CreateSaleDetailRequest } from '../../../core/models/sale.models';
+import { CreateCcSaleRequest, CreateSaleDetailRequest } from '../../../core/models/sale.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { ProductPickerModalComponent } from '../../../shared/components/product-picker-modal/product-picker-modal.component';
 import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../../shared/components/product-picker-modal/product-picker-modal.models';
@@ -23,6 +24,7 @@ interface DraftItem {
   quantity: number;
   discountPercent: number;
   unitPriceOverride?: number;
+  forceUnitPrice?: boolean;
   total: number;
 }
 
@@ -32,6 +34,25 @@ interface TradeInDraft {
   name: string;
   quantity: number;
   amount: number;
+}
+
+interface QuotePrefillDetail {
+  productId: string;
+  productName: string;
+  productBrand: string;
+  quantity: number;
+  unitPrice: number;
+  discountPercent: number;
+}
+
+interface QuotePrefill {
+  quoteId: string;
+  branchId: string;
+  customerId?: string | null;
+  customerFullName?: string | null;
+  prospectName?: string | null;
+  generalDiscountPercent: number;
+  details: QuotePrefillDetail[];
 }
 
 @Component({
@@ -54,6 +75,9 @@ export class SalesCcComponent implements OnInit {
 
   generalDiscountPercent = 0;
   manualOverridePrice: number | null = null;
+  convertingQuoteId: string | null = null;
+  quoteConversionLabel = '';
+  private pendingQuotePrefill: QuotePrefill | null = null;
 
   productModalOpen = false;
   pickerRows: ProductPickerRow[] = [];
@@ -71,15 +95,28 @@ export class SalesCcComponent implements OnInit {
     private readonly customerService: CustomerService,
     private readonly stockService: StockService,
     private readonly saleService: SaleService,
+    private readonly quoteService: QuoteService,
     private readonly toast: ToastService,
     public readonly auth: AuthService
   ) {}
 
   ngOnInit(): void {
+    const state = history.state as { quotePrefill?: QuotePrefill } | null;
+    this.pendingQuotePrefill = state?.quotePrefill ?? null;
+
     this.branchService.listBranches().subscribe({
       next: branches => {
         this.branches = branches;
-        if (branches.length > 0) {
+        if (this.pendingQuotePrefill) {
+          this.selectedBranchId = this.pendingQuotePrefill.branchId;
+          this.convertingQuoteId = this.pendingQuotePrefill.quoteId;
+          this.quoteConversionLabel =
+            this.pendingQuotePrefill.customerFullName
+            ?? this.pendingQuotePrefill.prospectName
+            ?? 'presupuesto seleccionado';
+          this.generalDiscountPercent = this.pendingQuotePrefill.generalDiscountPercent || 0;
+          this.applyQuotePrefill();
+        } else if (branches.length > 0) {
           this.selectedBranchId = branches[0].id;
         }
       },
@@ -180,11 +217,7 @@ export class SalesCcComponent implements OnInit {
   private loadStock(openModal = true): void {
     this.stockService.listBranchStock(this.selectedBranchId).subscribe({
       next: items => {
-        this.stockItems = items;
-        this.stockByProductId.clear();
-        for (const item of items) {
-          this.stockByProductId.set(item.productId, item);
-        }
+        this.setStockItems(items);
         if (openModal) {
           this.buildPickerRows();
           this.productModalOpen = true;
@@ -192,6 +225,98 @@ export class SalesCcComponent implements OnInit {
       },
       error: () => this.toast.error('No se pudo cargar el stock de la sucursal')
     });
+  }
+
+  private setStockItems(items: BranchProductStockResponse[]): void {
+    this.stockItems = items;
+    this.stockByProductId.clear();
+    for (const item of items) {
+      this.stockByProductId.set(item.productId, item);
+    }
+  }
+
+  private applyQuotePrefill(): void {
+    if (!this.pendingQuotePrefill || !this.selectedBranchId) { return; }
+
+    this.stockService.listBranchStock(this.selectedBranchId).subscribe({
+      next: items => {
+        this.setStockItems(items);
+        this.draftItems = [];
+
+        for (const detail of this.pendingQuotePrefill!.details) {
+          const stock = this.stockByProductId.get(detail.productId) ?? this.createQuoteStockFallback(detail);
+          if (!this.stockByProductId.has(stock.productId)) {
+            this.stockByProductId.set(stock.productId, stock);
+            this.stockItems = [...this.stockItems, stock];
+          }
+
+          const maxAllowed = Math.max(stock.availableQuantity, detail.quantity);
+          if (this.upsertDraftItem(stock, detail.quantity, maxAllowed)) {
+            const item = this.draftItems.find(draft => draft.stock.productId === detail.productId);
+            if (item) {
+              item.unitPriceOverride = Math.round(detail.unitPrice * 100) / 100;
+              item.forceUnitPrice = true;
+              item.discountPercent = detail.discountPercent || 0;
+              this.recalcItem(item);
+            }
+          }
+        }
+
+        this.buildPickerRows();
+        this.resolveQuoteCustomer();
+        this.toast.success('Presupuesto precargado para convertir a venta CC');
+      },
+      error: () => this.toast.error('No se pudo cargar el stock para convertir el presupuesto')
+    });
+  }
+
+  private createQuoteStockFallback(detail: QuotePrefillDetail): BranchProductStockResponse {
+    return {
+      productId: detail.productId,
+      branchId: this.selectedBranchId,
+      code: '',
+      sku: '',
+      brand: detail.productBrand,
+      name: detail.productName,
+      price: detail.unitPrice,
+      publicPrice: detail.unitPrice,
+      costPrice: null,
+      unitPrice: detail.unitPrice,
+      allowsManualValueInSale: false,
+      onHandQuantity: detail.quantity,
+      reservedQuantity: 0,
+      availableQuantity: detail.quantity
+    };
+  }
+
+  private resolveQuoteCustomer(): void {
+    if (!this.pendingQuotePrefill) { return; }
+
+    if (this.pendingQuotePrefill.customerId) {
+      this.customerService.getCustomerById(this.pendingQuotePrefill.customerId).subscribe({
+        next: customer => this.selectedCustomer = this.toCustomerSearchItem(customer),
+        error: () => this.toast.error('No se pudo cargar el cliente del presupuesto')
+      });
+      return;
+    }
+
+    this.selectedCustomer = null;
+    this.customerQuery = this.pendingQuotePrefill.prospectName ?? '';
+  }
+
+  private toCustomerSearchItem(customer: CustomerResponse): CustomerSearchItem {
+    return {
+      id: customer.id,
+      name: customer.name,
+      fullName: customer.fullName,
+      email: customer.email,
+      phone: customer.phone,
+      documentType: customer.documentType,
+      documentTypeName: customer.documentTypeName,
+      documentNumber: customer.documentNumber,
+      taxId: customer.taxId,
+      creditBalance: customer.creditBalance
+    };
   }
 
   private buildPickerRows(): void {
@@ -347,11 +472,13 @@ export class SalesCcComponent implements OnInit {
     const details: CreateSaleDetailRequest[] = this.draftItems.map(item => ({
       productId: item.stock.productId,
       quantity: item.quantity,
-      unitPrice: this.canOverridePrice && this.isPriceOverridden(item) ? item.unitPriceOverride : undefined,
+      unitPrice: item.forceUnitPrice || (this.canOverridePrice && this.isPriceOverridden(item))
+        ? item.unitPriceOverride
+        : undefined,
       discountPercent: item.discountPercent || undefined
     }));
 
-    this.saleService.createCcSale({
+    const payload: CreateCcSaleRequest = {
       branchId: this.selectedBranchId,
       customerId: this.selectedCustomer.id,
       details,
@@ -360,10 +487,18 @@ export class SalesCcComponent implements OnInit {
         : undefined,
       generalDiscountPercent: this.generalDiscountPercent || undefined,
       manualOverridePrice: this.manualOverridePrice ?? undefined
-    }).subscribe({
+    };
+
+    const request$ = this.convertingQuoteId
+      ? this.quoteService.convertQuote(this.convertingQuoteId, payload)
+      : this.saleService.createCcSale(payload);
+
+    request$.subscribe({
       next: (res) => {
         this.saving = false;
-        this.toast.success('Venta CC creada exitosamente');
+        this.toast.success(this.convertingQuoteId
+          ? 'Presupuesto convertido a venta CC exitosamente'
+          : 'Venta CC creada exitosamente');
         if (res?.creditApplied && res.creditApplied > 0) {
           const applied = res.creditApplied.toLocaleString('es-AR', { minimumFractionDigits: 2 });
           const remaining = res.remainingCustomerCredit?.toLocaleString('es-AR', { minimumFractionDigits: 2 }) ?? '0,00';
@@ -379,11 +514,16 @@ export class SalesCcComponent implements OnInit {
         this.canjeAmount = null;
         this.generalDiscountPercent = 0;
         this.manualOverridePrice = null;
+        this.convertingQuoteId = null;
+        this.pendingQuotePrefill = null;
+        this.quoteConversionLabel = '';
         this.pickerRows = [];
       },
       error: err => {
         this.saving = false;
-        this.toast.error(extractApiError(err, 'Error al crear la venta CC'));
+        this.toast.error(extractApiError(err, this.convertingQuoteId
+          ? 'Error al convertir el presupuesto'
+          : 'Error al crear la venta CC'));
       }
     });
   }

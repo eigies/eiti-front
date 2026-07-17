@@ -8,6 +8,11 @@
       <a class="btn btn--ghost" routerLink="/sales">Volver a ventas</a>
     </div>
 
+    <div class="quote-conversion-banner" *ngIf="convertingQuoteId">
+      <strong>Convirtiendo presupuesto</strong>
+      <span>{{ quoteConversionLabel }}</span>
+    </div>
+
     <div class="grid">
       <label class="field">
         <span class="field__label">Sucursal</span>
@@ -73,7 +78,7 @@
                      (ngModelChange)="setItemPrice(item.stock.productId, $event)"
                      [ngModelOptions]="{ standalone: true }"
                      [class.is-overridden]="isPriceOverridden(item)" />
-              <span *ngIf="!canOverridePrice">{{ (item.stock.publicPrice ?? item.stock.price) | currency:'USD':'symbol':'1.2-2' }}</span>
+              <span *ngIf="!canOverridePrice">{{ effectiveUnitPrice(item) | currency:'USD':'symbol':'1.2-2' }}</span>
             </td>
             <td>
               <input class="control control--compact control--discount" type="number" min="0" max="100" step="1"
@@ -176,7 +181,7 @@
 
     <div class="footer">
       <button class="btn" type="button" [disabled]="!canSubmit" (click)="submit()">
-        {{ saving ? 'Guardando...' : 'Crear venta CC' }}
+        {{ saving ? 'Guardando...' : (convertingQuoteId ? 'Convertir presupuesto' : 'Crear venta CC') }}
       </button>
     </div>
   </section>
