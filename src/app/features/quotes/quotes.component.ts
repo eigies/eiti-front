@@ -9,6 +9,8 @@ import { QuoteListItem, QuoteDetailResponse } from '../../core/models/quote.mode
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { QuoteService } from '../../core/services/quote.service';
+import { extractApiError } from '../../shared/utils/api-error.util';
 
 @Component({
     selector: 'app-quotes',
@@ -26,7 +28,8 @@ export class QuotesComponent {
     constructor(
         private readonly router: Router,
         private readonly auth: AuthService,
-        private readonly toast: ToastService
+        private readonly toast: ToastService,
+        private readonly quoteService: QuoteService
     ) {}
 
     onCreated(): void {
@@ -54,25 +57,33 @@ export class QuotesComponent {
             return;
         }
 
+        // quotes-list's "Convertir" button only carries a QuoteListItem (no `details`,
+        // no `generalDiscountPercent`) - always refetch the full quote so the sales-cc
+        // prefill has real line items regardless of which child triggered the conversion.
+        this.quoteService.getQuoteById(quote.id).subscribe({
+            next: fullQuote => this.navigateToConversion(fullQuote),
+            error: err => this.toast.error(extractApiError(err, 'No se pudo cargar el presupuesto para convertir'))
+        });
+    }
+
+    private navigateToConversion(quote: QuoteDetailResponse): void {
         this.router.navigateByUrl('/sales-cc', {
             state: {
                 quotePrefill: {
                     quoteId: quote.id,
                     branchId: quote.branchId,
-                    customerId: 'customerId' in quote ? quote.customerId : null,
-                    customerFullName: 'customerFullName' in quote ? quote.customerFullName : null,
-                    prospectName: 'prospectName' in quote ? quote.prospectName : null,
-                    generalDiscountPercent: 'generalDiscountPercent' in quote ? quote.generalDiscountPercent : 0,
-                    details: 'details' in quote
-                        ? quote.details.map(detail => ({
-                            productId: detail.productId,
-                            productName: detail.productName,
-                            productBrand: detail.productBrand,
-                            quantity: detail.quantity,
-                            unitPrice: detail.unitPrice,
-                            discountPercent: detail.discountPercent
-                        }))
-                        : []
+                    customerId: quote.customerId,
+                    customerFullName: quote.customerFullName,
+                    prospectName: quote.prospectName,
+                    generalDiscountPercent: quote.generalDiscountPercent,
+                    details: quote.details.map(detail => ({
+                        productId: detail.productId,
+                        productName: detail.productName,
+                        productBrand: detail.productBrand,
+                        quantity: detail.quantity,
+                        unitPrice: detail.unitPrice,
+                        discountPercent: detail.discountPercent
+                    }))
                 }
             }
         });
