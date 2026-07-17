@@ -34,10 +34,10 @@ export class QuotePdfService {
       ]
       : [
         { header: '#', width: 12 },
-        { header: 'Producto', width: 92 },
+        { header: 'Producto', width: 84 },
         { header: 'Cant.', width: 18, align: 'right' },
         { header: 'Unitario', width: 34, align: 'right' },
-        { header: 'Subtotal', width: 36, align: 'right' }
+        { header: 'Subtotal', width: 34, align: 'right' }
       ];
     const itemTableColumns = this.pdfLayout.resolveColumns(margin, itemColumns);
     const [numberCol, productCol, quantityCol] = itemTableColumns;
