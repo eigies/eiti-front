@@ -21,11 +21,11 @@
 }
 
 .modal-card {
-  width: min(100%, 720px);
+  width: min(100%, 900px);
   background: color-mix(in srgb, var(--bg-panel) 98%, transparent);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 1.3rem;
+  padding: 1.75rem;
   box-shadow: 0 22px 46px rgba(0, 0, 0, .2);
   animation: slideUp .2s ease;
   flex-shrink: 0;
@@ -36,9 +36,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding-bottom: 1rem;
+  padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
 }
 
 .modal-head__copy {
@@ -146,9 +146,9 @@
 }
 
 .detalle-header {
-  padding: 0 0 .85rem;
+  padding: 0 0 1.1rem;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 1rem;
+  margin-bottom: 1.4rem;
 }
 
 .detalle-header__row {
@@ -175,7 +175,7 @@
 }
 
 .detalle-section {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   overflow-x: auto;
 }
 
@@ -225,7 +225,7 @@
 
 .detalle-table th,
 .detalle-table td {
-  padding: .5rem .65rem;
+  padding: .7rem .9rem;
   border-bottom: 1px solid var(--border);
 }
 
@@ -259,9 +259,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: .28rem 0;
+  padding: .4rem 0;
   font-family: 'DM Mono', monospace;
-  font-size: .8rem;
+  font-size: .85rem;
   color: var(--text);
 }
 
