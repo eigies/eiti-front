@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 import { QuoteService } from '../../../core/services/quote.service';
 import { StockService } from '../../../core/services/stock.service';
 import { QuoteDetailResponse } from '../../../core/models/quote.models';
-import { generateQuotePdf } from '../../../shared/utils/quote-pdf.util';
+import { QuotePdfService } from '../../../shared/services/quote-pdf.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { extractApiError } from '../../../shared/utils/api-error.util';
 
@@ -45,6 +45,7 @@ export class QuoteDetailModalComponent implements OnChanges {
     constructor(
         private readonly quoteService: QuoteService,
         private readonly stockService: StockService,
+        private readonly quotePdfService: QuotePdfService,
         private readonly toast: ToastService,
         private readonly cdr: ChangeDetectorRef
     ) {}
@@ -131,7 +132,8 @@ export class QuoteDetailModalComponent implements OnChanges {
     }
 
     downloadPdf(): void {
-        if (this.quote) { generateQuotePdf(this.quote); }
+        if (!this.quote) { return; }
+        this.quotePdfService.generate(this.quote).catch(() => this.toast.error('No se pudo generar el PDF'));
     }
 
     requestConvert(): void {
