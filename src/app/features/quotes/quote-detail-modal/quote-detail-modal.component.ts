@@ -10,10 +10,18 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { QuoteService } from '../../../core/services/quote.service';
+import { StockService } from '../../../core/services/stock.service';
 import { QuoteDetailResponse } from '../../../core/models/quote.models';
 import { generateQuotePdf } from '../../../shared/utils/quote-pdf.util';
 import { ToastService } from '../../../shared/services/toast.service';
 import { extractApiError } from '../../../shared/utils/api-error.util';
+
+export interface QuoteStockWarning {
+    productId: string;
+    productLabel: string;
+    quoted: number;
+    available: number;
+}
 
 @Component({
     selector: 'app-quote-detail-modal',
@@ -31,8 +39,12 @@ export class QuoteDetailModalComponent implements OnChanges {
     quote: QuoteDetailResponse | null = null;
     loading = false;
 
+    private availableByProductId = new Map<string, number>();
+    stockWarnings: QuoteStockWarning[] = [];
+
     constructor(
         private readonly quoteService: QuoteService,
+        private readonly stockService: StockService,
         private readonly toast: ToastService,
         private readonly cdr: ChangeDetectorRef
     ) {}
@@ -40,11 +52,14 @@ export class QuoteDetailModalComponent implements OnChanges {
     ngOnChanges(): void {
         if (!this.quoteId) { return; }
         this.loading = true;
+        this.quote = null;
+        this.stockWarnings = [];
         this.quoteService.getQuoteById(this.quoteId).subscribe({
             next: quote => {
                 this.quote = quote;
                 this.loading = false;
                 this.cdr.markForCheck();
+                this.loadStockWarnings(quote);
             },
             error: err => {
                 this.loading = false;
@@ -52,6 +67,37 @@ export class QuoteDetailModalComponent implements OnChanges {
                 this.cdr.markForCheck();
             }
         });
+    }
+
+    // El presupuesto no reserva stock: acá solo comparamos contra el stock ACTUAL de la
+    // sucursal para avisarle al vendedor si algo cambió desde que se cotizó (nunca bloquea).
+    private loadStockWarnings(quote: QuoteDetailResponse): void {
+        this.stockService.listBranchStock(quote.branchId).subscribe({
+            next: stockItems => {
+                this.availableByProductId = new Map(stockItems.map(item => [item.productId, item.availableQuantity]));
+                this.stockWarnings = quote.details
+                    .map(detail => ({
+                        productId: detail.productId,
+                        productLabel: `${detail.productBrand} ${detail.productName}`.trim(),
+                        quoted: detail.quantity,
+                        available: this.availableByProductId.get(detail.productId) ?? 0
+                    }))
+                    .filter(warning => warning.available < warning.quoted);
+                this.cdr.markForCheck();
+            },
+            error: () => {
+                // No bloquea la vista del presupuesto si falla la consulta de stock; simplemente no se muestran avisos.
+                this.cdr.markForCheck();
+            }
+        });
+    }
+
+    hasStockIssue(productId: string): boolean {
+        return this.stockWarnings.some(warning => warning.productId === productId);
+    }
+
+    stockIssueFor(productId: string): QuoteStockWarning | undefined {
+        return this.stockWarnings.find(warning => warning.productId === productId);
     }
 
     get canConvert(): boolean {

@@ -6,9 +6,20 @@
       <h3>Presupuesto {{ q.code }}</h3>
       <p>Cliente: {{ q.customerFullName ?? q.prospectName }}</p>
       <p>Valido hasta: {{ q.expiresAt | date: 'dd/MM/yyyy' }}</p>
+
+      <div class="stock-warning" *ngIf="stockWarnings.length > 0">
+        <strong>Atencion: stock insuficiente</strong>
+        <ul>
+          <li *ngFor="let warning of stockWarnings">
+            {{ warning.productLabel }} — pediste {{ warning.quoted }}, hay {{ warning.available }} disponible{{ warning.available === 1 ? '' : 's' }}
+            <span *ngIf="warning.available === 0"> (sin stock)</span>
+          </li>
+        </ul>
+      </div>
+
       <table>
         <tbody>
-          <tr *ngFor="let detail of q.details">
+          <tr *ngFor="let detail of q.details" [class.row--stock-issue]="hasStockIssue(detail.productId)">
             <td>{{ detail.productBrand }} {{ detail.productName }}</td>
             <td>{{ detail.quantity }}</td>
             <td>{{ detail.unitPrice | number: '1.2-2' }}</td>

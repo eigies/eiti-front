@@ -77,6 +77,7 @@ export class SalesCcComponent implements OnInit {
   manualOverridePrice: number | null = null;
   convertingQuoteId: string | null = null;
   quoteConversionLabel = '';
+  quoteStockDisclaimer: string[] = [];
   private pendingQuotePrefill: QuotePrefill | null = null;
 
   productModalOpen = false;
@@ -242,51 +243,46 @@ export class SalesCcComponent implements OnInit {
       next: items => {
         this.setStockItems(items);
         this.draftItems = [];
+        this.quoteStockDisclaimer = [];
 
         for (const detail of this.pendingQuotePrefill!.details) {
-          const stock = this.stockByProductId.get(detail.productId) ?? this.createQuoteStockFallback(detail);
-          if (!this.stockByProductId.has(stock.productId)) {
-            this.stockByProductId.set(stock.productId, stock);
-            this.stockItems = [...this.stockItems, stock];
+          const stock = this.stockByProductId.get(detail.productId);
+          const productLabel = `${detail.productBrand} ${detail.productName}`.trim();
+          const available = stock?.availableQuantity ?? 0;
+
+          if (!stock || available <= 0) {
+            this.quoteStockDisclaimer.push(`${productLabel}: sin stock disponible, no se cargo a la venta.`);
+            continue;
           }
 
-          const maxAllowed = Math.max(stock.availableQuantity, detail.quantity);
-          if (this.upsertDraftItem(stock, detail.quantity, maxAllowed)) {
-            const item = this.draftItems.find(draft => draft.stock.productId === detail.productId);
-            if (item) {
-              item.unitPriceOverride = Math.round(detail.unitPrice * 100) / 100;
-              item.forceUnitPrice = true;
-              item.discountPercent = detail.discountPercent || 0;
-              this.recalcItem(item);
-            }
+          const quantityToLoad = Math.min(detail.quantity, available);
+          if (quantityToLoad < detail.quantity) {
+            this.quoteStockDisclaimer.push(
+              `${productLabel}: se pidieron ${detail.quantity}, solo hay ${available} disponible${available === 1 ? '' : 's'}. Se cargaron ${quantityToLoad}.`
+            );
           }
+
+          this.draftItems.push({
+            stock,
+            quantity: quantityToLoad,
+            discountPercent: detail.discountPercent || 0,
+            unitPriceOverride: Math.round(detail.unitPrice * 100) / 100,
+            forceUnitPrice: true,
+            total: 0
+          });
+          this.recalcItem(this.draftItems[this.draftItems.length - 1]);
         }
 
         this.buildPickerRows();
         this.resolveQuoteCustomer();
-        this.toast.success('Presupuesto precargado para convertir a venta CC');
+        if (this.quoteStockDisclaimer.length > 0) {
+          this.toast.error('Presupuesto precargado con ajustes de stock. Revisa el detalle en pantalla.');
+        } else {
+          this.toast.success('Presupuesto precargado para convertir a venta CC');
+        }
       },
       error: () => this.toast.error('No se pudo cargar el stock para convertir el presupuesto')
     });
-  }
-
-  private createQuoteStockFallback(detail: QuotePrefillDetail): BranchProductStockResponse {
-    return {
-      productId: detail.productId,
-      branchId: this.selectedBranchId,
-      code: '',
-      sku: '',
-      brand: detail.productBrand,
-      name: detail.productName,
-      price: detail.unitPrice,
-      publicPrice: detail.unitPrice,
-      costPrice: null,
-      unitPrice: detail.unitPrice,
-      allowsManualValueInSale: false,
-      onHandQuantity: detail.quantity,
-      reservedQuantity: 0,
-      availableQuantity: detail.quantity
-    };
   }
 
   private resolveQuoteCustomer(): void {
@@ -517,6 +513,7 @@ export class SalesCcComponent implements OnInit {
         this.convertingQuoteId = null;
         this.pendingQuotePrefill = null;
         this.quoteConversionLabel = '';
+        this.quoteStockDisclaimer = [];
         this.pickerRows = [];
       },
       error: err => {

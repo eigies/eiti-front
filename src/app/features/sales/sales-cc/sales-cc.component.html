@@ -13,6 +13,13 @@
       <span>{{ quoteConversionLabel }}</span>
     </div>
 
+    <div class="quote-stock-disclaimer" *ngIf="quoteStockDisclaimer.length > 0">
+      <strong>Ajustes por stock</strong>
+      <ul>
+        <li *ngFor="let line of quoteStockDisclaimer">{{ line }}</li>
+      </ul>
+    </div>
+
     <div class="grid">
       <label class="field">
         <span class="field__label">Sucursal</span>
