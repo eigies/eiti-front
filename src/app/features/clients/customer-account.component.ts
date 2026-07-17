@@ -9,6 +9,7 @@ import { BranchService } from '../../core/services/branch.service';
 import { SaleService } from '../../core/services/sale.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
+import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
 import {
   CustomerAccount,
   CustomerAccountMovement,
@@ -81,6 +82,7 @@ export class CustomerAccountComponent implements OnInit {
     private readonly branchService: BranchService,
     private readonly saleService: SaleService,
     private readonly remitoPdf: RemitoPdfService,
+    private readonly paymentReceiptPdf: PaymentReceiptPdfService,
     readonly auth: AuthService,
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
@@ -299,6 +301,23 @@ export class CustomerAccountComponent implements OnInit {
 
   hasImputaciones(m: CustomerAccountMovement): boolean {
     return (m.imputaciones?.length ?? 0) > 0 || (m.sobrante ?? 0) > 0;
+  }
+
+  downloadReceipt(m: CustomerAccountMovement): void {
+    const data: PaymentReceiptData = {
+      kind: 'cobro',
+      partyLabel: 'Cliente',
+      partyName: this.account?.customerName ?? '-',
+      amount: m.amount,
+      date: m.date,
+      methodLabel: m.method ?? '-',
+      reference: m.reference,
+      notes: m.notes,
+      chequeNumero: m.chequeNumero,
+      coverage: (m.imputaciones ?? []).map(item => ({ code: item.code, amount: item.amount })),
+      creditAdded: m.sobrante
+    };
+    this.paymentReceiptPdf.generate(data).catch(() => this.toast.error('No se pudo generar el recibo'));
   }
 
   ventaLabel(i: CustomerPaymentImputacion): string {

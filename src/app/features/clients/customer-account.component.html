@@ -243,6 +243,12 @@
                   <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>
                   <td class="col-remove">
                     <button
+                      type="button"
+                      class="btn-cancel-payment"
+                      (click)="$event.stopPropagation(); downloadReceipt(p)">
+                      Recibo
+                    </button>
+                    <button
                       *ngIf="isActiveMovement(p) && auth.hasPermission(permissionCodes.salesPay)"
                       class="btn-cancel-payment"
                       type="button"

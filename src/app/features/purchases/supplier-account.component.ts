@@ -10,6 +10,7 @@ import { CarteraChequeOption } from '../../core/models/cheque.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
 
 const PAYMENT_METHOD_CHECK = 3;
 
@@ -50,6 +51,7 @@ export class SupplierAccountComponent implements OnInit {
   constructor(
     private readonly supplierAccountService: SupplierAccountService,
     private readonly purchaseService: PurchaseService,
+    private readonly paymentReceiptPdf: PaymentReceiptPdfService,
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -219,6 +221,26 @@ export class SupplierAccountComponent implements OnInit {
 
   facturaLabel(i: SupplierPaymentImputacion): string {
     return i.invoiceNumber ? `Factura ${i.invoiceNumber} (${i.code})` : i.code;
+  }
+
+  downloadReceipt(m: SupplierAccountMovement): void {
+    const data: PaymentReceiptData = {
+      kind: 'pago',
+      partyLabel: 'Proveedor',
+      partyName: this.account?.supplierName ?? '-',
+      amount: m.amount,
+      date: m.date,
+      methodLabel: m.method ?? '-',
+      reference: m.reference,
+      notes: m.notes,
+      chequeNumero: m.chequeNumero,
+      coverage: (m.imputaciones ?? []).map(item => ({
+        code: item.invoiceNumber ? `${item.code} (Fact. ${item.invoiceNumber})` : item.code,
+        amount: item.amount
+      })),
+      creditAdded: m.sobrante
+    };
+    this.paymentReceiptPdf.generate(data).catch(() => this.toast.error('No se pudo generar el recibo'));
   }
 
   private resetPaymentForm(): void {
