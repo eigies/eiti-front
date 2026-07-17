@@ -104,6 +104,32 @@ export class QuoteDetailModalComponent implements OnChanges {
         return !!this.quote && this.quote.idQuoteStatus === 1 && !this.quote.isExpired;
     }
 
+    get statusLabel(): string {
+        if (!this.quote) { return ''; }
+        if (this.quote.idQuoteStatus === 1 && this.quote.isExpired) { return 'Vencido'; }
+        if (this.quote.idQuoteStatus === 1) { return 'Pendiente'; }
+        if (this.quote.idQuoteStatus === 2) { return 'Convertido'; }
+        return 'Cancelado';
+    }
+
+    get statusBadgeClass(): string {
+        if (!this.quote) { return ''; }
+        if (this.quote.idQuoteStatus === 1 && this.quote.isExpired) { return 'badge--expired'; }
+        if (this.quote.idQuoteStatus === 1) { return 'badge--pending'; }
+        if (this.quote.idQuoteStatus === 2) { return 'badge--paid'; }
+        return 'badge--cancelled';
+    }
+
+    get hasDiscount(): boolean {
+        if (!this.quote) { return false; }
+        return this.quote.generalDiscountPercent > 0 || this.quote.details.some(detail => detail.discountPercent > 0);
+    }
+
+    get subtotal(): number {
+        if (!this.quote) { return 0; }
+        return this.quote.details.reduce((sum, detail) => sum + detail.lineTotal, 0);
+    }
+
     downloadPdf(): void {
         if (this.quote) { generateQuotePdf(this.quote); }
     }
