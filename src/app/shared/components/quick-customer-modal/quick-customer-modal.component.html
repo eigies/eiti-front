@@ -1,0 +1,28 @@
+<div class="modal-backdrop" (click)="cancel.emit()">
+  <div class="modal" (click)="$event.stopPropagation()" [formGroup]="form">
+    <h3>Crear cliente</h3>
+    <p class="hint">Este presupuesto era para un cliente sin cuenta cargada. Completa los datos para poder convertirlo a venta.</p>
+
+    <label class="field">
+      <span class="field__label">Nombre</span>
+      <input class="control" type="text" formControlName="firstName" [class.is-invalid]="isInvalid('firstName')">
+    </label>
+
+    <label class="field">
+      <span class="field__label">Apellido</span>
+      <input class="control" type="text" formControlName="lastName">
+    </label>
+
+    <label class="field">
+      <span class="field__label">Telefono</span>
+      <input class="control" type="text" formControlName="phone">
+    </label>
+
+    <div class="modal__actions">
+      <button type="button" class="btn btn--ghost" (click)="cancel.emit()">Cancelar</button>
+      <button type="button" class="btn" [disabled]="saving" (click)="submit()">
+        {{ saving ? 'Creando...' : 'Crear y seleccionar' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -200,4 +200,13 @@
     (confirm)="onPickerConfirm($event)"
     (cancel)="closeProductModal()">
   </app-product-picker-modal>
+
+  <app-quick-customer-modal
+    *ngIf="showQuickCustomerModal"
+    [initialFirstName]="quickCustomerInitialFirstName"
+    [initialLastName]="quickCustomerInitialLastName"
+    [initialPhone]="quickCustomerInitialPhone"
+    (created)="onQuickCustomerCreated($event)"
+    (cancel)="onQuickCustomerCancelled()">
+  </app-quick-customer-modal>
 </div>

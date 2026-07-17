@@ -12,12 +12,13 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PermissionCodes } from '../../../core/models/permission.models';
 import { ToastService } from '../../../shared/services/toast.service';
 import { BranchResponse } from '../../../core/models/branch.models';
-import { CustomerResponse, CustomerSearchItem } from '../../../core/models/customer.models';
+import { CustomerSearchItem, toCustomerSearchItem } from '../../../core/models/customer.models';
 import { BranchProductStockResponse } from '../../../core/models/stock.models';
 import { CreateCcSaleRequest, CreateSaleDetailRequest } from '../../../core/models/sale.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { ProductPickerModalComponent } from '../../../shared/components/product-picker-modal/product-picker-modal.component';
 import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../../shared/components/product-picker-modal/product-picker-modal.models';
+import { QuickCustomerModalComponent } from '../../../shared/components/quick-customer-modal/quick-customer-modal.component';
 
 interface DraftItem {
   stock: BranchProductStockResponse;
@@ -58,7 +59,7 @@ interface QuotePrefill {
 @Component({
   selector: 'app-sales-cc',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent, ProductPickerModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent, ProductPickerModalComponent, QuickCustomerModalComponent],
   templateUrl: './sales-cc.component.html',
   styleUrls: ['./sales-cc.component.css']
 })
@@ -79,6 +80,11 @@ export class SalesCcComponent implements OnInit {
   quoteConversionLabel = '';
   quoteStockDisclaimer: string[] = [];
   private pendingQuotePrefill: QuotePrefill | null = null;
+
+  showQuickCustomerModal = false;
+  quickCustomerInitialFirstName = '';
+  quickCustomerInitialLastName = '';
+  quickCustomerInitialPhone = '';
 
   productModalOpen = false;
   pickerRows: ProductPickerRow[] = [];
@@ -290,29 +296,33 @@ export class SalesCcComponent implements OnInit {
 
     if (this.pendingQuotePrefill.customerId) {
       this.customerService.getCustomerById(this.pendingQuotePrefill.customerId).subscribe({
-        next: customer => this.selectedCustomer = this.toCustomerSearchItem(customer),
+        next: customer => this.selectedCustomer = toCustomerSearchItem(customer),
         error: () => this.toast.error('No se pudo cargar el cliente del presupuesto')
       });
       return;
     }
 
+    // Presupuesto de un prospecto sin cuenta: en vez de forzar al vendedor a ir primero a
+    // Clientes y volver, se le ofrece crearlo ahi mismo (nombre/telefono precargados) y
+    // queda seleccionado automaticamente para poder convertir sin cortar el flujo.
     this.selectedCustomer = null;
     this.customerQuery = this.pendingQuotePrefill.prospectName ?? '';
+    const [firstName, ...rest] = (this.pendingQuotePrefill.prospectName ?? '').trim().split(/\s+/);
+    this.quickCustomerInitialFirstName = firstName ?? '';
+    this.quickCustomerInitialLastName = rest.join(' ');
+    this.quickCustomerInitialPhone = '';
+    this.showQuickCustomerModal = true;
   }
 
-  private toCustomerSearchItem(customer: CustomerResponse): CustomerSearchItem {
-    return {
-      id: customer.id,
-      name: customer.name,
-      fullName: customer.fullName,
-      email: customer.email,
-      phone: customer.phone,
-      documentType: customer.documentType,
-      documentTypeName: customer.documentTypeName,
-      documentNumber: customer.documentNumber,
-      taxId: customer.taxId,
-      creditBalance: customer.creditBalance
-    };
+  onQuickCustomerCreated(customer: CustomerSearchItem): void {
+    this.selectedCustomer = customer;
+    this.searchResults = [];
+    this.customerQuery = '';
+    this.showQuickCustomerModal = false;
+  }
+
+  onQuickCustomerCancelled(): void {
+    this.showQuickCustomerModal = false;
   }
 
   private buildPickerRows(): void {
