@@ -2793,7 +2793,17 @@ export class CashComponent implements OnInit {
             date: p.date,
             methodLabel: this.paymentMethodLabel(p.idPaymentMethod),
             notes: p.notes,
-            coverage: [{ code: sale.code || 'S/N', amount: p.amount }]
+            coverage: [{ code: sale.code || 'S/N', amount: p.amount }],
+            saleDetailSections: [{
+                code: sale.code || 'S/N',
+                details: sale.details.map(detail => ({
+                    productBrand: detail.productBrand,
+                    productName: detail.productName,
+                    quantity: detail.quantity,
+                    unitPrice: detail.unitPrice,
+                    totalAmount: detail.totalAmount
+                }))
+            }]
         }));
         this.paymentReceiptPdf.generateBatch(receipts, `recibos-${sale.code || sale.id}.pdf`)
             .catch(() => this.toast.error('No se pudieron generar los recibos'));

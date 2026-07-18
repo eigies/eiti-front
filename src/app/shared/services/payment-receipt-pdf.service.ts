@@ -10,6 +10,19 @@ export interface PaymentReceiptCoverage {
   amount: number;
 }
 
+export interface PaymentReceiptSaleDetail {
+  productBrand: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+}
+
+export interface PaymentReceiptSaleDetailSection {
+  code: string;
+  details: PaymentReceiptSaleDetail[];
+}
+
 export interface PaymentReceiptData {
   kind: 'cobro' | 'pago';
   partyLabel: 'Cliente' | 'Proveedor';
@@ -21,6 +34,8 @@ export interface PaymentReceiptData {
   notes?: string | null;
   chequeNumero?: string | null;
   coverage: PaymentReceiptCoverage[];
+  saleDetails?: PaymentReceiptSaleDetail[];
+  saleDetailSections?: PaymentReceiptSaleDetailSection[];
   creditAdded?: number | null;
 }
 
@@ -107,6 +122,89 @@ export class PaymentReceiptPdfService {
         y += 7;
       }
       y += 6;
+    }
+
+    const saleDetailSections: PaymentReceiptSaleDetailSection[] = (data.saleDetailSections?.length ?? 0) > 0
+      ? data.saleDetailSections ?? []
+      : (data.saleDetails?.length ?? 0) > 0
+        ? [{ code: data.coverage[0]?.code ?? 'Venta', details: data.saleDetails ?? [] }]
+        : [];
+
+    if (saleDetailSections.length > 0) {
+      const signatureTop = pageHeight - 50;
+      const ensureSpace = (height: number): void => {
+        if (y + height <= signatureTop) { return; }
+        doc.addPage();
+        this.brandingService.drawWatermark(doc, branding, pageWidth, pageHeight);
+        y = this.brandingService.drawHeader(doc, branding, {
+          title: `${title} / Continuacion`,
+          subtitle: `Fecha: ${formatDate(data.date)}`,
+          margin,
+          y: margin,
+          pageWidth
+        }) + 6;
+      };
+
+      const columns = {
+        productX: margin,
+        productW: contentWidth - 74,
+        quantityX: margin + contentWidth - 72,
+        quantityW: 18,
+        unitX: margin + contentWidth - 54,
+        unitW: 27,
+        totalX: margin + contentWidth - 27,
+        totalW: 27
+      };
+
+      ensureSpace(22);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(25, 25, 25);
+      doc.text('Detalle de venta', margin, y);
+      y += 6;
+
+      const drawDetailsHeader = (): void => {
+        doc.setDrawColor(205, 205, 205);
+        doc.setFillColor(246, 246, 246);
+        doc.rect(margin, y, contentWidth, 7, 'FD');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(70, 70, 70);
+        doc.text('Producto', columns.productX + 2, y + 4.7);
+        doc.text('Cant.', columns.quantityX + columns.quantityW - 2, y + 4.7, { align: 'right' });
+        doc.text('Unitario', columns.unitX + columns.unitW - 2, y + 4.7, { align: 'right' });
+        doc.text('Subtotal', columns.totalX + columns.totalW - 2, y + 4.7, { align: 'right' });
+        y += 7;
+      };
+
+      for (const section of saleDetailSections) {
+        ensureSpace(18);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(45, 45, 45);
+        doc.text(section.code, margin, y);
+        y += 5;
+        drawDetailsHeader();
+
+        for (const detail of section.details) {
+          ensureSpace(8);
+          const product = `${detail.productBrand} / ${detail.productName}`;
+          doc.setDrawColor(205, 205, 205);
+          doc.rect(margin, y, contentWidth, 8);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.2);
+          doc.setTextColor(25, 25, 25);
+          doc.text(product, columns.productX + 2, y + 5.2, { maxWidth: columns.productW - 4 });
+          doc.text(`${detail.quantity}`, columns.quantityX + columns.quantityW - 2, y + 5.2, { align: 'right' });
+          doc.text(formatCurrency(detail.unitPrice), columns.unitX + columns.unitW - 2, y + 5.2, { align: 'right' });
+          doc.text(formatCurrency(detail.totalAmount), columns.totalX + columns.totalW - 2, y + 5.2, { align: 'right' });
+          y += 8;
+        }
+
+        y += 4;
+      }
+
+      y += 2;
     }
 
     if (data.creditAdded && data.creditAdded > 0) {

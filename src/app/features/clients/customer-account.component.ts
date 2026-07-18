@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { formatMoney } from '../../shared/utils/money.util';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +11,7 @@ import { SaleService } from '../../core/services/sale.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
+import { SALE_PAYMENT_METHODS } from '../../core/models/sale-payment.models';
 import {
   CustomerAccount,
   CustomerAccountMovement,
@@ -317,7 +319,62 @@ export class CustomerAccountComponent implements OnInit {
       coverage: (m.imputaciones ?? []).map(item => ({ code: item.code, amount: item.amount })),
       creditAdded: m.sobrante
     };
-    this.paymentReceiptPdf.generate(data).catch(() => this.toast.error('No se pudo generar el recibo'));
+
+    const imputaciones = m.imputaciones ?? [];
+    if (imputaciones.length === 0) {
+      this.paymentReceiptPdf.generate(data).catch(() => this.toast.error('No se pudo generar el recibo'));
+      return;
+    }
+
+    forkJoin(imputaciones.map(item => this.saleService.getSaleById(item.saleId))).subscribe({
+      next: sales => {
+        data.saleDetailSections = sales.map((sale, index) => ({
+          code: sale.code || imputaciones[index]?.code || 'S/N',
+          details: sale.details.map(detail => ({
+            productBrand: detail.productBrand,
+            productName: detail.productName,
+            quantity: detail.quantity,
+            unitPrice: detail.unitPrice,
+            totalAmount: detail.totalAmount
+          }))
+        }));
+        this.paymentReceiptPdf.generate(data).catch(() => this.toast.error('No se pudo generar el recibo'));
+      },
+      error: () => this.toast.error('No se pudo cargar el detalle de las ventas para el recibo')
+    });
+  }
+
+  // Descarga TODOS los recibos de pagos activos de la venta abierta en el modal de detalle.
+  downloadAllSaleReceipts(): void {
+    const sale = this.detalleModalSale;
+    if (!sale) { return; }
+    const activePayments = (sale.ccPayments ?? []).filter(p => p.status === 1);
+    if (activePayments.length === 0) {
+      this.toast.error('No hay pagos activos para generar recibos');
+      return;
+    }
+    const receipts: PaymentReceiptData[] = activePayments.map(p => ({
+      kind: 'cobro',
+      partyLabel: 'Cliente',
+      partyName: sale.customerFullName || 'Sin cliente',
+      amount: p.amount,
+      date: p.date,
+      methodLabel: SALE_PAYMENT_METHODS.find(m => m.id === p.idPaymentMethod)?.label ?? 'Otro',
+      notes: p.notes,
+      coverage: [{ code: sale.code || 'S/N', amount: p.amount }],
+      saleDetailSections: [{
+        code: sale.code || 'S/N',
+        details: sale.details.map(detail => ({
+          productBrand: detail.productBrand,
+          productName: detail.productName,
+          quantity: detail.quantity,
+          unitPrice: detail.unitPrice,
+          totalAmount: detail.totalAmount
+        }))
+      }]
+    }));
+    this.paymentReceiptPdf.generateBatch(receipts, `recibos-${sale.code || sale.id}.pdf`)
+      .catch(() => this.toast.error('No se pudieron generar los recibos'));
   }
 
   ventaLabel(i: CustomerPaymentImputacion): string {

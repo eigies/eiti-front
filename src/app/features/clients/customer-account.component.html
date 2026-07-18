@@ -242,20 +242,22 @@
                   <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
                   <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>
                   <td class="col-remove">
-                    <button
-                      type="button"
-                      class="btn-receipt"
-                      (click)="$event.stopPropagation(); downloadReceipt(p)">
-                      Recibo
-                    </button>
-                    <button
-                      *ngIf="isActiveMovement(p) && auth.hasPermission(permissionCodes.salesPay)"
-                      class="btn-cancel-payment"
-                      type="button"
-                      [disabled]="cancellingPaymentId === p.id"
-                      (click)="$event.stopPropagation(); cancelPayment(p)">
-                      {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
-                    </button>
+                    <div class="row-actions">
+                      <button
+                        type="button"
+                        class="btn-receipt"
+                        (click)="$event.stopPropagation(); downloadReceipt(p)">
+                        Recibo
+                      </button>
+                      <button
+                        *ngIf="isActiveMovement(p) && auth.hasPermission(permissionCodes.salesPay)"
+                        class="btn-cancel-payment"
+                        type="button"
+                        [disabled]="cancellingPaymentId === p.id"
+                        (click)="$event.stopPropagation(); cancelPayment(p)">
+                        {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 <tr class="imputaciones-row" *ngIf="isExpanded(p)">
@@ -308,6 +310,7 @@
       <div class="modal-head__actions">
         <button class="detalle-remito-btn" type="button" *ngIf="detalleModalSale && auth.hasPermission(permissionCodes.salesRemitoAmounts)" (click)="descargarComprobante()">↓ Comprobante con precios</button>
         <button class="detalle-remito-btn" type="button" *ngIf="detalleModalSale" (click)="descargarRemitoTraslado()">↓ Remito sin precios</button>
+        <button class="detalle-remito-btn" type="button" *ngIf="detalleModalSale && (detalleModalSale.ccPayments?.length ?? 0) > 0" (click)="downloadAllSaleReceipts()">↓ Recibos de pago</button>
         <button class="detalle-anular-btn" type="button" *ngIf="canCancelDetalleSale" [disabled]="cancelingSale" (click)="openCancelModal()">Anular venta</button>
         <button class="modal-close" type="button" (click)="closeDetalle()">×</button>
       </div>

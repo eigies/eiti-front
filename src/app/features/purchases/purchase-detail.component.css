@@ -420,8 +420,12 @@
 }
 
 .col-remove {
-  display: flex;
-  justify-content: flex-end;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-actions {
+  display: inline-flex;
   align-items: center;
   gap: .5rem;
 }

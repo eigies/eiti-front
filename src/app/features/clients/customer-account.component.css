@@ -420,10 +420,16 @@
 }
 
 .col-remove {
-  display: flex;
-  justify-content: flex-end;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-actions {
+  display: inline-flex;
   align-items: center;
-  gap: .5rem;
+  justify-content: flex-end;
+  gap: .34rem;
+  max-width: 100%;
 }
 
 .empty-payments {
@@ -521,12 +527,13 @@
 }
 
 .btn-cancel-payment {
-  padding: .3rem .65rem;
+  min-height: 1.85rem;
+  padding: .28rem .48rem;
   border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border-2));
   border-radius: 8px;
   background: color-mix(in srgb, var(--danger) 5%, transparent);
   color: color-mix(in srgb, var(--danger) 82%, var(--text-dim));
-  font-size: .61rem;
+  font-size: .58rem;
   opacity: .8;
   transition: opacity .15s, background .15s;
   white-space: nowrap;
@@ -543,13 +550,14 @@
 }
 
 .btn-receipt {
-  padding: .3rem .65rem;
+  min-height: 1.85rem;
+  padding: .28rem .48rem;
   border: 1px solid color-mix(in srgb, var(--amber) 36%, var(--border-2));
   border-radius: 8px;
   background: color-mix(in srgb, var(--amber) 8%, transparent);
   color: color-mix(in srgb, var(--amber) 80%, var(--text) 20%);
   font-family: 'DM Mono', monospace;
-  font-size: .61rem;
+  font-size: .58rem;
   letter-spacing: .04em;
   cursor: pointer;
   white-space: nowrap;
@@ -895,18 +903,25 @@
 
 .ledger-card .table-shell {
   flex: 1 1 auto;
+  overflow-x: hidden;
 }
 
 .ledger-table {
-  min-width: 600px;
+  min-width: 0;
   table-layout: fixed;
 }
 
-.ledger-table th:nth-child(1) { width: 22%; }
-.ledger-table th:nth-child(2) { width: 30%; }
+.ledger-table th:nth-child(1) { width: 20%; }
+.ledger-table th:nth-child(2) { width: 26%; }
 .ledger-table th:nth-child(3) { width: 18%; }
-.ledger-table th:nth-child(4) { width: 17%; }
-.ledger-table th:nth-child(5) { width: 13%; }
+.ledger-table th:nth-child(4) { width: 16%; }
+.ledger-table th:nth-child(5) { width: 20%; }
+
+.ledger-table--payments th:nth-child(1) { width: 20%; }
+.ledger-table--payments th:nth-child(2) { width: 25%; }
+.ledger-table--payments th:nth-child(3) { width: 19%; }
+.ledger-table--payments th:nth-child(4) { width: 15%; }
+.ledger-table--payments th:nth-child(5) { width: 21%; }
 
 .movement-code,
 .movement-date {
@@ -1199,7 +1214,7 @@
   }
 
   .ledger-table {
-    min-width: 560px;
+    min-width: 0;
   }
 
   .cell-arrow span {
@@ -1337,6 +1352,12 @@
   flex-shrink: 0;
 }
 
+.modal-card--detalle {
+  width: min(calc(100vw - 2rem), 900px);
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+}
+
 .modal-head {
   display: flex;
   align-items: flex-start;
@@ -1350,6 +1371,7 @@
 .modal-head__copy {
   display: grid;
   gap: .25rem;
+  min-width: 0;
 }
 
 .modal-head .eyebrow {
@@ -1542,12 +1564,15 @@
 .modal-head__actions {
   display: flex;
   align-items: center;
-  gap: .5rem;
-  flex-shrink: 0;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: .42rem;
 }
 
 .detalle-remito-btn {
-  padding: .4rem .7rem;
+  min-height: 2rem;
+  padding: .38rem .62rem;
   border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border-2));
   border-radius: 8px;
   color: var(--amber);
@@ -1567,7 +1592,8 @@
 }
 
 .detalle-anular-btn {
-  padding: .4rem .7rem;
+  min-height: 2rem;
+  padding: .38rem .62rem;
   border: 1px solid color-mix(in srgb, var(--danger, #d9534f) 40%, var(--border-2));
   border-radius: 8px;
   color: var(--danger, #d9534f);
@@ -1589,6 +1615,28 @@
 .detalle-anular-btn:disabled {
   opacity: .6;
   cursor: default;
+}
+
+@media (max-width: 840px) {
+  .modal-card--detalle {
+    width: min(calc(100vw - 1rem), 760px);
+    max-height: calc(100vh - 1rem);
+  }
+
+  .modal-card--detalle .modal-head {
+    flex-direction: column;
+    gap: .85rem;
+  }
+
+  .modal-card--detalle .modal-head__actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .modal-card--detalle .modal-close {
+    margin-left: auto;
+  }
 }
 
 /* Modal de anulación: confirmación financiera, no formulario genérico */
