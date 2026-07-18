@@ -16,6 +16,7 @@ describe('CashComponent payroll movement labels', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
       { hasPermission: () => true } as never
     );
   }

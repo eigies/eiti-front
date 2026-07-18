@@ -14,6 +14,9 @@ describe('users UI models', () => {
     {
       id: 'u1',
       username: 'testa',
+      firstName: 'Ana',
+      lastName: 'Tester',
+      fullName: 'Ana Tester',
       email: 'alpha@example.com',
       isActive: true,
       employeeName: 'Ana Tester',
@@ -26,6 +29,9 @@ describe('users UI models', () => {
     {
       id: 'u2',
       username: 'testb',
+      firstName: 'Beto',
+      lastName: 'Tester',
+      fullName: 'Beto Tester',
       email: 'cashier@example.com',
       isActive: false,
       employeeName: 'Beto Tester',

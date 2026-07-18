@@ -3,9 +3,18 @@ import { formatMoney } from '../../shared/utils/money.util';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PurchaseService } from '../../core/services/purchase.service';
-import { PurchaseDetailResponse, PurchaseStatus } from '../../core/models/purchase.models';
+import { PurchaseDetailResponse, PurchasePaymentMethod, PurchaseStatus } from '../../core/models/purchase.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
+
+const PURCHASE_PAYMENT_METHOD_LABELS: Record<PurchasePaymentMethod, string> = {
+  [PurchasePaymentMethod.Cash]: 'Efectivo',
+  [PurchasePaymentMethod.BankTransfer]: 'Transferencia',
+  [PurchasePaymentMethod.Check]: 'Cheque',
+  [PurchasePaymentMethod.Other]: 'Otro',
+  [PurchasePaymentMethod.SupplierCredit]: 'Saldo a favor'
+};
 
 @Component({
   selector: 'app-purchase-detail',
@@ -27,6 +36,7 @@ export class PurchaseDetailComponent implements OnInit {
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly paymentReceiptPdf: PaymentReceiptPdfService,
     private readonly cdr: ChangeDetectorRef,
     private readonly confirmation: ConfirmationService
   ) {}
@@ -46,6 +56,31 @@ export class PurchaseDetailComponent implements OnInit {
 
   get purchaseId(): string {
     return this.purchase?.id ?? '';
+  }
+
+  // Descarga TODOS los recibos de pagos activos imputados a esta compra en un solo PDF.
+  downloadAllReceipts(): void {
+    const purchase = this.purchase;
+    if (!purchase) { return; }
+    const activePayments = purchase.payments.filter(p => p.status === 1);
+    if (activePayments.length === 0) {
+      this.toast.error('No hay pagos activos para generar recibos');
+      return;
+    }
+    const receipts: PaymentReceiptData[] = activePayments.map(p => ({
+      kind: 'pago',
+      partyLabel: 'Proveedor',
+      partyName: purchase.supplierName ?? '-',
+      amount: p.amount,
+      date: p.date,
+      methodLabel: PURCHASE_PAYMENT_METHOD_LABELS[p.method] ?? 'Otro',
+      reference: p.reference,
+      notes: p.notes,
+      chequeNumero: p.chequeNumero,
+      coverage: [{ code: purchase.invoiceNumber ? `${purchase.code} (Fact. ${purchase.invoiceNumber})` : purchase.code, amount: p.amount }]
+    }));
+    this.paymentReceiptPdf.generateBatch(receipts, `recibos-${purchase.code}.pdf`)
+      .catch(() => this.toast.error('No se pudieron generar los recibos'));
   }
 
   backToAccount(): void {

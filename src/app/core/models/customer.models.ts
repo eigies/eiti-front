@@ -72,3 +72,18 @@ export interface CustomerSearchItem {
     taxId?: string | null;
     creditBalance: number;
 }
+
+export function toCustomerSearchItem(customer: CustomerResponse): CustomerSearchItem {
+    return {
+        id: customer.id,
+        name: customer.name,
+        fullName: customer.fullName,
+        email: customer.email,
+        phone: customer.phone,
+        documentType: customer.documentType,
+        documentTypeName: customer.documentTypeName,
+        documentNumber: customer.documentNumber,
+        taxId: customer.taxId,
+        creditBalance: customer.creditBalance
+    };
+}

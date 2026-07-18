@@ -1,0 +1,72 @@
+.quotes-page {
+    min-height: calc(100vh - 64px);
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem 1.75rem 2.75rem;
+    background:
+        radial-gradient(circle at top right, var(--page-radial), transparent 32%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+}
+
+.quotes-page__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 1.35rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    box-shadow: 0 16px 34px -28px rgba(0, 0, 0, .22), inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+}
+
+.quotes-page__header h2 {
+    margin: 0;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(1.35rem, 3vw, 2rem);
+    letter-spacing: .02em;
+}
+
+.quotes-page__header button {
+    border: 1px solid color-mix(in srgb, var(--amber) 30%, var(--border-2));
+    border-radius: 8px;
+    padding: .8rem 1rem;
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
+    color: color-mix(in srgb, var(--amber) 76%, var(--text) 24%);
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform .15s ease, background .2s ease, border-color .2s ease;
+}
+
+.quotes-page__header button:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--amber) 15%, transparent);
+    border-color: color-mix(in srgb, var(--amber) 42%, var(--border-2));
+}
+
+app-quote-form,
+app-quotes-list {
+    display: block;
+    margin-top: 1rem;
+}
+
+@media (max-width: 720px) {
+    .quotes-page {
+        padding: 1rem .85rem 1.5rem;
+    }
+
+    .quotes-page__header {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .quotes-page__header button {
+        width: 100%;
+    }
+}

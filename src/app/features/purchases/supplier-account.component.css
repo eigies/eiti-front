@@ -233,18 +233,45 @@
 
 .ledger-card .table-shell {
   flex: 1 1 auto;
+  overflow-x: hidden;
 }
 
 .ledger-table {
-  min-width: 600px;
+  min-width: 0;
   table-layout: fixed;
 }
 
-.ledger-table th:nth-child(1) { width: 22%; }
-.ledger-table th:nth-child(2) { width: 30%; }
+.ledger-table th:nth-child(1) { width: 20%; }
+.ledger-table th:nth-child(2) { width: 26%; }
 .ledger-table th:nth-child(3) { width: 18%; }
-.ledger-table th:nth-child(4) { width: 17%; }
-.ledger-table th:nth-child(5) { width: 13%; }
+.ledger-table th:nth-child(4) { width: 16%; }
+.ledger-table th:nth-child(5) { width: 20%; }
+
+.ledger-table--payments th:nth-child(1) { width: 20%; }
+.ledger-table--payments th:nth-child(2) { width: 25%; }
+.ledger-table--payments th:nth-child(3) { width: 19%; }
+.ledger-table--payments th:nth-child(4) { width: 15%; }
+.ledger-table--payments th:nth-child(5) { width: 21%; }
+
+.ledger-table .col-remove {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ledger-table .row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .34rem;
+  max-width: 100%;
+}
+
+.ledger-table .btn-receipt,
+.ledger-table .btn-cancel-payment {
+  min-height: 1.85rem;
+  padding: .28rem .48rem;
+  font-size: .58rem;
+}
 
 .movement-code,
 .movement-date {
@@ -537,7 +564,7 @@
   }
 
   .ledger-table {
-    min-width: 560px;
+    min-width: 0;
   }
 
   .cell-arrow span {

@@ -133,6 +133,13 @@ export const routes: Routes = [
             import('./features/banks/banks.component').then(m => m.BanksComponent)
     },
     {
+        path: 'quotes',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.quotesAccess },
+        loadComponent: () =>
+            import('./features/quotes/quotes.component').then(m => m.QuotesComponent)
+    },
+    {
         path: 'payroll/deduction-concepts',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.payrollManage },
