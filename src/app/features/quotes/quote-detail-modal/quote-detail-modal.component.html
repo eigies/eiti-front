@@ -1,0 +1,85 @@
+<!-- src/app/features/quotes/quote-detail-modal/quote-detail-modal.component.html -->
+<div class="modal-backdrop" *ngIf="quoteId" (click)="close.emit()"></div>
+<div class="modal-panel" *ngIf="quoteId">
+  <div class="modal-card modal-card--detalle" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-head__copy">
+        <p class="eyebrow">Detalle de presupuesto</p>
+        <h2 *ngIf="quote">{{ quote.code || 'S/N' }} · {{ quote.customerFullName ?? quote.prospectName }}</h2>
+        <h2 *ngIf="!quote && loading">Cargando...</h2>
+      </div>
+      <div class="modal-head__actions">
+        <button class="detalle-remito-btn" type="button" *ngIf="quote" (click)="downloadPdf()">↓ Descargar PDF</button>
+        <button class="detalle-remito-btn" type="button" *ngIf="canConvert" (click)="requestConvert()">Convertir a venta</button>
+        <button class="modal-close" type="button" (click)="close.emit()">×</button>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="hint">Cargando...</div>
+
+    <ng-container *ngIf="!loading && quote as q">
+      <div class="detalle-header">
+        <div class="detalle-header__row">
+          <span class="detalle-header__code">{{ q.code || 'S/N' }}</span>
+          <span class="badge" [ngClass]="statusBadgeClass">{{ statusLabel }}</span>
+        </div>
+        <div class="detalle-header__meta">
+          <span>{{ q.customerFullName ?? q.prospectName ?? 'Sin cliente' }}</span>
+          <span>Sucursal: {{ q.branchName }}</span>
+          <span>Valido hasta {{ q.expiresAt | date: 'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+
+      <div class="detalle-section detalle-section--warning" *ngIf="stockWarnings.length > 0">
+        <div class="detalle-section__title detalle-section__title--warning">Atencion: stock insuficiente</div>
+        <ul class="stock-warning-list">
+          <li *ngFor="let warning of stockWarnings">
+            {{ warning.productLabel }} — pediste {{ warning.quoted }}, hay {{ warning.available }} disponible{{ warning.available === 1 ? '' : 's' }}
+            <span *ngIf="warning.available === 0">(sin stock)</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="detalle-section">
+        <div class="detalle-section__title">Productos</div>
+        <table class="detalle-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-right">Cant.</th>
+              <th class="text-right">Unitario</th>
+              <th class="text-right" *ngIf="hasDiscount">Desc.</th>
+              <th class="text-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let detail of q.details" [class.row--stock-issue]="hasStockIssue(detail.productId)">
+              <td>{{ detail.productBrand }} / {{ detail.productName }}</td>
+              <td class="text-right">{{ detail.quantity }}</td>
+              <td class="text-right">${{ detail.unitPrice | number: '1.2-2' }}</td>
+              <td class="text-right" *ngIf="hasDiscount">
+                <span *ngIf="detail.discountPercent > 0">{{ detail.discountPercent }}%</span>
+              </td>
+              <td class="text-right">${{ detail.lineTotal | number: '1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detalle-totals">
+        <div class="detalle-totals__row" *ngIf="q.generalDiscountPercent > 0">
+          <span>Subtotal</span>
+          <span>${{ subtotal | number: '1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--discount" *ngIf="q.generalDiscountPercent > 0">
+          <span>Descuento general ({{ q.generalDiscountPercent }}%)</span>
+          <span>-${{ (subtotal - q.totalAmount) | number: '1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row detalle-totals__row--total">
+          <span>Total</span>
+          <span>${{ q.totalAmount | number: '1.2-2' }}</span>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

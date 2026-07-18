@@ -1,0 +1,73 @@
+<!-- src/app/features/quotes/quote-form/quote-form.component.html -->
+<div class="quote-form">
+  <label class="quote-form__field">Sucursal
+    <app-searchable-select [(ngModel)]="selectedBranchId" (ngModelChange)="onBranchChange()"
+      [options]="branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal...">
+    </app-searchable-select>
+  </label>
+
+  <label class="quote-form__field quote-form__field--checkbox">
+    <input type="checkbox" [(ngModel)]="isProspectMode" [ngModelOptions]="{ standalone: true }" />
+    <span>Cliente sin cargar <small>(prospecto sin cuenta en el sistema)</small></span>
+  </label>
+
+  <ng-container *ngIf="customerMode === 'existing'">
+    <div *ngIf="!selectedCustomer" class="quote-form__customer-search">
+      <input type="text" [(ngModel)]="customerQuery" placeholder="Buscar cliente" (keyup.enter)="searchCustomers()">
+      <button type="button" (click)="searchCustomers()">Buscar</button>
+      <ul *ngIf="searchResults.length > 0" class="quote-form__customer-results">
+        <li *ngFor="let customer of searchResults" (click)="selectCustomer(customer)">{{ customer.fullName }}</li>
+      </ul>
+    </div>
+    <div *ngIf="selectedCustomer" class="quote-form__customer-selected">
+      <span>{{ selectedCustomer.fullName }}</span>
+      <button type="button" (click)="clearCustomer()">Cambiar</button>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="customerMode === 'prospect'">
+    <label class="quote-form__field">Nombre <input type="text" [(ngModel)]="prospectName"></label>
+    <label class="quote-form__field">Contacto <input type="text" [(ngModel)]="prospectContact"></label>
+  </ng-container>
+
+  <label class="quote-form__field">Valido hasta <input type="date" [(ngModel)]="expiresAt"></label>
+
+  <button type="button" (click)="openProductModal()">Agregar productos</button>
+
+  <table class="quote-form__table" *ngIf="draftItems.length > 0">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cant.</th>
+        <th>Precio unit.</th>
+        <th>Desc. %</th>
+        <th>Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of draftItems">
+        <td>{{ item.stock.brand }} {{ item.stock.name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td><input type="number" [value]="item.unitPrice" (change)="setItemPrice(item.stock.productId, $any($event.target).valueAsNumber)"></td>
+        <td><input type="number" [value]="item.discountPercent" (change)="setItemDiscount(item.stock.productId, $any($event.target).value)"></td>
+        <td>{{ item.total | number: '1.2-2' }}</td>
+        <td><button type="button" (click)="removeItem(item.stock.productId)">Quitar</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <label class="quote-form__field">Descuento general (%)
+    <input type="number" [value]="generalDiscountPercent" (change)="setGeneralDiscount($any($event.target).value)">
+  </label>
+  <div class="quote-form__total">Total: {{ total | number: '1.2-2' }}</div>
+
+  <button type="button" [disabled]="!canSubmit" (click)="submit()">Crear presupuesto</button>
+
+  <app-product-picker-modal
+    *ngIf="productModalOpen"
+    [rows]="pickerRows"
+    (confirm)="onPickerConfirm($event)"
+    (cancel)="closeProductModal()">
+  </app-product-picker-modal>
+</div>

@@ -1,0 +1,21 @@
+<!-- src/app/features/quotes/quotes.component.html -->
+<div class="quotes-page">
+  <div class="quotes-page__header">
+    <h2>Presupuestos</h2>
+    <button type="button" (click)="showForm = !showForm">{{ showForm ? 'Cerrar' : 'Nuevo presupuesto' }}</button>
+  </div>
+
+  <app-quote-form *ngIf="showForm" (created)="onCreated()"></app-quote-form>
+
+  <app-quotes-list
+    (openDetail)="openDetail($event)"
+    (convertRequested)="convertQuote($event)">
+  </app-quotes-list>
+
+  <app-quote-detail-modal
+    *ngIf="detailQuoteId"
+    [quoteId]="detailQuoteId"
+    (close)="closeDetail()"
+    (convert)="convertQuote($event)">
+  </app-quote-detail-modal>
+</div>

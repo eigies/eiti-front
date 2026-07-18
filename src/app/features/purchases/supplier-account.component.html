@@ -193,14 +193,22 @@
                   <td class="col-num cell-amount">${{ formatCurrency(p.amount) }}</td>
                   <td><span class="chip" [ngClass]="statusChipClass(p)">{{ statusLabel(p) }}</span></td>
                   <td class="col-remove">
-                    <button
-                      *ngIf="isActiveMovement(p)"
-                      class="btn-cancel-payment"
-                      type="button"
-                      [disabled]="cancellingPaymentId === p.id"
-                      (click)="$event.stopPropagation(); cancelPayment(p)">
-                      {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
-                    </button>
+                    <div class="row-actions">
+                      <button
+                        type="button"
+                        class="btn-receipt"
+                        (click)="$event.stopPropagation(); downloadReceipt(p)">
+                        Recibo
+                      </button>
+                      <button
+                        *ngIf="isActiveMovement(p)"
+                        class="btn-cancel-payment"
+                        type="button"
+                        [disabled]="cancellingPaymentId === p.id"
+                        (click)="$event.stopPropagation(); cancelPayment(p)">
+                        {{ cancellingPaymentId === p.id ? '...' : 'Anular' }}
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 <tr class="imputaciones-row" *ngIf="isExpanded(p)">

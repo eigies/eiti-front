@@ -27,6 +27,13 @@
           {{ statusLabel(purchase.status) }}
         </span>
         <button
+          class="btn-receipt"
+          type="button"
+          *ngIf="purchase.payments.length > 0"
+          (click)="downloadAllReceipts()">
+          Descargar recibos
+        </button>
+        <button
           class="btn-danger"
           type="button"
           *ngIf="purchase.status === PurchaseStatus.Active"
