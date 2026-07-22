@@ -50,6 +50,12 @@ export class QuoteFormComponent implements OnInit {
     generalDiscountPercent = 0;
     expiresAt = this.defaultExpiresAt();
 
+    // Los precios se cargan NETOS (sin IVA); el sistema suma el IVA sobre el neto.
+    // includesVat = el presupuesto cobra IVA (neto + IVA) o no (solo neto). vatRate: 21 | 10.5 | 0 (exento).
+    readonly vatRateOptions: readonly number[] = [21, 10.5, 0];
+    vatRate = 21;
+    includesVat = true;
+
     draftItems: QuoteDraftItem[] = [];
     stockItems: BranchProductStockResponse[] = [];
     stockByProductId = new Map<string, BranchProductStockResponse>();
@@ -89,12 +95,24 @@ export class QuoteFormComponent implements OnInit {
         return date.toISOString().slice(0, 10);
     }
 
+    // Subtotal NETO (los precios cargados son netos), ya con el descuento general aplicado.
     get total(): number {
         const subtotal = this.draftItems.reduce((sum, item) => sum + item.total, 0);
         if (this.generalDiscountPercent > 0) {
             return Math.round(subtotal * (1 - this.generalDiscountPercent / 100) * 100) / 100;
         }
         return subtotal;
+    }
+
+    // IVA que suma el sistema sobre el neto (0 si el presupuesto va sin IVA o es exento).
+    get vatAmount(): number {
+        if (!this.includesVat || this.vatRate <= 0) { return 0; }
+        return Math.round(this.total * this.vatRate / 100 * 100) / 100;
+    }
+
+    // Total que paga el cliente = neto + IVA.
+    get grandTotal(): number {
+        return Math.round((this.total + this.vatAmount) * 100) / 100;
     }
 
     get canSubmit(): boolean {
@@ -235,6 +253,15 @@ export class QuoteFormComponent implements OnInit {
         this.recalcItem(item);
     }
 
+    setVatRate(rawValue: string): void {
+        const parsed = Number(rawValue);
+        this.vatRate = this.vatRateOptions.includes(parsed) ? parsed : 21;
+    }
+
+    setIncludesVat(checked: boolean): void {
+        this.includesVat = checked;
+    }
+
     setGeneralDiscount(rawValue: string): void {
         const parsed = Number(rawValue);
         this.generalDiscountPercent = Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : 0;
@@ -260,7 +287,9 @@ export class QuoteFormComponent implements OnInit {
                 discountPercent: item.discountPercent || undefined
             })),
             generalDiscountPercent: this.generalDiscountPercent || 0,
-            expiresAt: new Date(this.expiresAt).toISOString()
+            expiresAt: new Date(this.expiresAt).toISOString(),
+            vatRate: this.vatRate,
+            includesVat: this.includesVat
         };
 
         this.quoteService.createQuote(request).subscribe({
@@ -289,5 +318,7 @@ export class QuoteFormComponent implements OnInit {
         this.draftItems = [];
         this.generalDiscountPercent = 0;
         this.expiresAt = this.defaultExpiresAt();
+        this.vatRate = 21;
+        this.includesVat = true;
     }
 }

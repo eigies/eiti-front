@@ -75,9 +75,17 @@
           <span>Descuento general ({{ q.generalDiscountPercent }}%)</span>
           <span>-${{ (subtotal - q.totalAmount) | number: '1.2-2' }}</span>
         </div>
+        <div class="detalle-totals__row" *ngIf="q.includesVat && q.vatRate > 0">
+          <span>Neto</span>
+          <span>${{ q.netAmount | number: '1.2-2' }}</span>
+        </div>
+        <div class="detalle-totals__row" *ngIf="q.includesVat && q.vatRate > 0">
+          <span>IVA {{ q.vatRate | number: '1.0-1' }}%</span>
+          <span>${{ q.vatAmount | number: '1.2-2' }}</span>
+        </div>
         <div class="detalle-totals__row detalle-totals__row--total">
           <span>Total</span>
-          <span>${{ q.totalAmount | number: '1.2-2' }}</span>
+          <span>${{ q.grandTotal | number: '1.2-2' }}</span>
         </div>
       </div>
     </ng-container>

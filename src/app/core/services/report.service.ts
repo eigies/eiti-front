@@ -10,7 +10,9 @@ import {
     SalesReportFilters,
     SalesReportResponse,
     StockMatrixResponse,
-    StockMovementsReportResponse
+    StockMovementsReportResponse,
+    WholesaleByCustomerFilters,
+    WholesaleByCustomerResponse
 } from '../models/report.models';
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +35,16 @@ export class ReportService {
         if (filters.saleType && filters.saleType !== 'all') params.set('saleType', filters.saleType);
         if (filters.branchId) params.set('branchId', filters.branchId);
         return this.http.get<SalesReportResponse>(`${this.base}/sales?${params.toString()}`);
+    }
+
+    wholesaleByCustomer(filters: WholesaleByCustomerFilters): Observable<WholesaleByCustomerResponse> {
+        const params = new URLSearchParams();
+        params.set('dateFrom', filters.dateFrom);
+        params.set('dateTo', filters.dateTo);
+        if (filters.saleType) params.set('saleType', filters.saleType);
+        if (filters.branchId) params.set('branchId', filters.branchId);
+        if (filters.customerId) params.set('customerId', filters.customerId);
+        return this.http.get<WholesaleByCustomerResponse>(`${this.base}/sales/wholesale-by-customer?${params.toString()}`);
     }
 
     customerDebtors(): Observable<CustomerDebtorsResponse> {

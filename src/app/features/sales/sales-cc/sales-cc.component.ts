@@ -53,6 +53,8 @@ interface QuotePrefill {
   customerFullName?: string | null;
   prospectName?: string | null;
   generalDiscountPercent: number;
+  vatRate: number;
+  includesVat: boolean;
   details: QuotePrefillDetail[];
 }
 
@@ -79,6 +81,10 @@ export class SalesCcComponent implements OnInit {
   convertingQuoteId: string | null = null;
   quoteConversionLabel = '';
   quoteStockDisclaimer: string[] = [];
+  // IVA de la conversión: arranca con lo que eligió el presupuesto y el usuario puede cambiarlo.
+  // Los precios del presupuesto son netos; "con IVA" hace que la venta baje al final (neto + IVA).
+  convertVatRate = 0;
+  convertWithVat = false;
   private pendingQuotePrefill: QuotePrefill | null = null;
 
   showQuickCustomerModal = false;
@@ -122,6 +128,8 @@ export class SalesCcComponent implements OnInit {
             ?? this.pendingQuotePrefill.prospectName
             ?? 'presupuesto seleccionado';
           this.generalDiscountPercent = this.pendingQuotePrefill.generalDiscountPercent || 0;
+          this.convertVatRate = this.pendingQuotePrefill.vatRate || 0;
+          this.convertWithVat = this.pendingQuotePrefill.includesVat && this.convertVatRate > 0;
           this.applyQuotePrefill();
         } else if (branches.length > 0) {
           this.selectedBranchId = branches[0].id;
@@ -496,7 +504,7 @@ export class SalesCcComponent implements OnInit {
     };
 
     const request$ = this.convertingQuoteId
-      ? this.quoteService.convertQuote(this.convertingQuoteId, payload)
+      ? this.quoteService.convertQuote(this.convertingQuoteId, { ...payload, withVat: this.convertWithVat })
       : this.saleService.createCcSale(payload);
 
     request$.subscribe({
@@ -524,6 +532,8 @@ export class SalesCcComponent implements OnInit {
         this.pendingQuotePrefill = null;
         this.quoteConversionLabel = '';
         this.quoteStockDisclaimer = [];
+        this.convertWithVat = false;
+        this.convertVatRate = 0;
         this.pickerRows = [];
       },
       error: err => {

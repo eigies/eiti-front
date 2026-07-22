@@ -29,6 +29,11 @@ export class PurchaseDetailComponent implements OnInit {
   loading = true;
   cancelling = false;
 
+  // Anulación: si la compra tiene pagos imputados, hay que elegir qué hacer con la plata.
+  // 1 = saldo a favor del proveedor, 2 = revertir el/los pago(s) (reintegra caja / devuelve cheque).
+  cancelModalOpen = false;
+  cancelRefundMode = 1;
+
   readonly PurchaseStatus = PurchaseStatus;
 
   constructor(
@@ -109,20 +114,32 @@ export class PurchaseDetailComponent implements OnInit {
     }
   }
 
-  async cancelPurchase(): Promise<void> {
+  get hasPaidAmount(): boolean {
+    return (this.purchase?.totalPaid ?? 0) > 0;
+  }
+
+  openCancelModal(): void {
     if (!this.purchase) return;
-    const confirmed = await this.confirmation.confirm({
-      eyebrow: 'Compra a proveedor',
-      title: 'Cancelar compra',
-      message: `Vas a cancelar la compra ${this.purchase.code || 'seleccionada'}.`,
-      detail: 'Esta accion no se puede deshacer.',
-      confirmLabel: 'Cancelar compra',
-      tone: 'danger'
-    });
-    if (!confirmed) return;
+    this.cancelRefundMode = 1;
+    this.cancelModalOpen = true;
+  }
+
+  closeCancelModal(): void {
+    if (this.cancelling) return;
+    this.cancelModalOpen = false;
+  }
+
+  setCancelRefundMode(mode: number): void {
+    this.cancelRefundMode = mode;
+  }
+
+  confirmCancelPurchase(): void {
+    if (!this.purchase || this.cancelling) return;
+    // Sin pagos imputados no se manda refundMode (el backend no lo exige).
+    const refundMode = this.hasPaidAmount ? this.cancelRefundMode : undefined;
     this.cancelling = true;
-    this.purchaseService.cancelPurchase(this.purchaseId).subscribe({
-      next: () => { this.toast.success('Compra cancelada'); this.backToAccount(); },
+    this.purchaseService.cancelPurchase(this.purchaseId, refundMode).subscribe({
+      next: () => { this.cancelModalOpen = false; this.toast.success('Compra cancelada'); this.backToAccount(); },
       error: (err: { error?: { detail?: string } }) => {
         this.toast.error(err?.error?.detail || 'Error al cancelar la compra');
         this.cancelling = false;

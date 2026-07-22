@@ -23,7 +23,7 @@
       <tr *ngFor="let quote of quotes">
         <td>{{ quote.code }}</td>
         <td>{{ quote.customerFullName ?? quote.prospectName }}</td>
-        <td>{{ quote.totalAmount | number: '1.2-2' }}</td>
+        <td>{{ quote.grandTotal | number: '1.2-2' }}</td>
         <td>{{ quote.expiresAt | date: 'dd/MM/yyyy' }}</td>
         <td><span class="chip" [ngClass]="statusClass(quote)">{{ statusLabel(quote) }}</span></td>
         <td class="quotes-list__actions">

@@ -22,6 +22,10 @@ export interface QuoteListItem {
     customerFullName?: string | null;
     prospectName?: string | null;
     totalAmount: number;
+    vatRate: number;
+    includesVat: boolean;
+    vatAmount: number;
+    grandTotal: number;
     expiresAt: string;
     idQuoteStatus: QuoteStatusCode;
     status: string;
@@ -41,6 +45,11 @@ export interface QuoteDetailResponse {
     prospectContact?: string | null;
     generalDiscountPercent: number;
     totalAmount: number;
+    vatRate: number;
+    includesVat: boolean;
+    netAmount: number;
+    vatAmount: number;
+    grandTotal: number;
     expiresAt: string;
     idQuoteStatus: QuoteStatusCode;
     status: string;
@@ -65,6 +74,8 @@ export interface CreateQuoteRequest {
     details: CreateQuoteDetailRequest[];
     generalDiscountPercent: number;
     expiresAt: string;
+    vatRate: number;
+    includesVat: boolean;
 }
 
 export interface ConvertQuoteRequest {
@@ -74,6 +85,7 @@ export interface ConvertQuoteRequest {
     tradeIns?: SaleTradeInRequest[];
     generalDiscountPercent?: number;
     manualOverridePrice?: number | null;
+    withVat: boolean;
 }
 
 export type ConvertQuoteResponse = CreateCcSaleResponse;
@@ -88,6 +100,11 @@ export interface CreateQuoteResponse {
     prospectContact?: string | null;
     generalDiscountPercent: number;
     totalAmount: number;
+    vatRate: number;
+    includesVat: boolean;
+    netAmount: number;
+    vatAmount: number;
+    grandTotal: number;
     expiresAt: string;
     idQuoteStatus: QuoteStatusCode;
     status: string;

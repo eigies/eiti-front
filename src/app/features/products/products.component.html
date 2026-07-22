@@ -28,7 +28,7 @@
     <div class="ph__actions">
       <button class="btn btn--ghost btn--sm" type="button" *ngIf="viewMode !== 'list'" (click)="goToList()">Volver al listado</button>
       <ng-container *ngIf="viewMode === 'list'">
-        <button class="btn btn--ghost btn--sm" type="button" (click)="downloadImportTemplate()">Descargar template</button>
+        <button class="btn btn--ghost btn--sm" type="button" *ngIf="canViewCostPrice" (click)="downloadImportTemplate()">Descargar template</button>
         <button class="btn btn--outline-amber btn--sm" type="button" (click)="openImportPicker()" [disabled]="importInProgress">{{ importInProgress ? 'Importando...' : 'Importar Excel' }}</button>
         <button class="btn btn--primary btn--sm" type="button" (click)="goToCreate()">Nuevo producto</button>
       </ng-container>

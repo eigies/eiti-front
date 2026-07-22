@@ -38,7 +38,7 @@
           type="button"
           *ngIf="purchase.status === PurchaseStatus.Active"
           [disabled]="cancelling"
-          (click)="cancelPurchase()">
+          (click)="openCancelModal()">
           {{ cancelling ? 'Cancelando...' : 'Cancelar compra' }}
         </button>
       </div>
@@ -98,4 +98,65 @@
       </div>
     </div>
   </ng-container>
+</div>
+
+<!-- Modal de anulación: elegir qué hacer con lo ya pagado (mismo patrón que anular venta CC) -->
+<div class="pcancel-backdrop" *ngIf="cancelModalOpen" (click)="closeCancelModal()"></div>
+<div class="pcancel-panel" *ngIf="cancelModalOpen && purchase as p" (click)="closeCancelModal()">
+  <div class="pcancel-card" role="alertdialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <div class="pcancel-head">
+      <div>
+        <p class="pcancel-eyebrow">Acción irreversible</p>
+        <h2>Cancelar compra</h2>
+        <p class="pcancel-meta">Proveedor · {{ p.code || 'Sin número' }}</p>
+      </div>
+      <button class="pcancel-close" type="button" [disabled]="cancelling" aria-label="Cerrar" (click)="closeCancelModal()">×</button>
+    </div>
+
+    <div class="pcancel-body">
+      <div class="pcancel-warning">
+        <strong>La compra quedará cancelada</strong>
+        <p>El stock ingresado se revierte y la compra se elimina de la cuenta del proveedor.</p>
+      </div>
+
+      <ng-container *ngIf="hasPaidAmount">
+        <div class="pcancel-paid">
+          <span>Monto ya pagado</span>
+          <strong>${{ formatCurrency(p.totalPaid) }}</strong>
+        </div>
+
+        <fieldset class="pcancel-options">
+          <legend>¿Qué querés hacer con ese dinero?</legend>
+
+          <label class="pcancel-opt" [class.pcancel-opt--active]="cancelRefundMode === 1">
+            <input type="radio" name="pRefundMode" [checked]="cancelRefundMode === 1" (change)="setCancelRefundMode(1)" />
+            <span class="pcancel-opt__body">
+              <span class="pcancel-opt__title">Dejar saldo a favor <span class="pcancel-tag">Sin mover caja</span></span>
+              <span class="pcancel-opt__desc">Queda como saldo a favor del proveedor y se aplica automáticamente a las compras pendientes.</span>
+            </span>
+          </label>
+
+          <label class="pcancel-opt" [class.pcancel-opt--active]="cancelRefundMode === 2">
+            <input type="radio" name="pRefundMode" [checked]="cancelRefundMode === 2" (change)="setCancelRefundMode(2)" />
+            <span class="pcancel-opt__body">
+              <span class="pcancel-opt__title">Revertir el pago <span class="pcancel-tag pcancel-tag--danger">Reintegra caja</span></span>
+              <span class="pcancel-opt__desc">Deshace el/los pago(s) que financiaron la compra (reintegra caja en efectivo, devuelve cheque a cartera). Requiere caja abierta.</span>
+            </span>
+          </label>
+        </fieldset>
+      </ng-container>
+
+      <div class="pcancel-nopaid" *ngIf="!hasPaidAmount">
+        <strong>Sin pagos asociados</strong>
+        <p>No hay movimientos de dinero que resolver. Sólo se cancela la compra y se revierte el stock.</p>
+      </div>
+    </div>
+
+    <div class="pcancel-actions">
+      <button class="pcancel-btn pcancel-btn--ghost" type="button" [disabled]="cancelling" (click)="closeCancelModal()">Volver</button>
+      <button class="pcancel-btn pcancel-btn--danger" type="button" [disabled]="cancelling" (click)="confirmCancelPurchase()">
+        {{ cancelling ? 'Cancelando…' : 'Confirmar cancelación' }}
+      </button>
+    </div>
+  </div>
 </div>

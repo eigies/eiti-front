@@ -195,6 +195,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/daily-sales-control/daily-sales-control.component').then(m => m.DailySalesControlComponent)
     },
     {
+        path: 'reportes/ventas/mayorista-cliente',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsWholesaleByCustomer },
+        loadComponent: () => import('./features/reports/wholesale-by-customer/wholesale-by-customer.component').then(m => m.WholesaleByCustomerComponent)
+    },
+    {
         path: 'reportes/ventas/modelo',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesModel, tipo: 'product' },

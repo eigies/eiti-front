@@ -190,44 +190,59 @@ export class QuotePdfService {
       drawItemRow(row);
     });
 
-    if (y + 24 > printableBottom) {
+    // Resumen: los precios son NETOS; si el presupuesto lleva IVA se discrimina Neto + IVA + Total.
+    const subtotal = quote.details.reduce((sum, detail) => sum + detail.lineTotal, 0);
+    const showVat = quote.includesVat && quote.vatRate > 0;
+
+    interface SummaryRow { label: string; value: string; total?: boolean; }
+    const summaryRows: SummaryRow[] = [];
+    if (quote.generalDiscountPercent > 0) {
+      summaryRows.push({ label: 'Subtotal', value: formatCurrency(subtotal) });
+      summaryRows.push({
+        label: `Descuento (${quote.generalDiscountPercent}%)`,
+        value: `-${formatCurrency(subtotal - quote.netAmount)}`
+      });
+    }
+    if (showVat) {
+      summaryRows.push({ label: 'Neto', value: formatCurrency(quote.netAmount) });
+      summaryRows.push({ label: `IVA (${quote.vatRate.toLocaleString('es-AR')}%)`, value: formatCurrency(quote.vatAmount) });
+    }
+    summaryRows.push({ label: 'TOTAL', value: formatCurrency(quote.grandTotal), total: true });
+
+    const summaryWidth = 76;
+    const summaryX = pageWidth - margin - summaryWidth;
+    const summaryLineHeight = 6;
+    const summaryPadTop = 5;
+    const summaryPadBottom = 4;
+    const summaryHeight = summaryPadTop + summaryRows.length * summaryLineHeight + summaryPadBottom;
+
+    if (y + summaryHeight + 16 > printableBottom) {
       doc.addPage();
       y = margin;
       drawDocumentHeader(true);
     }
-    const subtotal = quote.details.reduce((sum, detail) => sum + detail.lineTotal, 0);
-    const summaryWidth = 72;
-    const summaryX = pageWidth - margin - summaryWidth;
-    const summaryHeight = quote.generalDiscountPercent > 0 ? 28 : 16;
+
+    const summaryTop = y + 5;
     doc.setFillColor(246, 246, 246);
     doc.setDrawColor(150, 150, 150);
-    doc.roundedRect(summaryX, y + 5, summaryWidth, summaryHeight, 1.2, 1.2, 'FD');
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(45, 45, 45);
-    doc.setFontSize(9.5);
-    doc.text(quote.generalDiscountPercent > 0 ? 'SUBTOTAL' : 'TOTAL', summaryX + 3, y + 11);
-    doc.setFontSize(quote.generalDiscountPercent > 0 ? 10.5 : 12.5);
-    doc.text(
-      formatCurrency(subtotal),
-      summaryX + summaryWidth - 3,
-      quote.generalDiscountPercent > 0 ? y + 11 : y + 17,
-      { align: 'right' }
-    );
-    if (quote.generalDiscountPercent > 0) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9.5);
-      doc.text(`Descuento (${quote.generalDiscountPercent}%)`, summaryX + 3, y + 18);
-      doc.text(`-${formatCurrency(subtotal - quote.totalAmount)}`, summaryX + summaryWidth - 3, y + 18, { align: 'right' });
-      doc.setDrawColor(180, 180, 180);
-      doc.line(summaryX + 3, y + 21, summaryX + summaryWidth - 3, y + 21);
-      doc.setFont('helvetica', 'bold');
-      doc.text('TOTAL', summaryX + 3, y + 27);
-      doc.setFontSize(11.5);
-      doc.text(formatCurrency(quote.totalAmount), summaryX + summaryWidth - 3, y + 27, { align: 'right' });
-    }
+    doc.roundedRect(summaryX, summaryTop, summaryWidth, summaryHeight, 1.2, 1.2, 'FD');
+
+    let summaryTextY = summaryTop + summaryPadTop + 3;
+    summaryRows.forEach(row => {
+      if (row.total && summaryRows.length > 1) {
+        doc.setDrawColor(180, 180, 180);
+        doc.line(summaryX + 3, summaryTextY - 4, summaryX + summaryWidth - 3, summaryTextY - 4);
+      }
+      doc.setFont('helvetica', row.total ? 'bold' : 'normal');
+      doc.setFontSize(row.total ? 11.5 : 9.5);
+      doc.setTextColor(45, 45, 45);
+      doc.text(row.label, summaryX + 3, summaryTextY);
+      doc.text(row.value, summaryX + summaryWidth - 3, summaryTextY, { align: 'right' });
+      summaryTextY += summaryLineHeight;
+    });
 
     // Fecha de vencimiento destacada, para que quede claro que no es una venta concretada.
-    y += summaryHeight + 12;
+    y = summaryTop + summaryHeight + 12;
     if (y > printableBottom) {
       doc.addPage();
       y = margin;

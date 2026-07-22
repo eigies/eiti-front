@@ -11,6 +11,10 @@
     <div class="quote-conversion-banner" *ngIf="convertingQuoteId">
       <strong>Convirtiendo presupuesto</strong>
       <span>{{ quoteConversionLabel }}</span>
+      <label class="quote-conversion-vat" *ngIf="convertVatRate > 0">
+        <input type="checkbox" [checked]="convertWithVat" (change)="convertWithVat = $any($event.target).checked">
+        <span>Cobrar IVA {{ convertVatRate | number: '1.0-1' }}% (la venta baja al total con IVA)</span>
+      </label>
     </div>
 
     <div class="quote-stock-disclaimer" *ngIf="quoteStockDisclaimer.length > 0">

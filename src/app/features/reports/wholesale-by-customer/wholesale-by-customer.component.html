@@ -1,0 +1,137 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Reportería / Ventas</div>
+    <h1>Ventas mayoristas por cliente</h1>
+    <p>Ventas mayoristas (Cuenta Corriente) agrupadas por cliente: operaciones, facturación, ticket promedio, saldo de cuenta corriente pendiente y rentabilidad en el período.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div>
+        <span>Filtros</span>
+        <p>El rango de fechas es obligatorio. Los demás filtros son opcionales.</p>
+      </div>
+    </div>
+
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form filter-form--collapsible">
+      <div class="filter-form__primary">
+        <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
+        <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+
+        <button
+          class="btn btn--filters"
+          type="button"
+          [class.is-open]="advancedFiltersOpen"
+          [attr.aria-expanded]="advancedFiltersOpen"
+          aria-controls="wholesale-advanced-filters"
+          (click)="toggleAdvancedFilters()">
+          <svg class="btn--filters__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16M7 12h10M10 18h4"></path>
+          </svg>
+          <span>{{ advancedFiltersOpen ? 'Ocultar filtros' : 'Más filtros' }}</span>
+          <span class="filter-count" *ngIf="activeOptionalFiltersCount > 0">{{ activeOptionalFiltersCount }}</span>
+          <span class="filter-chevron" aria-hidden="true"></span>
+        </button>
+
+        <div class="filter-form__actions">
+          <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
+          <button class="btn btn--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="filter-form__advanced" id="wholesale-advanced-filters" *ngIf="advancedFiltersOpen">
+        <div class="advanced-filters__head">
+          <div>
+            <span>Filtros adicionales</span>
+            <p>El tipo de venta arranca en Mayorista (CC); podés cambiarlo o filtrar por cliente y sucursal.</p>
+          </div>
+          <span class="advanced-filters__status" *ngIf="activeOptionalFiltersCount > 0">
+            {{ activeOptionalFiltersCount }} activo{{ activeOptionalFiltersCount === 1 ? '' : 's' }}
+          </span>
+        </div>
+
+        <div class="advanced-filters__grid">
+          <label class="field"><span>Tipo de venta</span>
+            <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Mayorista (CC)"></app-searchable-select>
+          </label>
+          <label class="field"><span>Cliente</span>
+            <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Sucursal</span>
+            <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+          </label>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div>
+        <span>Resultados</span>
+        <p *ngIf="data">{{ data.rows.length }} cliente(s) · {{ saleTypeLabel }}</p>
+      </div>
+      <div class="panel__actions">
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.rows.length === 0">Exportar XLSX</button>
+        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="!data || data.rows.length === 0">Exportar PDF</button>
+      </div>
+    </div>
+
+    <div class="loading-shell" *ngIf="loading">
+      <div class="loading-shell__grid"><div class="loading-card" *ngFor="let _ of [1,2,3,4]"></div></div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && hasSearched && data && data.rows.length === 0">
+      <span class="empty-state__eyebrow">Sin resultados</span>
+      <h2>No hay ventas con esos filtros.</h2>
+      <p>Probá ampliar el rango de fechas o cambiar el tipo de venta.</p>
+    </div>
+
+    <div class="table-wrap" *ngIf="!loading && data && data.rows.length > 0">
+      <table class="data-table data-table--sales data-table--sticky-first">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th class="t-right">Operaciones</th>
+            <th class="t-right">Unidades</th>
+            <th class="t-right">Facturación</th>
+            <th class="t-right">Ticket prom.</th>
+            <th class="t-right">Saldo CC</th>
+            <th class="t-right">Costo</th>
+            <th class="t-right">Ganancia</th>
+            <th class="t-right">Margen %</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="data-row" *ngFor="let r of data.rows; trackBy: trackByRow">
+            <td class="strong">{{ r.customerName }}</td>
+            <td class="t-right">{{ r.operations }}</td>
+            <td class="t-right">{{ r.units }}</td>
+            <td class="t-right">$ {{ money(r.revenue) }}</td>
+            <td class="t-right">$ {{ money(r.avgTicket) }}</td>
+            <td class="t-right" [class.neg]="r.ccPending > 0">$ {{ money(r.ccPending) }}</td>
+            <td class="t-right dim">$ {{ money(r.cost) }}</td>
+            <td class="t-right" [class.pos]="r.profit >= 0" [class.neg]="r.profit < 0">$ {{ money(r.profit) }}</td>
+            <td class="t-right">{{ r.marginPct }}%</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td>TOTAL</td>
+            <td class="t-right">{{ data.totals.operations }}</td>
+            <td class="t-right">{{ data.totals.units }}</td>
+            <td class="t-right">$ {{ money(data.totals.revenue) }}</td>
+            <td class="t-right">$ {{ money(data.totals.avgTicket) }}</td>
+            <td class="t-right">$ {{ money(data.totals.ccPending) }}</td>
+            <td class="t-right">$ {{ money(data.totals.cost) }}</td>
+            <td class="t-right">$ {{ money(data.totals.profit) }}</td>
+            <td class="t-right">{{ data.totals.marginPct }}%</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <p class="note" *ngIf="data && data.rows.length > 0">La rentabilidad usa el costo guardado en la venta; las ventas previas a esa función usan el costo actual del producto.</p>
+    <p class="note" *ngIf="data && data.rows.length > 0">SALDO CC = saldo de cuenta corriente pendiente actual del cliente (todas sus ventas CC, no sólo las del período).</p>
+  </section>
+</div>

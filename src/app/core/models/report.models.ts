@@ -59,6 +59,44 @@ export interface SalesReportFilters {
     branchId?: string | null;
 }
 
+export interface WholesaleByCustomerRow {
+    customerId: string | null;
+    customerName: string;
+    operations: number;
+    units: number;
+    revenue: number;
+    avgTicket: number;
+    ccPending: number;
+    cost: number;
+    profit: number;
+    marginPct: number;
+}
+
+export interface WholesaleByCustomerTotals {
+    operations: number;
+    units: number;
+    revenue: number;
+    avgTicket: number;
+    ccPending: number;
+    cost: number;
+    profit: number;
+    marginPct: number;
+}
+
+export interface WholesaleByCustomerResponse {
+    saleType: string;
+    rows: WholesaleByCustomerRow[];
+    totals: WholesaleByCustomerTotals;
+}
+
+export interface WholesaleByCustomerFilters {
+    dateFrom: string;
+    dateTo: string;
+    saleType?: 'all' | 'wholesale' | 'retail' | null;
+    branchId?: string | null;
+    customerId?: string | null;
+}
+
 export interface CustomerDebtorRow {
     customerId: string;
     customerName: string;

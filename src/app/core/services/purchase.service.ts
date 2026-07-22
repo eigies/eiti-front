@@ -43,8 +43,9 @@ export class PurchaseService {
     return this.http.get<PurchaseDetailResponse>(`${this.base}/${id}`);
   }
 
-  cancelPurchase(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/${id}`);
+  cancelPurchase(id: string, refundMode?: number): Observable<void> {
+    const query = refundMode ? `?refundMode=${refundMode}` : '';
+    return this.http.delete<void>(`${this.base}/${id}${query}`);
   }
 
   listCarteraCheques(): Observable<CarteraChequeOption[]> {

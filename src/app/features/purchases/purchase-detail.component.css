@@ -671,3 +671,155 @@
     grid-column: span 2;
   }
 }
+
+/* ── Modal de cancelación de compra (elección de destino del dinero) ── */
+.pcancel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, black 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.pcancel-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+}
+
+.pcancel-card {
+  width: min(34rem, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg-panel);
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .5);
+}
+
+.pcancel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem 1.3rem .8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.pcancel-head h2 {
+  margin: .1rem 0;
+  color: var(--text);
+  font-family: 'Crimson Pro', serif;
+  font-size: 1.5rem;
+}
+
+.pcancel-eyebrow {
+  color: var(--danger);
+  font-family: 'DM Mono', monospace;
+  font-size: .64rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.pcancel-meta { color: var(--text-soft); font-family: 'DM Mono', monospace; font-size: .74rem; }
+
+.pcancel-close {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.pcancel-close:hover:not(:disabled) { color: var(--text); }
+
+.pcancel-body { display: grid; gap: 1rem; padding: 1.1rem 1.3rem; }
+
+.pcancel-warning {
+  padding: .8rem .9rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 26%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+.pcancel-warning strong { color: var(--text); }
+.pcancel-warning p { margin-top: .2rem; color: var(--text-soft); font-size: .82rem; }
+
+.pcancel-paid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .7rem .9rem;
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  font-family: 'DM Mono', monospace;
+}
+.pcancel-paid span { color: var(--text-dim); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
+.pcancel-paid strong { color: var(--text); font-size: 1.05rem; }
+
+.pcancel-options { display: grid; gap: .6rem; border: none; padding: 0; margin: 0; }
+.pcancel-options legend { padding: 0; margin-bottom: .3rem; color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+
+.pcancel-opt {
+  display: flex;
+  gap: .7rem;
+  align-items: flex-start;
+  padding: .8rem .9rem;
+  border: 1px solid var(--border-2);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.pcancel-opt--active { border-color: color-mix(in srgb, var(--amber) 55%, var(--border-2)); background: color-mix(in srgb, var(--amber) 7%, transparent); }
+.pcancel-opt input { margin-top: .2rem; accent-color: var(--amber); }
+.pcancel-opt__body { display: grid; gap: .25rem; }
+.pcancel-opt__title { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; color: var(--text); font-weight: 600; font-size: .9rem; }
+.pcancel-opt__desc { color: var(--text-soft); font-size: .8rem; line-height: 1.4; }
+
+.pcancel-tag {
+  padding: .1rem .4rem;
+  border: 1px solid color-mix(in srgb, var(--text-dim) 40%, transparent);
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.pcancel-tag--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+
+.pcancel-nopaid {
+  padding: .8rem .9rem;
+  border: 1px solid color-mix(in srgb, var(--success) 26%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--success) 6%, transparent);
+}
+.pcancel-nopaid strong { color: var(--text); }
+.pcancel-nopaid p { margin-top: .2rem; color: var(--text-soft); font-size: .82rem; }
+
+.pcancel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .6rem;
+  padding: .9rem 1.3rem 1.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.pcancel-btn {
+  min-height: 2.6rem;
+  padding: .6rem 1rem;
+  border-radius: 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.pcancel-btn:disabled { opacity: .55; cursor: not-allowed; }
+.pcancel-btn--ghost { border: 1px solid var(--border-2); background: transparent; color: var(--text-dim); }
+.pcancel-btn--ghost:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }
+.pcancel-btn--danger { border: none; background: var(--danger); color: white; }
+.pcancel-btn--danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 85%, black); }

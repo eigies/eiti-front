@@ -76,6 +76,8 @@ export class QuotesComponent {
                     customerFullName: quote.customerFullName,
                     prospectName: quote.prospectName,
                     generalDiscountPercent: quote.generalDiscountPercent,
+                    vatRate: quote.vatRate,
+                    includesVat: quote.includesVat,
                     details: quote.details.map(detail => ({
                         productId: detail.productId,
                         productName: detail.productName,
