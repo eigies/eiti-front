@@ -253,8 +253,14 @@ export class QuoteFormComponent implements OnInit {
         this.recalcItem(item);
     }
 
-    setVatRate(rawValue: string): void {
-        const parsed = Number(rawValue);
+    readonly vatRateSelectOptions: SearchableSelectOption[] = [
+        { value: 21, label: 'IVA 21%' },
+        { value: 10.5, label: 'IVA 10,5%' },
+        { value: 0, label: 'Exento' }
+    ];
+
+    setVatRate(value: string | number | null): void {
+        const parsed = Number(value);
         this.vatRate = this.vatRateOptions.includes(parsed) ? parsed : 21;
     }
 

@@ -63,11 +63,7 @@
 
   <div class="quote-form__vat">
     <label class="quote-form__field">IVA
-      <select [value]="vatRate" (change)="setVatRate($any($event.target).value)">
-        <option [value]="21">IVA 21%</option>
-        <option [value]="10.5">IVA 10,5%</option>
-        <option [value]="0">Exento</option>
-      </select>
+      <app-searchable-select [(ngModel)]="vatRate" (ngModelChange)="setVatRate($event)" [options]="vatRateSelectOptions"></app-searchable-select>
     </label>
     <label class="quote-form__check">
       <input type="checkbox" [checked]="includesVat" (change)="setIncludesVat($any($event.target).checked)">
