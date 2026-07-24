@@ -2,7 +2,7 @@
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { catchError, debounceTime, distinctUntilChanged, forkJoin, map, of, Subject, switchMap } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { ProductService } from '../../core/services/product.service';
@@ -197,6 +197,7 @@ export class SalesPageComponent implements OnInit {
         private onboardingService: OnboardingService,
         private bankService: BankService,
         private remitoPdf: RemitoPdfService,
+        private router: Router,
         public auth: AuthService
     ) {
         this.lineForm = this.fb.group({
@@ -913,6 +914,18 @@ this.saleService.updateSale(this.editingSale.id, this.buildRequest(this.editMeta
 
 markAsPaid(sale: SaleResponse): void {
     if(sale.idSaleStatus !== 1) {
+    return;
+}
+
+// Las ventas de Cuenta Corriente se cobran desde la cuenta del cliente (permite imputar un cobro a
+// varias ventas pendientes a la vez). El cobro rapido de aca es solo para ventas normales: aplicarlo a
+// una venta CC generaba un pago fantasma que no quedaba registrado en la cuenta del cliente.
+if (sale.isCuentaCorriente) {
+    if (!sale.customerId) {
+        this.toast.error('La venta no tiene cliente asociado; no se puede cobrar.');
+        return;
+    }
+    this.router.navigateByUrl(`/clients-cc/customer/${sale.customerId}`);
     return;
 }
 
