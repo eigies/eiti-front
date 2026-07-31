@@ -6,6 +6,9 @@ import { VehicleService } from '../../core/services/vehicle.service';
 import { DriverResponse } from '../../core/models/employee.models';
 import { FleetLogResponse, VehicleResponse } from '../../core/models/vehicle.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { AuthService } from '../../core/services/auth.service';
+import { PermissionCodes } from '../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
@@ -29,6 +32,7 @@ export class TransportComponent implements OnInit {
   activityExpanded = true;
 
   editingDriver: DriverResponse | null = null;
+  deletingDriverId: string | null = null;
   isEditModalClosing = false;
   isSavingEdit = false;
 
@@ -41,7 +45,9 @@ export class TransportComponent implements OnInit {
     private fb: FormBuilder,
     private employeeService: EmployeeService,
     private vehicleService: VehicleService,
-    private toast: ToastService
+    private toast: ToastService,
+    private confirmation: ConfirmationService,
+    private auth: AuthService
   ) {
     this.driverForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -151,6 +157,42 @@ export class TransportComponent implements OnInit {
         });
       },
       error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el conductor')
+    });
+  }
+
+  get canDeleteDriver(): boolean {
+    return this.auth.hasPermission(PermissionCodes.driversDelete);
+  }
+
+  async deleteDriver(driver: DriverResponse): Promise<void> {
+    if (!this.canDeleteDriver || this.deletingDriverId) {
+      return;
+    }
+
+    const confirmed = await this.confirmation.confirm({
+      title: 'Eliminar conductor',
+      message: `Vas a eliminar a ${driver.fullName} del listado de conductores.`,
+      detail: 'Se libera de los vehiculos que tenga asignados y queda desactivado como empleado. Los viajes historicos no se modifican.',
+      confirmLabel: 'Eliminar conductor',
+      tone: 'danger'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingDriverId = driver.employeeId;
+    this.employeeService.deleteDriverProfile(driver.employeeId).subscribe({
+      next: () => {
+        this.deletingDriverId = null;
+        this.toast.success('Conductor eliminado');
+        this.loadDrivers();
+        this.loadVehicles();
+      },
+      error: err => {
+        this.deletingDriverId = null;
+        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo eliminar el conductor');
+      }
     });
   }
 

@@ -38,4 +38,8 @@ export class EmployeeService {
     upsertDriverProfile(request: UpsertDriverProfileRequest): Observable<DriverResponse> {
         return this.http.post<DriverResponse>(this.driversBase, request);
     }
+
+    deleteDriverProfile(employeeId: string): Observable<void> {
+        return this.http.delete<void>(`${this.driversBase}/${employeeId}`);
+    }
 }
