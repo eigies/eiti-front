@@ -11,6 +11,8 @@ import {
     SalesReportResponse,
     StockMatrixResponse,
     StockMovementsReportResponse,
+    TradeInsByBranchFilters,
+    TradeInsByBranchResponse,
     WholesaleByCustomerFilters,
     WholesaleByCustomerResponse
 } from '../models/report.models';
@@ -45,6 +47,15 @@ export class ReportService {
         if (filters.branchId) params.set('branchId', filters.branchId);
         if (filters.customerId) params.set('customerId', filters.customerId);
         return this.http.get<WholesaleByCustomerResponse>(`${this.base}/sales/wholesale-by-customer?${params.toString()}`);
+    }
+
+    tradeInsByBranch(filters: TradeInsByBranchFilters): Observable<TradeInsByBranchResponse> {
+        const params = new URLSearchParams();
+        params.set('dateFrom', filters.dateFrom);
+        params.set('dateTo', filters.dateTo);
+        if (filters.branchId) params.set('branchId', filters.branchId);
+        if (filters.customerId) params.set('customerId', filters.customerId);
+        return this.http.get<TradeInsByBranchResponse>(`${this.base}/sales/trade-ins-by-branch?${params.toString()}`);
     }
 
     customerDebtors(): Observable<CustomerDebtorsResponse> {

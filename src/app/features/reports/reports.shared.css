@@ -403,6 +403,9 @@
 
 .data-row:hover { background: color-mix(in srgb, var(--amber) 5%, var(--bg-panel)); }
 .data-row:hover td:first-child { background: color-mix(in srgb, var(--amber) 5%, var(--bg-panel)); }
+
+/* Separador entre grupos en tablas agrupadas (ej. canjes por sucursal). */
+.data-row.branch-break td { border-top: 1px solid color-mix(in srgb, var(--amber) 26%, var(--border)); }
 .data-table :is(th, td).t-right {
   text-align: right;
   white-space: nowrap;

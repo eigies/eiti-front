@@ -201,6 +201,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/wholesale-by-customer/wholesale-by-customer.component').then(m => m.WholesaleByCustomerComponent)
     },
     {
+        path: 'reportes/ventas/canjes',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesTradeIns },
+        loadComponent: () => import('./features/reports/trade-ins-by-branch/trade-ins-by-branch.component').then(m => m.TradeInsByBranchComponent)
+    },
+    {
         path: 'reportes/ventas/modelo',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesModel, tipo: 'product' },

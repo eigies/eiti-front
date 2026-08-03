@@ -163,7 +163,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const p = this.permissionCodes;
     return [
       p.reportsSalesDailyControl, p.reportsSalesModel, p.reportsSalesBrand, p.reportsSalesChannel,
-      p.reportsSalesChannelBrand, p.reportsSalesTransport, p.reportsSalesRanking, p.reportsSalesComparison
+      p.reportsSalesChannelBrand, p.reportsSalesTransport, p.reportsSalesRanking, p.reportsSalesComparison,
+      p.reportsWholesaleByCustomer, p.reportsSalesTradeIns
     ].some(code => this.auth.hasPermission(code));
   }
 
@@ -231,7 +232,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return [
       p.reportsAudit, p.reportsSalesModel, p.reportsSalesComparison, p.reportsSalesTransport,
       p.reportsSalesChannel, p.reportsSalesChannelBrand, p.reportsSalesBrand, p.reportsSalesRanking,
-      p.reportsSalesDailyControl, p.reportsDebtors, p.reportsCash, p.reportsStock, p.reportsPayments
+      p.reportsSalesDailyControl, p.reportsDebtors, p.reportsCash, p.reportsStock, p.reportsPayments,
+      p.reportsWholesaleByCustomer, p.reportsSalesTradeIns
     ].some(code => this.auth.hasPermission(code));
   }
 

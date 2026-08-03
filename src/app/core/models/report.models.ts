@@ -97,6 +97,38 @@ export interface WholesaleByCustomerFilters {
     customerId?: string | null;
 }
 
+export interface TradeInsByBranchRow {
+    branchId: string;
+    branchName: string;
+    productId: string;
+    productName: string;
+    productBrand: string;
+    productSku: string;
+    operations: number;
+    units: number;
+    amount: number;
+    avgUnitValue: number;
+}
+
+export interface TradeInsByBranchTotals {
+    operations: number;
+    units: number;
+    amount: number;
+    avgUnitValue: number;
+}
+
+export interface TradeInsByBranchResponse {
+    rows: TradeInsByBranchRow[];
+    totals: TradeInsByBranchTotals;
+}
+
+export interface TradeInsByBranchFilters {
+    dateFrom: string;
+    dateTo: string;
+    branchId?: string | null;
+    customerId?: string | null;
+}
+
 export interface CustomerDebtorRow {
     customerId: string;
     customerName: string;
