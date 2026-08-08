@@ -8,6 +8,7 @@ import { CashService } from '../../core/services/cash.service';
 import { BranchResponse } from '../../core/models/branch.models';
 import { CashDrawerResponse, CashSessionMovementResponse, CashSessionResponse, CashSessionSummaryResponse, PaymentMethodBreakdownItem } from '../../core/models/cash.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingStatusResponse } from '../../core/models/onboarding.models';
 import { OnboardingBannerComponent } from '../../shared/components/onboarding-banner/onboarding-banner.component';
@@ -1267,6 +1268,10 @@ export class CashComponent implements OnInit {
     historyTo = '';
     showCreateDrawer = false;
     loadingSession = false;
+    // Cierre de la ultima sesion de esta caja: es lo que precarga el monto inicial y contra lo
+    // que se contrasta al confirmar la apertura. null = no se pudo obtener.
+    suggestedOpeningAmount: number | null = null;
+    loadingSuggestedOpening = false;
     loadingHistory = false;
     onboardingStatus: OnboardingStatusResponse | null = null;
 
@@ -1279,6 +1284,7 @@ export class CashComponent implements OnInit {
         private bankService: BankService,
         private purchaseService: PurchaseService,
         private toast: ToastService,
+        private confirmation: ConfirmationService,
         private onboardingService: OnboardingService,
         private router: Router,
         private pdfBranding: PdfBrandingService,
@@ -1412,13 +1418,35 @@ export class CashComponent implements OnInit {
         this.loadHistory();
     }
 
-    openSession(): void {
+    async openSession(): Promise<void> {
         if (!this.selectedDrawerId || this.openForm.invalid) {
             this.openForm.markAllAsTouched();
             return;
         }
 
         const { openingAmount, notes } = this.openForm.getRawValue();
+        const amount = Number(openingAmount);
+        const suggested = this.suggestedOpeningAmount;
+        // El monto sugerido puede no haber llegado todavia (o haber fallado). Confirmar con el
+        // numero a la vista obliga a mirarlo antes de abrir en un valor que no corresponde.
+        const mismatch = suggested !== null && suggested !== amount;
+
+        const confirmed = await this.confirmation.confirm({
+            title: 'Abrir caja',
+            message: `Vas a abrir la caja con un monto inicial de $ ${this.formatCurrency(amount)}.`,
+            detail: mismatch
+                ? `Atencion: el cierre anterior de esta caja fue de $ ${this.formatCurrency(suggested!)}. Si el monto inicial no coincide, revisalo antes de continuar.`
+                : this.loadingSuggestedOpening
+                    ? 'Todavia se esta consultando el cierre anterior. Confirma solo si el monto es el correcto.'
+                    : undefined,
+            confirmLabel: 'Abrir caja',
+            tone: mismatch || this.loadingSuggestedOpening ? 'warning' : 'neutral'
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
         const source = this.showInitialCashOpenOnboarding
             ? this.onboardingService.completeInitialCashOpen(this.selectedDrawerId, Number(openingAmount), notes)
             : this.cashService.openSession(this.selectedDrawerId, Number(openingAmount), notes);
@@ -2146,6 +2174,9 @@ export class CashComponent implements OnInit {
         this.loadingSession = true;
         this.currentSession = null;
         this.currentSummary = null;
+        // El sugerido es por caja: al cambiar de caja hay que descartar el anterior.
+        this.suggestedOpeningAmount = null;
+        this.openForm.patchValue({ openingAmount: 0 });
         this.salePaymentMethodsBySaleId.clear();
         this.salesBySaleId.clear();
         this.ccSalesBySaleId.clear();
@@ -2165,11 +2196,20 @@ export class CashComponent implements OnInit {
             error: () => {
                 this.loadingSession = false;
                 if (this.selectedDrawerId) {
+                    this.loadingSuggestedOpening = true;
                     this.cashService.getLastClosedSession(this.selectedDrawerId).subscribe({
                         next: ({ suggestedOpeningAmount }) => {
+                            this.loadingSuggestedOpening = false;
+                            this.suggestedOpeningAmount = suggestedOpeningAmount;
                             if (suggestedOpeningAmount > 0) {
                                 this.openForm.patchValue({ openingAmount: suggestedOpeningAmount });
                             }
+                        },
+                        // Sin esto la falla es muda y el formulario queda en 0 sin que nadie se entere.
+                        error: () => {
+                            this.loadingSuggestedOpening = false;
+                            this.suggestedOpeningAmount = null;
+                            this.toast.error('No se pudo obtener el cierre anterior. Verifica el monto inicial antes de abrir.');
                         }
                     });
                 }
