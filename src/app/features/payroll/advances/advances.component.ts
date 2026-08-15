@@ -280,7 +280,7 @@ export class AdvancesComponent implements OnInit {
   }
 
   private today(): string {
-    return new Date().toISOString().slice(0, 10);
+    return new Date().toLocaleDateString('en-CA');
   }
 
   private cashDrawerRequiredValidator(control: AbstractControl): ValidationErrors | null {

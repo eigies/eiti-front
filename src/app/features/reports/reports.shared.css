@@ -46,6 +46,13 @@
   line-height: 1.7;
 }
 
+/* Aclaracion secundaria bajo la bajada del hero (ej. que toma cada tipo de venta). */
+.hero p.hero__note {
+  margin-top: .45rem;
+  font-size: .78rem;
+  color: color-mix(in srgb, var(--text) 55%, var(--text-soft));
+}
+
 .panel {
   margin-bottom: 1rem;
   padding: 1.2rem;

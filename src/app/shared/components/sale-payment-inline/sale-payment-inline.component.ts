@@ -433,7 +433,7 @@ export class SalePaymentInlineComponent implements OnChanges {
     }
 
     private todayIso(): string {
-        return new Date().toISOString().slice(0, 10);
+        return new Date().toLocaleDateString('en-CA');
     }
 
     trackByIndex(index: number): number {

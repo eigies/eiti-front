@@ -173,6 +173,6 @@ export class StockTransferPdfService {
 
     this.brandingService.drawFooter(doc, pageWidth, pageHeight, margin, 'Constancia de traspaso interno - sin valor fiscal');
 
-    doc.save(`traspaso-stock-${now.toISOString().slice(0, 10)}.pdf`);
+    doc.save(`traspaso-stock-${now.toLocaleDateString('en-CA')}.pdf`);
   }
 }

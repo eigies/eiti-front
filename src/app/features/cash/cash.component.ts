@@ -1796,7 +1796,7 @@ export class CashComponent implements OnInit {
 
         const suffix = this.historyFrom || this.historyTo
             ? `${this.historyFrom || 'inicio'}_${this.historyTo || 'hoy'}`
-            : new Date().toISOString().slice(0, 10);
+            : new Date().toLocaleDateString('en-CA');
 
         const allSessions = this.historySessions.map(item => item.session);
         const allBreakdown = allSessions.flatMap(s => this.computePaymentBreakdown(s));
@@ -1825,7 +1825,7 @@ export class CashComponent implements OnInit {
 
         const suffix = this.historyFrom || this.historyTo
             ? `${this.historyFrom || 'inicio'}_${this.historyTo || 'hoy'}`
-            : new Date().toISOString().slice(0, 10);
+            : new Date().toLocaleDateString('en-CA');
 
         const overrides = new Map<string, number>(this.historySessions.map(item => [item.session.id, item.expectedClosingAmount]));
         this.exportSessionsPdf(`cash-history-${suffix}.pdf`, 'Historial de caja', this.historySessions.map(item => item.session), overrides);

@@ -92,7 +92,7 @@ export class QuoteFormComponent implements OnInit {
     private defaultExpiresAt(): string {
         const date = new Date();
         date.setDate(date.getDate() + 7);
-        return date.toISOString().slice(0, 10);
+        return date.toLocaleDateString('en-CA');
     }
 
     // Subtotal NETO (los precios cargados son netos), ya con el descuento general aplicado.
