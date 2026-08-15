@@ -3,8 +3,12 @@ import { CashComponent } from './cash.component';
 
 describe('CashComponent payroll movement labels', () => {
   function createComponent(): CashComponent {
+    // Orden del constructor de CashComponent: fb, branch, cash, sale, customerAccount, bank,
+    // purchase, toast, confirmation, onboarding, router, pdfBranding, pdfLayout,
+    // paymentReceiptPdf, auth. Solo auth se usa en estos tests.
     return new CashComponent(
       new FormBuilder(),
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
