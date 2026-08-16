@@ -1,5 +1,8 @@
 export interface DashboardSegment {
+  /** Operaciones. Con filtro de categoría, ventas que incluyen al menos una unidad de esas categorías. */
   count: number;
+  /** Unidades vendidas. Es lo comparable contra el reporte de ventas, que también cuenta unidades. */
+  units: number;
   amount: number;
 }
 

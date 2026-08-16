@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { catchError, of } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { BranchResponse } from '../../core/models/branch.models';
 import {
   DashboardChartMetric,
@@ -13,10 +13,12 @@ import {
   DashboardTopProduct
 } from '../../core/models/dashboard.models';
 import { PermissionCodes } from '../../core/models/permission.models';
+import { ProductCategoryResponse } from '../../core/models/product-category.models';
 import { AuthService } from '../../core/services/auth.service';
 import { BranchService } from '../../core/services/branch.service';
 import { DashboardPreferencesService } from '../../core/services/dashboard-preferences.service';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { ProductCategoryService } from '../../core/services/product-category.service';
 import { ToastService } from '../../shared/services/toast.service';
 
 interface DashboardAlert {
@@ -58,6 +60,8 @@ export class DashboardComponent implements OnInit {
   readonly permissionCodes = PermissionCodes;
   summary: DashboardSummaryResponse | null = null;
   branches: BranchResponse[] = [];
+  categories: ProductCategoryResponse[] = [];
+  categoryIds: string[] = [];
   loading = true;
   loadFailed = false;
   branchId: string | null = null;
@@ -75,6 +79,7 @@ export class DashboardComponent implements OnInit {
     private readonly dashboardService: DashboardService,
     private readonly preferences: DashboardPreferencesService,
     private readonly branchService: BranchService,
+    private readonly productCategoryService: ProductCategoryService,
     private readonly toast: ToastService
   ) {}
 
@@ -85,18 +90,53 @@ export class DashboardComponent implements OnInit {
       ? 'count'
       : storedMetric;
 
-    this.branchService.listBranches()
-      .pipe(catchError(() => of([] as BranchResponse[])))
-      .subscribe(branches => {
-        this.branches = branches;
-        this.branchId = branches.length > 0
-          ? this.preferences.readBranchId(
-              branches.map(branch => branch.id),
-              this.canViewAllBranches
-            )
-          : null;
-        this.loadSummary();
-      });
+    // Sucursales y categorias en paralelo: las dos alimentan filtros y ninguna depende de la otra.
+    forkJoin({
+      branches: this.branchService.listBranches().pipe(catchError(() => of([] as BranchResponse[]))),
+      categories: this.productCategoryService.list()
+        .pipe(catchError(() => of([] as ProductCategoryResponse[])))
+    }).subscribe(({ branches, categories }) => {
+      this.branches = branches;
+      this.branchId = branches.length > 0
+        ? this.preferences.readBranchId(
+            branches.map(branch => branch.id),
+            this.canViewAllBranches
+          )
+        : null;
+
+      this.categories = categories;
+      this.categoryIds = this.preferences.readCategoryIds(categories.map(c => c.id));
+
+      this.loadSummary();
+    });
+  }
+
+  /** Categorías activas del filtro. Vacío = sin filtro, cuenta todo el catálogo. */
+  get hasCategoryFilter(): boolean {
+    return this.categoryIds.length > 0;
+  }
+
+  isCategorySelected(id: string): boolean {
+    return this.categoryIds.includes(id);
+  }
+
+  toggleCategory(id: string): void {
+    this.categoryIds = this.isCategorySelected(id)
+      ? this.categoryIds.filter(current => current !== id)
+      : [...this.categoryIds, id];
+    this.preferences.writeCategoryIds(this.categoryIds);
+    this.clearExploration();
+    this.loadSummary();
+  }
+
+  clearCategories(): void {
+    if (!this.hasCategoryFilter) {
+      return;
+    }
+    this.categoryIds = [];
+    this.preferences.writeCategoryIds([]);
+    this.clearExploration();
+    this.loadSummary();
   }
 
   get canViewFinancials(): boolean {
@@ -246,7 +286,7 @@ export class DashboardComponent implements OnInit {
     const dateFrom = this.localDateKey(new Date(now.getFullYear(), now.getMonth(), 1));
     const dateTo = this.localDateKey(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-    this.dashboardService.getSummary(dateFrom, dateTo, this.branchId).subscribe({
+    this.dashboardService.getSummary(dateFrom, dateTo, this.branchId, this.categoryIds).subscribe({
       next: summary => {
         if (requestId !== this.summaryRequestId) return;
         this.summary = summary;

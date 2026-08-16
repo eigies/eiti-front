@@ -4,6 +4,7 @@ import { DashboardChartMetric, DashboardChartSegment } from '../models/dashboard
 const BRANCH_KEY = 'eiti_dashboard_branch_id';
 const SEGMENT_KEY = 'eiti_dashboard_chart_segment';
 const METRIC_KEY = 'eiti_dashboard_chart_metric';
+const CATEGORIES_KEY = 'eiti_dashboard_category_ids';
 
 const SEGMENTS: readonly DashboardChartSegment[] = ['both', 'retail', 'cc'];
 const METRICS: readonly DashboardChartMetric[] = ['count', 'amount', 'products'];
@@ -49,6 +50,37 @@ export class DashboardPreferencesService {
 
   writeChartMetric(value: DashboardChartMetric): void {
     this.write(METRIC_KEY, value);
+  }
+
+  /**
+   * Categorías elegidas, descartando las que ya no existen (borradas o de otra empresa).
+   * Si no queda ninguna válida devuelve [], que significa "sin filtro".
+   */
+  readCategoryIds(availableCategoryIds: readonly string[]): string[] {
+    const stored = this.read(CATEGORIES_KEY);
+    if (stored === null) {
+      return [];
+    }
+
+    try {
+      const parsed: unknown = JSON.parse(stored);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed.filter(
+        (id): id is string => typeof id === 'string' && availableCategoryIds.includes(id)
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  writeCategoryIds(value: readonly string[]): void {
+    if (value.length === 0) {
+      this.remove(CATEGORIES_KEY);
+      return;
+    }
+    this.write(CATEGORIES_KEY, JSON.stringify(value));
   }
 
   private read(key: string): string | null {
