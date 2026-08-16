@@ -12,44 +12,64 @@
         <span class="db-live"><span class="db-live__dot"></span>EN VIVO</span>
       </div>
 
-      <div class="branch-filter" *ngIf="branches.length > 1">
-        <span>Sucursal</span>
-        <div class="branch-chips" role="group" aria-label="Sucursal del dashboard">
-          <button
-            *ngIf="canViewAllBranches"
-            type="button"
-            class="branch-chip"
-            [class.is-active]="branchId === null"
-            [attr.aria-pressed]="branchId === null"
-            (click)="setBranch(null)">Todas</button>
-          <button
-            *ngFor="let branch of branches"
-            type="button"
-            class="branch-chip"
-            [class.is-active]="branchId === branch.id"
-            [attr.aria-pressed]="branchId === branch.id"
-            (click)="setBranch(branch.id)">{{ branch.name }}</button>
-        </div>
+    </div>
+  </header>
 
-        <div class="branch-chips branch-chips--categories" role="group"
-             aria-label="Categorias contadas en el dashboard" *ngIf="categories.length > 0">
-          <button
-            type="button"
-            class="branch-chip"
-            [class.is-active]="!hasCategoryFilter"
-            [attr.aria-pressed]="!hasCategoryFilter"
-            (click)="clearCategories()">Todo el catalogo</button>
-          <button
-            *ngFor="let category of categories"
-            type="button"
-            class="branch-chip"
-            [class.is-active]="isCategorySelected(category.id)"
-            [attr.aria-pressed]="isCategorySelected(category.id)"
-            (click)="toggleCategory(category.id)">{{ category.name }}</button>
+  <section class="db-filters" aria-label="Filtros del panel">
+    <div class="db-filters__row" *ngIf="branches.length > 1">
+      <span class="db-filters__label" id="db-filter-branch">Sucursal</span>
+      <div class="branch-chips" role="group" aria-labelledby="db-filter-branch">
+        <button
+          *ngIf="canViewAllBranches"
+          type="button"
+          class="branch-chip"
+          [class.is-active]="branchId === null"
+          [attr.aria-pressed]="branchId === null"
+          (click)="setBranch(null)">Todas</button>
+        <button
+          *ngFor="let branch of branches"
+          type="button"
+          class="branch-chip"
+          [class.is-active]="branchId === branch.id"
+          [attr.aria-pressed]="branchId === branch.id"
+          (click)="setBranch(branch.id)">{{ branch.name }}</button>
+      </div>
+    </div>
+
+    <div class="db-filters__row" *ngIf="categories.length > 0">
+      <span class="db-filters__label" id="db-filter-category">Categorías</span>
+      <div class="category-picker">
+        <button
+          type="button"
+          class="category-picker__toggle"
+          [class.is-active]="hasCategoryFilter"
+          [attr.aria-expanded]="categoryPanelOpen"
+          aria-controls="db-category-panel"
+          (click)="toggleCategoryPanel()">
+          <span>{{ categoryFilterLabel }}</span>
+          <span class="category-picker__chevron" aria-hidden="true"></span>
+        </button>
+
+        <div class="category-picker__panel" id="db-category-panel" *ngIf="categoryPanelOpen">
+          <label class="category-option" *ngFor="let category of categories">
+            <input
+              type="checkbox"
+              [checked]="isCategorySelected(category.id)"
+              (change)="toggleCategory(category.id)" />
+            <span>{{ category.name }}</span>
+          </label>
+
+          <div class="category-picker__actions">
+            <button type="button" class="category-picker__clear"
+                    [disabled]="!hasCategoryFilter"
+                    (click)="clearCategories()">Contar todo el catálogo</button>
+            <button type="button" class="category-picker__done"
+                    (click)="toggleCategoryPanel()">Listo</button>
+          </div>
         </div>
       </div>
     </div>
-  </header>
+  </section>
 
   <section class="loading-grid" *ngIf="loading" aria-label="Cargando dashboard">
     <div class="skeleton skeleton--wide"></div>
@@ -134,7 +154,7 @@
         </div>
 
         <div class="chart-controls">
-          <div class="panel-toggle" role="group" aria-label="Segmento del gráfico" *ngIf="chartMetric !== 'products'">
+          <div class="panel-toggle" role="group" aria-label="Segmento del gráfico" *ngIf="isSeriesView">
             <button type="button" [class.is-active]="chartSegment === 'both'" [attr.aria-pressed]="chartSegment === 'both'" (click)="setChartSegment('both')">Ambas</button>
             <button type="button" [class.is-active]="chartSegment === 'retail'" [attr.aria-pressed]="chartSegment === 'retail'" (click)="setChartSegment('retail')">Minorista</button>
             <button type="button" [class.is-active]="chartSegment === 'cc'" [attr.aria-pressed]="chartSegment === 'cc'" (click)="setChartSegment('cc')">CC</button>
@@ -143,12 +163,13 @@
           <div class="panel-toggle" role="group" aria-label="Métrica del gráfico">
             <button type="button" [class.is-active]="chartMetric === 'count'" [attr.aria-pressed]="chartMetric === 'count'" (click)="setChartMetric('count')">Cantidad</button>
             <button type="button" *ngIf="canViewFinancials" [class.is-active]="chartMetric === 'amount'" [attr.aria-pressed]="chartMetric === 'amount'" (click)="setChartMetric('amount')">Monto</button>
+            <button type="button" [class.is-active]="chartMetric === 'comparison'" [attr.aria-pressed]="chartMetric === 'comparison'" (click)="setChartMetric('comparison')">vs mes ant.</button>
             <button type="button" [class.is-active]="chartMetric === 'products'" [attr.aria-pressed]="chartMetric === 'products'" (click)="setChartMetric('products')">Productos</button>
           </div>
         </div>
       </div>
 
-      <ng-container *ngIf="chartMetric !== 'products'">
+      <ng-container *ngIf="isSeriesView">
         <div class="chart-legend">
           <span *ngIf="chartSegment !== 'cc'"><i class="legend-dot legend-dot--retail"></i>Minorista</span>
           <span *ngIf="chartSegment !== 'retail'"><i class="legend-dot legend-dot--cc"></i>Cuenta corriente</span>
@@ -178,6 +199,31 @@
           </button>
         </div>
         <ng-template #noChartData><div class="data-empty">Sin actividad en los últimos siete días.</div></ng-template>
+      </ng-container>
+
+      <ng-container *ngIf="chartMetric === 'comparison'">
+        <div class="chart-legend">
+          <span><i class="legend-dot legend-dot--retail"></i>{{ comparisonCurrentLabel }}</span>
+          <span><i class="legend-dot legend-dot--previous"></i>{{ comparisonPreviousLabel }}</span>
+          <small>Acumulado hasta el día {{ data.monthComparison.daysElapsed }} de cada mes</small>
+        </div>
+
+        <div class="compare-chart" *ngIf="comparisonPath.current; else noComparisonData">
+          <svg viewBox="0 0 100 46" preserveAspectRatio="none" role="img"
+               [attr.aria-label]="comparisonSummaryLabel">
+            <path class="compare-line compare-line--previous" [attr.d]="comparisonPath.previous"></path>
+            <path class="compare-line compare-line--current" [attr.d]="comparisonPath.current"></path>
+          </svg>
+          <div class="compare-axis">
+            <span>1</span>
+            <span>{{ data.monthComparison.daysElapsed }}</span>
+          </div>
+        </div>
+        <ng-template #noComparisonData><div class="data-empty">Todavía no hay datos para comparar.</div></ng-template>
+
+        <p class="compare-verdict" [class.is-up]="comparisonDelta >= 0" [class.is-down]="comparisonDelta < 0">
+          {{ comparisonVerdict }}
+        </p>
       </ng-container>
 
       <div class="product-ranking" *ngIf="chartMetric === 'products' && rankedProducts.length > 0">

@@ -7,7 +7,7 @@ const METRIC_KEY = 'eiti_dashboard_chart_metric';
 const CATEGORIES_KEY = 'eiti_dashboard_category_ids';
 
 const SEGMENTS: readonly DashboardChartSegment[] = ['both', 'retail', 'cc'];
-const METRICS: readonly DashboardChartMetric[] = ['count', 'amount', 'products'];
+const METRICS: readonly DashboardChartMetric[] = ['count', 'amount', 'products', 'comparison'];
 
 @Injectable({ providedIn: 'root' })
 export class DashboardPreferencesService {

@@ -29,7 +29,20 @@ describe('DashboardComponent', () => {
     topProducts: [],
     collections: { paidAmount: 200, paidCount: 2, pendingAmount: 100, pendingCount: 1, avgTicket: 100 },
     todayStatus: { activeCount: 1, paidCount: 1, pendingCount: 0, cancelledCount: 0 },
-    recentSales: []
+    recentSales: [],
+    monthComparison: {
+      currentMonth: '2026-08-01',
+      previousMonth: '2026-07-01',
+      daysElapsed: 2,
+      current: [
+        { dayOfMonth: 1, count: 1, units: 1, amount: 100 },
+        { dayOfMonth: 2, count: 3, units: 4, amount: 260 }
+      ],
+      previous: [
+        { dayOfMonth: 1, count: 2, units: 2, amount: 150 },
+        { dayOfMonth: 2, count: 2, units: 2, amount: 150 }
+      ]
+    }
   };
 
   function setup(
@@ -367,4 +380,71 @@ describe('DashboardComponent', () => {
       .withContext('el breakpoint mobile no debe ocultar los números ubicados sobre las barras')
       .not.toMatch(/@media\s*\(max-width:\s*520px\)[\s\S]*?\.chart-day__values[^\{]*\{[^}]*visibility:\s*hidden/i);
   });
+
+  it('compara el acumulado contra el mismo tramo del mes anterior', () => {
+    const { component, dashboard } = setup();
+    dashboard.getSummary.and.returnValue(of(summary));
+    component.ngOnInit();
+
+    // El fixture cierra en 3 ventas contra 2: 50% por encima.
+    expect(component.comparisonDelta).toBe(50);
+    expect(component.comparisonVerdict).toContain('por encima');
+    expect(component.comparisonVerdict).toContain('50%');
+  });
+
+  it('las dos curvas comparten escala y arrancan en el mismo eje', () => {
+    const { component, dashboard } = setup();
+    dashboard.getSummary.and.returnValue(of(summary));
+    component.ngOnInit();
+
+    const { current, previous } = component.comparisonPath;
+
+    // Si cada serie se escalara por su cuenta, la comparacion visual mentiria: la serie
+    // menor terminaria igual de alta que la mayor.
+    expect(current).toContain('M0.00');
+    expect(previous).toContain('M0.00');
+    const lastCurrentY = Number(current.split('L')[1].split(',')[1]);
+    const lastPreviousY = Number(previous.split('L')[1].split(',')[1]);
+    expect(lastCurrentY).toBeLessThan(lastPreviousY);
+  });
+
+  it('la vista de comparativa no dibuja las series por dia', () => {
+    const { component } = setup();
+
+    component.setChartMetric('comparison');
+    expect(component.isSeriesView).toBeFalse();
+
+    component.setChartMetric('count');
+    expect(component.isSeriesView).toBeTrue();
+  });
+
+  it('el titulo y la bajada describen la vista de comparativa', () => {
+    const { component, dashboard } = setup();
+    dashboard.getSummary.and.returnValue(of(summary));
+    component.ngOnInit();
+    component.setChartMetric('comparison');
+
+    // Antes caia al texto de las series por dia y decia "ultimos 7 dias" sobre un
+    // grafico mensual, y "Facturacion" sobre un grafico de cantidad.
+    expect(component.chartTitle).not.toContain('7 días');
+    expect(component.chartTitle).toContain('Agosto');
+    expect(component.chartSubtitle).toContain('Acumulado');
+  });
+
+  it('la curva del mes en curso se dibuja entera, sin patron de guiones', async () => {
+    const { fixture, component } = await setupFixture();
+    component.setChartMetric('comparison');
+    fixture.detectChanges();
+
+    const path = fixture.debugElement.query(By.css('.compare-line--current'));
+    expect(path).withContext('la curva del mes en curso debe renderizarse').not.toBeNull();
+
+    // stroke-dasharray sobre esta curva la parte en pedazos: con preserveAspectRatio="none"
+    // y non-scaling-stroke el patron se calcula contra el largo renderizado y se repite.
+    const dash = getComputedStyle(path.nativeElement).strokeDasharray;
+    expect(['none', '', 'none none'].includes(dash) || dash === 'none')
+      .withContext(`la curva no debe tener stroke-dasharray, tiene "${dash}"`)
+      .toBeTrue();
+  });
+
 });

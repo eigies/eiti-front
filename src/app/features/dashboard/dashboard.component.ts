@@ -5,6 +5,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { BranchResponse } from '../../core/models/branch.models';
 import {
   DashboardChartMetric,
+  DashboardCumulativePoint,
   DashboardChartSegment,
   DashboardDayPoint,
   DashboardRecentSale,
@@ -62,6 +63,7 @@ export class DashboardComponent implements OnInit {
   branches: BranchResponse[] = [];
   categories: ProductCategoryResponse[] = [];
   categoryIds: string[] = [];
+  categoryPanelOpen = false;
   loading = true;
   loadFailed = false;
   branchId: string | null = null;
@@ -109,6 +111,21 @@ export class DashboardComponent implements OnInit {
 
       this.loadSummary();
     });
+  }
+
+  toggleCategoryPanel(): void {
+    this.categoryPanelOpen = !this.categoryPanelOpen;
+  }
+
+  /** Resume el filtro en el boton: sin abrirlo se entiende que esta contando. */
+  get categoryFilterLabel(): string {
+    if (!this.hasCategoryFilter) {
+      return 'Todo el catálogo';
+    }
+    if (this.categoryIds.length === 1) {
+      return this.categories.find(c => c.id === this.categoryIds[0])?.name ?? '1 categoría';
+    }
+    return `${this.categoryIds.length} categorías`;
   }
 
   /** Categorías activas del filtro. Vacío = sin filtro, cuenta todo el catálogo. */
@@ -162,14 +179,21 @@ export class DashboardComponent implements OnInit {
   }
 
   get chartTitle(): string {
-    return this.chartMetric === 'products'
-      ? 'Productos con mayor salida'
-      : 'Ritmo comercial · últimos 7 días';
+    if (this.chartMetric === 'products') {
+      return 'Productos con mayor salida';
+    }
+    if (this.chartMetric === 'comparison') {
+      return `${this.comparisonCurrentLabel} contra ${this.comparisonPreviousLabel.toLowerCase()}`;
+    }
+    return 'Ritmo comercial · últimos 7 días';
   }
 
   get chartSubtitle(): string {
     if (this.chartMetric === 'products') {
       return 'Ranking del período por unidades vendidas';
+    }
+    if (this.chartMetric === 'comparison') {
+      return 'Acumulado del mes contra el mismo tramo del anterior';
     }
     return this.chartMetric === 'count'
       ? 'Cantidad de ventas por segmento'
@@ -216,6 +240,105 @@ export class DashboardComponent implements OnInit {
         currentAccountHeight: this.barHeight(this.chartValue(day, 'cc'), max)
       };
     });
+  }
+
+  /** Vistas que dibujan las series minorista/CC por dia. La comparativa y el ranking no. */
+  get isSeriesView(): boolean {
+    return this.chartMetric === 'count' || this.chartMetric === 'amount';
+  }
+
+  private monthLabel(iso: string): string {
+    const label = new Intl.DateTimeFormat('es-AR', { month: 'long' })
+      .format(new Date(`${iso.slice(0, 10)}T12:00:00`));
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  get comparisonCurrentLabel(): string {
+    return this.summary ? this.monthLabel(this.summary.monthComparison.currentMonth) : '';
+  }
+
+  get comparisonPreviousLabel(): string {
+    return this.summary ? this.monthLabel(this.summary.monthComparison.previousMonth) : '';
+  }
+
+  /** El valor que se grafica depende de si el usuario esta mirando cantidad o monto. */
+  private cumulativeValue(point: DashboardCumulativePoint): number {
+    return this.chartMetric === 'amount' ? point.amount : point.count;
+  }
+
+  private comparisonTotal(points: DashboardCumulativePoint[]): number {
+    return points.length === 0 ? 0 : this.cumulativeValue(points[points.length - 1]);
+  }
+
+  /**
+   * Las dos curvas comparten escala, si no la comparacion visual mentiría. El viewBox es
+   * 100x46 y se dibuja invertido en Y porque en SVG el origen esta arriba.
+   */
+  get comparisonPath(): { current: string; previous: string } {
+    const comparison = this.summary?.monthComparison;
+    if (!comparison || comparison.current.length === 0) {
+      return { current: '', previous: '' };
+    }
+
+    const max = Math.max(
+      ...comparison.current.map(p => this.cumulativeValue(p)),
+      ...comparison.previous.map(p => this.cumulativeValue(p)),
+      1
+    );
+    const lastDay = Math.max(comparison.daysElapsed - 1, 1);
+
+    const toPath = (points: DashboardCumulativePoint[]): string => points
+      .map((point, index) => {
+        const x = (index / lastDay) * 100;
+        const y = 44 - (this.cumulativeValue(point) / max) * 42;
+        return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
+      })
+      .join(' ');
+
+    return { current: toPath(comparison.current), previous: toPath(comparison.previous) };
+  }
+
+  /** Diferencia porcentual del tramo corriente contra el mismo tramo del mes anterior. */
+  get comparisonDelta(): number {
+    const comparison = this.summary?.monthComparison;
+    if (!comparison) {
+      return 0;
+    }
+    const current = this.comparisonTotal(comparison.current);
+    const previous = this.comparisonTotal(comparison.previous);
+    if (previous === 0) {
+      return current > 0 ? 100 : 0;
+    }
+    return Math.round(((current - previous) / previous) * 100);
+  }
+
+  get comparisonVerdict(): string {
+    const comparison = this.summary?.monthComparison;
+    if (!comparison) {
+      return '';
+    }
+    const current = this.comparisonTotal(comparison.current);
+    const previous = this.comparisonTotal(comparison.previous);
+    const unit = this.chartMetric === 'amount' ? '' : ' ventas';
+    const format = (value: number): string => this.chartMetric === 'amount'
+      ? value.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
+      : `${value}${unit}`;
+
+    if (previous === 0 && current === 0) {
+      return `Sin actividad en los primeros ${comparison.daysElapsed} días de ninguno de los dos meses.`;
+    }
+    if (previous === 0) {
+      return `${format(current)} en ${this.comparisonCurrentLabel}, contra nada en el mismo tramo de ${this.comparisonPreviousLabel.toLowerCase()}.`;
+    }
+
+    const delta = this.comparisonDelta;
+    const direction = delta > 0 ? 'por encima' : delta < 0 ? 'por debajo' : 'al mismo nivel';
+    const suffix = delta === 0 ? '' : ` (${Math.abs(delta)}%)`;
+    return `${format(current)} contra ${format(previous)}: ${direction}${suffix} del mismo tramo de ${this.comparisonPreviousLabel.toLowerCase()}.`;
+  }
+
+  get comparisonSummaryLabel(): string {
+    return `Acumulado de ${this.comparisonCurrentLabel} comparado con ${this.comparisonPreviousLabel}`;
   }
 
   get rankedProducts(): RankedProduct[] {
