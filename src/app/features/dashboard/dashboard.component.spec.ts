@@ -251,6 +251,25 @@ describe('DashboardComponent', () => {
     );
   });
 
+  it('presenta las sucursales como pills individuales sin una capsula exterior', async () => {
+    const { fixture, component } = await setupFixture();
+    component.branches = [
+      { id: 'branch-a', name: 'Centro', salesCount: 0, cashValue: 0, createdAt: '' },
+      { id: 'branch-b', name: 'Norte', salesCount: 0, cashValue: 0, createdAt: '' }
+    ];
+    fixture.detectChanges();
+
+    const group = fixture.nativeElement.querySelector('.branch-chips') as HTMLElement;
+    const chip = fixture.nativeElement.querySelector('.branch-chip') as HTMLButtonElement;
+
+    expect(getComputedStyle(group).borderTopStyle)
+      .withContext('el grupo no debe verse como una capsula gigante')
+      .toBe('none');
+    expect(getComputedStyle(chip).borderTopStyle)
+      .withContext('cada sucursal debe tener su propio limite visual')
+      .toBe('solid');
+  });
+
   it('mantiene visible el dia elegido hasta quitar el filtro', async () => {
     const { fixture, component } = await setupFixture();
     component.summary = {
@@ -281,5 +300,52 @@ describe('DashboardComponent', () => {
 
     expect(component.selectedDayKey).toBeNull();
     expect(fixture.nativeElement.querySelector('.scope-chip')).toBeNull();
+  });
+
+  it('presenta el ritmo comercial como pilares compactos y redondeados', async () => {
+    const { fixture, component } = await setupFixture();
+    component.summary = {
+      ...summary,
+      days: [{
+        date: '2026-08-15T00:00:00Z',
+        retailCount: 3,
+        retailAmount: 300,
+        currentAccountCount: 1,
+        currentAccountAmount: 100
+      }]
+    };
+    component.loading = false;
+    fixture.detectChanges();
+
+    const chart = fixture.nativeElement.querySelector('.dual-chart') as HTMLElement;
+    const bar = fixture.nativeElement.querySelector('.chart-bar') as HTMLElement;
+    const chartStyle = getComputedStyle(chart);
+    const barStyle = getComputedStyle(bar);
+
+    expect(chartStyle.display).withContext('los siete días deben formar un grid compacto').toBe('grid');
+    expect(Number.parseFloat(barStyle.borderTopLeftRadius))
+      .withContext('el remate de las barras debe verse claramente redondeado')
+      .toBeGreaterThan(8);
+  });
+
+  it('presenta la lectura mensual como bandas elevadas y separa mes de hoy', async () => {
+    const { fixture, component } = await setupFixture();
+    component.summary = summary;
+    component.loading = false;
+    fixture.detectChanges();
+
+    const rowStart = fixture.nativeElement.querySelector('.month-table tbody th') as HTMLElement;
+    const monthCell = fixture.nativeElement.querySelector('.month-table tbody .month-table__month') as HTMLElement | null;
+    const todayCell = fixture.nativeElement.querySelector('.month-table tbody .month-table__today') as HTMLElement | null;
+
+    expect(Number.parseFloat(getComputedStyle(rowStart).borderTopLeftRadius))
+      .withContext('cada segmento debe percibirse como una banda redondeada')
+      .toBeGreaterThan(8);
+    expect(monthCell).withContext('las celdas del mes deben tener una superficie propia').not.toBeNull();
+    expect(todayCell).withContext('las celdas de hoy deben tener una superficie propia').not.toBeNull();
+    if (!monthCell || !todayCell) return;
+    expect(getComputedStyle(monthCell).backgroundColor)
+      .withContext('mes y hoy deben distinguirse sin agregar contenido')
+      .not.toBe(getComputedStyle(todayCell).backgroundColor);
   });
 });

@@ -120,10 +120,10 @@
 
 .branch-filter {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: .6rem;
-  align-items: center;
+  gap: .42rem;
+  justify-items: end;
   min-width: 0;
+  width: min(100%, 38rem);
   max-width: 100%;
   color: var(--text-mute);
   font-size: .58rem;
@@ -135,33 +135,37 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: .18rem;
+  gap: .36rem;
   min-width: 0;
-  padding: .18rem;
-  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  max-width: 100%;
 }
 
 .branch-chip {
   flex: 0 0 auto;
-  padding: .34rem .62rem;
-  border: none;
+  padding: .4rem .7rem;
+  border: 1px solid color-mix(in srgb, var(--border-2) 74%, transparent);
   border-radius: 999px;
-  background: transparent;
-  color: var(--text-mute);
+  background: color-mix(in srgb, var(--bg-panel) 76%, transparent);
+  color: var(--text-dim);
   cursor: pointer;
   font: inherit;
   font-size: .56rem;
   letter-spacing: .1em;
   text-transform: uppercase;
   white-space: nowrap;
-  transition: background .18s ease, color .18s ease;
+  transition: border-color .18s ease, background .18s ease, color .18s ease, transform .18s ease;
 }
 
 .branch-chip.is-active {
-  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  border-color: color-mix(in srgb, var(--amber) 38%, var(--border));
+  background: color-mix(in srgb, var(--amber) 14%, var(--bg-panel));
+  color: var(--amber);
+}
+
+.branch-chip:hover {
+  border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
   color: var(--text);
+  transform: translateY(-1px);
 }
 
 .branch-chip:focus-visible {
@@ -268,18 +272,20 @@
 .month-table {
   width: 100%;
   min-width: 680px;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 .48rem;
   color: var(--text);
 }
 
 .month-table th,
 .month-table td {
   padding: .92rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
   text-align: right;
 }
 
 .month-table thead th {
+  padding-top: .2rem;
+  padding-bottom: .35rem;
   color: var(--text-mute);
   font-size: .54rem;
   font-weight: 500;
@@ -303,15 +309,54 @@
   font-size: clamp(.78rem, 1.6vw, 1rem);
 }
 
+.month-table tbody th,
+.month-table tbody td {
+  border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-panel) 86%, var(--text) 2%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.month-table tbody th:first-child {
+  border-left: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 12px 0 0 12px;
+}
+
+.month-table tbody td:last-child {
+  border-right: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 0 12px 12px 0;
+}
+
+.month-table tbody .month-table__month {
+  background: color-mix(in srgb, var(--amber) 5%, var(--bg-panel));
+}
+
+.month-table tbody .month-table__today {
+  background: color-mix(in srgb, var(--text) 3.5%, var(--bg-panel));
+}
+
+.month-table tbody tr:hover th,
+.month-table tbody tr:hover td {
+  border-color: color-mix(in srgb, var(--amber) 22%, var(--border));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 24%, transparent), 0 7px 18px color-mix(in srgb, var(--text) 5%, transparent);
+}
+
 .month-table__total th,
 .month-table__total td {
   color: var(--text);
   font-weight: 600;
 }
 
-.month-table tbody tr:last-child th,
-.month-table tbody tr:last-child td {
-  border-bottom: none;
+.month-table tbody .month-table__total th,
+.month-table tbody .month-table__total td {
+  border-color: color-mix(in srgb, var(--amber) 24%, var(--border));
+  background: color-mix(in srgb, var(--amber) 9%, var(--bg-panel));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 26%, transparent), 0 8px 20px color-mix(in srgb, var(--amber) 7%, transparent);
+}
+
+.month-table tbody .month-table__total .month-table__today {
+  background: color-mix(in srgb, var(--amber) 6%, var(--bg-panel));
 }
 
 .segment-mark,
@@ -392,10 +437,15 @@
 }
 
 .dual-chart {
-  display: flex;
-  gap: .55rem;
-  height: 230px;
-  padding-top: .5rem;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(72px, 106px));
+  justify-content: center;
+  gap: clamp(.45rem, 1.2vw, .9rem);
+  width: 100%;
+  max-width: 980px;
+  height: 250px;
+  margin-inline: auto;
+  padding: .65rem .35rem .15rem;
   background: repeating-linear-gradient(
     180deg,
     color-mix(in srgb, var(--border) 52%, transparent) 0,
@@ -405,23 +455,32 @@
 }
 
 .chart-day {
-  flex: 1;
   display: grid;
   grid-template-rows: 1.2rem 1fr 1.2rem;
   gap: .32rem;
   min-width: 0;
-  padding: 0;
+  padding: .35rem .2rem .15rem;
   border: none;
+  border-radius: 16px;
   background: transparent;
   color: var(--text-mute);
   cursor: pointer;
   animation: fade-up .35s var(--delay) ease both;
-  transition: opacity .18s ease, transform .18s ease;
+  transition: opacity .18s ease, transform .18s ease, background .18s ease, box-shadow .18s ease;
 }
 
 .chart-day:hover,
 .chart-day.is-selected {
   transform: translateY(-2px);
+}
+
+.chart-day:hover {
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.chart-day.is-selected {
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 16%, transparent);
 }
 
 .chart-day.is-dimmed {
@@ -432,7 +491,7 @@
 .chart-day__plot {
   display: flex;
   justify-content: center;
-  gap: .26rem;
+  gap: .42rem;
 }
 
 .chart-day__values span {
@@ -449,10 +508,10 @@
 }
 
 .chart-bar {
-  width: min(30px, 44%);
+  width: min(42px, 44%);
   min-height: 0;
   border: 1px solid transparent;
-  border-radius: 8px 8px 2px 2px;
+  border-radius: 12px 12px 4px 4px;
   box-sizing: border-box;
   transform: scaleY(0);
   transform-origin: bottom;
@@ -460,19 +519,32 @@
   transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
 
-.chart-bar--retail { background: color-mix(in srgb, var(--amber) 85%, transparent); }
-.chart-bar--cc { background: color-mix(in srgb, var(--success) 80%, transparent); }
+.chart-bar:only-child {
+  width: min(58px, 64%);
+}
+
+.chart-bar--retail {
+  border-color: color-mix(in srgb, var(--amber) 34%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--amber) 94%, white 6%), color-mix(in srgb, var(--amber) 54%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 28%, transparent);
+}
+
+.chart-bar--cc {
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--success) 88%, white 12%), color-mix(in srgb, var(--success) 50%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+}
 
 .chart-day.is-selected .chart-bar--retail {
   border-color: var(--amber);
   background: linear-gradient(180deg, color-mix(in srgb, var(--amber) 96%, white 4%), color-mix(in srgb, var(--amber) 48%, transparent));
-  box-shadow: 0 0 16px color-mix(in srgb, var(--amber) 34%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 34%, transparent), 0 0 16px color-mix(in srgb, var(--amber) 34%, transparent);
 }
 
 .chart-day.is-selected .chart-bar--cc {
   border-color: var(--success);
   background: linear-gradient(180deg, color-mix(in srgb, var(--success) 92%, white 8%), color-mix(in srgb, var(--success) 45%, transparent));
-  box-shadow: 0 0 16px color-mix(in srgb, var(--success) 30%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 30%, transparent), 0 0 16px color-mix(in srgb, var(--success) 30%, transparent);
 }
 
 .chart-day__label {
@@ -926,6 +998,10 @@ button.pulse-card:hover {
     justify-content: flex-start;
   }
 
+  .branch-filter {
+    justify-items: start;
+  }
+
   .secondary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -942,6 +1018,7 @@ button.pulse-card:hover {
 
   .branch-filter {
     grid-template-columns: 1fr;
+    justify-items: stretch;
     width: 100%;
   }
 
@@ -997,8 +1074,29 @@ button.pulse-card:hover {
   }
 
   .dual-chart {
-    gap: .3rem;
-    height: 200px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .28rem;
+    max-width: none;
+    height: 210px;
+    padding-inline: 0;
+  }
+
+  .chart-day {
+    padding-inline: .08rem;
+  }
+
+  .chart-day__values,
+  .chart-day__plot {
+    gap: .16rem;
+  }
+
+  .chart-bar {
+    width: min(34px, 46%);
+    border-radius: 10px 10px 3px 3px;
+  }
+
+  .chart-bar:only-child {
+    width: min(44px, 68%);
   }
 
   .chart-day__values span {
@@ -1061,12 +1159,11 @@ button.pulse-card:hover {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .7rem;
-    padding: .85rem 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
-  }
-
-  .month-table tbody tr:last-child {
-    border-bottom: none;
+    margin-bottom: .65rem;
+    padding: .8rem;
+    border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg-panel) 88%, var(--text) 2%);
   }
 
   .month-table tbody th {
@@ -1076,13 +1173,26 @@ button.pulse-card:hover {
   .month-table th,
   .month-table td {
     padding: 0;
-    border-bottom: none;
+    border: none;
     text-align: left;
   }
 
   .month-table td {
     display: grid;
     gap: .18rem;
+    padding: .62rem;
+    border-radius: 10px;
+  }
+
+  .month-table tbody th:first-child,
+  .month-table tbody td:last-child {
+    border: none;
+    border-radius: 10px;
+  }
+
+  .month-table tbody .month-table__total th,
+  .month-table tbody .month-table__total td {
+    border: none;
   }
 
   .month-table td::before {

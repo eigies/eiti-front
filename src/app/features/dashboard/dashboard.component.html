@@ -75,33 +75,33 @@
           <thead>
             <tr>
               <th>Segmento</th>
-              <th>Mes · ventas</th>
-              <th *ngIf="canViewFinancials">Mes · importe</th>
-              <th>Hoy · ventas</th>
-              <th *ngIf="canViewFinancials">Hoy · importe</th>
+              <th class="month-table__month">Mes · ventas</th>
+              <th class="month-table__month" *ngIf="canViewFinancials">Mes · importe</th>
+              <th class="month-table__today">Hoy · ventas</th>
+              <th class="month-table__today" *ngIf="canViewFinancials">Hoy · importe</th>
             </tr>
           </thead>
           <tbody>
             <tr class="month-table__total">
               <th><span class="segment-mark segment-mark--total"></span>Total</th>
-              <td data-label="Mes · ventas">{{ data.month.total.count }}</td>
-              <td data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td data-label="Hoy · ventas">{{ data.today.total.count }}</td>
-              <td data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td class="month-table__month" data-label="Mes · ventas">{{ data.month.total.count }}</td>
+              <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td class="month-table__today" data-label="Hoy · ventas">{{ data.today.total.count }}</td>
+              <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
             </tr>
             <tr>
               <th><span class="segment-mark segment-mark--retail"></span>Minorista</th>
-              <td data-label="Mes · ventas">{{ data.month.retail.count }}</td>
-              <td data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td data-label="Hoy · ventas">{{ data.today.retail.count }}</td>
-              <td data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td class="month-table__month" data-label="Mes · ventas">{{ data.month.retail.count }}</td>
+              <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td class="month-table__today" data-label="Hoy · ventas">{{ data.today.retail.count }}</td>
+              <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
             </tr>
             <tr>
               <th><span class="segment-mark segment-mark--cc"></span>Cta. corriente</th>
-              <td data-label="Mes · ventas">{{ data.month.currentAccount.count }}</td>
-              <td data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td data-label="Hoy · ventas">{{ data.today.currentAccount.count }}</td>
-              <td data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td class="month-table__month" data-label="Mes · ventas">{{ data.month.currentAccount.count }}</td>
+              <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td class="month-table__today" data-label="Hoy · ventas">{{ data.today.currentAccount.count }}</td>
+              <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
             </tr>
           </tbody>
         </table>
