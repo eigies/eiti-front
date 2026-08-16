@@ -63,6 +63,27 @@ export interface DashboardSaleResponse {
   isCuentaCorriente: boolean;
 }
 
+/** Valores ACUMULADOS al cierre de ese día del mes, no el movimiento del día. */
+export interface DashboardCumulativePoint {
+  dayOfMonth: number;
+  count: number;
+  units: number;
+  amount: number;
+}
+
+/**
+ * Acumulado del mes contra el mismo tramo del mes anterior. Las dos series se cortan en el
+ * mismo día (`daysElapsed`): comparar un mes entero contra uno a mitad de camino diría
+ * siempre que se viene peor.
+ */
+export interface DashboardMonthComparison {
+  currentMonth: string;
+  previousMonth: string;
+  daysElapsed: number;
+  current: DashboardCumulativePoint[];
+  previous: DashboardCumulativePoint[];
+}
+
 export interface DashboardSummaryResponse {
   month: DashboardPeriodTotals;
   today: DashboardPeriodTotals;
@@ -71,7 +92,8 @@ export interface DashboardSummaryResponse {
   collections: DashboardCollections;
   todayStatus: DashboardTodayStatus;
   recentSales: DashboardRecentSale[];
+  monthComparison: DashboardMonthComparison;
 }
 
 export type DashboardChartSegment = 'both' | 'retail' | 'cc';
-export type DashboardChartMetric = 'count' | 'amount' | 'products';
+export type DashboardChartMetric = 'count' | 'amount' | 'products' | 'comparison';

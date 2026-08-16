@@ -30,7 +30,6 @@
 .eyebrow,
 .db-date,
 .db-live,
-.branch-filter,
 .data-panel__eyebrow,
 .period-badge,
 .month-table,
@@ -118,18 +117,6 @@
   animation: blink 1.5s ease-in-out infinite;
 }
 
-.branch-filter {
-  display: grid;
-  gap: .42rem;
-  justify-items: end;
-  min-width: 0;
-  width: min(100%, 38rem);
-  max-width: 100%;
-  color: var(--text-mute);
-  font-size: .58rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
 
 .branch-chips {
   display: flex;
@@ -998,10 +985,6 @@ button.pulse-card:hover {
     justify-content: flex-start;
   }
 
-  .branch-filter {
-    justify-items: start;
-  }
-
   .secondary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1014,12 +997,6 @@ button.pulse-card:hover {
 @media (max-width: 760px) {
   .page {
     padding: 1.4rem .9rem 2.2rem;
-  }
-
-  .branch-filter {
-    grid-template-columns: 1fr;
-    justify-items: stretch;
-    width: 100%;
   }
 
   .branch-chips {
@@ -1253,7 +1230,206 @@ button.pulse-card:hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* Los chips de categoria son la segunda linea de filtros, subordinada a la de sucursal. */
-.branch-chips--categories {
-  margin-top: .4rem;
+
+/* ── BARRA DE FILTROS ──
+   Sale del header para no competir con el titulo y para tener ancho propio: con muchas
+   sucursales o categorias, ahi adentro se desarmaba en cuatro lineas irregulares. */
+.db-filters {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  margin-top: 1.1rem;
+  /* Mas aire abajo que el 1rem que separa paneles entre si: la barra es una capa de
+     controles, no un panel mas de contenido, y la separacion lo tiene que decir. */
+  margin-bottom: 1.9rem;
+  padding: .85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-panel) 70%, transparent);
 }
+
+.db-filters__row {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+/* La etiqueta va al costado y con ancho fijo: cada fila dice que es sin leer los chips. */
+.db-filters__label {
+  flex: 0 0 5.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: .64rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+/* ── SELECTOR DE CATEGORIAS ──
+   Colapsado porque es seleccion multiple sobre una lista abierta: como chips sueltos
+   crecia sin limite y no se distinguia de los de sucursal. */
+.category-picker {
+  position: relative;
+}
+
+.category-picker__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .34rem .7rem;
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+
+.category-picker__toggle:hover,
+.category-picker__toggle:focus-visible {
+  border-color: color-mix(in srgb, var(--amber) 55%, var(--border-2));
+  color: var(--amber);
+}
+
+.category-picker__toggle.is-active {
+  border-color: color-mix(in srgb, var(--amber) 60%, var(--border-2));
+  background: var(--amber-dim);
+  color: var(--amber);
+}
+
+.category-picker__chevron {
+  width: 0;
+  height: 0;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 4px solid currentColor;
+}
+
+.category-picker__panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + .4rem);
+  left: 0;
+  min-width: 15rem;
+  display: grid;
+  gap: .1rem;
+  padding: .5rem;
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--overlay) 60%, transparent);
+}
+
+.category-option {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .3rem .35rem;
+  border-radius: 6px;
+  font-size: .76rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.category-option:hover {
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+}
+
+.category-option input {
+  accent-color: var(--amber);
+  cursor: pointer;
+}
+
+.category-picker__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-top: .35rem;
+  padding-top: .45rem;
+  border-top: 1px solid var(--border);
+}
+
+.category-picker__clear,
+.category-picker__done {
+  border: none;
+  background: none;
+  padding: .2rem .3rem;
+  font-family: 'DM Mono', monospace;
+  font-size: .64rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.category-picker__clear { color: var(--text-dim); }
+.category-picker__clear:hover:not(:disabled) { color: var(--amber); }
+.category-picker__clear:disabled { opacity: .45; cursor: not-allowed; }
+.category-picker__done { color: var(--amber); }
+
+@media (max-width: 640px) {
+  .db-filters__label { flex-basis: 100%; }
+  .category-picker__panel { min-width: min(15rem, calc(100vw - 3rem)); }
+}
+
+/* ── COMPARATIVA CONTRA EL MES ANTERIOR ──
+   Dos curvas acumuladas en la misma escala. El mes en curso lleva el acento; el anterior
+   queda punteado y apagado, para que se lea como referencia y no como dato principal. */
+.compare-chart {
+  margin-top: .9rem;
+}
+
+.compare-chart svg {
+  width: 100%;
+  height: 11rem;
+  overflow: visible;
+}
+
+.compare-line {
+  fill: none;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.compare-line--current { stroke: var(--amber); }
+
+.compare-line--previous {
+  stroke: color-mix(in srgb, var(--text-mute) 70%, transparent);
+  stroke-dasharray: 3 3;
+}
+
+.legend-dot--previous {
+  background: color-mix(in srgb, var(--text-mute) 70%, transparent);
+}
+
+.compare-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: .3rem;
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .1em;
+  color: var(--text-mute);
+}
+
+/* El veredicto en texto es lo que se lee primero: la curva muestra la forma, la frase
+   contesta la pregunta. */
+.compare-verdict {
+  margin-top: .75rem;
+  font-size: .78rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.compare-verdict.is-up { color: var(--success); }
+.compare-verdict.is-down { color: var(--danger); }
+
+/* Sin animacion de dibujado a proposito: para animarla hace falta stroke-dasharray, y
+   combinado con preserveAspectRatio="none" (que estira el eje X de 100 a ~1240px) mas
+   vector-effect: non-scaling-stroke, el navegador calcula el patron contra el largo
+   renderizado y la curva aparece partida en pedazos. El adorno no vale el bug. */
