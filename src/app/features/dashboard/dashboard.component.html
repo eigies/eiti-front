@@ -30,6 +30,23 @@
             [attr.aria-pressed]="branchId === branch.id"
             (click)="setBranch(branch.id)">{{ branch.name }}</button>
         </div>
+
+        <div class="branch-chips branch-chips--categories" role="group"
+             aria-label="Categorias contadas en el dashboard" *ngIf="categories.length > 0">
+          <button
+            type="button"
+            class="branch-chip"
+            [class.is-active]="!hasCategoryFilter"
+            [attr.aria-pressed]="!hasCategoryFilter"
+            (click)="clearCategories()">Todo el catalogo</button>
+          <button
+            *ngFor="let category of categories"
+            type="button"
+            class="branch-chip"
+            [class.is-active]="isCategorySelected(category.id)"
+            [attr.aria-pressed]="isCategorySelected(category.id)"
+            (click)="toggleCategory(category.id)">{{ category.name }}</button>
+        </div>
       </div>
     </div>
   </header>
@@ -75,32 +92,32 @@
           <thead>
             <tr>
               <th>Segmento</th>
-              <th class="month-table__month">Mes · ventas</th>
+              <th class="month-table__month">Mes · unid. y ventas</th>
               <th class="month-table__month" *ngIf="canViewFinancials">Mes · importe</th>
-              <th class="month-table__today">Hoy · ventas</th>
+              <th class="month-table__today">Hoy · unid. y ventas</th>
               <th class="month-table__today" *ngIf="canViewFinancials">Hoy · importe</th>
             </tr>
           </thead>
           <tbody>
             <tr class="month-table__total">
               <th><span class="segment-mark segment-mark--total"></span>Total</th>
-              <td class="month-table__month" data-label="Mes · ventas">{{ data.month.total.count }}</td>
+              <td class="month-table__month" data-label="Mes · unid. y ventas"><strong class="units">{{ data.month.total.units }} u</strong><span class="sales-count">{{ data.month.total.count }} vta</span></td>
               <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td class="month-table__today" data-label="Hoy · ventas">{{ data.today.total.count }}</td>
+              <td class="month-table__today" data-label="Hoy · unid. y ventas"><strong class="units">{{ data.today.total.units }} u</strong><span class="sales-count">{{ data.today.total.count }} vta</span></td>
               <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
             </tr>
             <tr>
               <th><span class="segment-mark segment-mark--retail"></span>Minorista</th>
-              <td class="month-table__month" data-label="Mes · ventas">{{ data.month.retail.count }}</td>
+              <td class="month-table__month" data-label="Mes · unid. y ventas"><strong class="units">{{ data.month.retail.units }} u</strong><span class="sales-count">{{ data.month.retail.count }} vta</span></td>
               <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td class="month-table__today" data-label="Hoy · ventas">{{ data.today.retail.count }}</td>
+              <td class="month-table__today" data-label="Hoy · unid. y ventas"><strong class="units">{{ data.today.retail.units }} u</strong><span class="sales-count">{{ data.today.retail.count }} vta</span></td>
               <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
             </tr>
             <tr>
               <th><span class="segment-mark segment-mark--cc"></span>Cta. corriente</th>
-              <td class="month-table__month" data-label="Mes · ventas">{{ data.month.currentAccount.count }}</td>
+              <td class="month-table__month" data-label="Mes · unid. y ventas"><strong class="units">{{ data.month.currentAccount.units }} u</strong><span class="sales-count">{{ data.month.currentAccount.count }} vta</span></td>
               <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td class="month-table__today" data-label="Hoy · ventas">{{ data.today.currentAccount.count }}</td>
+              <td class="month-table__today" data-label="Hoy · unid. y ventas"><strong class="units">{{ data.today.currentAccount.units }} u</strong><span class="sales-count">{{ data.today.currentAccount.count }} vta</span></td>
               <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
             </tr>
           </tbody>

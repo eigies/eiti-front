@@ -1209,7 +1209,12 @@ button.pulse-card:hover {
   }
 
   .chart-day__values {
-    visibility: hidden;
+    gap: .08rem;
+  }
+
+  .chart-day__values span {
+    font-size: clamp(.38rem, 1.8vw, .43rem);
+    line-height: 1rem;
   }
 
   .product-rank {
@@ -1231,4 +1236,24 @@ button.pulse-card:hover {
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+}
+
+/* Unidades y ventas conviven en la misma celda: la relacion entre las dos es el dato
+   interesante (280 ventas con 273 baterias = casi una bateria por operacion). */
+.month-table .units {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-table .sales-count {
+  display: block;
+  margin-top: .12rem;
+  font-size: .72rem;
+  color: color-mix(in srgb, var(--text) 55%, var(--text-soft));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Los chips de categoria son la segunda linea de filtros, subordinada a la de sucursal. */
+.branch-chips--categories {
+  margin-top: .4rem;
 }

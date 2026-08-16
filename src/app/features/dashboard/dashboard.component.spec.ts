@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { BranchService } from '../../core/services/branch.service';
 import { DashboardPreferencesService } from '../../core/services/dashboard-preferences.service';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { ProductCategoryService } from '../../core/services/product-category.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { DashboardComponent } from './dashboard.component';
@@ -15,14 +16,14 @@ import { DashboardComponent } from './dashboard.component';
 describe('DashboardComponent', () => {
   const summary: DashboardSummaryResponse = {
     month: {
-      total: { count: 3, amount: 300 },
-      retail: { count: 2, amount: 200 },
-      currentAccount: { count: 1, amount: 100 }
+      total: { count: 3, units: 3, amount: 300 },
+      retail: { count: 2, units: 2, amount: 200 },
+      currentAccount: { count: 1, units: 1, amount: 100 }
     },
     today: {
-      total: { count: 1, amount: 100 },
-      retail: { count: 1, amount: 100 },
-      currentAccount: { count: 0, amount: 0 }
+      total: { count: 1, units: 1, amount: 100 },
+      retail: { count: 1, units: 1, amount: 100 },
+      currentAccount: { count: 0, units: 0, amount: 0 }
     },
     days: [],
     topProducts: [],
@@ -59,19 +60,23 @@ describe('DashboardComponent', () => {
     dashboard.listSales.and.returnValue(of([]));
     const prefs = jasmine.createSpyObj<DashboardPreferencesService>(
       'DashboardPreferencesService',
-      ['readBranchId', 'writeBranchId', 'readChartSegment', 'writeChartSegment', 'readChartMetric', 'writeChartMetric']
+      ['readBranchId', 'writeBranchId', 'readChartSegment', 'writeChartSegment',
+       'readChartMetric', 'writeChartMetric', 'readCategoryIds', 'writeCategoryIds']
     );
     prefs.readBranchId.and.returnValue('branch-a');
     prefs.readChartSegment.and.returnValue('cc');
     prefs.readChartMetric.and.returnValue('count');
+    prefs.readCategoryIds.and.returnValue([]);
     const branch = jasmine.createSpyObj<BranchService>('BranchService', ['listBranches']);
     branch.listBranches.and.returnValue(branchesFail
       ? throwError(() => new Error('branches unavailable'))
       : of([{ id: 'branch-a', name: 'Centro', salesCount: 0, cashValue: 0, createdAt: '' }]));
+    const categories = jasmine.createSpyObj<ProductCategoryService>('ProductCategoryService', ['list']);
+    categories.list.and.returnValue(of([]));
     const toast = jasmine.createSpyObj<ToastService>('ToastService', ['error']);
-    const component = new DashboardComponent(auth, dashboard, prefs, branch, toast);
+    const component = new DashboardComponent(auth, dashboard, prefs, branch, categories, toast);
 
-    return { component, auth, dashboard, prefs, branch, toast };
+    return { component, auth, dashboard, prefs, branch, categories, toast };
   }
 
   async function setupFixture() {
@@ -84,6 +89,7 @@ describe('DashboardComponent', () => {
         { provide: DashboardService, useValue: dependencies.dashboard },
         { provide: DashboardPreferencesService, useValue: dependencies.prefs },
         { provide: BranchService, useValue: dependencies.branch },
+        { provide: ProductCategoryService, useValue: dependencies.categories },
         { provide: ToastService, useValue: dependencies.toast }
       ]
     }).compileComponents();
@@ -103,7 +109,8 @@ describe('DashboardComponent', () => {
     expect(dashboard.getSummary).toHaveBeenCalledWith(
       jasmine.stringMatching(/^\d{4}-\d{2}-01$/),
       jasmine.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
-      'branch-a'
+      'branch-a',
+      []
     );
     expect(component.summary).toBe(summary);
     expect(component.loading).toBeFalse();
@@ -192,7 +199,7 @@ describe('DashboardComponent', () => {
     const { component, dashboard } = setup();
     const oldRequest = new Subject<DashboardSummaryResponse>();
     const newRequest = new Subject<DashboardSummaryResponse>();
-    const newer = { ...summary, month: { ...summary.month, total: { count: 9, amount: 900 } } };
+    const newer = { ...summary, month: { ...summary.month, total: { count: 9, units: 9, amount: 900 } } };
     dashboard.getSummary.and.returnValues(oldRequest, newRequest);
 
     component.loadSummary();
@@ -247,7 +254,8 @@ describe('DashboardComponent', () => {
     expect(dashboard.getSummary).toHaveBeenCalledWith(
       jasmine.stringMatching(/^\d{4}-\d{2}-01$/),
       jasmine.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
-      'branch-b'
+      'branch-b',
+      []
     );
   });
 
@@ -347,5 +355,16 @@ describe('DashboardComponent', () => {
     expect(getComputedStyle(monthCell).backgroundColor)
       .withContext('mes y hoy deben distinguirse sin agregar contenido')
       .not.toBe(getComputedStyle(todayCell).backgroundColor);
+  });
+
+  it('mantiene visibles los valores del ritmo comercial en mobile', async () => {
+    await setupFixture();
+    const componentStyles = Array.from(document.head.querySelectorAll('style'))
+      .map(style => style.textContent ?? '')
+      .find(css => css.includes('.chart-day__values')) ?? '';
+
+    expect(componentStyles)
+      .withContext('el breakpoint mobile no debe ocultar los números ubicados sobre las barras')
+      .not.toMatch(/@media\s*\(max-width:\s*520px\)[\s\S]*?\.chart-day__values[^\{]*\{[^}]*visibility:\s*hidden/i);
   });
 });
