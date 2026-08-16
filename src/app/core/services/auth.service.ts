@@ -159,7 +159,8 @@ export class AuthService {
             profileId: parsed.profileId ?? null,
             profileName: parsed.profileName ?? null,
             permissions: parsed.permissions ?? [],
-            assignedCashDrawerId: parsed.assignedCashDrawerId ?? null
+            assignedCashDrawerId: parsed.assignedCashDrawerId ?? null,
+            canViewAllBranches: parsed.canViewAllBranches
         };
     }
 }

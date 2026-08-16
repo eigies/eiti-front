@@ -1,36 +1,49 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
-import { SaleService } from '../../core/services/sale.service';
-import { SaleResponse } from '../../core/models/sale.models';
+import { catchError, of } from 'rxjs';
+import { BranchResponse } from '../../core/models/branch.models';
+import {
+  DashboardChartMetric,
+  DashboardChartSegment,
+  DashboardDayPoint,
+  DashboardRecentSale,
+  DashboardSaleResponse,
+  DashboardSummaryResponse,
+  DashboardTopProduct
+} from '../../core/models/dashboard.models';
 import { PermissionCodes } from '../../core/models/permission.models';
-
-interface DayBar {
-  label: string;
-  dateKey: string;
-  total: number;
-  count: number;
-  heightPct: number;
-  isToday: boolean;
-}
+import { AuthService } from '../../core/services/auth.service';
+import { BranchService } from '../../core/services/branch.service';
+import { DashboardPreferencesService } from '../../core/services/dashboard-preferences.service';
+import { DashboardService } from '../../core/services/dashboard.service';
+import { ToastService } from '../../shared/services/toast.service';
 
 interface DashboardAlert {
   tone: 'success' | 'warn' | 'danger';
   label: string;
   detail: string;
-  statLabel?: string;
-  statValue?: string;
-  compareLabel?: string;
-  compareValue?: string;
 }
 
-interface ProductRankingItem {
-  productId: string;
-  name: string;
-  brand: string;
-  units: number;
-  salesCount: number;
+interface DashboardSaleItem {
+  id: string;
+  code?: string | null;
+  createdAt: string;
+  customerName: string;
+  status: number;
+  totalAmount: number;
+  isCuentaCorriente: boolean;
+}
+
+interface DashboardChartDay extends DashboardDayPoint {
+  dateKey: string;
+  label: string;
+  isToday: boolean;
+  retailHeight: number;
+  currentAccountHeight: number;
+}
+
+interface RankedProduct extends DashboardTopProduct {
   sharePct: number;
 }
 
@@ -43,28 +56,56 @@ interface ProductRankingItem {
 })
 export class DashboardComponent implements OnInit {
   readonly permissionCodes = PermissionCodes;
-  sales: SaleResponse[] = [];
+  summary: DashboardSummaryResponse | null = null;
+  branches: BranchResponse[] = [];
   loading = true;
+  loadFailed = false;
+  branchId: string | null = null;
+  chartSegment: DashboardChartSegment = 'both';
+  chartMetric: DashboardChartMetric = 'count';
   selectedDayKey: string | null = null;
   selectedStatusKey: 'paid' | 'pending' | 'cancelled' | null = null;
-  chartMetric: 'count' | 'amount' | 'products' = 'count';
+  drillDownSales: DashboardSaleResponse[] = [];
+  drillDownLoading = false;
+  private summaryRequestId = 0;
+  private drillDownRequestId = 0;
 
   constructor(
-    public auth: AuthService,
-    private saleService: SaleService
+    public readonly auth: AuthService,
+    private readonly dashboardService: DashboardService,
+    private readonly preferences: DashboardPreferencesService,
+    private readonly branchService: BranchService,
+    private readonly toast: ToastService
   ) {}
 
   ngOnInit(): void {
-    const now = new Date();
-    const dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
-    this.saleService.listSales({ dateFrom, includeCuentaCorriente: true }).subscribe({
-      next: sales => { this.sales = sales; this.loading = false; },
-      error: () => { this.loading = false; }
-    });
+    this.chartSegment = this.preferences.readChartSegment();
+    const storedMetric = this.preferences.readChartMetric();
+    this.chartMetric = storedMetric === 'amount' && !this.canViewFinancials
+      ? 'count'
+      : storedMetric;
+
+    this.branchService.listBranches()
+      .pipe(catchError(() => of([] as BranchResponse[])))
+      .subscribe(branches => {
+        this.branches = branches;
+        this.branchId = branches.length > 0
+          ? this.preferences.readBranchId(
+              branches.map(branch => branch.id),
+              this.canViewAllBranches
+            )
+          : null;
+        this.loadSummary();
+      });
   }
 
   get canViewFinancials(): boolean {
     return this.auth.hasPermission(PermissionCodes.dashboardViewFinancials);
+  }
+
+  get canViewAllBranches(): boolean {
+    return this.auth.currentUser?.canViewAllBranches
+      ?? this.auth.hasPermission(PermissionCodes.branchesViewAll);
   }
 
   get username(): string {
@@ -73,176 +114,37 @@ export class DashboardComponent implements OnInit {
 
   get todayLabel(): string {
     return new Intl.DateTimeFormat('es-AR', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     }).format(new Date());
   }
 
-  get todayKey(): string {
-    return new Date().toLocaleDateString('en-CA');
+  get chartTitle(): string {
+    return this.chartMetric === 'products'
+      ? 'Productos con mayor salida'
+      : 'Ritmo comercial · últimos 7 días';
   }
 
-  get yesterdayKey(): string {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return yesterday.toLocaleDateString('en-CA');
-  }
-
-  get activeSales(): SaleResponse[] {
-    return this.sales.filter(s => s.idSaleStatus !== 3);
-  }
-
-  get paidSales(): SaleResponse[] {
-    return this.sales.filter(s => s.idSaleStatus === 2);
-  }
-
-  get pendingSales(): SaleResponse[] {
-    return this.sales.filter(s => s.idSaleStatus === 1);
-  }
-
-  get cancelledSales(): SaleResponse[] {
-    return this.sales.filter(s => s.idSaleStatus === 3);
-  }
-
-  private salesForDay(dateKey: string): SaleResponse[] {
-    return this.sales.filter(s => new Date(s.createdAt).toLocaleDateString('en-CA') === dateKey);
-  }
-
-  private salesByStatus(statusKey: 'paid' | 'pending' | 'cancelled', sales: SaleResponse[]): SaleResponse[] {
-    if (statusKey === 'paid') {
-      return sales.filter(s => s.idSaleStatus === 2);
+  get chartSubtitle(): string {
+    if (this.chartMetric === 'products') {
+      return 'Ranking del período por unidades vendidas';
     }
-
-    if (statusKey === 'pending') {
-      return sales.filter(s => s.idSaleStatus === 1);
-    }
-
-    return sales.filter(s => s.idSaleStatus === 3);
-  }
-
-  get todaySales(): SaleResponse[] {
-    return this.salesForDay(this.todayKey);
-  }
-
-  get todayActiveSales(): SaleResponse[] {
-    return this.todaySales.filter(s => s.idSaleStatus !== 3);
-  }
-
-  get todayPaidSales(): SaleResponse[] {
-    return this.todaySales.filter(s => s.idSaleStatus === 2);
-  }
-
-  get todayPendingSales(): SaleResponse[] {
-    return this.todaySales.filter(s => s.idSaleStatus === 1);
-  }
-
-  get todayCancelledSales(): SaleResponse[] {
-    return this.todaySales.filter(s => s.idSaleStatus === 3);
-  }
-
-  get todayRevenue(): number {
-    return this.todayPaidSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-  }
-
-  get todayPendingRevenue(): number {
-    return this.todayPendingSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-  }
-
-  get yesterdayRevenue(): number {
-    return this.salesForDay(this.yesterdayKey)
-      .filter(sale => sale.idSaleStatus === 2)
-      .reduce((sum, sale) => sum + sale.totalAmount, 0);
-  }
-
-  get todayVsYesterdayDelta(): number {
-    if (this.yesterdayRevenue === 0) {
-      return this.todayRevenue > 0 ? 100 : 0;
-    }
-
-    return Math.round(((this.todayRevenue - this.yesterdayRevenue) / this.yesterdayRevenue) * 100);
-  }
-
-  get todayVsYesterdayLabel(): string {
-    if (this.todayRevenue === 0 && this.yesterdayRevenue === 0) {
-      return 'Mismo nivel que ayer';
-    }
-
-    if (this.yesterdayRevenue === 0 && this.todayRevenue > 0) {
-      return 'Mas cobros que ayer';
-    }
-
-    if (this.todayVsYesterdayDelta > 0) {
-      return `${this.todayVsYesterdayDelta}% mas cobrado que ayer`;
-    }
-
-    if (this.todayVsYesterdayDelta < 0) {
-      return `${Math.abs(this.todayVsYesterdayDelta)}% menos cobrado que ayer`;
-    }
-
-    return 'Mismo nivel de cobro que ayer';
-  }
-
-  get scopeSales(): SaleResponse[] {
-    const base = this.selectedDayKey ? this.salesForDay(this.selectedDayKey) : this.sales;
-    return base.filter(s => s.idSaleStatus !== 3);
-  }
-
-  get scopePaidSales(): SaleResponse[] {
-    const base = this.selectedDayKey ? this.salesForDay(this.selectedDayKey) : this.sales;
-    return base.filter(s => s.idSaleStatus === 2);
-  }
-
-  get scopePendingSales(): SaleResponse[] {
-    const base = this.selectedDayKey ? this.salesForDay(this.selectedDayKey) : this.sales;
-    return base.filter(s => s.idSaleStatus === 1);
-  }
-
-  get totalRevenue(): number {
-    return this.scopePaidSales.reduce((sum, s) => sum + s.totalAmount, 0);
-  }
-
-  get pendingRevenue(): number {
-    return this.scopePendingSales.reduce((sum, s) => sum + s.totalAmount, 0);
-  }
-
-  get avgSaleValue(): number {
-    if (this.scopeSales.length === 0) return 0;
-    return this.scopeSales.reduce((sum, s) => sum + s.totalAmount, 0) / this.scopeSales.length;
-  }
-
-  get paidPct(): number {
-    return this.sales.length === 0 ? 0 : Math.round(this.paidSales.length / this.sales.length * 100);
-  }
-
-  get pendingPct(): number {
-    return this.sales.length === 0 ? 0 : Math.round(this.pendingSales.length / this.sales.length * 100);
-  }
-
-  get cancelledPct(): number {
-    return this.sales.length === 0 ? 0 : Math.round(this.cancelledSales.length / this.sales.length * 100);
-  }
-
-  get recentSales(): SaleResponse[] {
-    return [...this.sales]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 6);
-  }
-
-  get displayedSales(): SaleResponse[] {
-    const baseSales = this.selectedDayKey
-      ? this.salesForDay(this.selectedDayKey)
-      : this.recentSales;
-    const filteredByStatus = this.selectedStatusKey
-      ? this.salesByStatus(this.selectedStatusKey, baseSales)
-      : baseSales;
-
-    return [...filteredByStatus]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return this.chartMetric === 'count'
+      ? 'Cantidad de ventas por segmento'
+      : 'Facturación por segmento';
   }
 
   get selectedDayLabel(): string {
-    if (!this.selectedDayKey) return '';
-    const d = new Date(this.selectedDayKey + 'T12:00:00');
-    return new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d);
+    if (!this.selectedDayKey) {
+      return '';
+    }
+    return new Intl.DateTimeFormat('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    }).format(new Date(`${this.selectedDayKey}T12:00:00`));
   }
 
   get selectedStatusLabel(): string {
@@ -252,210 +154,261 @@ export class DashboardComponent implements OnInit {
     return '';
   }
 
-  get monthTopLineLabel(): string {
-    return this.selectedDayKey ? 'Lectura del dia filtrado' : 'Lectura del mes en curso';
-  }
+  get chartDays(): DashboardChartDay[] {
+    const days = this.summary?.days ?? [];
+    const values = days.flatMap(day => [
+      this.chartValue(day, 'retail'),
+      this.chartValue(day, 'cc')
+    ]);
+    const max = Math.max(...values, 1);
+    const todayKey = this.localDateKey(new Date());
 
-  get chartTitle(): string {
-    return this.chartMetric === 'products'
-      ? 'Productos vendidos'
-      : 'Ritmo comercial · últimos 7 días';
-  }
-
-  get chartSubtitle(): string {
-    if (this.chartMetric === 'products') {
-      return this.selectedDayKey
-        ? `Ranking del ${this.selectedDayLabel} · solo ventas pagadas`
-        : 'Ranking del mes · solo ventas pagadas';
-    }
-
-    return this.chartMetric === 'count'
-      ? 'Cantidad de ventas por día'
-      : 'Facturación cobrada por día';
-  }
-
-  get productSalesScope(): SaleResponse[] {
-    const base = this.selectedDayKey ? this.salesForDay(this.selectedDayKey) : this.sales;
-    return base.filter(sale => sale.idSaleStatus === 2);
-  }
-
-  get productRanking(): ProductRankingItem[] {
-    const products = new Map<string, {
-      productId: string;
-      name: string;
-      brand: string;
-      units: number;
-      saleIds: Set<string>;
-    }>();
-
-    for (const sale of this.productSalesScope) {
-      for (const detail of sale.details ?? []) {
-        const current = products.get(detail.productId) ?? {
-          productId: detail.productId,
-          name: detail.productName || 'Producto',
-          brand: detail.productBrand || 'Sin marca',
-          units: 0,
-          saleIds: new Set<string>()
-        };
-
-        current.units += detail.quantity;
-        current.saleIds.add(sale.id);
-        products.set(detail.productId, current);
-      }
-    }
-
-    const maxUnits = Math.max(...[...products.values()].map(product => product.units), 1);
-
-    return [...products.values()]
-      .sort((left, right) => right.units - left.units || left.name.localeCompare(right.name))
-      .slice(0, 5)
-      .map(product => ({
-        productId: product.productId,
-        name: product.name,
-        brand: product.brand,
-        units: product.units,
-        salesCount: product.saleIds.size,
-        sharePct: Math.max(Math.round((product.units / maxUnits) * 100), 6)
-      }));
-  }
-
-  get totalSoldUnits(): number {
-    return this.productSalesScope.reduce(
-      (total, sale) => total + (sale.details ?? []).reduce((subtotal, detail) => subtotal + detail.quantity, 0),
-      0
-    );
-  }
-
-  get distinctSoldProducts(): number {
-    const productIds = new Set<string>();
-    for (const sale of this.productSalesScope) {
-      for (const detail of sale.details ?? []) {
-        productIds.add(detail.productId);
-      }
-    }
-    return productIds.size;
-  }
-
-  get operationalAlerts(): DashboardAlert[] {
-    const alerts: DashboardAlert[] = [];
-    const showMoney = this.canViewFinancials;
-
-    if (this.todayActiveSales.length === 0) {
-      alerts.push({
-        tone: 'danger',
-        label: 'Dia sin ventas',
-        detail: 'Todavia no hay ventas activas registradas hoy.',
-        statLabel: 'Hoy',
-        statValue: '0 ventas'
-      });
-    }
-
-    if (this.todayPendingSales.length >= 3) {
-      alerts.push({
-        tone: 'warn',
-        label: 'Cobros en espera',
-        detail: `${this.todayPendingSales.length} venta(s) siguen abiertas hoy.`,
-        statLabel: showMoney ? 'Pendiente' : 'Ventas abiertas',
-        statValue: showMoney
-          ? this.todayPendingRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
-          : String(this.todayPendingSales.length),
-        compareLabel: showMoney ? 'Ventas abiertas' : undefined,
-        compareValue: showMoney ? String(this.todayPendingSales.length) : undefined
-      });
-    }
-
-    if (this.todayCancelledSales.length > 0) {
-      alerts.push({
-        tone: 'warn',
-        label: 'Cancelaciones detectadas',
-        detail: `${this.todayCancelledSales.length} venta(s) canceladas durante la jornada.`,
-        statLabel: 'Canceladas hoy',
-        statValue: String(this.todayCancelledSales.length)
-      });
-    }
-
-    if (showMoney && this.todayRevenue > this.yesterdayRevenue && this.todayRevenue > 0) {
-      alerts.push({
-        tone: 'success',
-        label: 'Ritmo superior a ayer',
-        detail: this.todayVsYesterdayLabel.charAt(0).toUpperCase() + this.todayVsYesterdayLabel.slice(1) + '.',
-        statLabel: 'Cobrado hoy',
-        statValue: this.todayRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 }),
-        compareLabel: 'Ayer',
-        compareValue: this.yesterdayRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
-      });
-    }
-
-    if (alerts.length === 0) {
-      alerts.push({
-        tone: 'success',
-        label: 'Operacion estable',
-        detail: 'No hay desvíos operativos relevantes en este momento.',
-        statLabel: showMoney ? 'Cobrado hoy' : 'Ventas activas',
-        statValue: showMoney
-          ? this.todayRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
-          : String(this.todayActiveSales.length),
-        compareLabel: showMoney ? 'Ventas activas' : undefined,
-        compareValue: showMoney ? String(this.todayActiveSales.length) : undefined
-      });
-    }
-
-    return alerts.slice(0, 3);
-  }
-
-  selectDay(bar: DayBar): void {
-    this.selectedDayKey = this.selectedDayKey === bar.dateKey ? null : bar.dateKey;
-  }
-
-  selectStatus(statusKey: 'paid' | 'pending' | 'cancelled'): void {
-    this.selectedStatusKey = this.selectedStatusKey === statusKey ? null : statusKey;
-  }
-
-  setChartMetric(metric: 'count' | 'amount' | 'products'): void {
-    if (metric === 'amount' && !this.canViewFinancials) {
-      return;
-    }
-    this.chartMetric = metric;
-  }
-
-  get last7DaysBars(): DayBar[] {
-    const todayKey = new Date().toLocaleDateString('en-CA');
-    const bars: DayBar[] = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toLocaleDateString('en-CA');
-      const raw = new Intl.DateTimeFormat('es-AR', { weekday: 'short' }).format(d);
-      const label = raw.charAt(0).toUpperCase() + raw.slice(1, 3);
-
-      const daySales = this.activeSales.filter(s => new Date(s.createdAt).toLocaleDateString('en-CA') === key);
-      const total = daySales.reduce((sum, s) => sum + s.totalAmount, 0);
-
-      bars.push({ label, dateKey: key, total, count: daySales.length, heightPct: 0, isToday: key === todayKey });
-    }
-
-    const maxCount = Math.max(...bars.map(b => b.count), 1);
-    const maxAmount = Math.max(...bars.map(b => b.total), 1);
-
-    return bars.map(b => {
-      const sourceValue = this.chartMetric === 'amount' ? b.total : b.count;
-      const maxValue = this.chartMetric === 'amount' ? maxAmount : maxCount;
-
+    return days.map(day => {
+      const dateKey = day.date.slice(0, 10);
+      const rawLabel = new Intl.DateTimeFormat('es-AR', { weekday: 'short' })
+        .format(new Date(`${dateKey}T12:00:00`));
       return {
-        ...b,
-        heightPct: sourceValue > 0 ? Math.max(Math.round((sourceValue / maxValue) * 100), 5) : 0
+        ...day,
+        dateKey,
+        label: rawLabel.slice(0, 3),
+        isToday: dateKey === todayKey,
+        retailHeight: this.barHeight(this.chartValue(day, 'retail'), max),
+        currentAccountHeight: this.barHeight(this.chartValue(day, 'cc'), max)
       };
     });
   }
 
+  get rankedProducts(): RankedProduct[] {
+    const products = this.summary?.topProducts ?? [];
+    const maxUnits = Math.max(...products.map(product => product.units), 1);
+    return products.map(product => ({
+      ...product,
+      sharePct: Math.max(Math.round((product.units / maxUnits) * 100), 6)
+    }));
+  }
+
+  get displayedSales(): DashboardSaleItem[] {
+    const base = this.selectedDayKey || this.selectedStatusKey
+      ? this.drillDownSales.map(sale => this.mapDashboardSale(sale))
+      : (this.summary?.recentSales ?? []).map(sale => this.mapRecentSale(sale));
+    const filtered = this.selectedStatusKey
+      ? base.filter(sale => sale.status === this.statusValue(this.selectedStatusKey!))
+      : base;
+
+    return [...filtered].sort(
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+    );
+  }
+
+  get operationalAlerts(): DashboardAlert[] {
+    const status = this.summary?.todayStatus;
+    if (!status) {
+      return [];
+    }
+
+    const alerts: DashboardAlert[] = [];
+    if (status.activeCount === 0) {
+      alerts.push({
+        tone: 'danger',
+        label: 'Día sin ventas',
+        detail: 'Todavía no hay ventas activas registradas hoy.'
+      });
+    }
+    if (status.pendingCount >= 3) {
+      alerts.push({
+        tone: 'warn',
+        label: 'Cobros en espera',
+        detail: `${status.pendingCount} ventas siguen abiertas durante la jornada.`
+      });
+    }
+    if (status.cancelledCount > 0) {
+      alerts.push({
+        tone: 'warn',
+        label: 'Cancelaciones detectadas',
+        detail: `${status.cancelledCount} ventas fueron canceladas hoy.`
+      });
+    }
+    if (alerts.length === 0) {
+      alerts.push({
+        tone: 'success',
+        label: 'Operación estable',
+        detail: 'No hay desvíos operativos relevantes en este momento.'
+      });
+    }
+    return alerts.slice(0, 3);
+  }
+
+  loadSummary(): void {
+    const requestId = ++this.summaryRequestId;
+    this.loading = true;
+    this.loadFailed = false;
+    const now = new Date();
+    const dateFrom = this.localDateKey(new Date(now.getFullYear(), now.getMonth(), 1));
+    const dateTo = this.localDateKey(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+
+    this.dashboardService.getSummary(dateFrom, dateTo, this.branchId).subscribe({
+      next: summary => {
+        if (requestId !== this.summaryRequestId) return;
+        this.summary = summary;
+        this.loading = false;
+      },
+      error: (error: { error?: { detail?: string } }) => {
+        if (requestId !== this.summaryRequestId) return;
+        this.loading = false;
+        this.loadFailed = true;
+        this.toast.error(error?.error?.detail || 'No se pudo cargar el dashboard.');
+      }
+    });
+  }
+
+  setBranch(id: string | null): void {
+    if (this.branchId === id) {
+      return;
+    }
+    this.branchId = id;
+    this.preferences.writeBranchId(id);
+    this.clearExploration();
+    this.loadSummary();
+  }
+
+  setChartSegment(segment: DashboardChartSegment): void {
+    this.chartSegment = segment;
+    this.preferences.writeChartSegment(segment);
+  }
+
+  setChartMetric(metric: DashboardChartMetric): void {
+    if (metric === 'amount' && !this.canViewFinancials) {
+      return;
+    }
+    this.chartMetric = metric;
+    this.preferences.writeChartMetric(metric);
+  }
+
+  selectDay(dateKey: string): void {
+    if (this.selectedDayKey === dateKey) {
+      this.selectedDayKey = null;
+      if (this.selectedStatusKey) {
+        this.loadDashboardSales(this.localDateKey(new Date()));
+      } else {
+        this.clearDrillDown();
+      }
+      return;
+    }
+
+    this.selectedDayKey = dateKey;
+    this.loadDashboardSales(dateKey);
+  }
+
+  selectStatus(status: 'paid' | 'pending' | 'cancelled'): void {
+    this.selectedStatusKey = this.selectedStatusKey === status ? null : status;
+    if (this.selectedDayKey) {
+      return;
+    }
+    if (this.selectedStatusKey) {
+      this.loadDashboardSales(this.localDateKey(new Date()));
+    } else {
+      this.clearDrillDown();
+    }
+  }
+
+  clearDay(): void {
+    this.selectedDayKey = null;
+    if (this.selectedStatusKey) {
+      this.loadDashboardSales(this.localDateKey(new Date()));
+    } else {
+      this.clearDrillDown();
+    }
+  }
+
+  private loadDashboardSales(dateKey: string): void {
+    const requestId = ++this.drillDownRequestId;
+    this.drillDownLoading = true;
+    this.dashboardService.listSales(dateKey, dateKey, this.branchId).subscribe({
+      next: sales => {
+        if (requestId !== this.drillDownRequestId) return;
+        this.drillDownSales = sales;
+        this.drillDownLoading = false;
+      },
+      error: (error: { error?: { detail?: string } }) => {
+        if (requestId !== this.drillDownRequestId) return;
+        this.drillDownSales = [];
+        this.drillDownLoading = false;
+        this.toast.error(error?.error?.detail || 'No se pudieron cargar las ventas del día.');
+      }
+    });
+  }
+
+  chartValue(day: DashboardDayPoint, segment: 'retail' | 'cc'): number {
+    if (segment === 'retail') {
+      return this.chartMetric === 'amount' ? day.retailAmount : day.retailCount;
+    }
+    return this.chartMetric === 'amount' ? day.currentAccountAmount : day.currentAccountCount;
+  }
+
   saleStatusLabel(status: number): string {
-    const map: Record<number, string> = { 1: 'En espera', 2: 'Pagada', 3: 'Cancelada' };
-    return map[status] ?? 'Desconocido';
+    const labels: Record<number, string> = { 1: 'En espera', 2: 'Pagada', 3: 'Cancelada' };
+    return labels[status] ?? 'Desconocido';
   }
 
   saleStatusClass(status: number): string {
-    const map: Record<number, string> = { 1: 'st--pending', 2: 'st--paid', 3: 'st--cancelled' };
-    return map[status] ?? '';
+    const classes: Record<number, string> = {
+      1: 'st--pending',
+      2: 'st--paid',
+      3: 'st--cancelled'
+    };
+    return classes[status] ?? '';
+  }
+
+  private barHeight(value: number, max: number): number {
+    return value > 0 ? Math.max(Math.round((value / max) * 100), 5) : 0;
+  }
+
+  private clearExploration(): void {
+    this.selectedDayKey = null;
+    this.selectedStatusKey = null;
+    this.drillDownSales = [];
+    this.drillDownLoading = false;
+    this.drillDownRequestId++;
+  }
+
+  private clearDrillDown(): void {
+    this.drillDownRequestId++;
+    this.drillDownSales = [];
+    this.drillDownLoading = false;
+  }
+
+  private mapDashboardSale(sale: DashboardSaleResponse): DashboardSaleItem {
+    return {
+      id: sale.id,
+      code: sale.code,
+      createdAt: sale.createdAt,
+      customerName: sale.customerName || 'Consumidor final',
+      status: sale.saleStatus,
+      totalAmount: sale.totalAmount,
+      isCuentaCorriente: sale.isCuentaCorriente
+    };
+  }
+
+  private mapRecentSale(sale: DashboardRecentSale): DashboardSaleItem {
+    return {
+      id: sale.id,
+      code: sale.code,
+      createdAt: sale.createdAt,
+      customerName: sale.customerName,
+      status: sale.saleStatus,
+      totalAmount: sale.totalAmount,
+      isCuentaCorriente: sale.isCuentaCorriente
+    };
+  }
+
+  private statusValue(status: 'paid' | 'pending' | 'cancelled'): number {
+    return status === 'paid' ? 2 : status === 'pending' ? 1 : 3;
+  }
+
+  private localDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

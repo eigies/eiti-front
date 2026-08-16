@@ -2,8 +2,8 @@
   <header class="db-header">
     <div class="db-header__copy">
       <p class="eyebrow">_ PANEL COMERCIAL</p>
-      <h1 class="db-title">Operacion viva para <span class="db-title__accent">{{ username }}</span></h1>
-      <p class="db-subtitle">Lectura diaria, pulso mensual y desvíos que conviene resolver antes de que escalen.</p>
+      <h1 class="db-title">Operación viva para <span>{{ username }}</span></h1>
+      <p class="db-subtitle">El mes en una mirada, con el detalle operativo listo para actuar.</p>
     </div>
 
     <div class="db-header__side">
@@ -12,315 +12,258 @@
         <span class="db-live"><span class="db-live__dot"></span>EN VIVO</span>
       </div>
 
-      <div class="quick-actions">
-        <a class="quick-actions__item" routerLink="/sales" *ngIf="auth.hasPermission(permissionCodes.salesAccess)">Ventas</a>
-        <a class="quick-actions__item" routerLink="/products">Productos</a>
-        <a class="quick-actions__item" routerLink="/users" *ngIf="auth.hasPermission(permissionCodes.usersManage)">Usuarios</a>
+      <div class="branch-filter" *ngIf="branches.length > 1">
+        <span>Sucursal</span>
+        <div class="branch-chips" role="group" aria-label="Sucursal del dashboard">
+          <button
+            *ngIf="canViewAllBranches"
+            type="button"
+            class="branch-chip"
+            [class.is-active]="branchId === null"
+            [attr.aria-pressed]="branchId === null"
+            (click)="setBranch(null)">Todas</button>
+          <button
+            *ngFor="let branch of branches"
+            type="button"
+            class="branch-chip"
+            [class.is-active]="branchId === branch.id"
+            [attr.aria-pressed]="branchId === branch.id"
+            (click)="setBranch(branch.id)">{{ branch.name }}</button>
+        </div>
       </div>
     </div>
   </header>
 
-  <div class="db-loading" *ngIf="loading">
-    <span class="db-loading__dot"></span>
-    <span class="db-loading__dot"></span>
-    <span class="db-loading__dot"></span>
-    <span>Cargando datos del mes...</span>
-  </div>
+  <section class="loading-grid" *ngIf="loading" aria-label="Cargando dashboard">
+    <div class="skeleton skeleton--wide"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton skeleton--tall"></div>
+  </section>
 
-  <ng-container *ngIf="!loading">
-    <section class="hero-grid">
-      <article class="hero-card hero-card--primary">
-        <span class="hero-card__eyebrow">Resumen de hoy</span>
-        <div class="hero-card__headline">
-          <div *ngIf="canViewFinancials; else todayCountHeadline">
-            <strong>{{ todayRevenue | currency:'ARS':'code':'1.0-0' }}</strong>
-            <span>Cobrado hoy</span>
-          </div>
-          <ng-template #todayCountHeadline>
-            <div>
-              <strong>{{ todayActiveSales.length }}</strong>
-              <span>Ventas hoy</span>
-            </div>
-          </ng-template>
-          <span class="hero-delta" *ngIf="canViewFinancials" [class.hero-delta--up]="todayVsYesterdayDelta >= 0" [class.hero-delta--down]="todayVsYesterdayDelta < 0">
-            {{ todayVsYesterdayLabel }}
-          </span>
-        </div>
-        <div class="hero-card__metrics">
-          <div class="hero-metric">
-            <span>Ventas activas</span>
-            <strong>{{ todayActiveSales.length }}</strong>
-          </div>
-          <div class="hero-metric" *ngIf="canViewFinancials">
-            <span>Pendiente</span>
-            <strong>{{ todayPendingRevenue | currency:'ARS':'code':'1.0-0' }}</strong>
-          </div>
-          <div class="hero-metric">
-            <span>Canceladas</span>
-            <strong>{{ todayCancelledSales.length }}</strong>
-          </div>
-        </div>
-      </article>
+  <section class="load-error" *ngIf="!loading && loadFailed">
+    <span class="load-error__mark">!</span>
+    <div>
+      <strong>No pudimos leer el tablero</strong>
+      <p>La operación sigue disponible. Reintentá cargar el resumen.</p>
+    </div>
+    <button type="button" (click)="loadSummary()">Reintentar</button>
+  </section>
 
-      <article class="hero-card hero-card--secondary">
-        <span class="hero-card__eyebrow">Alertas operativas</span>
-        <div class="alert-stack">
-          <div class="alert-item" *ngFor="let alert of operationalAlerts" [class.alert-item--success]="alert.tone === 'success'" [class.alert-item--warn]="alert.tone === 'warn'" [class.alert-item--danger]="alert.tone === 'danger'">
-            <strong>{{ alert.label }}</strong>
-            <span>{{ alert.detail }}</span>
-            <div class="alert-item__stats" *ngIf="alert.statValue || alert.compareValue">
-              <div class="alert-stat" *ngIf="alert.statValue">
-                <span>{{ alert.statLabel }}</span>
-                <strong>{{ alert.statValue }}</strong>
-              </div>
-              <div class="alert-stat" *ngIf="alert.compareValue">
-                <span>{{ alert.compareLabel }}</span>
-                <strong>{{ alert.compareValue }}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </article>
-    </section>
+  <ng-container *ngIf="!loading && !loadFailed && summary as data">
+    <div class="dashboard-scope" *ngIf="selectedDayKey">
+      <span class="scope-chip">
+        {{ selectedDayLabel }}
+        <button
+          type="button"
+          (click)="clearDay()"
+          [attr.aria-label]="'Quitar filtro del ' + selectedDayLabel">×</button>
+      </span>
+    </div>
 
-    <section class="kpi-strip" [class.kpi-strip--filtered]="selectedDayKey || selectedStatusKey">
-      <div class="kpi-strip__filters" *ngIf="selectedDayKey || selectedStatusKey">
-        <span class="scope-chip" *ngIf="selectedDayKey">
-          {{ selectedDayLabel }}
-          <button type="button" (click)="selectedDayKey = null">×</button>
-        </span>
-        <span class="scope-chip" *ngIf="selectedStatusKey">
-          {{ selectedStatusLabel }}
-          <button type="button" (click)="selectedStatusKey = null">×</button>
-        </span>
-      </div>
-
-      <article class="kpi-card kpi-card--wide">
-        <span class="kpi-label">{{ monthTopLineLabel }}</span>
-        <strong class="kpi-value">{{ scopeSales.length }}</strong>
-        <span class="kpi-sub">{{ scopePaidSales.length }} pagadas · {{ scopePendingSales.length }} en espera</span>
-      </article>
-      <article class="kpi-card kpi-card--primary" *ngIf="canViewFinancials">
-        <span class="kpi-label">Ingresos cobrados</span>
-        <strong class="kpi-value">{{ totalRevenue | currency:'ARS':'code':'1.0-0' }}</strong>
-        <span class="kpi-sub">{{ scopePaidSales.length }} transacciones cerradas</span>
-      </article>
-      <article class="kpi-card kpi-card--warn" *ngIf="canViewFinancials">
-        <span class="kpi-label">Pendiente de cobro</span>
-        <strong class="kpi-value">{{ pendingRevenue | currency:'ARS':'code':'1.0-0' }}</strong>
-        <span class="kpi-sub">{{ scopePendingSales.length }} venta(s) abiertas</span>
-      </article>
-      <article class="kpi-card" *ngIf="canViewFinancials">
-        <span class="kpi-label">Ticket promedio</span>
-        <strong class="kpi-value">{{ avgSaleValue | currency:'ARS':'code':'1.0-0' }}</strong>
-        <span class="kpi-sub">Sobre {{ scopeSales.length }} ventas activas</span>
-      </article>
-    </section>
-
-    <section class="dashboard-grid">
-      <article class="data-panel data-panel--chart">
-        <div class="data-panel__head">
-          <div class="data-panel__title-group">
-            <span class="data-panel__title">{{ chartTitle }}</span>
-            <span class="data-panel__sub">{{ chartSubtitle }}</span>
-          </div>
-
-          <div class="panel-toggle" role="tablist" aria-label="Vista del panel comercial">
-            <button role="tab" type="button" class="panel-toggle__item" [attr.aria-selected]="chartMetric === 'count'" [class.panel-toggle__item--active]="chartMetric === 'count'" (click)="setChartMetric('count')">Cantidad</button>
-            <button *ngIf="canViewFinancials" role="tab" type="button" class="panel-toggle__item" [attr.aria-selected]="chartMetric === 'amount'" [class.panel-toggle__item--active]="chartMetric === 'amount'" (click)="setChartMetric('amount')">Monto</button>
-            <button role="tab" type="button" class="panel-toggle__item" [attr.aria-selected]="chartMetric === 'products'" [class.panel-toggle__item--active]="chartMetric === 'products'" (click)="setChartMetric('products')">Productos</button>
-          </div>
-        </div>
-
-        <div class="bar-chart" *ngIf="chartMetric !== 'products' && activeSales.length > 0">
-          <button class="bar-col"
-            *ngFor="let bar of last7DaysBars; let i = index"
-            [style.--delay]="(i * 0.06) + 's'"
-            [style.--bh]="bar.heightPct + '%'"
-            [class.bar-col--selected]="selectedDayKey === bar.dateKey"
-            [class.bar-col--dimmed]="selectedDayKey && selectedDayKey !== bar.dateKey"
-            (click)="selectDay(bar)"
-            type="button">
-            <span class="bar-count bar-count--vis">
-              {{ chartMetric === 'count' ? bar.count : (bar.total | currency:'ARS':'code':'1.0-0') }}
-            </span>
-            <div class="bar-shell">
-              <div class="bar-fill" [class.bar-fill--today]="bar.isToday" [class.bar-fill--selected]="selectedDayKey === bar.dateKey"></div>
-            </div>
-            <span class="bar-label" [class.bar-label--today]="bar.isToday" [class.bar-label--selected]="selectedDayKey === bar.dateKey">{{ bar.label }}</span>
-          </button>
-        </div>
-
-        <div class="data-empty" *ngIf="chartMetric !== 'products' && activeSales.length === 0">Sin ventas activas este mes</div>
-
-        <div class="product-performance" *ngIf="chartMetric === 'products' && totalSoldUnits > 0">
-          <div class="product-performance__summary">
-            <div class="product-summary product-summary--primary">
-              <span>Unidades vendidas</span>
-              <strong>{{ totalSoldUnits }}</strong>
-            </div>
-            <div class="product-summary">
-              <span>Productos distintos</span>
-              <strong>{{ distinctSoldProducts }}</strong>
-            </div>
-            <div class="product-summary product-summary--scope">
-              <span>Periodo</span>
-              <strong>{{ selectedDayKey ? selectedDayLabel : 'Mes en curso' }}</strong>
-            </div>
-          </div>
-
-          <div class="product-ranking">
-            <div class="product-ranking__head">
-              <span>Top 5 por unidades</span>
-              <span>Cantidad</span>
-            </div>
-
-            <article class="product-rank" *ngFor="let product of productRanking; let i = index">
-              <span class="product-rank__position">{{ (i + 1).toString().padStart(2, '0') }}</span>
-              <div class="product-rank__body">
-                <div class="product-rank__copy">
-                  <div>
-                    <span class="product-rank__brand">{{ product.brand }}</span>
-                    <strong>{{ product.name }}</strong>
-                  </div>
-                  <span>{{ product.salesCount }} venta{{ product.salesCount === 1 ? '' : 's' }}</span>
-                </div>
-                <div class="product-rank__track">
-                  <span [style.width.%]="product.sharePct"></span>
-                </div>
-              </div>
-              <strong class="product-rank__units">{{ product.units }}</strong>
-            </article>
-          </div>
-        </div>
-
-        <div class="data-empty" *ngIf="chartMetric === 'products' && totalSoldUnits === 0">
-          Sin productos vendidos en el periodo seleccionado
-        </div>
-      </article>
-
-      <div class="side-stack">
-        <article class="data-panel">
-          <div class="data-panel__head">
-            <div class="data-panel__title-group">
-              <span class="data-panel__title">Distribución de estados</span>
-              <span class="data-panel__sub">{{ sales.length }} ventas este mes</span>
-            </div>
-          </div>
-
-          <div class="dist-track" *ngIf="sales.length > 0">
-            <div class="dist-seg dist-seg--paid" [style.flex]="paidSales.length || 0"></div>
-            <div class="dist-seg dist-seg--pending" [style.flex]="pendingSales.length || 0"></div>
-            <div class="dist-seg dist-seg--cancelled" [style.flex]="cancelledSales.length || 0"></div>
-          </div>
-
-          <div class="dist-items">
-            <button type="button" class="dist-item" [class.dist-item--active]="selectedStatusKey === 'paid'" (click)="selectStatus('paid')">
-              <span class="dist-dot dist-dot--paid"></span>
-              <div class="dist-item__body">
-                <span class="dist-item__label">Pagadas</span>
-                <div class="dist-bar"><div class="dist-bar__fill dist-bar__fill--paid" [style.width.%]="paidPct"></div></div>
-              </div>
-              <div class="dist-item__nums">
-                <strong>{{ paidSales.length }}</strong>
-                <span>{{ paidPct }}%</span>
-              </div>
-            </button>
-
-            <button type="button" class="dist-item" [class.dist-item--active]="selectedStatusKey === 'pending'" (click)="selectStatus('pending')">
-              <span class="dist-dot dist-dot--pending"></span>
-              <div class="dist-item__body">
-                <span class="dist-item__label">En espera</span>
-                <div class="dist-bar"><div class="dist-bar__fill dist-bar__fill--pending" [style.width.%]="pendingPct"></div></div>
-              </div>
-              <div class="dist-item__nums">
-                <strong>{{ pendingSales.length }}</strong>
-                <span>{{ pendingPct }}%</span>
-              </div>
-            </button>
-
-            <button type="button" class="dist-item" [class.dist-item--active]="selectedStatusKey === 'cancelled'" (click)="selectStatus('cancelled')">
-              <span class="dist-dot dist-dot--cancelled"></span>
-              <div class="dist-item__body">
-                <span class="dist-item__label">Canceladas</span>
-                <div class="dist-bar"><div class="dist-bar__fill dist-bar__fill--cancelled" [style.width.%]="cancelledPct"></div></div>
-              </div>
-              <div class="dist-item__nums">
-                <strong>{{ cancelledSales.length }}</strong>
-                <span>{{ cancelledPct }}%</span>
-              </div>
-            </button>
-          </div>
-
-          <div class="data-empty" *ngIf="sales.length === 0">Sin ventas registradas este mes</div>
-        </article>
-
-        <article class="data-panel data-panel--mini">
-          <div class="data-panel__head">
-            <div class="data-panel__title-group">
-              <span class="data-panel__title">Pulso del día</span>
-              <span class="data-panel__sub">Corte operativo de la jornada</span>
-            </div>
-          </div>
-
-          <div class="pulse-grid">
-            <div class="pulse-card">
-              <span>Ventas</span>
-              <strong>{{ todayActiveSales.length }}</strong>
-            </div>
-            <div class="pulse-card">
-              <span>Pagadas</span>
-              <strong>{{ todayPaidSales.length }}</strong>
-            </div>
-            <div class="pulse-card">
-              <span>En espera</span>
-              <strong>{{ todayPendingSales.length }}</strong>
-            </div>
-            <div class="pulse-card">
-              <span>Canceladas</span>
-              <strong>{{ todayCancelledSales.length }}</strong>
-            </div>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="data-panel data-panel--full" *ngIf="displayedSales.length > 0 || selectedDayKey || selectedStatusKey">
+    <section class="data-panel month-panel">
       <div class="data-panel__head">
         <div class="data-panel__title-group">
-          <span class="data-panel__title">{{ selectedDayKey || selectedStatusKey ? 'Ventas filtradas' : 'Últimas ventas' }}</span>
-          <span class="data-panel__day-label" *ngIf="selectedDayKey || selectedStatusKey">
-            {{ selectedDayKey ? selectedDayLabel : 'Mes completo' }}<span *ngIf="selectedStatusKey"> · {{ selectedStatusLabel }}</span>
-          </span>
+          <span class="data-panel__eyebrow">PRIMER PLANO</span>
+          <h2>Lectura del mes en curso</h2>
+          <p>Minorista y cuenta corriente, comparados contra el pulso de hoy.</p>
         </div>
-
-        <div class="data-panel__head-actions">
-          <button class="clear-day-btn" *ngIf="selectedDayKey" type="button" (click)="selectedDayKey = null">Quitar día</button>
-          <button class="clear-day-btn" *ngIf="selectedStatusKey" type="button" (click)="selectedStatusKey = null">Quitar estado</button>
-          <a routerLink="/sales" class="data-panel__link" *ngIf="auth.hasPermission(permissionCodes.salesAccess)">Ver ventas →</a>
-        </div>
+        <div class="period-badge">MES ACTUAL</div>
       </div>
 
-      <div class="data-empty" *ngIf="displayedSales.length === 0">
-        Sin ventas para el filtro actual.
+      <div class="month-table-wrap">
+        <table class="month-table">
+          <thead>
+            <tr>
+              <th>Segmento</th>
+              <th>Mes · ventas</th>
+              <th *ngIf="canViewFinancials">Mes · importe</th>
+              <th>Hoy · ventas</th>
+              <th *ngIf="canViewFinancials">Hoy · importe</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="month-table__total">
+              <th><span class="segment-mark segment-mark--total"></span>Total</th>
+              <td data-label="Mes · ventas">{{ data.month.total.count }}</td>
+              <td data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td data-label="Hoy · ventas">{{ data.today.total.count }}</td>
+              <td data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
+            </tr>
+            <tr>
+              <th><span class="segment-mark segment-mark--retail"></span>Minorista</th>
+              <td data-label="Mes · ventas">{{ data.month.retail.count }}</td>
+              <td data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td data-label="Hoy · ventas">{{ data.today.retail.count }}</td>
+              <td data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
+            </tr>
+            <tr>
+              <th><span class="segment-mark segment-mark--cc"></span>Cta. corriente</th>
+              <td data-label="Mes · ventas">{{ data.month.currentAccount.count }}</td>
+              <td data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
+              <td data-label="Hoy · ventas">{{ data.today.currentAccount.count }}</td>
+              <td data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+    </section>
 
-      <div class="sales-list" *ngIf="displayedSales.length > 0">
-        <article class="sale-card" *ngFor="let sale of displayedSales">
-          <div class="sale-card__head">
-            <div class="sale-card__identity">
-              <span class="sale-card__id">#{{ sale.id }}</span>
-              <strong>{{ sale.customerFullName || 'Consumidor final' }}</strong>
-            </div>
-            <span class="st-chip" [ngClass]="saleStatusClass(sale.idSaleStatus)">{{ saleStatusLabel(sale.idSaleStatus) }}</span>
+    <section class="data-panel rhythm-panel">
+      <div class="data-panel__head rhythm-panel__head">
+        <div class="data-panel__title-group">
+          <span class="data-panel__eyebrow">RITMO COMERCIAL</span>
+          <h2>{{ chartTitle }}</h2>
+          <p>{{ chartSubtitle }}</p>
+        </div>
+
+        <div class="chart-controls">
+          <div class="panel-toggle" role="group" aria-label="Segmento del gráfico" *ngIf="chartMetric !== 'products'">
+            <button type="button" [class.is-active]="chartSegment === 'both'" [attr.aria-pressed]="chartSegment === 'both'" (click)="setChartSegment('both')">Ambas</button>
+            <button type="button" [class.is-active]="chartSegment === 'retail'" [attr.aria-pressed]="chartSegment === 'retail'" (click)="setChartSegment('retail')">Minorista</button>
+            <button type="button" [class.is-active]="chartSegment === 'cc'" [attr.aria-pressed]="chartSegment === 'cc'" (click)="setChartSegment('cc')">CC</button>
           </div>
 
+          <div class="panel-toggle" role="group" aria-label="Métrica del gráfico">
+            <button type="button" [class.is-active]="chartMetric === 'count'" [attr.aria-pressed]="chartMetric === 'count'" (click)="setChartMetric('count')">Cantidad</button>
+            <button type="button" *ngIf="canViewFinancials" [class.is-active]="chartMetric === 'amount'" [attr.aria-pressed]="chartMetric === 'amount'" (click)="setChartMetric('amount')">Monto</button>
+            <button type="button" [class.is-active]="chartMetric === 'products'" [attr.aria-pressed]="chartMetric === 'products'" (click)="setChartMetric('products')">Productos</button>
+          </div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="chartMetric !== 'products'">
+        <div class="chart-legend">
+          <span *ngIf="chartSegment !== 'cc'"><i class="legend-dot legend-dot--retail"></i>Minorista</span>
+          <span *ngIf="chartSegment !== 'retail'"><i class="legend-dot legend-dot--cc"></i>Cuenta corriente</span>
+          <small>Seleccioná un día para ver sus ventas</small>
+        </div>
+
+        <div class="dual-chart" *ngIf="chartDays.length > 0; else noChartData">
+          <button
+            type="button"
+            class="chart-day"
+            *ngFor="let day of chartDays; let i = index"
+            [class.is-selected]="selectedDayKey === day.dateKey"
+            [class.is-dimmed]="selectedDayKey && selectedDayKey !== day.dateKey"
+            [class.is-today]="day.isToday"
+            [attr.aria-pressed]="selectedDayKey === day.dateKey"
+            [style.--delay]="(i * 0.05) + 's'"
+            (click)="selectDay(day.dateKey)">
+            <span class="chart-day__values">
+              <span *ngIf="chartSegment !== 'cc'">{{ chartValue(day, 'retail') | number:'1.0-0' }}</span>
+              <span *ngIf="chartSegment !== 'retail'">{{ chartValue(day, 'cc') | number:'1.0-0' }}</span>
+            </span>
+            <span class="chart-day__plot">
+              <i *ngIf="chartSegment !== 'cc'" class="chart-bar chart-bar--retail" [style.height.%]="day.retailHeight"></i>
+              <i *ngIf="chartSegment !== 'retail'" class="chart-bar chart-bar--cc" [style.height.%]="day.currentAccountHeight"></i>
+            </span>
+            <span class="chart-day__label">{{ day.label }}</span>
+          </button>
+        </div>
+        <ng-template #noChartData><div class="data-empty">Sin actividad en los últimos siete días.</div></ng-template>
+      </ng-container>
+
+      <div class="product-ranking" *ngIf="chartMetric === 'products' && rankedProducts.length > 0">
+        <article class="product-rank" *ngFor="let product of rankedProducts; let i = index">
+          <span class="product-rank__position">{{ (i + 1).toString().padStart(2, '0') }}</span>
+          <div class="product-rank__body">
+            <div class="product-rank__copy">
+              <div><span>{{ product.brand }}</span><strong>{{ product.name }}</strong></div>
+              <small>{{ product.salesCount }} venta{{ product.salesCount === 1 ? '' : 's' }}</small>
+            </div>
+            <div class="product-rank__track"><span [style.width.%]="product.sharePct"></span></div>
+          </div>
+          <strong class="product-rank__units">{{ product.units }}</strong>
+        </article>
+      </div>
+      <div class="data-empty" *ngIf="chartMetric === 'products' && rankedProducts.length === 0">Sin productos vendidos en el período.</div>
+    </section>
+
+    <section class="data-panel sales-panel">
+      <div class="data-panel__head">
+        <div class="data-panel__title-group">
+          <span class="data-panel__eyebrow">VENTAS</span>
+          <h2>{{ selectedDayKey || selectedStatusKey ? 'Detalle filtrado' : 'Últimas ventas' }}</h2>
+          <p *ngIf="selectedDayKey || selectedStatusKey">
+            {{ selectedDayKey ? selectedDayLabel : 'Hoy' }}<span *ngIf="selectedStatusKey"> · {{ selectedStatusLabel }}</span>
+          </p>
+          <p *ngIf="!selectedDayKey && !selectedStatusKey">Las seis operaciones más recientes del período.</p>
+        </div>
+        <div class="head-actions">
+          <button type="button" *ngIf="selectedDayKey" (click)="clearDay()">Quitar día</button>
+          <button type="button" *ngIf="selectedStatusKey" (click)="selectedStatusKey = null">Quitar estado</button>
+          <a routerLink="/sales" *ngIf="auth.hasPermission(permissionCodes.salesAccess)">Ver ventas →</a>
+        </div>
+      </div>
+
+      <div class="inline-loading" *ngIf="drillDownLoading"><span></span>Cargando ventas del día…</div>
+      <div class="sales-list" *ngIf="!drillDownLoading && displayedSales.length > 0">
+        <article class="sale-card" *ngFor="let sale of displayedSales">
+          <div class="sale-card__identity">
+            <span>#{{ sale.code || sale.id }}</span>
+            <strong>{{ sale.customerName }}</strong>
+            <small>{{ sale.isCuentaCorriente ? 'Cuenta corriente' : 'Minorista' }}</small>
+          </div>
           <div class="sale-card__meta">
             <span>{{ sale.createdAt | date:'dd/MM/yy HH:mm' }}</span>
-            <strong *ngIf="canViewFinancials">{{ sale.totalAmount | currency:'ARS':'code':'1.2-2' }}</strong>
+            <strong *ngIf="canViewFinancials">{{ sale.totalAmount | currency:'ARS':'code':'1.0-0' }}</strong>
+            <span class="st-chip" [ngClass]="saleStatusClass(sale.status)">{{ saleStatusLabel(sale.status) }}</span>
           </div>
         </article>
       </div>
+      <div class="data-empty" *ngIf="!drillDownLoading && displayedSales.length === 0">Sin ventas para el filtro actual.</div>
+    </section>
+
+    <section class="secondary-grid">
+      <article class="data-panel compact-panel collections-panel">
+        <div class="data-panel__title-group">
+          <span class="data-panel__eyebrow">COBRANZA</span>
+          <h2>Estado del mes</h2>
+        </div>
+        <div class="collection-list">
+          <div>
+            <span><i class="legend-dot legend-dot--cc"></i>Cobrado</span>
+            <strong *ngIf="canViewFinancials">{{ data.collections.paidAmount | currency:'ARS':'code':'1.0-0' }}</strong>
+            <small>{{ data.collections.paidCount }} ventas</small>
+          </div>
+          <div>
+            <span><i class="legend-dot legend-dot--retail"></i>Pendiente</span>
+            <strong *ngIf="canViewFinancials">{{ data.collections.pendingAmount | currency:'ARS':'code':'1.0-0' }}</strong>
+            <small>{{ data.collections.pendingCount }} ventas</small>
+          </div>
+          <div *ngIf="canViewFinancials">
+            <span>Ticket promedio</span>
+            <strong>{{ data.collections.avgTicket | currency:'ARS':'code':'1.0-0' }}</strong>
+            <small>Sobre ventas activas</small>
+          </div>
+        </div>
+      </article>
+
+      <article class="data-panel compact-panel pulse-panel">
+        <div class="data-panel__title-group">
+          <span class="data-panel__eyebrow">PULSO DEL DÍA</span>
+          <h2>Corte operativo</h2>
+        </div>
+        <div class="pulse-grid">
+          <div class="pulse-card"><span>Ventas</span><strong>{{ data.todayStatus.activeCount }}</strong></div>
+          <button type="button" class="pulse-card" [class.is-active]="selectedStatusKey === 'paid'" (click)="selectStatus('paid')"><span>Pagadas</span><strong>{{ data.todayStatus.paidCount }}</strong></button>
+          <button type="button" class="pulse-card" [class.is-active]="selectedStatusKey === 'pending'" (click)="selectStatus('pending')"><span>En espera</span><strong>{{ data.todayStatus.pendingCount }}</strong></button>
+          <button type="button" class="pulse-card" [class.is-active]="selectedStatusKey === 'cancelled'" (click)="selectStatus('cancelled')"><span>Canceladas</span><strong>{{ data.todayStatus.cancelledCount }}</strong></button>
+        </div>
+      </article>
+
+      <article class="data-panel compact-panel alerts-panel">
+        <div class="data-panel__title-group">
+          <span class="data-panel__eyebrow">ALERTAS OPERATIVAS</span>
+          <h2>Lo que pide atención</h2>
+        </div>
+        <div class="alert-stack">
+          <div class="alert-item" *ngFor="let alert of operationalAlerts" [ngClass]="'alert-item--' + alert.tone">
+            <span class="alert-item__dot"></span>
+            <div><strong>{{ alert.label }}</strong><p>{{ alert.detail }}</p></div>
+          </div>
+        </div>
+      </article>
     </section>
   </ng-container>
 </div>
