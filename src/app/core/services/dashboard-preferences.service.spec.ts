@@ -45,4 +45,25 @@ describe('DashboardPreferencesService', () => {
     localStorage.setItem('eiti_dashboard_chart_metric', 'basura');
     expect(service.readChartMetric()).toBe('count');
   });
+
+  it('guarda y restaura la vista del grafico', () => {
+    service.writeChartView('products');
+    expect(service.readChartView()).toBe('products');
+  });
+
+  // Antes metrica y vista compartian clave. Quien tenia el ranking abierto tiene que seguir
+  // encontrandolo ahi, y no quedarse con una metrica que ya no existe.
+  it('migra una vista guardada bajo la clave vieja de metrica', () => {
+    localStorage.setItem('eiti_dashboard_chart_metric', 'products');
+
+    expect(service.readChartView()).toBe('products');
+    expect(service.readChartMetric()).toBe('count');
+  });
+
+  it('la vista nueva le gana a la clave vieja', () => {
+    localStorage.setItem('eiti_dashboard_chart_metric', 'products');
+    service.writeChartView('comparison');
+
+    expect(service.readChartView()).toBe('comparison');
+  });
 });

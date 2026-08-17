@@ -1,13 +1,19 @@
 import { Injectable } from '@angular/core';
-import { DashboardChartMetric, DashboardChartSegment } from '../models/dashboard.models';
+import {
+  DashboardChartMetric,
+  DashboardChartSegment,
+  DashboardChartView
+} from '../models/dashboard.models';
 
 const BRANCH_KEY = 'eiti_dashboard_branch_id';
 const SEGMENT_KEY = 'eiti_dashboard_chart_segment';
 const METRIC_KEY = 'eiti_dashboard_chart_metric';
+const VIEW_KEY = 'eiti_dashboard_chart_view';
 const CATEGORIES_KEY = 'eiti_dashboard_category_ids';
 
 const SEGMENTS: readonly DashboardChartSegment[] = ['both', 'retail', 'cc'];
-const METRICS: readonly DashboardChartMetric[] = ['count', 'amount', 'products', 'comparison'];
+const METRICS: readonly DashboardChartMetric[] = ['count', 'units', 'amount'];
+const VIEWS: readonly DashboardChartView[] = ['days', 'comparison', 'products'];
 
 @Injectable({ providedIn: 'root' })
 export class DashboardPreferencesService {
@@ -41,6 +47,11 @@ export class DashboardPreferencesService {
     this.write(SEGMENT_KEY, value);
   }
 
+  /**
+   * Hasta la versión anterior esta clave guardaba métrica y vista mezcladas, así que puede
+   * traer 'products' o 'comparison'. Esos valores ya no son métricas: caen al default y los
+   * levanta `readChartView`, para que quien tenía el ranking abierto lo siga encontrando ahí.
+   */
   readChartMetric(): DashboardChartMetric {
     const stored = this.read(METRIC_KEY);
     return METRICS.includes(stored as DashboardChartMetric)
@@ -50,6 +61,22 @@ export class DashboardPreferencesService {
 
   writeChartMetric(value: DashboardChartMetric): void {
     this.write(METRIC_KEY, value);
+  }
+
+  readChartView(): DashboardChartView {
+    const stored = this.read(VIEW_KEY);
+    if (VIEWS.includes(stored as DashboardChartView)) {
+      return stored as DashboardChartView;
+    }
+
+    const legacy = this.read(METRIC_KEY);
+    return VIEWS.includes(legacy as DashboardChartView)
+      ? (legacy as DashboardChartView)
+      : 'days';
+  }
+
+  writeChartView(value: DashboardChartView): void {
+    this.write(VIEW_KEY, value);
   }
 
   /**

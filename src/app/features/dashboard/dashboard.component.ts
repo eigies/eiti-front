@@ -5,9 +5,11 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { BranchResponse } from '../../core/models/branch.models';
 import {
   DashboardChartMetric,
+  DashboardChartView,
   DashboardCumulativePoint,
   DashboardChartSegment,
   DashboardDayPoint,
+  DashboardProductRanking,
   DashboardRecentSale,
   DashboardSaleResponse,
   DashboardSummaryResponse,
@@ -69,6 +71,7 @@ export class DashboardComponent implements OnInit {
   branchId: string | null = null;
   chartSegment: DashboardChartSegment = 'both';
   chartMetric: DashboardChartMetric = 'count';
+  chartView: DashboardChartView = 'days';
   selectedDayKey: string | null = null;
   selectedStatusKey: 'paid' | 'pending' | 'cancelled' | null = null;
   drillDownSales: DashboardSaleResponse[] = [];
@@ -87,6 +90,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.chartSegment = this.preferences.readChartSegment();
+    this.chartView = this.preferences.readChartView();
     const storedMetric = this.preferences.readChartMetric();
     this.chartMetric = storedMetric === 'amount' && !this.canViewFinancials
       ? 'count'
@@ -179,25 +183,49 @@ export class DashboardComponent implements OnInit {
   }
 
   get chartTitle(): string {
-    if (this.chartMetric === 'products') {
-      return 'Productos con mayor salida';
+    if (this.chartView === 'products') {
+      return this.selectedDayKey
+        ? `Productos del ${this.selectedDayLabel}`
+        : 'Productos con mayor salida';
     }
-    if (this.chartMetric === 'comparison') {
+    if (this.chartView === 'comparison') {
       return `${this.comparisonCurrentLabel} contra ${this.comparisonPreviousLabel.toLowerCase()}`;
     }
     return 'Ritmo comercial · últimos 7 días';
   }
 
   get chartSubtitle(): string {
-    if (this.chartMetric === 'products') {
-      return 'Ranking del período por unidades vendidas';
+    if (this.chartView === 'products') {
+      // Dos cosas que el panel no muestra solo y hacen que no cierre contra el reporte de
+      // ventas: que ordena por unidades aunque se esté mirando ventas, y que son cinco de
+      // todos los productos del día, no todos.
+      return `Top 5 por unidades vendidas · ${this.segmentLabel.toLowerCase()}`;
     }
-    if (this.chartMetric === 'comparison') {
+    if (this.chartView === 'comparison') {
       return 'Acumulado del mes contra el mismo tramo del anterior';
     }
-    return this.chartMetric === 'count'
-      ? 'Cantidad de ventas por segmento'
-      : 'Facturación por segmento';
+    if (this.chartMetric === 'amount') {
+      return 'Facturación por día y segmento';
+    }
+    return this.chartMetric === 'units'
+      ? 'Unidades vendidas por día y segmento'
+      : 'Ventas por día y segmento';
+  }
+
+  private get segmentLabel(): string {
+    if (this.chartSegment === 'retail') return 'Minorista';
+    if (this.chartSegment === 'cc') return 'Cuenta corriente';
+    return 'Minorista y cuenta corriente';
+  }
+
+  /** El chip de segmento no aplica a la comparativa: el backend no la parte por tipo de venta. */
+  get showsSegmentToggle(): boolean {
+    return this.chartView !== 'comparison';
+  }
+
+  /** El ranking siempre ordena por unidades, así que la métrica no cambia nada ahí. */
+  get showsMetricToggle(): boolean {
+    return this.chartView !== 'products';
   }
 
   get selectedDayLabel(): string {
@@ -242,9 +270,9 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  /** Vistas que dibujan las series minorista/CC por dia. La comparativa y el ranking no. */
+  /** Vista que dibuja las series minorista/CC por dia. La comparativa y el ranking no. */
   get isSeriesView(): boolean {
-    return this.chartMetric === 'count' || this.chartMetric === 'amount';
+    return this.chartView === 'days';
   }
 
   private monthLabel(iso: string): string {
@@ -261,9 +289,10 @@ export class DashboardComponent implements OnInit {
     return this.summary ? this.monthLabel(this.summary.monthComparison.previousMonth) : '';
   }
 
-  /** El valor que se grafica depende de si el usuario esta mirando cantidad o monto. */
+  /** El valor que se grafica depende de si el usuario está mirando ventas, unidades o monto. */
   private cumulativeValue(point: DashboardCumulativePoint): number {
-    return this.chartMetric === 'amount' ? point.amount : point.count;
+    if (this.chartMetric === 'amount') return point.amount;
+    return this.chartMetric === 'units' ? point.units : point.count;
   }
 
   private comparisonTotal(points: DashboardCumulativePoint[]): number {
@@ -319,7 +348,9 @@ export class DashboardComponent implements OnInit {
     }
     const current = this.comparisonTotal(comparison.current);
     const previous = this.comparisonTotal(comparison.previous);
-    const unit = this.chartMetric === 'amount' ? '' : ' ventas';
+    const unit = this.chartMetric === 'amount'
+      ? ''
+      : this.chartMetric === 'units' ? ' unidades' : ' ventas';
     const format = (value: number): string => this.chartMetric === 'amount'
       ? value.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
       : `${value}${unit}`;
@@ -341,8 +372,35 @@ export class DashboardComponent implements OnInit {
     return `Acumulado de ${this.comparisonCurrentLabel} comparado con ${this.comparisonPreviousLabel}`;
   }
 
+  /**
+   * El ranking sigue los mismos filtros que el resto del panel: el día seleccionado en las barras
+   * y el segmento minorista/CC. Antes era siempre el del mes entero con los dos segmentos juntos,
+   * así que no cerraba contra el reporte de ventas ni contra las barras de al lado.
+   */
+  private get activeRanking(): DashboardProductRanking | null {
+    if (!this.summary) {
+      return null;
+    }
+    if (!this.selectedDayKey) {
+      return this.summary.topProducts;
+    }
+    // El día viene de las barras, así que siempre cae dentro de la serie; el fallback cubre el
+    // caso de que la selección sobreviva a una recarga que ya no incluye ese día.
+    const ofDay = this.summary.dayRankings
+      .find(day => day.date.slice(0, 10) === this.selectedDayKey);
+    return ofDay?.products ?? this.summary.topProducts;
+  }
+
   get rankedProducts(): RankedProduct[] {
-    const products = this.summary?.topProducts ?? [];
+    const ranking = this.activeRanking;
+    if (!ranking) {
+      return [];
+    }
+
+    const products = this.chartSegment === 'retail'
+      ? ranking.retail
+      : this.chartSegment === 'cc' ? ranking.currentAccount : ranking.total;
+
     const maxUnits = Math.max(...products.map(product => product.units), 1);
     return products.map(product => ({
       ...product,
@@ -447,6 +505,11 @@ export class DashboardComponent implements OnInit {
     this.preferences.writeChartMetric(metric);
   }
 
+  setChartView(view: DashboardChartView): void {
+    this.chartView = view;
+    this.preferences.writeChartView(view);
+  }
+
   selectDay(dateKey: string): void {
     if (this.selectedDayKey === dateKey) {
       this.selectedDayKey = null;
@@ -503,9 +566,11 @@ export class DashboardComponent implements OnInit {
 
   chartValue(day: DashboardDayPoint, segment: 'retail' | 'cc'): number {
     if (segment === 'retail') {
-      return this.chartMetric === 'amount' ? day.retailAmount : day.retailCount;
+      if (this.chartMetric === 'amount') return day.retailAmount;
+      return this.chartMetric === 'units' ? day.retailUnits : day.retailCount;
     }
-    return this.chartMetric === 'amount' ? day.currentAccountAmount : day.currentAccountCount;
+    if (this.chartMetric === 'amount') return day.currentAccountAmount;
+    return this.chartMetric === 'units' ? day.currentAccountUnits : day.currentAccountCount;
   }
 
   saleStatusLabel(status: number): string {

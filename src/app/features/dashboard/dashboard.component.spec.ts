@@ -26,7 +26,8 @@ describe('DashboardComponent', () => {
       currentAccount: { count: 0, units: 0, amount: 0 }
     },
     days: [],
-    topProducts: [],
+    topProducts: { total: [], retail: [], currentAccount: [] },
+    dayRankings: [],
     collections: { paidAmount: 200, paidCount: 2, pendingAmount: 100, pendingCount: 1, avgTicket: 100 },
     todayStatus: { activeCount: 1, paidCount: 1, pendingCount: 0, cancelledCount: 0 },
     recentSales: [],
@@ -74,11 +75,13 @@ describe('DashboardComponent', () => {
     const prefs = jasmine.createSpyObj<DashboardPreferencesService>(
       'DashboardPreferencesService',
       ['readBranchId', 'writeBranchId', 'readChartSegment', 'writeChartSegment',
-       'readChartMetric', 'writeChartMetric', 'readCategoryIds', 'writeCategoryIds']
+       'readChartMetric', 'writeChartMetric', 'readChartView', 'writeChartView',
+       'readCategoryIds', 'writeCategoryIds']
     );
     prefs.readBranchId.and.returnValue('branch-a');
     prefs.readChartSegment.and.returnValue('cc');
     prefs.readChartMetric.and.returnValue('count');
+    prefs.readChartView.and.returnValue('days');
     prefs.readCategoryIds.and.returnValue([]);
     const branch = jasmine.createSpyObj<BranchService>('BranchService', ['listBranches']);
     branch.listBranches.and.returnValue(branchesFail
@@ -170,8 +173,10 @@ describe('DashboardComponent', () => {
       days: [{
         date: '2026-08-15T00:00:00Z',
         retailCount: 1,
+        retailUnits: 1,
         retailAmount: 100,
         currentAccountCount: 0,
+        currentAccountUnits: 0,
         currentAccountAmount: 0
       }]
     };
@@ -298,8 +303,10 @@ describe('DashboardComponent', () => {
       days: [{
         date: '2026-08-13T00:00:00Z',
         retailCount: 3,
+        retailUnits: 3,
         retailAmount: 300,
         currentAccountCount: 1,
+        currentAccountUnits: 1,
         currentAccountAmount: 100
       }]
     };
@@ -330,8 +337,10 @@ describe('DashboardComponent', () => {
       days: [{
         date: '2026-08-15T00:00:00Z',
         retailCount: 3,
+        retailUnits: 3,
         retailAmount: 300,
         currentAccountCount: 1,
+        currentAccountUnits: 1,
         currentAccountAmount: 100
       }]
     };
@@ -411,18 +420,30 @@ describe('DashboardComponent', () => {
   it('la vista de comparativa no dibuja las series por dia', () => {
     const { component } = setup();
 
-    component.setChartMetric('comparison');
+    component.setChartView('comparison');
     expect(component.isSeriesView).toBeFalse();
 
-    component.setChartMetric('count');
+    component.setChartView('days');
     expect(component.isSeriesView).toBeTrue();
+  });
+
+  // La metrica dejo de ser tambien el selector de vista: cambiarla no puede sacar al usuario
+  // del ranking ni de la comparativa donde esta parado.
+  it('cambiar de metrica no cambia la vista', () => {
+    const { component } = setup();
+
+    component.setChartView('products');
+    component.setChartMetric('units');
+
+    expect(component.chartView).toBe('products');
+    expect(component.chartMetric).toBe('units');
   });
 
   it('el titulo y la bajada describen la vista de comparativa', () => {
     const { component, dashboard } = setup();
     dashboard.getSummary.and.returnValue(of(summary));
     component.ngOnInit();
-    component.setChartMetric('comparison');
+    component.setChartView('comparison');
 
     // Antes caia al texto de las series por dia y decia "ultimos 7 dias" sobre un
     // grafico mensual, y "Facturacion" sobre un grafico de cantidad.
@@ -431,9 +452,87 @@ describe('DashboardComponent', () => {
     expect(component.chartSubtitle).toContain('Acumulado');
   });
 
+  // El caso que disparo el cambio: el ranking mostraba el mes entero con los dos segmentos
+  // juntos aunque el usuario tuviera CC prendido y un dia seleccionado, asi que no cerraba
+  // contra el reporte de ventas con esos mismos filtros.
+  it('el ranking sigue el segmento elegido', () => {
+    const { component } = setup();
+    component.summary = {
+      ...summary,
+      topProducts: {
+        total: [
+          { productId: 'p1', name: 'Bateria', brand: 'Moura', units: 10, salesCount: 8 },
+          { productId: 'p2', name: 'Cable', brand: 'Generico', units: 4, salesCount: 4 }
+        ],
+        retail: [{ productId: 'p1', name: 'Bateria', brand: 'Moura', units: 8, salesCount: 7 }],
+        currentAccount: [{ productId: 'p2', name: 'Cable', brand: 'Generico', units: 4, salesCount: 4 }]
+      }
+    };
+
+    component.setChartSegment('cc');
+    expect(component.rankedProducts.map(p => p.productId)).toEqual(['p2']);
+
+    component.setChartSegment('retail');
+    expect(component.rankedProducts.map(p => p.productId)).toEqual(['p1']);
+
+    component.setChartSegment('both');
+    expect(component.rankedProducts.map(p => p.productId)).toEqual(['p1', 'p2']);
+  });
+
+  it('el ranking se acota al dia seleccionado', () => {
+    const { component } = setup();
+    component.summary = {
+      ...summary,
+      topProducts: {
+        total: [{ productId: 'mes', name: 'Del mes', brand: 'M', units: 40, salesCount: 30 }],
+        retail: [],
+        currentAccount: []
+      },
+      dayRankings: [{
+        date: '2026-08-15T00:00:00Z',
+        products: {
+          total: [{ productId: 'dia', name: 'Del dia', brand: 'D', units: 3, salesCount: 1 }],
+          retail: [],
+          currentAccount: []
+        }
+      }]
+    };
+
+    expect(component.rankedProducts.map(p => p.productId)).toEqual(['mes']);
+
+    component.selectDay('2026-08-15');
+    expect(component.rankedProducts.map(p => p.productId)).toEqual(['dia']);
+
+    component.clearDay();
+    expect(component.rankedProducts.map(p => p.productId)).toEqual(['mes']);
+  });
+
+  it('la metrica de unidades lee las unidades del dia, no las ventas', () => {
+    const { component } = setup();
+    const day = {
+      date: '2026-08-15T00:00:00Z',
+      retailCount: 2,
+      retailUnits: 9,
+      retailAmount: 900,
+      currentAccountCount: 1,
+      currentAccountUnits: 5,
+      currentAccountAmount: 500
+    };
+
+    component.setChartMetric('count');
+    expect(component.chartValue(day, 'retail')).toBe(2);
+
+    component.setChartMetric('units');
+    expect(component.chartValue(day, 'retail')).toBe(9);
+    expect(component.chartValue(day, 'cc')).toBe(5);
+
+    component.setChartMetric('amount');
+    expect(component.chartValue(day, 'retail')).toBe(900);
+  });
+
   it('la curva del mes en curso se dibuja entera, sin patron de guiones', async () => {
     const { fixture, component } = await setupFixture();
-    component.setChartMetric('comparison');
+    component.setChartView('comparison');
     fixture.detectChanges();
 
     const path = fixture.debugElement.query(By.css('.compare-line--current'));
