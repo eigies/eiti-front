@@ -15,8 +15,10 @@ export interface DashboardPeriodTotals {
 export interface DashboardDayPoint {
   date: string;
   retailCount: number;
+  retailUnits: number;
   retailAmount: number;
   currentAccountCount: number;
+  currentAccountUnits: number;
   currentAccountAmount: number;
 }
 
@@ -26,6 +28,22 @@ export interface DashboardTopProduct {
   brand: string;
   units: number;
   salesCount: number;
+}
+
+/**
+ * El ranking viene partido por segmento porque el chip Minorista/CC es local al front: sin las
+ * tres listas, cambiar de segmento seguiría mostrando el ranking de todo.
+ */
+export interface DashboardProductRanking {
+  total: DashboardTopProduct[];
+  retail: DashboardTopProduct[];
+  currentAccount: DashboardTopProduct[];
+}
+
+/** Un ranking por cada día de la serie, para que seleccionar un día acote también el ranking. */
+export interface DashboardDayRanking {
+  date: string;
+  products: DashboardProductRanking;
 }
 
 export interface DashboardCollections {
@@ -88,7 +106,8 @@ export interface DashboardSummaryResponse {
   month: DashboardPeriodTotals;
   today: DashboardPeriodTotals;
   days: DashboardDayPoint[];
-  topProducts: DashboardTopProduct[];
+  topProducts: DashboardProductRanking;
+  dayRankings: DashboardDayRanking[];
   collections: DashboardCollections;
   todayStatus: DashboardTodayStatus;
   recentSales: DashboardRecentSale[];
@@ -96,4 +115,9 @@ export interface DashboardSummaryResponse {
 }
 
 export type DashboardChartSegment = 'both' | 'retail' | 'cc';
-export type DashboardChartMetric = 'count' | 'amount' | 'products' | 'comparison';
+
+/** QUÉ se mide. Aplica a las tres vistas. */
+export type DashboardChartMetric = 'count' | 'units' | 'amount';
+
+/** CÓMO se muestra. Antes vivía mezclado con la métrica en un solo grupo de chips. */
+export type DashboardChartView = 'days' | 'comparison' | 'products';

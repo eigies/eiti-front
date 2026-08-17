@@ -154,17 +154,31 @@
         </div>
 
         <div class="chart-controls">
-          <div class="panel-toggle" role="group" aria-label="Segmento del gráfico" *ngIf="isSeriesView">
-            <button type="button" [class.is-active]="chartSegment === 'both'" [attr.aria-pressed]="chartSegment === 'both'" (click)="setChartSegment('both')">Ambas</button>
-            <button type="button" [class.is-active]="chartSegment === 'retail'" [attr.aria-pressed]="chartSegment === 'retail'" (click)="setChartSegment('retail')">Minorista</button>
-            <button type="button" [class.is-active]="chartSegment === 'cc'" [attr.aria-pressed]="chartSegment === 'cc'" (click)="setChartSegment('cc')">CC</button>
+          <div class="chart-control" *ngIf="showsSegmentToggle">
+            <span class="chart-control__label" id="db-chart-segment">Tipo</span>
+            <div class="panel-toggle" role="group" aria-labelledby="db-chart-segment">
+              <button type="button" [class.is-active]="chartSegment === 'both'" [attr.aria-pressed]="chartSegment === 'both'" (click)="setChartSegment('both')">Ambas</button>
+              <button type="button" [class.is-active]="chartSegment === 'retail'" [attr.aria-pressed]="chartSegment === 'retail'" (click)="setChartSegment('retail')">Minorista</button>
+              <button type="button" [class.is-active]="chartSegment === 'cc'" [attr.aria-pressed]="chartSegment === 'cc'" (click)="setChartSegment('cc')">CC</button>
+            </div>
           </div>
 
-          <div class="panel-toggle" role="group" aria-label="Métrica del gráfico">
-            <button type="button" [class.is-active]="chartMetric === 'count'" [attr.aria-pressed]="chartMetric === 'count'" (click)="setChartMetric('count')">Cantidad</button>
-            <button type="button" *ngIf="canViewFinancials" [class.is-active]="chartMetric === 'amount'" [attr.aria-pressed]="chartMetric === 'amount'" (click)="setChartMetric('amount')">Monto</button>
-            <button type="button" [class.is-active]="chartMetric === 'comparison'" [attr.aria-pressed]="chartMetric === 'comparison'" (click)="setChartMetric('comparison')">vs mes ant.</button>
-            <button type="button" [class.is-active]="chartMetric === 'products'" [attr.aria-pressed]="chartMetric === 'products'" (click)="setChartMetric('products')">Productos</button>
+          <div class="chart-control" *ngIf="showsMetricToggle">
+            <span class="chart-control__label" id="db-chart-metric">Métrica</span>
+            <div class="panel-toggle" role="group" aria-labelledby="db-chart-metric">
+              <button type="button" [class.is-active]="chartMetric === 'count'" [attr.aria-pressed]="chartMetric === 'count'" (click)="setChartMetric('count')">Ventas</button>
+              <button type="button" [class.is-active]="chartMetric === 'units'" [attr.aria-pressed]="chartMetric === 'units'" (click)="setChartMetric('units')">Unidades</button>
+              <button type="button" *ngIf="canViewFinancials" [class.is-active]="chartMetric === 'amount'" [attr.aria-pressed]="chartMetric === 'amount'" (click)="setChartMetric('amount')">Monto</button>
+            </div>
+          </div>
+
+          <div class="chart-control">
+            <span class="chart-control__label" id="db-chart-view">Vista</span>
+            <div class="panel-toggle" role="group" aria-labelledby="db-chart-view">
+              <button type="button" [class.is-active]="chartView === 'days'" [attr.aria-pressed]="chartView === 'days'" (click)="setChartView('days')">7 días</button>
+              <button type="button" [class.is-active]="chartView === 'comparison'" [attr.aria-pressed]="chartView === 'comparison'" (click)="setChartView('comparison')">vs mes ant.</button>
+              <button type="button" [class.is-active]="chartView === 'products'" [attr.aria-pressed]="chartView === 'products'" (click)="setChartView('products')">Productos</button>
+            </div>
           </div>
         </div>
       </div>
@@ -201,7 +215,7 @@
         <ng-template #noChartData><div class="data-empty">Sin actividad en los últimos siete días.</div></ng-template>
       </ng-container>
 
-      <ng-container *ngIf="chartMetric === 'comparison'">
+      <ng-container *ngIf="chartView === 'comparison'">
         <div class="chart-legend">
           <span><i class="legend-dot legend-dot--retail"></i>{{ comparisonCurrentLabel }}</span>
           <span><i class="legend-dot legend-dot--previous"></i>{{ comparisonPreviousLabel }}</span>
@@ -226,7 +240,7 @@
         </p>
       </ng-container>
 
-      <div class="product-ranking" *ngIf="chartMetric === 'products' && rankedProducts.length > 0">
+      <div class="product-ranking" *ngIf="chartView === 'products' && rankedProducts.length > 0">
         <article class="product-rank" *ngFor="let product of rankedProducts; let i = index">
           <span class="product-rank__position">{{ (i + 1).toString().padStart(2, '0') }}</span>
           <div class="product-rank__body">
@@ -239,7 +253,7 @@
           <strong class="product-rank__units">{{ product.units }}</strong>
         </article>
       </div>
-      <div class="data-empty" *ngIf="chartMetric === 'products' && rankedProducts.length === 0">Sin productos vendidos en el período.</div>
+      <div class="data-empty" *ngIf="chartView === 'products' && rankedProducts.length === 0">Sin productos vendidos con estos filtros.</div>
     </section>
 
     <section class="data-panel sales-panel">
