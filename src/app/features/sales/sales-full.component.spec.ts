@@ -116,7 +116,7 @@ describe('SalesFullComponent (price override)', () => {
     it('avisa del canje incompleto antes de avanzar de paso', async () => {
         component.products = [{ id: 'p1', brand: 'MOURA', name: '12x65 20GD' } as any];
         component.paymentState.hasTradeIn = true;
-        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 1, amount: 0 }];
+        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 0, amount: 85000 }];
 
         await (component as any).validatePaymentState();
 
@@ -128,14 +128,14 @@ describe('SalesFullComponent (price override)', () => {
     it('volver desde el aviso corta el guardado', async () => {
         pendingTradeInSpy.confirmDiscard.and.resolveTo(false);
         component.paymentState.hasTradeIn = true;
-        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 1, amount: 0 }];
+        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 0, amount: 85000 }];
 
         await expectAsync((component as any).validatePaymentState()).toBeResolvedTo(false);
     });
 
     it('continuar descarta la linea incompleta para no volver a preguntar', async () => {
         component.paymentState.hasTradeIn = true;
-        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 1, amount: 0 }];
+        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 0, amount: 85000 }];
 
         await (component as any).validatePaymentState();
 

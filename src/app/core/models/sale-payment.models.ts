@@ -159,9 +159,12 @@ export function normalizeSaleTradeIns(state: SalePaymentDraftState): SaleTradeIn
  * Lineas de canje con algo cargado que `normalizeSaleTradeIns` va a descartar: el usuario
  * escribio datos que no van a viajar con la venta.
  *
- * Una linea recien agregada y vacia no cuenta — no hay nada que perder. Completa significa
- * producto + cantidad >= 1 + monto > 0: un canje en cero no reconoce nada, asi que se avisa
- * igual (la pantalla siempre deja continuar).
+ * Una linea recien agregada y vacia no cuenta — no hay nada que perder.
+ *
+ * "Completa" tiene que significar exactamente lo mismo que acepta `normalizeSaleTradeIns`,
+ * que es la puerta real hacia la API. Un canje en CERO es valido (el dominio solo rechaza
+ * negativos y el validador pide GreaterThanOrEqualTo(0)), asi que no es pendiente: marcarlo
+ * hacia imposible guardarlo, porque el unico camino que dejaba avanzar era descartar la linea.
  */
 export function pendingTradeInLines(state: SalePaymentDraftState): SaleTradeInDraftLine[] {
     return (state.tradeIns ?? []).filter(item => {
@@ -170,7 +173,7 @@ export function pendingTradeInLines(state: SalePaymentDraftState): SaleTradeInDr
         const hasData = Boolean(item.productId) || amount > 0 || quantity > 1;
         const isComplete = Boolean(item.productId)
             && Number.isFinite(quantity) && quantity >= 1
-            && Number.isFinite(amount) && amount > 0;
+            && Number.isFinite(amount) && amount >= 0;
 
         return hasData && !isComplete;
     });
