@@ -13,6 +13,7 @@ import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
 import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
 import { BranchResponse } from '../../core/models/branch.models';
 import { CashService } from '../../core/services/cash.service';
@@ -48,6 +49,9 @@ import {
     mapSalePaymentDraftState,
     normalizeSalePayments,
     normalizeSaleTradeIns,
+    pendingTradeInLines,
+    dropPendingTradeInLines,
+    describeTradeInLine,
     paymentMethodSummary,
     SALE_PAYMENT_METHOD_CASH,
     SALE_PAYMENT_METHODS,
@@ -194,6 +198,7 @@ export class SalesPageComponent implements OnInit {
         private employeeService: EmployeeService,
         private vehicleService: VehicleService,
         private toast: ToastService,
+        private pendingTradeIn: PendingTradeInService,
         private onboardingService: OnboardingService,
         private bankService: BankService,
         private remitoPdf: RemitoPdfService,
@@ -713,7 +718,7 @@ removeEditItem(productId: string): void {
     this.editItems = this.editItems.filter(item => item.product.id !== productId);
 }
 
-createSale(): void {
+async createSale(): Promise<void> {
     if (!this.isCreateConfigComplete) {
     this.activeCreateStage = 'config';
 } else if (!this.isCreateProductsComplete) {
@@ -728,7 +733,7 @@ createSale(): void {
     return;
 }
 
-if (!this.validatePaymentState(this.lineForm, this.draftTotal, this.createPaymentState, 'crear')) {
+if (!await this.validatePaymentState(this.lineForm, this.draftTotal, this.createPaymentState, 'crear')) {
     return;
 }
 
@@ -882,12 +887,12 @@ this.editProductQuery = '';
 this.showEditProductResults = false;
     }
 
-saveEdit(): void {
+async saveEdit(): Promise<void> {
     if(!this.editingSale || this.editItems.length === 0) {
     return;
 }
 
-if (!this.validatePaymentState(this.editMetaForm, this.editTotal, this.editPaymentState, 'editar')) {
+if (!await this.validatePaymentState(this.editMetaForm, this.editTotal, this.editPaymentState, 'editar')) {
     return;
 }
 
@@ -1833,7 +1838,7 @@ saveChannelPopup(): void {
         && Boolean(sale.customerId);
 }
 
-    private validatePaymentState(form: FormGroup, total: number, paymentState: SalePaymentDraftState, mode: 'crear' | 'editar'): boolean {
+    private async validatePaymentState(form: FormGroup, total: number, paymentState: SalePaymentDraftState, mode: 'crear' | 'editar'): Promise<boolean> {
     const payments = normalizeSalePayments(paymentState);
     const tradeIns = normalizeSaleTradeIns(paymentState);
     const coverage = roundMoney(
@@ -1844,18 +1849,13 @@ saveChannelPopup(): void {
     const effectiveTotal = roundMoney(total + cardSurcharge);
     const isPaid = Number(form.get('idSaleStatus')?.value ?? 1) === 2;
 
-    if (paymentState.hasTradeIn) {
-        const hasIncompleteTradeIn = paymentState.tradeIns
-            .some(item =>
-                (item.productId && (!Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))
-                || (!item.productId && (Number(item.amount) > 0 || Number(item.quantity) > 1))
-            );
-
-        if (hasIncompleteTradeIn) {
-            this.toast.error('Completa producto, cantidad y monto en cada item de canje.');
-            return false;
-        }
+    // Un canje a medio cargar no viaja con la venta: se avisa antes de guardar.
+    const pendingTradeIns = pendingTradeInLines(paymentState)
+        .map(line => describeTradeInLine(line, this.products));
+    if (!await this.pendingTradeIn.confirmDiscard(pendingTradeIns)) {
+        return false;
     }
+    dropPendingTradeInLines(paymentState);
 
     const missingTransferBank = paymentState.payments.some(
         p => p.idPaymentMethod === 2 && p.amount > 0 && !p.transferBankId
