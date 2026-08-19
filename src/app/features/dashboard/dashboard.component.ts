@@ -52,6 +52,15 @@ interface RankedProduct extends DashboardTopProduct {
   sharePct: number;
 }
 
+interface ComparisonEndpoint {
+  tone: 'current' | 'previous';
+  month: string;
+  value: number;
+  label: string;
+  /** Alto del punto dentro del area del grafico, en % — para posicionar la etiqueta en HTML. */
+  topPct: number;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -300,31 +309,91 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Las dos curvas comparten escala, si no la comparacion visual mentiría. El viewBox es
-   * 100x46 y se dibuja invertido en Y porque en SVG el origen esta arriba.
+   * Escala compartida por las dos curvas Y por las etiquetas. Vive en un solo lugar a
+   * proposito: si la etiqueta calculara su propio maximo, el punto dejaria de caer sobre
+   * la linea en cuanto una de las dos formulas cambiara.
    */
+  private get comparisonMax(): number {
+    const comparison = this.summary?.monthComparison;
+    if (!comparison) {
+      return 1;
+    }
+    return Math.max(
+      ...comparison.current.map(p => this.cumulativeValue(p)),
+      ...comparison.previous.map(p => this.cumulativeValue(p)),
+      1
+    );
+  }
+
+  /** El viewBox es 100x46 y se dibuja invertido en Y porque en SVG el origen esta arriba. */
+  private plotY(value: number): number {
+    return 44 - (value / this.comparisonMax) * 42;
+  }
+
+  /** Alto del cero dentro del viewBox, en % — para apoyar la linea base y su etiqueta. */
+  readonly comparisonBaselineTopPct = (44 / 46) * 100;
+
   get comparisonPath(): { current: string; previous: string } {
     const comparison = this.summary?.monthComparison;
     if (!comparison || comparison.current.length === 0) {
       return { current: '', previous: '' };
     }
 
-    const max = Math.max(
-      ...comparison.current.map(p => this.cumulativeValue(p)),
-      ...comparison.previous.map(p => this.cumulativeValue(p)),
-      1
-    );
     const lastDay = Math.max(comparison.daysElapsed - 1, 1);
 
     const toPath = (points: DashboardCumulativePoint[]): string => points
       .map((point, index) => {
         const x = (index / lastDay) * 100;
-        const y = 44 - (this.cumulativeValue(point) / max) * 42;
+        const y = this.plotY(this.cumulativeValue(point));
         return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
       })
       .join(' ');
 
     return { current: toPath(comparison.current), previous: toPath(comparison.previous) };
+  }
+
+  /**
+   * Punto final de cada curva con su valor. Las curvas son acumuladas, asi que el ultimo
+   * punto es el total del tramo y el mas alto de los dos marca el techo de la escala: por
+   * eso alcanza con estas dos etiquetas y no hace falta un maximo aparte.
+   *
+   * Las etiquetas van en HTML y no dentro del SVG porque el grafico usa
+   * preserveAspectRatio="none": adentro, el texto y los puntos saldrian estirados.
+   */
+  get comparisonEndpoints(): ComparisonEndpoint[] {
+    const comparison = this.summary?.monthComparison;
+    if (!comparison || comparison.current.length === 0) {
+      return [];
+    }
+
+    const build = (
+      points: DashboardCumulativePoint[], tone: 'current' | 'previous', month: string
+    ): ComparisonEndpoint => {
+      const value = this.comparisonTotal(points);
+      return {
+        tone,
+        month,
+        value,
+        label: this.formatComparisonValue(value),
+        topPct: (this.plotY(value) / 46) * 100
+      };
+    };
+
+    // El anterior primero para que, si se pisan, el mes en curso quede arriba.
+    return [
+      build(comparison.previous, 'previous', this.comparisonPreviousLabel),
+      build(comparison.current, 'current', this.comparisonCurrentLabel)
+    ];
+  }
+
+  /** Un solo formato para el veredicto y para las etiquetas: si difieren, se leen como datos distintos. */
+  private formatComparisonValue(value: number): string {
+    if (this.chartMetric === 'amount') {
+      return value.toLocaleString('es-AR', {
+        style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0
+      });
+    }
+    return `${value}${this.chartMetric === 'units' ? ' unidades' : ' ventas'}`;
   }
 
   /** Diferencia porcentual del tramo corriente contra el mismo tramo del mes anterior. */
@@ -348,12 +417,7 @@ export class DashboardComponent implements OnInit {
     }
     const current = this.comparisonTotal(comparison.current);
     const previous = this.comparisonTotal(comparison.previous);
-    const unit = this.chartMetric === 'amount'
-      ? ''
-      : this.chartMetric === 'units' ? ' unidades' : ' ventas';
-    const format = (value: number): string => this.chartMetric === 'amount'
-      ? value.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', currencyDisplay: 'code', maximumFractionDigits: 0 })
-      : `${value}${unit}`;
+    const format = (value: number): string => this.formatComparisonValue(value);
 
     if (previous === 0 && current === 0) {
       return `Sin actividad en los primeros ${comparison.daysElapsed} días de ninguno de los dos meses.`;

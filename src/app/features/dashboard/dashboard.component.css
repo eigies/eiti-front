@@ -1398,10 +1398,95 @@ button.pulse-card:hover {
   margin-top: .9rem;
 }
 
+/* El padding derecho reserva el lugar de las etiquetas de cierre. Las dos curvas terminan
+   en x=100, o sea en el borde del area de contenido: la etiqueta arranca justo ahi. */
+.compare-plot {
+  position: relative;
+  padding-right: 7rem;
+}
+
 .compare-chart svg {
   width: 100%;
   height: 11rem;
+  display: block;
   overflow: visible;
+}
+
+.compare-baseline {
+  stroke: color-mix(in srgb, var(--border) 90%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.compare-zero,
+.compare-endpoint {
+  position: absolute;
+  font-family: 'DM Mono', monospace;
+  pointer-events: none;
+}
+
+.compare-zero {
+  left: 0;
+  transform: translateY(-115%);
+  font-size: .58rem;
+  letter-spacing: .1em;
+  color: var(--text-mute);
+}
+
+.compare-endpoint {
+  right: 0;
+  width: 6.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: .05rem;
+  padding-left: .85rem;
+  transform: translateY(-50%);
+  line-height: 1.25;
+  color: var(--text-mute);
+}
+
+.compare-endpoint b {
+  font-size: .68rem;
+  font-weight: 500;
+}
+
+.compare-endpoint small {
+  font-size: .55rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  opacity: .8;
+}
+
+.compare-endpoint--current {
+  color: var(--amber);
+}
+
+.compare-endpoint__dot {
+  position: absolute;
+  left: 0;
+  top: .34rem;
+  width: .4rem;
+  height: .4rem;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 620px) {
+  /* Sin ancho para la etiqueta al costado, el valor pasa abajo del grafico. */
+  .compare-plot { padding-right: 0; }
+
+  .compare-endpoint {
+    position: static;
+    width: auto;
+    flex-direction: row;
+    align-items: baseline;
+    gap: .4rem;
+    padding-left: .9rem;
+    transform: none;
+  }
+
+  .compare-endpoint__dot { top: .5rem; left: .25rem; }
 }
 
 .compare-line {

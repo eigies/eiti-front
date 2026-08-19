@@ -223,11 +223,30 @@
         </div>
 
         <div class="compare-chart" *ngIf="comparisonPath.current; else noComparisonData">
-          <svg viewBox="0 0 100 46" preserveAspectRatio="none" role="img"
-               [attr.aria-label]="comparisonSummaryLabel">
-            <path class="compare-line compare-line--previous" [attr.d]="comparisonPath.previous"></path>
-            <path class="compare-line compare-line--current" [attr.d]="comparisonPath.current"></path>
-          </svg>
+          <div class="compare-plot">
+            <svg viewBox="0 0 100 46" preserveAspectRatio="none" role="img"
+                 [attr.aria-label]="comparisonSummaryLabel">
+              <!-- La linea de cero ancla la escala: sin ella el piso del grafico es un
+                   recorte arbitrario. Va adentro del SVG porque una horizontal no se
+                   deforma con preserveAspectRatio="none". -->
+              <line class="compare-baseline" x1="0" y1="44" x2="100" y2="44"></line>
+              <path class="compare-line compare-line--previous" [attr.d]="comparisonPath.previous"></path>
+              <path class="compare-line compare-line--current" [attr.d]="comparisonPath.current"></path>
+            </svg>
+
+            <span class="compare-zero" [style.top.%]="comparisonBaselineTopPct">0</span>
+
+            <span
+              *ngFor="let endpoint of comparisonEndpoints"
+              class="compare-endpoint"
+              [class.compare-endpoint--current]="endpoint.tone === 'current'"
+              [style.top.%]="endpoint.topPct">
+              <i class="compare-endpoint__dot" aria-hidden="true"></i>
+              <b>{{ endpoint.label }}</b>
+              <small>{{ endpoint.month }}</small>
+            </span>
+          </div>
+
           <div class="compare-axis">
             <span>1</span>
             <span>{{ data.monthComparison.daysElapsed }}</span>

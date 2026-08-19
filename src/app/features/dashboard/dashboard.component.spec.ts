@@ -530,6 +530,48 @@ describe('DashboardComponent', () => {
     expect(component.chartValue(day, 'retail')).toBe(900);
   });
 
+  // El punto tiene que caer SOBRE la linea: si la etiqueta calculara su propia escala,
+  // se despegaria de la curva en cuanto cambiara una de las dos formulas.
+  it('el punto de cierre cae sobre el final de su curva', () => {
+    const { component, dashboard } = setup();
+    dashboard.getSummary.and.returnValue(of(summary));
+    component.ngOnInit();
+
+    const endpoints = component.comparisonEndpoints;
+    expect(endpoints.length).toBe(2);
+
+    const paths = component.comparisonPath;
+    const lastY = (d: string): number => Number(d.split('L').pop()!.split(',')[1]);
+
+    const current = endpoints.find(e => e.tone === 'current')!;
+    const previous = endpoints.find(e => e.tone === 'previous')!;
+
+    expect(current.topPct).toBeCloseTo((lastY(paths.current) / 46) * 100, 5);
+    expect(previous.topPct).toBeCloseTo((lastY(paths.previous) / 46) * 100, 5);
+  });
+
+  it('la etiqueta del cierre dice lo mismo que el veredicto', () => {
+    const { component, dashboard } = setup();
+    dashboard.getSummary.and.returnValue(of(summary));
+    component.ngOnInit();
+
+    const current = component.comparisonEndpoints.find(e => e.tone === 'current')!;
+
+    // summary.current termina en 3 ventas; el veredicto lo nombra con las mismas palabras.
+    expect(current.label).toBe('3 ventas');
+    expect(component.comparisonVerdict).toContain('3 ventas');
+  });
+
+  it('la metrica manda tambien en las etiquetas del cierre', () => {
+    const { component, dashboard } = setup();
+    dashboard.getSummary.and.returnValue(of(summary));
+    component.ngOnInit();
+
+    component.setChartMetric('units');
+    expect(component.comparisonEndpoints.find(e => e.tone === 'current')!.label)
+      .toBe('4 unidades');
+  });
+
   it('la curva del mes en curso se dibuja entera, sin patron de guiones', async () => {
     const { fixture, component } = await setupFixture();
     component.setChartView('comparison');
