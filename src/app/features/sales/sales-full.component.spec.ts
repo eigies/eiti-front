@@ -15,12 +15,14 @@ import { StockService } from '../../core/services/stock.service';
 import { EmployeeService } from '../../core/services/employee.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { ToastService } from '../../shared/services/toast.service';
+import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { of } from 'rxjs';
 
 describe('SalesFullComponent (price override)', () => {
     let component: SalesFullComponent;
     let authSpy: jasmine.SpyObj<AuthService>;
+    let pendingTradeInSpy: jasmine.SpyObj<PendingTradeInService>;
 
     function createMockService<T>(methods: string[]): jasmine.SpyObj<T> {
         return jasmine.createSpyObj(methods) as jasmine.SpyObj<T>;
@@ -43,6 +45,8 @@ describe('SalesFullComponent (price override)', () => {
         const vehicleSpy = createMockService<VehicleService>(['listVehicles']);
         (vehicleSpy as any).listVehicles.and.returnValue(of([]));
         const toastSpy = createMockService<ToastService>(['success', 'error', 'show']);
+        pendingTradeInSpy = createMockService<PendingTradeInService>(['confirmDiscard']);
+        pendingTradeInSpy.confirmDiscard.and.resolveTo(true);
 
         TestBed.configureTestingModule({
             imports: [SalesFullComponent, ReactiveFormsModule, RouterTestingModule],
@@ -59,7 +63,8 @@ describe('SalesFullComponent (price override)', () => {
                 { provide: StockService, useValue: stockSpy },
                 { provide: EmployeeService, useValue: employeeSpy },
                 { provide: VehicleService, useValue: vehicleSpy },
-                { provide: ToastService, useValue: toastSpy }
+                { provide: ToastService, useValue: toastSpy },
+                { provide: PendingTradeInService, useValue: pendingTradeInSpy }
             ]
         });
 
@@ -104,5 +109,37 @@ describe('SalesFullComponent (price override)', () => {
 
         const request = (component as any).buildSaleRequest(null);
         expect(request.details[0].unitPrice).toBeUndefined();
+    });
+
+    // El canje a medio cargar tiene que llegar al aviso con su descripcion, no como un
+    // toast generico: es el mismo aviso que el resto de las pantallas.
+    it('avisa del canje incompleto antes de avanzar de paso', async () => {
+        component.products = [{ id: 'p1', brand: 'MOURA', name: '12x65 20GD' } as any];
+        component.paymentState.hasTradeIn = true;
+        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 1, amount: 0 }];
+
+        await (component as any).validatePaymentState();
+
+        const pending = pendingTradeInSpy.confirmDiscard.calls.mostRecent().args[0];
+        expect(pending.length).toBe(1);
+        expect(pending[0]).toContain('MOURA 12x65 20GD');
+    });
+
+    it('volver desde el aviso corta el guardado', async () => {
+        pendingTradeInSpy.confirmDiscard.and.resolveTo(false);
+        component.paymentState.hasTradeIn = true;
+        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 1, amount: 0 }];
+
+        await expectAsync((component as any).validatePaymentState()).toBeResolvedTo(false);
+    });
+
+    it('continuar descarta la linea incompleta para no volver a preguntar', async () => {
+        component.paymentState.hasTradeIn = true;
+        component.paymentState.tradeIns = [{ productId: 'p1', quantity: 1, amount: 0 }];
+
+        await (component as any).validatePaymentState();
+
+        expect(component.paymentState.tradeIns).toEqual([]);
+        expect(component.paymentState.hasTradeIn).toBeFalse();
     });
 });

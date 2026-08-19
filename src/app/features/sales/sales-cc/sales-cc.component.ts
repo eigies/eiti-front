@@ -11,9 +11,11 @@ import { QuoteService } from '../../../core/services/quote.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissionCodes } from '../../../core/models/permission.models';
 import { ToastService } from '../../../shared/services/toast.service';
+import { PendingTradeInService } from '../../../shared/services/pending-trade-in.service';
 import { BranchResponse } from '../../../core/models/branch.models';
 import { CustomerSearchItem, toCustomerSearchItem } from '../../../core/models/customer.models';
 import { BranchProductStockResponse } from '../../../core/models/stock.models';
+import { describeTradeInLine } from '../../../core/models/sale-payment.models';
 import { CreateCcSaleRequest, CreateSaleDetailRequest } from '../../../core/models/sale.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { ProductPickerModalComponent } from '../../../shared/components/product-picker-modal/product-picker-modal.component';
@@ -110,6 +112,7 @@ export class SalesCcComponent implements OnInit {
     private readonly saleService: SaleService,
     private readonly quoteService: QuoteService,
     private readonly toast: ToastService,
+    private readonly pendingTradeIn: PendingTradeInService,
     public readonly auth: AuthService
   ) {}
 
@@ -467,7 +470,35 @@ export class SalesCcComponent implements OnInit {
     this.tradeInDrafts = this.tradeInDrafts.filter((_, i) => i !== index);
   }
 
-  submit(): void {
+  /**
+   * El canje solo entra a la venta cuando el usuario aprieta "Agregar canje". Si dejo datos
+   * en el formulario de armado y confirma, se pierden en silencio: esto los describe para
+   * poder avisarle. Vacio = no hay nada cargado.
+   */
+  private pendingTradeInLabels(): string[] {
+    const amount = Number(this.canjeAmount);
+    const quantity = Number(this.canjeQuantity);
+    const hasData = Boolean(this.canjeProductId)
+      || (Number.isFinite(amount) && amount > 0)
+      || (Number.isFinite(quantity) && quantity > 1);
+
+    if (!hasData) {
+      return [];
+    }
+
+    return [describeTradeInLine(
+      { productId: this.canjeProductId ?? '', quantity, amount },
+      this.stockItems.map(item => ({ id: item.productId, brand: item.brand, name: item.name }))
+    )];
+  }
+
+  private clearTradeInForm(): void {
+    this.canjeProductId = null;
+    this.canjeQuantity = 1;
+    this.canjeAmount = null;
+  }
+
+  async submit(): Promise<void> {
     if (!this.canSubmit) { return; }
     if (!this.selectedCustomer) {
       this.toast.error('Selecciona un cliente para continuar');
@@ -481,6 +512,12 @@ export class SalesCcComponent implements OnInit {
       this.toast.error('Selecciona una sucursal');
       return;
     }
+
+    // Ultimo chequeo antes de guardar: lo que quedo en el formulario de canje no viaja.
+    if (!await this.pendingTradeIn.confirmDiscard(this.pendingTradeInLabels())) {
+      return;
+    }
+    this.clearTradeInForm();
 
     this.saving = true;
     const details: CreateSaleDetailRequest[] = this.draftItems.map(item => ({

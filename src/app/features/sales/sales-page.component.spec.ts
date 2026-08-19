@@ -241,7 +241,7 @@ describe('SalesPageComponent (price override)', () => {
         expect(fixture.nativeElement.querySelectorAll('.sales-skeleton__row').length).toBe(4);
     });
 
-    it('returns to the configuration stage after creating a sale', () => {
+    it('returns to the configuration stage after creating a sale', async () => {
         component.activeCreateStage = 'payment';
         component.lineForm.patchValue({ branchId: 'branch-1', sourceChannel: 1 });
         component.draftItems = [{
@@ -250,7 +250,7 @@ describe('SalesPageComponent (price override)', () => {
             total: 100
         }];
 
-        component.createSale();
+        await component.createSale();
 
         expect(saleSpy.createSale).toHaveBeenCalled();
         expect(component.activeCreateStage).toBe('config');

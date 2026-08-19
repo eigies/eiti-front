@@ -5,94 +5,101 @@ import { CustomerService } from '../../../core/services/customer.service';
 import { StockService } from '../../../core/services/stock.service';
 import { SaleService } from '../../../core/services/sale.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { PendingTradeInService } from '../../../shared/services/pending-trade-in.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { QuoteService } from '../../../core/services/quote.service';
 import { BranchResponse } from '../../../core/models/branch.models';
 import { BranchProductStockResponse } from '../../../core/models/stock.models';
 import { CustomerResponse } from '../../../core/models/customer.models';
 
+const branch: BranchResponse = {
+  id: 'branch-1',
+  name: 'Centro',
+  code: 'CEN',
+  address: 'Street 1',
+  salesCount: 0,
+  cashValue: 0,
+  createdAt: '2026-07-16T00:00:00Z'
+};
+
+const stock: BranchProductStockResponse = {
+  productId: 'product-1',
+  branchId: 'branch-1',
+  code: 'BAT-1',
+  sku: 'SKU-1',
+  brand: 'Bosch',
+  name: 'Bateria 75',
+  price: 120,
+  publicPrice: 120,
+  costPrice: null,
+  unitPrice: null,
+  allowsManualValueInSale: false,
+  onHandQuantity: 10,
+  reservedQuantity: 0,
+  availableQuantity: 10
+};
+
+const customer: CustomerResponse = {
+  id: 'customer-1',
+  name: 'ACME',
+  firstName: '',
+  lastName: '',
+  fullName: 'ACME SA',
+  email: 'ventas@acme.test',
+  phone: '123',
+  documentType: null,
+  documentTypeName: null,
+  documentNumber: null,
+  taxId: null,
+  addressId: null,
+  address: null,
+  createdAt: '2026-07-16T00:00:00Z',
+  updatedAt: null,
+  creditBalance: 0
+};
+
+function buildCcComponent() {
+  const branchService = jasmine.createSpyObj<BranchService>('BranchService', ['listBranches']);
+  branchService.listBranches.and.returnValue(of([branch]));
+
+  const customerService = jasmine.createSpyObj<CustomerService>('CustomerService', ['getCustomerById', 'searchCustomers']);
+  customerService.getCustomerById.and.returnValue(of(customer));
+  customerService.searchCustomers.and.returnValue(of([]));
+
+  const stockService = jasmine.createSpyObj<StockService>('StockService', ['listBranchStock']);
+  stockService.listBranchStock.and.returnValue(of([stock]));
+
+  const saleService = jasmine.createSpyObj<SaleService>('SaleService', ['createCcSale']);
+  saleService.createCcSale.and.returnValue(of({ id: 'sale-direct' }));
+
+  const quoteService = jasmine.createSpyObj<QuoteService>('QuoteService', ['convertQuote']);
+  quoteService.convertQuote.and.returnValue(of({ id: 'sale-from-quote' }));
+
+  const toast = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error']);
+  const auth = jasmine.createSpyObj<AuthService>('AuthService', ['hasPermission']);
+  auth.hasPermission.and.returnValue(true);
+
+  const pendingTradeIn = jasmine.createSpyObj<PendingTradeInService>(
+    'PendingTradeInService', ['confirmDiscard']);
+  pendingTradeIn.confirmDiscard.and.resolveTo(true);
+
+  const component = new (SalesCcComponent as any)(
+    branchService,
+    customerService,
+    stockService,
+    saleService,
+    quoteService,
+    toast,
+    pendingTradeIn,
+    auth
+  );
+
+  return { component, branchService, customerService, stockService, saleService, quoteService, toast, pendingTradeIn };
+}
+
 describe('SalesCcComponent quote conversion', () => {
-  const branch: BranchResponse = {
-    id: 'branch-1',
-    name: 'Centro',
-    code: 'CEN',
-    address: 'Street 1',
-    salesCount: 0,
-    cashValue: 0,
-    createdAt: '2026-07-16T00:00:00Z'
-  };
 
-  const stock: BranchProductStockResponse = {
-    productId: 'product-1',
-    branchId: 'branch-1',
-    code: 'BAT-1',
-    sku: 'SKU-1',
-    brand: 'Bosch',
-    name: 'Bateria 75',
-    price: 120,
-    publicPrice: 120,
-    costPrice: null,
-    unitPrice: null,
-    allowsManualValueInSale: false,
-    onHandQuantity: 10,
-    reservedQuantity: 0,
-    availableQuantity: 10
-  };
-
-  const customer: CustomerResponse = {
-    id: 'customer-1',
-    name: 'ACME',
-    firstName: '',
-    lastName: '',
-    fullName: 'ACME SA',
-    email: 'ventas@acme.test',
-    phone: '123',
-    documentType: null,
-    documentTypeName: null,
-    documentNumber: null,
-    taxId: null,
-    addressId: null,
-    address: null,
-    createdAt: '2026-07-16T00:00:00Z',
-    updatedAt: null,
-    creditBalance: 0
-  };
-
-  function buildComponent() {
-    const branchService = jasmine.createSpyObj<BranchService>('BranchService', ['listBranches']);
-    branchService.listBranches.and.returnValue(of([branch]));
-
-    const customerService = jasmine.createSpyObj<CustomerService>('CustomerService', ['getCustomerById', 'searchCustomers']);
-    customerService.getCustomerById.and.returnValue(of(customer));
-    customerService.searchCustomers.and.returnValue(of([]));
-
-    const stockService = jasmine.createSpyObj<StockService>('StockService', ['listBranchStock']);
-    stockService.listBranchStock.and.returnValue(of([stock]));
-
-    const saleService = jasmine.createSpyObj<SaleService>('SaleService', ['createCcSale']);
-    saleService.createCcSale.and.returnValue(of({ id: 'sale-direct' }));
-
-    const quoteService = jasmine.createSpyObj<QuoteService>('QuoteService', ['convertQuote']);
-    quoteService.convertQuote.and.returnValue(of({ id: 'sale-from-quote' }));
-
-    const toast = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error']);
-    const auth = jasmine.createSpyObj<AuthService>('AuthService', ['hasPermission']);
-    auth.hasPermission.and.returnValue(true);
-
-    const component = new (SalesCcComponent as any)(
-      branchService,
-      customerService,
-      stockService,
-      saleService,
-      quoteService,
-      toast,
-      auth
-    );
-
-    return { component, branchService, customerService, stockService, saleService, quoteService, toast };
-  }
-
-  it('prefills quote items and converts the quote instead of creating a direct CC sale', () => {
+  it('prefills quote items and converts the quote instead of creating a direct CC sale', async () => {
     history.replaceState({
       quotePrefill: {
         quoteId: 'quote-1',
@@ -112,7 +119,7 @@ describe('SalesCcComponent quote conversion', () => {
       }
     }, '');
 
-    const { component, customerService, stockService, saleService, quoteService } = buildComponent();
+    const { component, customerService, stockService, saleService, quoteService } = buildCcComponent();
 
     component.ngOnInit();
 
@@ -126,7 +133,7 @@ describe('SalesCcComponent quote conversion', () => {
     expect(component.draftItems[0].unitPriceOverride).toBe(99);
     expect(component.draftItems[0].discountPercent).toBe(5);
 
-    component.submit();
+    await component.submit();
 
     expect(quoteService.convertQuote).toHaveBeenCalledOnceWith('quote-1', jasmine.objectContaining({
       branchId: 'branch-1',
@@ -140,5 +147,66 @@ describe('SalesCcComponent quote conversion', () => {
       })]
     }));
     expect(saleService.createCcSale).not.toHaveBeenCalled();
+  });
+});
+
+describe('SalesCcComponent canje sin agregar', () => {
+  // El canje solo entra a la venta con "Agregar canje". Si queda en el formulario de armado
+  // y el usuario confirma, se perdia en silencio: el aviso existe para que no pase.
+  function readyComponent() {
+    // Sin ngOnInit a proposito: el test de conversion deja un quotePrefill en history y
+    // arrastrarlo mandaria el submit por convertQuote en vez de crear la venta directa.
+    const built = buildCcComponent();
+    built.component.stockItems = [stock];
+    built.component.stockByProductId.set(stock.productId, stock);
+    built.component.selectedBranchId = 'branch-1';
+    built.component.selectedCustomer = { id: 'customer-1', fullName: 'ACME SA' } as any;
+    built.component.draftItems = [{
+      stock: { productId: 'product-1', brand: 'Bosch', name: 'Bateria 75' },
+      quantity: 1,
+      unitPriceOverride: 120,
+      discountPercent: 0,
+      forceUnitPrice: false
+    } as any];
+    return built;
+  }
+
+  it('no avisa nada cuando el formulario de canje esta vacio', async () => {
+    const { component, saleService, pendingTradeIn } = readyComponent();
+
+    await component.submit();
+
+    expect(pendingTradeIn.confirmDiscard).toHaveBeenCalledWith([]);
+    expect(saleService.createCcSale).toHaveBeenCalled();
+  });
+
+  it('avisa y no guarda si el usuario elige volver', async () => {
+    const { component, saleService, pendingTradeIn } = readyComponent();
+    pendingTradeIn.confirmDiscard.and.resolveTo(false);
+    component.canjeProductId = 'product-1';
+    component.canjeAmount = 85000;
+
+    await component.submit();
+
+    const pending = pendingTradeIn.confirmDiscard.calls.mostRecent().args[0];
+    expect(pending.length).toBe(1);
+    expect(pending[0]).toContain('Bosch Bateria 75');
+    expect(saleService.createCcSale).not.toHaveBeenCalled();
+    // El canje sigue cargado: el usuario vuelve justo a donde lo dejo.
+    expect(component.canjeProductId).toBe('product-1');
+  });
+
+  it('si elige continuar, guarda sin el canje y limpia el formulario', async () => {
+    const { component, saleService, pendingTradeIn } = readyComponent();
+    pendingTradeIn.confirmDiscard.and.resolveTo(true);
+    component.canjeProductId = 'product-1';
+    component.canjeAmount = 85000;
+
+    await component.submit();
+
+    expect(saleService.createCcSale).toHaveBeenCalled();
+    expect(saleService.createCcSale.calls.mostRecent().args[0].tradeIns).toBeUndefined();
+    expect(component.canjeProductId).toBeNull();
+    expect(component.canjeAmount).toBeNull();
   });
 });

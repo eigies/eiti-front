@@ -155,6 +155,62 @@ export function normalizeSaleTradeIns(state: SalePaymentDraftState): SaleTradeIn
         .filter(item => item.productId.length > 0 && item.quantity > 0 && item.amount >= 0);
 }
 
+/**
+ * Lineas de canje con algo cargado que `normalizeSaleTradeIns` va a descartar: el usuario
+ * escribio datos que no van a viajar con la venta.
+ *
+ * Una linea recien agregada y vacia no cuenta — no hay nada que perder. Completa significa
+ * producto + cantidad >= 1 + monto > 0: un canje en cero no reconoce nada, asi que se avisa
+ * igual (la pantalla siempre deja continuar).
+ */
+export function pendingTradeInLines(state: SalePaymentDraftState): SaleTradeInDraftLine[] {
+    return (state.tradeIns ?? []).filter(item => {
+        const quantity = Number(item.quantity);
+        const amount = Number(item.amount);
+        const hasData = Boolean(item.productId) || amount > 0 || quantity > 1;
+        const isComplete = Boolean(item.productId)
+            && Number.isFinite(quantity) && quantity >= 1
+            && Number.isFinite(amount) && amount > 0;
+
+        return hasData && !isComplete;
+    });
+}
+
+/**
+ * Saca del estado las lineas que el usuario decidio no agregar. Sin esto el aviso vuelve a
+ * salir en el paso siguiente, porque los datos incompletos siguen cargados.
+ */
+export function dropPendingTradeInLines(state: SalePaymentDraftState): void {
+    const pending = new Set(pendingTradeInLines(state));
+    state.tradeIns = (state.tradeIns ?? []).filter(line => !pending.has(line));
+    state.hasTradeIn = state.tradeIns.length > 0;
+}
+
+/**
+ * Texto de una linea de canje para mostrarla en el aviso: "MOURA 12x65 · 2 u · $85.000".
+ * Los datos que faltan se nombran en vez de quedar vacios, que es justo lo que el usuario
+ * tiene que ver para entender por que el canje no se agrego.
+ */
+export function describeTradeInLine(
+    line: SaleTradeInDraftLine,
+    products: readonly { id: string; brand?: string | null; name?: string | null }[]
+): string {
+    const product = products.find(item => item.id === line.productId);
+    const label = product
+        ? `${product.brand ?? ''} ${product.name ?? ''}`.trim() || 'Producto sin nombre'
+        : 'Producto sin elegir';
+
+    const quantity = Number(line.quantity);
+    const units = Number.isFinite(quantity) && quantity > 0 ? quantity : 0;
+
+    const amount = Number(line.amount);
+    const value = Number.isFinite(amount) && amount > 0
+        ? amount.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
+        : 'sin valor';
+
+    return `${label} · ${units} u · ${value}`;
+}
+
 export function salePaymentCoverage(state: SalePaymentDraftState): number {
     return roundMoney(
         normalizeSalePayments(state).reduce((sum, item) => sum + item.amount, 0)

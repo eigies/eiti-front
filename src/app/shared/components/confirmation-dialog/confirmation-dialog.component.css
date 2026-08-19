@@ -129,6 +129,8 @@
   font-family: 'DM Mono', monospace;
   font-size: .72rem;
   line-height: 1.5;
+  /* Un detalle puede enumerar varios items, uno por linea. */
+  white-space: pre-line;
 }
 
 .confirmation-card__detail-mark {

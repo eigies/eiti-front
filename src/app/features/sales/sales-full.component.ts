@@ -15,6 +15,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { EmployeeService } from '../../core/services/employee.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { ToastService } from '../../shared/services/toast.service';
+import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
 import { BranchResponse } from '../../core/models/branch.models';
@@ -37,6 +38,9 @@ import {
   hasCashPayment,
   normalizeSalePayments,
   normalizeSaleTradeIns,
+  pendingTradeInLines,
+  dropPendingTradeInLines,
+  describeTradeInLine,
   paymentMethodSummary,
   roundMoney,
   salePaymentCoverage
@@ -79,7 +83,7 @@ export class SalesFullComponent implements OnInit {
   readonly itemForm = this.fb.group({ productId: ['', Validators.required], quantity: [1, [Validators.required, Validators.min(1)]] });
   readonly transportForm = this.fb.group({ driverEmployeeId: ['', Validators.required], vehicleId: ['', Validators.required], notes: [''] });
 
-  constructor(private readonly fb: FormBuilder, private readonly customerService: CustomerService, private readonly productService: ProductService, private readonly branchService: BranchService, private readonly cashService: CashService, private readonly stockService: StockService, private readonly saleService: SaleService, private readonly companyService: CompanyService, private readonly employeeService: EmployeeService, private readonly vehicleService: VehicleService, private readonly toast: ToastService, private readonly router: Router, private readonly bankService: BankService, public readonly auth: AuthService) { }
+  constructor(private readonly fb: FormBuilder, private readonly customerService: CustomerService, private readonly productService: ProductService, private readonly branchService: BranchService, private readonly cashService: CashService, private readonly stockService: StockService, private readonly saleService: SaleService, private readonly companyService: CompanyService, private readonly employeeService: EmployeeService, private readonly vehicleService: VehicleService, private readonly toast: ToastService, private readonly pendingTradeIn: PendingTradeInService, private readonly router: Router, private readonly bankService: BankService, public readonly auth: AuthService) { }
 
   ngOnInit(): void {
     this.productService.listProducts().subscribe({ next: products => this.products = [...products].sort((left, right) => this.productLabel(left).localeCompare(this.productLabel(right))) });
@@ -243,7 +247,7 @@ export class SalesFullComponent implements OnInit {
   canJumpToStep(targetStep: number): boolean { return targetStep <= this.step && targetStep <= this.totalSteps; }
   jumpToStep(targetStep: number): void { if (this.canJumpToStep(targetStep)) { this.step = targetStep; } }
   jumpToSummaryStep(section: 'customer' | 'address' | 'sale' | 'transport'): void { if (section === 'customer') { this.step = this.customerMode === 'existing' ? 1 : 2; return; } if (section === 'address') { this.step = this.customerMode === 'existing' ? 1 : 3; return; } if (section === 'transport' && this.requiresDelivery) { this.step = 5; return; } this.step = 4; }
-  nextStep(): void { if (!this.validateCurrentStep()) { return; } this.step = Math.min(this.totalSteps, this.step + 1); }
+  async nextStep(): Promise<void> { if (!await this.validateCurrentStep()) { return; } this.step = Math.min(this.totalSteps, this.step + 1); }
   setCashDrawerId(value: string | null): void {
     const assignedId = this.auth.currentUser?.assignedCashDrawerId ?? null;
     if (assignedId && value && value !== assignedId && !this.auth.hasPermission(PermissionCodes.cashDrawerViewAll)) {
@@ -267,8 +271,8 @@ export class SalesFullComponent implements OnInit {
     this.pendingOverrideDrawerId = null;
   }
 
-  submit(): void {
-    if (!this.validateCurrentStep()) { return; }
+  async submit(): Promise<void> {
+    if (!await this.validateCurrentStep()) { return; }
     this.saving = true;
     if (this.customerMode === 'existing') { this.updateExistingCustomerAndCreateSale(); return; }
     this.customerService.createCustomer({ firstName: String(this.customerForm.get('firstName')?.value || ''), lastName: String(this.customerForm.get('lastName')?.value || ''), email: String(this.customerForm.get('email')?.value || ''), phone: String(this.customerForm.get('phone')?.value || ''), documentType: Number(this.customerForm.get('documentType')?.value), documentNumber: String(this.customerForm.get('documentNumber')?.value || ''), taxId: this.nullIfEmpty(this.customerForm.get('taxId')?.value), address: { street: String(this.addressForm.get('street')?.value || ''), streetNumber: String(this.addressForm.get('streetNumber')?.value || ''), postalCode: String(this.addressForm.get('postalCode')?.value || ''), city: String(this.addressForm.get('city')?.value || ''), stateOrProvince: String(this.addressForm.get('stateOrProvince')?.value || ''), country: String(this.addressForm.get('country')?.value || ''), floor: this.nullIfEmpty(this.addressForm.get('floor')?.value), apartment: this.nullIfEmpty(this.addressForm.get('apartment')?.value), reference: this.nullIfEmpty(this.addressForm.get('reference')?.value) } }).subscribe({ next: customer => this.createSale(customer.id), error: err => { this.saving = false; this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el cliente'); } });
@@ -343,7 +347,7 @@ export class SalesFullComponent implements OnInit {
     this.router.navigate(['/sales']);
   }
 
-  private validateCurrentStep(): boolean {
+  private async validateCurrentStep(): Promise<boolean> {
     if (this.step === 1 && this.customerMode === 'existing' && !this.selectedExistingCustomer) { this.toast.error('Selecciona un cliente o cambia a crear nuevo.'); return false; }
     if (this.step === 2 && this.customerForm.invalid) { this.customerForm.markAllAsTouched(); this.toast.error('Completa los datos del cliente.'); return false; }
     if (this.step === 3 && this.addressForm.invalid) { this.addressForm.markAllAsTouched(); this.toast.error('Completa el domicilio.'); return false; }
@@ -362,7 +366,7 @@ export class SalesFullComponent implements OnInit {
         this.toast.error('Agrega al menos un item para continuar.');
         return false;
       }
-      if (!this.validatePaymentState()) { return false; }
+      if (!await this.validatePaymentState()) { return false; }
     }
     if (this.isTransportStep && this.transportForm.invalid) { this.transportForm.markAllAsTouched(); this.toast.error('Selecciona conductor y vehiculo para el envio.'); return false; }
     return true;
@@ -386,7 +390,7 @@ export class SalesFullComponent implements OnInit {
     };
   }
 
-  private validatePaymentState(): boolean {
+  private async validatePaymentState(): Promise<boolean> {
     const payments = normalizeSalePayments(this.paymentState);
     const tradeIns = normalizeSaleTradeIns(this.paymentState);
     const coverage = roundMoney(
@@ -395,17 +399,13 @@ export class SalesFullComponent implements OnInit {
     );
     const effectiveTotal = roundMoney(this.total + this.totalCardSurcharge);
 
-    if (this.paymentState.hasTradeIn) {
-      const hasIncompleteTradeIn = this.paymentState.tradeIns.some(item =>
-        (item.productId && (!Number.isFinite(Number(item.amount)) || Number(item.amount) <= 0 || !Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0))
-        || (!item.productId && (Number(item.amount) > 0 || Number(item.quantity) > 1))
-      );
-
-      if (hasIncompleteTradeIn) {
-        this.toast.error('Completa producto, cantidad y monto en cada canje cargado.');
-        return false;
-      }
+    // Un canje a medio cargar no viaja con la venta: se avisa antes de seguir.
+    const pending = pendingTradeInLines(this.paymentState)
+      .map(line => describeTradeInLine(line, this.products));
+    if (!await this.pendingTradeIn.confirmDiscard(pending)) {
+      return false;
     }
+    dropPendingTradeInLines(this.paymentState);
 
     if (this.isPaid && coverage !== effectiveTotal) {
       this.toast.error('Una venta pagada debe quedar cancelada exactamente con payments + tradeIns.');
