@@ -4,6 +4,8 @@ export const PermissionCodes = {
     salesUpdate: 'sales.update',
     salesDelete: 'sales.delete',
     salesPay: 'sales.pay',
+    salesCreditNoteCreate: 'sales.credit_note.create',
+    salesCreditNoteCancel: 'sales.credit_note.cancel',
     quotesAccess: 'quotes.access',
     quotesCreate: 'quotes.create',
     quotesConvert: 'quotes.convert',
@@ -56,6 +58,8 @@ export const PermissionCodes = {
     purchasesUpdate: 'purchases.update',
     purchasesPay: 'purchases.pay',
     purchasesCancel: 'purchases.cancel',
+    purchasesCreditNoteCreate: 'purchases.credit_note.create',
+    purchasesCreditNoteCancel: 'purchases.credit_note.cancel',
     productsCostPriceAlert: 'products.cost_price_alert',
     driversDelete: 'drivers.delete'
 } as const;
@@ -68,6 +72,8 @@ export const PermissionCatalog: ReadonlyArray<{ code: PermissionCode; label: str
     { code: PermissionCodes.salesUpdate, label: 'Ventas: editar', description: 'Permite actualizar ventas existentes.' },
     { code: PermissionCodes.salesDelete, label: 'Ventas: eliminar', description: 'Permite eliminar ventas.' },
     { code: PermissionCodes.salesPay, label: 'Ventas: cobrar', description: 'Permite registrar cobros y pagos.' },
+    { code: PermissionCodes.salesCreditNoteCreate, label: 'Ventas: emitir nota de crédito', description: 'Permite emitir notas de crédito que bajan la deuda del cliente.' },
+    { code: PermissionCodes.salesCreditNoteCancel, label: 'Ventas: anular nota de crédito', description: 'Permite anular notas de crédito emitidas a clientes.' },
     { code: PermissionCodes.quotesAccess, label: 'Presupuestos: acceso', description: 'Permite ingresar al modulo de presupuestos.' },
     { code: PermissionCodes.quotesCreate, label: 'Presupuestos: crear', description: 'Permite crear presupuestos nuevos.' },
     { code: PermissionCodes.quotesConvert, label: 'Presupuestos: convertir', description: 'Permite convertir un presupuesto en una venta de cuenta corriente.' },
@@ -120,6 +126,8 @@ export const PermissionCatalog: ReadonlyArray<{ code: PermissionCode; label: str
     { code: PermissionCodes.purchasesUpdate, label: 'Compras: editar', description: 'Permite editar compras existentes.' },
     { code: PermissionCodes.purchasesPay, label: 'Compras: pagar', description: 'Permite registrar pagos de compras.' },
     { code: PermissionCodes.purchasesCancel, label: 'Compras: cancelar', description: 'Permite cancelar compras.' },
+    { code: PermissionCodes.purchasesCreditNoteCreate, label: 'Compras: emitir nota de crédito', description: 'Permite registrar notas de crédito recibidas del proveedor.' },
+    { code: PermissionCodes.purchasesCreditNoteCancel, label: 'Compras: anular nota de crédito', description: 'Permite anular notas de crédito de proveedores.' },
     { code: PermissionCodes.productsCostPriceAlert, label: 'Productos: alerta precio costo', description: 'Muestra alerta cuando hay productos sin precio de costo cargado.' },
     { code: PermissionCodes.driversDelete, label: 'Transporte: eliminar conductores', description: 'Permite eliminar conductores desde Transporte. El conductor se libera de los vehiculos asignados y queda desactivado como empleado.' }
 ];
