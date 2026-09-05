@@ -17,7 +17,7 @@ export interface SupplierPaymentImputacion {
 }
 
 export interface SupplierAccountMovement {
-  type: 'compra' | 'pago';
+  type: 'compra' | 'pago' | 'nota_credito';
   id: string;
   date: string;
   description: string;

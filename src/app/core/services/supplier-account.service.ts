@@ -8,6 +8,7 @@ import {
   SupplierAccount,
   SupplierAccountListItem
 } from '../models/supplier-account.models';
+import { CreateCreditNoteRequest, CreateCreditNoteResult } from '../models/credit-note.models';
 
 @Injectable({ providedIn: 'root' })
 export class SupplierAccountService {
@@ -30,5 +31,13 @@ export class SupplierAccountService {
 
   cancelPayment(supplierId: string, paymentId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${supplierId}/payments/${paymentId}`);
+  }
+
+  createCreditNote(supplierId: string, req: CreateCreditNoteRequest): Observable<CreateCreditNoteResult> {
+    return this.http.post<CreateCreditNoteResult>(`${this.base}/${supplierId}/credit-notes`, req);
+  }
+
+  cancelCreditNote(supplierId: string, creditNoteId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${supplierId}/credit-notes/${creditNoteId}`);
   }
 }

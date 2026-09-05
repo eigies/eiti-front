@@ -964,6 +964,9 @@ type CashDisplayRow = {
     .badge--type[data-type="PurchaseExpense"]{background:color-mix(in srgb,#a855f7 12%, transparent);color:#a855f7;border:1px solid color-mix(in srgb,#a855f7 30%, transparent)}
     .badge--type[data-type="PurchasePaymentCancellation"]{background:color-mix(in srgb,var(--success) 12%, transparent);color:var(--success);border:1px solid color-mix(in srgb,var(--success) 30%, transparent)}
     .badge--type[data-type="PayrollExpense"],.badge--type[data-type="PayrollExpenseCancellation"],.badge--type[data-type="PayrollAdvanceExpense"],.badge--type[data-type="PayrollAdvanceExpenseCancellation"]{background:color-mix(in srgb,#db2777 12%, transparent);color:#db2777;border:1px solid color-mix(in srgb,#db2777 30%, transparent)}
+    .badge--type[data-type="CustomerCreditNote"]{background:color-mix(in srgb,#65a30d 12%, transparent);color:#65a30d;border:1px solid color-mix(in srgb,#65a30d 30%, transparent)}
+    .badge--type[data-type="SupplierCreditNote"]{background:color-mix(in srgb,#c026d3 12%, transparent);color:#c026d3;border:1px solid color-mix(in srgb,#c026d3 30%, transparent)}
+    .badge--type[data-type="CustomerCreditNoteCancellation"],.badge--type[data-type="SupplierCreditNoteCancellation"]{background:color-mix(in srgb,#64748b 12%, transparent);color:#64748b;border:1px solid color-mix(in srgb,#64748b 30%, transparent)}
     .history-table__row--clickable{cursor:pointer}.history-table__row--clickable:hover{background:color-mix(in srgb,#14b8a6 8%, transparent)}.history-table__row--clickable[data-type-purchase]:hover{background:color-mix(in srgb,#a855f7 8%, transparent)}
     .sale-code-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--amber);letter-spacing:.04em}
     .username-ref{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim);letter-spacing:.04em}
@@ -2343,6 +2346,10 @@ export class CashComponent implements OnInit {
             PayrollExpenseCancellation: 'Anulación pago sueldo',
             PayrollAdvanceExpense: 'Adelanto de sueldo',
             PayrollAdvanceExpenseCancellation: 'Anulación adelanto sueldo',
+            CustomerCreditNote: 'NC a cliente',
+            CustomerCreditNoteCancellation: 'NC a cliente anulada',
+            SupplierCreditNote: 'NC de proveedor',
+            SupplierCreditNoteCancellation: 'NC de proveedor anulada',
         };
         return map[typeName] ?? typeName;
     }

@@ -19,7 +19,7 @@ export interface CustomerPaymentImputacion {
 }
 
 export interface CustomerAccountMovement {
-  type: 'venta' | 'cobro';
+  type: 'venta' | 'cobro' | 'nota_credito';
   id: string;
   date: string;
   description: string;

@@ -17,6 +17,9 @@
         <button class="btn-primary" type="button" *ngIf="auth.hasPermission(permissionCodes.salesPay)" (click)="togglePaymentForm()">
           {{ showPaymentForm ? 'Cerrar cobro' : '+ Registrar cobro' }}
         </button>
+        <button class="btn-secondary" type="button" *ngIf="auth.hasPermission(permissionCodes.salesCreditNoteCreate)" (click)="toggleCreditNoteForm()">
+          {{ showCreditNoteForm ? 'Cerrar nota' : '+ Nota de crédito' }}
+        </button>
       </div>
     </div>
 
@@ -156,6 +159,54 @@
       </div>
     </section>
 
+    <section class="section-card payment-composer" *ngIf="showCreditNoteForm">
+      <div class="payment-composer__head">
+        <div>
+          <span class="section-label">Emitir nota de crédito</span>
+          <p>Baja la deuda del cliente sin registrar un cobro. Se imputa sobre las ventas pendientes más viejas.</p>
+        </div>
+        <button class="composer-close" type="button" aria-label="Cerrar formulario de nota de crédito" (click)="toggleCreditNoteForm()">×</button>
+      </div>
+
+      <div class="customer-payment-form credit-note-form">
+        <div class="field">
+          <label class="field__label" for="nc-amount">Importe</label>
+          <input id="nc-amount" class="field__input" type="number" min="0" step="0.01"
+                 [(ngModel)]="ncAmount" [ngModelOptions]="{ standalone: true }" placeholder="0,00" />
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="nc-date">Fecha</label>
+          <input id="nc-date" class="field__input" type="date"
+                 [(ngModel)]="ncDate" [ngModelOptions]="{ standalone: true }" />
+        </div>
+
+        <div class="field field--wide">
+          <label class="field__label" for="nc-reason">Motivo</label>
+          <input id="nc-reason" class="field__input" type="text" maxlength="250"
+                 [(ngModel)]="ncReason" [ngModelOptions]="{ standalone: true }"
+                 placeholder="Bonificación acordada, error de facturación, diferencia de precio..." />
+          <small class="field__hint">Queda en el estado de cuenta: es la explicación de por qué bajó la deuda.</small>
+        </div>
+
+        <div class="field field--wide">
+          <label class="field__label">Venta asociada</label>
+          <app-searchable-select
+            [ngModel]="ncSaleId"
+            (ngModelChange)="ncSaleId = $event"
+            [ngModelOptions]="{ standalone: true }"
+            [options]="creditNoteSaleOptions"
+            placeholder="Sin venta asociada"
+            searchPlaceholder="Buscar venta...">
+          </app-searchable-select>
+        </div>
+
+        <button class="btn-primary payment-submit" type="button" [disabled]="!canSubmitCreditNote" (click)="submitCreditNote()">
+          {{ addingCreditNote ? 'Emitiendo...' : 'Emitir nota de crédito' }}
+        </button>
+      </div>
+    </section>
+
     <div class="account-ledger-grid">
       <section class="section-card ledger-card">
         <div class="section-head ledger-head">
@@ -283,6 +334,87 @@
                             <span class="imputacion-factura">Sobrante a favor del cliente</span>
                           </div>
                           <span class="imputacion-amount">${{ formatCurrency(p.sobrante ?? 0) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section-card ledger-card ledger-card--credit-notes" *ngIf="notasCredito.length > 0">
+        <div class="section-head ledger-head">
+          <div>
+            <span class="section-label">Notas de crédito</span>
+            <p>{{ notasCredito.length }} nota{{ notasCredito.length === 1 ? '' : 's' }} emitida{{ notasCredito.length === 1 ? '' : 's' }}</p>
+          </div>
+        </div>
+
+        <div class="table-shell">
+          <table class="payments-table ledger-table">
+            <thead>
+              <tr>
+                <th>Nota</th>
+                <th>Motivo</th>
+                <th class="col-num">Importe</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let n of notasCredito">
+                <tr [class.row-clickable]="hasImputaciones(n)" (click)="togglePaymentDetail(n)">
+                  <td>
+                    <strong class="movement-code">{{ n.code }}</strong>
+                    <small class="movement-date">{{ formatDate(n.date) }}</small>
+                  </td>
+                  <td class="movement-description">
+                    {{ n.description }}
+                    <button
+                      *ngIf="hasImputaciones(n)"
+                      type="button"
+                      class="imputaciones-toggle"
+                      (click)="$event.stopPropagation(); togglePaymentDetail(n)">
+                      {{ isExpanded(n) ? 'Ocultar ventas ▴' : 'Ver ventas ▾' }}
+                    </button>
+                  </td>
+                  <td class="col-num cell-amount">${{ formatCurrency(n.amount) }}</td>
+                  <td class="col-remove">
+                    <button
+                      *ngIf="auth.hasPermission(permissionCodes.salesCreditNoteCancel)"
+                      class="btn-cancel-payment"
+                      type="button"
+                      [disabled]="cancellingCreditNoteId === n.id"
+                      (click)="$event.stopPropagation(); cancelCreditNote(n)">
+                      {{ cancellingCreditNoteId === n.id ? '...' : 'Anular' }}
+                    </button>
+                  </td>
+                </tr>
+                <tr class="imputaciones-row" *ngIf="isExpanded(n)">
+                  <td colspan="4">
+                    <div class="imputaciones-panel">
+                      <div class="imputaciones-panel__head">
+                        <span class="imputaciones-panel__title">Ventas cubiertas por esta nota</span>
+                        <strong>{{ (n.imputaciones?.length ?? 0) }} venta{{ (n.imputaciones?.length ?? 0) === 1 ? '' : 's' }}</strong>
+                      </div>
+                      <div class="imputaciones-list">
+                        <div class="imputacion-card" *ngFor="let i of n.imputaciones">
+                          <span class="imputacion-card__rail" aria-hidden="true"></span>
+                          <div class="imputacion-card__copy">
+                            <span class="imputacion-card__label">Venta aplicada</span>
+                            <span class="imputacion-factura">{{ ventaLabel(i) }}</span>
+                          </div>
+                          <span class="imputacion-amount">${{ formatCurrency(i.amount) }}</span>
+                        </div>
+                        <div class="imputacion-card imputacion-card--sobrante" *ngIf="(n.sobrante ?? 0) > 0">
+                          <span class="imputacion-card__rail" aria-hidden="true"></span>
+                          <div class="imputacion-card__copy">
+                            <span class="imputacion-card__label">Saldo disponible</span>
+                            <span class="imputacion-factura">Sobrante a favor del cliente</span>
+                          </div>
+                          <span class="imputacion-amount">${{ formatCurrency(n.sobrante ?? 0) }}</span>
                         </div>
                       </div>
                     </div>

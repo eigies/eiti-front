@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CustomerAccountService } from '../../core/services/customer-account.service';
+import { CreateCreditNoteRequest } from '../../core/models/credit-note.models';
 import { BankService } from '../../core/services/bank.service';
 import { BranchService } from '../../core/services/branch.service';
 import { SaleService } from '../../core/services/sale.service';
@@ -51,6 +52,13 @@ export class CustomerAccountComponent implements OnInit {
 
   // Form de cobro
   showPaymentForm = false;
+  showCreditNoteForm = false;
+  addingCreditNote = false;
+  cancellingCreditNoteId: string | null = null;
+  ncAmount = 0;
+  ncReason = '';
+  ncDate = '';
+  ncSaleId: string | null = null;
   addingPayment = false;
   cancellingPaymentId: string | null = null;
   expandedPaymentId: string | null = null;
@@ -120,6 +128,99 @@ export class CustomerAccountComponent implements OnInit {
 
   get cobros(): CustomerAccountMovement[] {
     return (this.account?.movements ?? []).filter(m => m.type === 'cobro');
+  }
+
+  get notasCredito(): CustomerAccountMovement[] {
+    return (this.account?.movements ?? []).filter(m => m.type === 'nota_credito');
+  }
+
+  /** Ventas a las que se puede asociar la NC: las del cliente que no estén anuladas. */
+  get creditNoteSaleOptions(): SearchableSelectOption[] {
+    return [
+      { value: '', label: 'Sin venta asociada' },
+      ...this.ventas
+        .filter(v => v.status !== 3)
+        .map(v => ({ value: v.id, label: `${v.code || 'S/N'} · $${this.formatCurrency(v.amount)}` }))
+    ];
+  }
+
+  get canSubmitCreditNote(): boolean {
+    return !this.addingCreditNote
+      && this.ncAmount > 0
+      && this.ncReason.trim().length > 0
+      && !!this.ncDate;
+  }
+
+  toggleCreditNoteForm(): void {
+    this.showCreditNoteForm = !this.showCreditNoteForm;
+    if (this.showCreditNoteForm) this.resetCreditNoteForm();
+    this.cdr.markForCheck();
+  }
+
+  submitCreditNote(): void {
+    if (!this.canSubmitCreditNote) return;
+
+    const payload: CreateCreditNoteRequest = {
+      amount: this.ncAmount,
+      reason: this.ncReason.trim(),
+      date: this.ncDate,
+      saleId: this.ncSaleId || null
+    };
+
+    this.addingCreditNote = true;
+    this.customerAccountService.createCreditNote(this.customerId, payload).subscribe({
+      next: result => {
+        this.addingCreditNote = false;
+        this.showCreditNoteForm = false;
+        this.toast.success(`Nota de crédito ${result.code} emitida`);
+        this.load();
+      },
+      error: (err: { error?: { detail?: string } }) => {
+        this.addingCreditNote = false;
+        this.toast.error(err?.error?.detail || 'No se pudo emitir la nota de crédito');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  async cancelCreditNote(m: CustomerAccountMovement): Promise<void> {
+    // Si el crédito ya se imputó, anular la NC deja esas ventas impagas otra vez.
+    // El usuario tiene que verlo antes de confirmar.
+    const ventas = (m.imputaciones ?? []).map(i => i.code).join(', ');
+    const detail = ventas
+      ? `Vuelven a quedar pendientes: ${ventas}.`
+      : 'El saldo a favor generado por esta nota vuelve atrás.';
+
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Cuenta de cliente',
+      title: 'Anular nota de crédito',
+      message: `Se anulará la nota de crédito ${m.code} de $${this.formatCurrency(m.amount)}.`,
+      detail,
+      confirmLabel: 'Anular nota',
+      tone: 'danger'
+    });
+    if (!confirmed) return;
+
+    this.cancellingCreditNoteId = m.id;
+    this.customerAccountService.cancelCreditNote(this.customerId, m.id).subscribe({
+      next: () => {
+        this.cancellingCreditNoteId = null;
+        this.toast.success('Nota de crédito anulada');
+        this.load();
+      },
+      error: (err: { error?: { detail?: string } }) => {
+        this.cancellingCreditNoteId = null;
+        this.toast.error(err?.error?.detail || 'No se pudo anular la nota de crédito');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private resetCreditNoteForm(): void {
+    this.ncAmount = 0;
+    this.ncReason = '';
+    this.ncDate = this.todayIso();
+    this.ncSaleId = null;
   }
 
   get methodOptions(): SearchableSelectOption[] {

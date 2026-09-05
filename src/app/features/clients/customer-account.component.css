@@ -2176,3 +2176,27 @@
   font-size: .82rem;
   font-style: italic;
 }
+
+/* ── NOTA DE CRÉDITO ──
+   Reusa el composer del cobro; solo cambia el reparto de la grilla de 12 columnas,
+   porque son cuatro campos y no ocho. El motivo ocupa la fila entera: es texto libre
+   y es lo único que explica por qué bajó la deuda. */
+.credit-note-form .field:nth-child(1) { grid-column: 1 / 4; }
+.credit-note-form .field:nth-child(2) { grid-column: 4 / 7; }
+.credit-note-form .field--wide { grid-column: 1 / 13; }
+.credit-note-form .payment-submit { grid-column: 10 / 13; }
+
+/* Las notas se leen como un tercer libro junto a Ventas y Cobros, con el acento
+   ámbar que en caja identifica al mismo movimiento. */
+.ledger-card--credit-notes .section-label {
+  color: var(--amber);
+}
+
+@media (max-width: 900px) {
+  .credit-note-form .field:nth-child(1),
+  .credit-note-form .field:nth-child(2),
+  .credit-note-form .field--wide,
+  .credit-note-form .payment-submit {
+    grid-column: 1 / 13;
+  }
+}
