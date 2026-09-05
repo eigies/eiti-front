@@ -10,6 +10,7 @@ import {
   CustomerAccountListItem,
   CustomerPaymentLink
 } from '../models/customer-account.models';
+import { CreateCreditNoteRequest, CreateCreditNoteResult } from '../models/credit-note.models';
 
 interface CustomerAccountListResponse {
   items: CustomerAccountListItem[];
@@ -37,6 +38,16 @@ export class CustomerAccountService {
 
   cancelPayment(customerId: string, paymentId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/customers/${customerId}/payments/${paymentId}`);
+  }
+
+  createCreditNote(customerId: string, req: CreateCreditNoteRequest): Observable<CreateCreditNoteResult> {
+    return this.http.post<CreateCreditNoteResult>(
+      `${this.base}/customers/${customerId}/credit-notes`, req);
+  }
+
+  cancelCreditNote(customerId: string, creditNoteId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/customers/${customerId}/credit-notes/${creditNoteId}`);
   }
 
   getPaymentLink(paymentId: string): Observable<CustomerPaymentLink> {
