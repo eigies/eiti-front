@@ -18,6 +18,7 @@ import { ProductCategoryResponse } from '../../../core/models/product-category.m
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
+import { AssistantContextService } from '../../../core/services/assistant-context.service';
 
 interface ReportMeta { title: string; eyebrow: string; }
 
@@ -77,7 +78,8 @@ export class SalesReportComponent implements OnInit {
     private readonly productCategoryService: ProductCategoryService,
     private readonly toast: ToastService,
     private readonly pdfBranding: PdfBrandingService,
-    private readonly pdfLayout: PdfLayoutService
+    private readonly pdfLayout: PdfLayoutService,
+    private readonly assistantContext: AssistantContextService
   ) {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -199,7 +201,15 @@ export class SalesReportComponent implements OnInit {
       saleType: v.saleType || 'all',
       branchId: v.branchId || null
     }).subscribe({
-      next: res => { this.data = res; this.loading = false; },
+      next: res => {
+        this.data = res;
+        this.loading = false;
+        this.assistantContext.set({
+          description: `${this.meta.title}: ventas, costo, margen y unidades agrupados por ${this.groupBy}.`,
+          filters: { ...v, groupBy: this.groupBy },
+          data: res
+        });
+      },
       error: (err: { error?: { detail?: string } }) => {
         this.loading = false;
         this.toast.error(err?.error?.detail || 'No se pudo generar el reporte.');

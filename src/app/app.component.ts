@@ -6,11 +6,12 @@ import { ThemeService } from './core/services/theme.service';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { AuthService } from './core/services/auth.service';
 import { ConfirmationDialogComponent } from './shared/components/confirmation-dialog/confirmation-dialog.component';
+import { AssistantBubbleComponent } from './shared/components/assistant-bubble/assistant-bubble.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ToastComponent, NavbarComponent, ConfirmationDialogComponent, NgIf],
+  imports: [RouterOutlet, ToastComponent, NavbarComponent, ConfirmationDialogComponent, AssistantBubbleComponent, NgIf],
   template: `
     <app-navbar *ngIf="isAuthenticated"></app-navbar>
     <div class="app-content">
@@ -18,6 +19,7 @@ import { ConfirmationDialogComponent } from './shared/components/confirmation-di
     </div>
     <app-toast></app-toast>
     <app-confirmation-dialog></app-confirmation-dialog>
+    <app-assistant-bubble *ngIf="isAuthenticated"></app-assistant-bubble>
   `,
   styles: []
 })

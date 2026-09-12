@@ -61,7 +61,8 @@ export const PermissionCodes = {
     purchasesCreditNoteCreate: 'purchases.credit_note.create',
     purchasesCreditNoteCancel: 'purchases.credit_note.cancel',
     productsCostPriceAlert: 'products.cost_price_alert',
-    driversDelete: 'drivers.delete'
+    driversDelete: 'drivers.delete',
+    assistantUse: 'assistant.use'
 } as const;
 
 export type PermissionCode = typeof PermissionCodes[keyof typeof PermissionCodes];
@@ -129,5 +130,6 @@ export const PermissionCatalog: ReadonlyArray<{ code: PermissionCode; label: str
     { code: PermissionCodes.purchasesCreditNoteCreate, label: 'Compras: emitir nota de crédito', description: 'Permite registrar notas de crédito recibidas del proveedor.' },
     { code: PermissionCodes.purchasesCreditNoteCancel, label: 'Compras: anular nota de crédito', description: 'Permite anular notas de crédito de proveedores.' },
     { code: PermissionCodes.productsCostPriceAlert, label: 'Productos: alerta precio costo', description: 'Muestra alerta cuando hay productos sin precio de costo cargado.' },
-    { code: PermissionCodes.driversDelete, label: 'Transporte: eliminar conductores', description: 'Permite eliminar conductores desde Transporte. El conductor se libera de los vehiculos asignados y queda desactivado como empleado.' }
+    { code: PermissionCodes.driversDelete, label: 'Transporte: eliminar conductores', description: 'Permite eliminar conductores desde Transporte. El conductor se libera de los vehiculos asignados y queda desactivado como empleado.' },
+    { code: PermissionCodes.assistantUse, label: 'Asistente IA: usar', description: 'Habilita la burbuja del asistente de IA para analizar y consultar sobre lo que se ve en pantalla.' }
 ];

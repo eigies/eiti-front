@@ -11,6 +11,7 @@ import { PaymentMethodsReportResponse } from '../../../core/models/report.models
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
+import { AssistantContextService } from '../../../core/services/assistant-context.service';
 
 @Component({
   selector: 'app-payment-methods-report',
@@ -32,7 +33,8 @@ export class PaymentMethodsReportComponent implements OnInit {
     private readonly branchService: BranchService,
     private readonly toast: ToastService,
     private readonly pdfBranding: PdfBrandingService,
-    private readonly pdfLayout: PdfLayoutService
+    private readonly pdfLayout: PdfLayoutService,
+    private readonly assistantContext: AssistantContextService
   ) {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -74,8 +76,23 @@ export class PaymentMethodsReportComponent implements OnInit {
     this.loading = true;
     this.hasSearched = true;
     this.reportService.paymentMethods(v.dateFrom, v.dateTo, v.branchId || undefined, v.saleType).subscribe({
-      next: res => { this.data = res; this.loading = false; },
+      next: res => {
+        this.data = res;
+        this.loading = false;
+        this.publishContext(v, res);
+      },
       error: (err: { error?: { detail?: string } }) => { this.loading = false; this.toast.error(err?.error?.detail || 'No se pudo cargar el reporte.'); }
+    });
+  }
+
+  private publishContext(filters: Record<string, unknown>, res: PaymentMethodsReportResponse): void {
+    const branchName = filters['branchId']
+      ? (this.branches.find(b => b.id === filters['branchId'])?.name ?? null)
+      : 'Todas las sucursales';
+    this.assistantContext.set({
+      filters: { ...filters, branchName },
+      description: 'Cobros agrupados por medio de pago para el período y filtros seleccionados.',
+      data: { rows: res.rows, totals: res.totals }
     });
   }
 

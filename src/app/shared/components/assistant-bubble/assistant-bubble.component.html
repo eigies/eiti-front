@@ -1,0 +1,244 @@
+<ng-container *ngIf="visible$ | async">
+  <section
+    class="assistant-panel"
+    id="assistant-panel"
+    *ngIf="isOpen"
+    role="dialog"
+    aria-modal="false"
+    aria-labelledby="assistant-title">
+    <header class="assistant-panel__head">
+      <div class="assistant-brand">
+        <span class="assistant-brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 3v2.6"></path>
+            <circle cx="12" cy="2.15" r="1.15" fill="currentColor" stroke="none"></circle>
+            <rect x="5.2" y="6.3" width="13.6" height="11.4" rx="4.2" fill="none"></rect>
+            <rect x="2.9" y="10" width="2" height="3.8" rx="1" fill="currentColor" stroke="none"></rect>
+            <rect x="19.1" y="10" width="2" height="3.8" rx="1" fill="currentColor" stroke="none"></rect>
+            <circle cx="9.35" cy="11.7" r="1.3" fill="currentColor" stroke="none"></circle>
+            <circle cx="14.65" cy="11.7" r="1.3" fill="currentColor" stroke="none"></circle>
+            <path d="M9.7 15q2.3 1.35 4.6 0"></path>
+          </svg>
+        </span>
+        <h2 id="assistant-title">Eitisito <span class="assistant-brand__role">· Analista de negocio</span></h2>
+      </div>
+      <div class="assistant-panel__actions">
+        <button
+          type="button"
+          class="assistant-icon-btn"
+          title="Nueva conversación"
+          aria-label="Iniciar nueva conversación"
+          (click)="clear()"
+          *ngIf="messages.length">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5a7 7 0 1 1-6.2 3.7M5 4v5h5"></path>
+          </svg>
+        </button>
+        <button type="button" class="assistant-icon-btn" title="Cerrar" aria-label="Cerrar asistente" (click)="close()">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m7 7 10 10M17 7 7 17"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="assistant-context" *ngIf="context$ | async as context">
+      <span class="assistant-context__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+          <path d="M8 15v-3m4 3V9m4 6v-5"></path>
+        </svg>
+      </span>
+      <div class="assistant-context__copy">
+        <span>Analizando pantalla</span>
+        <strong>{{ context.screen || 'Vista actual' }}</strong>
+      </div>
+      <span
+        class="assistant-context__status"
+        [class.assistant-context__status--linked]="hasScreenData(context)">
+        <i aria-hidden="true"></i>
+        {{ hasScreenData(context) ? 'Datos vinculados' : 'Contexto general' }}
+      </span>
+    </div>
+
+    <div class="assistant-panel__messages" #scroll>
+      <div class="assistant-empty" *ngIf="!messages.length">
+        <div class="assistant-empty__signal" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <svg viewBox="0 0 48 48" focusable="false">
+            <path d="M10 35.5h28"></path>
+            <path d="M14 31v-7m10 7V14m10 17V20"></path>
+            <path d="m13 18 8-7 6 4 8-8"></path>
+            <path d="M31.5 7H35v3.5"></path>
+          </svg>
+        </div>
+        <span class="assistant-empty__eyebrow">Lectura contextual</span>
+        <h3>Convertí esta pantalla en decisiones</h3>
+        <p>Puedo resumir resultados, comparar datos y señalar desvíos usando la información visible.</p>
+
+        <div class="assistant-suggestions" *ngIf="suggestions$ | async as suggestions">
+          <button
+            type="button"
+            *ngFor="let suggestion of suggestions; let i = index"
+            (click)="askSuggestion(suggestion)">
+            <span>{{ (i + 1).toString().padStart(2, '0') }}</span>
+            {{ suggestion }}
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h13m-5-5 5 5-5 5"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div *ngFor="let m of messages; let i = index; trackBy: trackMessage"
+           class="assistant-msg"
+           [class.assistant-msg--user]="m.role === 'user'"
+           [class.assistant-msg--bot]="m.role === 'assistant'">
+        <div class="assistant-msg__meta">
+          <span class="assistant-msg__author">
+            <i aria-hidden="true">
+              <svg *ngIf="m.role === 'assistant'" viewBox="0 0 24 24" focusable="false">
+                <path d="M5 16.5 9.25 12l3.1 2.5L19 7.5"></path>
+                <path d="M15 7.5h4v4"></path>
+              </svg>
+              <svg *ngIf="m.role === 'user'" viewBox="0 0 24 24" focusable="false">
+                <circle cx="12" cy="8" r="3.25"></circle>
+                <path d="M5.5 19c.8-3.4 3-5.1 6.5-5.1s5.7 1.7 6.5 5.1"></path>
+              </svg>
+            </i>
+            {{ m.role === 'assistant' ? 'Analista EITI' : 'Tu consulta' }}
+          </span>
+          <span class="assistant-msg__actions" *ngIf="m.role === 'assistant' && m.content">
+            <ng-container *ngIf="m.requestId !== undefined">
+              <button
+                type="button"
+                class="assistant-copy assistant-rate"
+                [class.assistant-rate--active]="m.rating === 1"
+                aria-label="Respuesta útil"
+                title="Respuesta útil"
+                (click)="rate(m, 1)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 10.5v9H4v-9h3Zm2 0 3.4-6.3a1.6 1.6 0 0 1 2.9 1.1l-.6 3.9h4.1a2 2 0 0 1 1.95 2.45l-1.3 6a2 2 0 0 1-1.95 1.55H9v-8.7Z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="assistant-copy assistant-rate"
+                [class.assistant-rate--active]="m.rating === -1"
+                aria-label="Respuesta no útil"
+                title="Respuesta no útil"
+                (click)="rate(m, -1)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M17 13.5v-9h3v9h-3Zm-2 0-3.4 6.3a1.6 1.6 0 0 1-2.9-1.1l.6-3.9H5.2a2 2 0 0 1-1.95-2.45l1.3-6A2 2 0 0 1 6.5 4.8H15v8.7Z"></path>
+                </svg>
+              </button>
+            </ng-container>
+            <button
+              type="button"
+              class="assistant-copy"
+              [attr.aria-label]="copiedMessageIndex === i ? 'Respuesta copiada' : 'Copiar respuesta'"
+              [title]="copiedMessageIndex === i ? 'Copiado' : 'Copiar respuesta'"
+              (click)="copyMessage(m.content, i)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 8h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z"></path>
+                <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"></path>
+              </svg>
+              <span>{{ copiedMessageIndex === i ? 'Copiado' : 'Copiar' }}</span>
+            </button>
+          </span>
+        </div>
+        <div class="assistant-msg__bubble">
+          <div class="assistant-msg__content" *ngIf="m.content" [innerHTML]="m.content | markdownLite"></div>
+          <span class="assistant-typing" *ngIf="!m.content && isStreaming">
+            <span class="assistant-typing__wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <em>Analizando contexto</em>
+          </span>
+          <div class="assistant-options" *ngIf="m.role === 'assistant' && m.options?.length && !isStreaming" role="group" aria-label="Opciones">
+            <button type="button" *ngFor="let opt of m.options" (click)="pickOption(opt)">{{ opt }}</button>
+          </div>
+          <div class="assistant-followups" *ngIf="m.role === 'assistant' && m.suggestions?.length && !isStreaming" role="group" aria-label="Preguntas sugeridas">
+            <button type="button" *ngFor="let s of m.suggestions" (click)="askSuggestion(s)">
+              {{ s }}
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"></path></svg>
+            </button>
+          </div>
+        </div>
+        <form class="assistant-feedback" *ngIf="feedbackCommentFor === m" (ngSubmit)="submitFeedbackComment()">
+          <input
+            type="text"
+            maxlength="1000"
+            placeholder="¿Qué faltó?"
+            aria-label="Qué faltó en la respuesta"
+            [(ngModel)]="feedbackComment"
+            name="feedbackComment">
+          <button type="submit" [disabled]="!feedbackComment.trim()">Enviar</button>
+          <button type="button" class="assistant-feedback__skip" (click)="dismissFeedbackComment()" aria-label="Omitir comentario">Omitir</button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="assistant-composer">
+      <div class="assistant-streaming" *ngIf="isStreaming" aria-live="polite">
+        <span><i></i> Elaborando respuesta</span>
+        <button type="button" (click)="stop()">Detener</button>
+      </div>
+
+      <div class="assistant-composer__field">
+        <textarea
+          #composer
+          rows="1"
+          maxlength="2000"
+          aria-label="Escribí tu consulta"
+          placeholder="Consultá sobre los datos de esta pantalla…"
+          [(ngModel)]="draft"
+          (input)="onDraftInput($event)"
+          (keydown)="onKeydown($event)"></textarea>
+        <button
+          type="button"
+          class="assistant-send"
+          (click)="send()"
+          [disabled]="isStreaming || !draft.trim()"
+          aria-label="Enviar consulta">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m5 12 14-7-4.5 14-3-5.5L5 12Z"></path>
+            <path d="m11.5 13.5 3-3"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="assistant-composer__meta">
+        <span><kbd>Enter</kbd> enviar <i>·</i> <kbd>Shift</kbd> + <kbd>Enter</kbd> nueva línea</span>
+        <span>Verificá decisiones sensibles</span>
+      </div>
+    </footer>
+  </section>
+
+  <button
+    #launcher
+    type="button"
+    class="assistant-fab"
+    (click)="toggle()"
+    [class.assistant-fab--open]="isOpen"
+    [attr.aria-expanded]="isOpen"
+    aria-controls="assistant-panel"
+    [attr.title]="isOpen ? 'Cerrar a Eitisito' : 'Abrir a Eitisito'"
+    [attr.aria-label]="isOpen ? 'Cerrar a Eitisito' : 'Abrir a Eitisito'">
+    <span class="assistant-fab__thought" aria-hidden="true" *ngIf="showThought && !isOpen">
+      <span class="assistant-fab__thought-cloud">Eitisito</span>
+      <i class="assistant-fab__thought-dot assistant-fab__thought-dot--lg"></i>
+      <i class="assistant-fab__thought-dot assistant-fab__thought-dot--sm"></i>
+    </span>
+    <svg class="assistant-fab__glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 3v2.6"></path>
+      <circle class="assistant-fab__antenna-dot" cx="12" cy="2.15" r="1.15" fill="currentColor" stroke="none"></circle>
+      <rect x="5.2" y="6.3" width="13.6" height="11.4" rx="4.2" fill="none"></rect>
+      <rect x="2.9" y="10" width="2" height="3.8" rx="1" fill="currentColor" stroke="none"></rect>
+      <rect x="19.1" y="10" width="2" height="3.8" rx="1" fill="currentColor" stroke="none"></rect>
+      <g class="assistant-fab__eyes">
+        <circle cx="9.35" cy="11.7" r="1.3" fill="currentColor" stroke="none"></circle>
+        <circle cx="14.65" cy="11.7" r="1.3" fill="currentColor" stroke="none"></circle>
+      </g>
+      <path d="M9.7 15q2.3 1.35 4.6 0"></path>
+    </svg>
+  </button>
+</ng-container>
