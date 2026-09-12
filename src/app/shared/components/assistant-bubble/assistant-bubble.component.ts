@@ -13,18 +13,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { map } from 'rxjs/operators';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, timer } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { AssistantService } from '../../../core/services/assistant.service';
 import { AssistantContextService } from '../../../core/services/assistant-context.service';
 import { PermissionCodes } from '../../../core/models/permission.models';
 import { AssistantChatMessage, ScreenContext } from '../../../core/models/assistant.models';
+import { MarkdownLitePipe } from '../../pipes/markdown-lite.pipe';
 
 @Component({
   selector: 'app-assistant-bubble',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MarkdownLitePipe],
   templateUrl: './assistant-bubble.component.html',
   styleUrls: ['./assistant-bubble.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -40,11 +41,17 @@ export class AssistantBubbleComponent implements AfterViewChecked {
   readonly context$: Observable<ScreenContext>;
   readonly suggestions$: Observable<string[]>;
 
+  private static readonly THOUGHT_INTERVAL_MS = 180_000;
+  private static readonly THOUGHT_VISIBLE_MS = 4_500;
+
   isOpen = false;
   isStreaming = false;
+  showThought = false;
   draft = '';
   messages: AssistantChatMessage[] = [];
   copiedMessageIndex: number | null = null;
+  feedbackCommentFor: AssistantChatMessage | null = null;
+  feedbackComment = '';
 
   private shouldScroll = false;
   private streamSubscription: Subscription | null = null;
@@ -63,6 +70,23 @@ export class AssistantBubbleComponent implements AfterViewChecked {
     this.suggestions$ = this.context.ctx$.pipe(
       map(ctx => this.suggestionsFor(ctx.screen))
     );
+
+    timer(700, AssistantBubbleComponent.THOUGHT_INTERVAL_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.flashThought());
+
+    this.context.open$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.open());
+  }
+
+  open(): void {
+    if (this.isOpen) {
+      setTimeout(() => this.composerRef?.nativeElement.focus());
+      return;
+    }
+    this.toggle();
+    this.cdr.markForCheck();
   }
 
   ngAfterViewChecked(): void {
@@ -98,6 +122,15 @@ export class AssistantBubbleComponent implements AfterViewChecked {
       return;
     }
 
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      if (this.messages[i].role === 'assistant') {
+        this.messages[i].options = undefined;
+        this.messages[i].suggestions = undefined;
+        break;
+      }
+    }
+    this.feedbackCommentFor = null;
+
     this.messages = [...this.messages, { role: 'user', content: text }];
     this.draft = '';
     const assistantMsg: AssistantChatMessage = { role: 'assistant', content: '' };
@@ -121,6 +154,14 @@ export class AssistantBubbleComponent implements AfterViewChecked {
           if (ev.type === 'delta') {
             assistantMsg.content += ev.text;
             this.shouldScroll = true;
+          } else if (ev.type === 'options') {
+            assistantMsg.options = ev.options;
+            this.shouldScroll = true;
+          } else if (ev.type === 'suggestions') {
+            assistantMsg.suggestions = ev.suggestions;
+            this.shouldScroll = true;
+          } else if (ev.type === 'usage') {
+            assistantMsg.requestId = ev.usage.requestId;
           } else if (ev.type === 'error') {
             assistantMsg.content += assistantMsg.content
               ? `\n\nNo pude completar la respuesta: ${ev.message}`
@@ -158,6 +199,59 @@ export class AssistantBubbleComponent implements AfterViewChecked {
     }
     this.draft = text;
     this.send();
+  }
+
+  pickOption(option: string): void {
+    this.askSuggestion(option);
+  }
+
+  rate(m: AssistantChatMessage, rating: 1 | -1): void {
+    if (m.requestId === undefined) {
+      return;
+    }
+    const previous = m.rating;
+    m.rating = rating;
+    if (rating === -1) {
+      this.feedbackCommentFor = m;
+      this.feedbackComment = '';
+    } else if (this.feedbackCommentFor === m) {
+      this.feedbackCommentFor = null;
+    }
+    this.cdr.markForCheck();
+
+    this.assistant
+      .sendFeedback(m.requestId, rating)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        error: () => {
+          m.rating = previous;
+          if (this.feedbackCommentFor === m) {
+            this.feedbackCommentFor = null;
+          }
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  submitFeedbackComment(): void {
+    const m = this.feedbackCommentFor;
+    const comment = this.feedbackComment.trim();
+    this.feedbackCommentFor = null;
+    this.feedbackComment = '';
+    this.cdr.markForCheck();
+    if (!m || m.requestId === undefined || m.rating !== -1 || !comment) {
+      return;
+    }
+    this.assistant
+      .sendFeedback(m.requestId, -1, comment)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ error: () => undefined });
+  }
+
+  dismissFeedbackComment(): void {
+    this.feedbackCommentFor = null;
+    this.feedbackComment = '';
+    this.cdr.markForCheck();
   }
 
   stop(): void {
@@ -218,8 +312,22 @@ export class AssistantBubbleComponent implements AfterViewChecked {
     this.stop();
     this.messages = [];
     this.draft = '';
+    this.feedbackCommentFor = null;
+    this.feedbackComment = '';
     this.resetComposerHeight();
     this.cdr.markForCheck();
+  }
+
+  private flashThought(): void {
+    if (this.isOpen) {
+      return;
+    }
+    this.showThought = true;
+    this.cdr.markForCheck();
+    setTimeout(() => {
+      this.showThought = false;
+      this.cdr.markForCheck();
+    }, AssistantBubbleComponent.THOUGHT_VISIBLE_MS);
   }
 
   private resetComposerHeight(): void {

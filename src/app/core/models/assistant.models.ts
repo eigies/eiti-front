@@ -1,6 +1,10 @@
 export interface AssistantChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  options?: string[];
+  suggestions?: string[];
+  requestId?: number;
+  rating?: 1 | -1;
 }
 
 /** Lo que el usuario está viendo en la pantalla actual, enviado con cada consulta. */
@@ -15,10 +19,20 @@ export interface AssistantUsage {
   inputTokens: number;
   outputTokens: number;
   total: number;
+  requestId?: number;
 }
 
 export type AssistantStreamEvent =
   | { type: 'delta'; text: string }
+  | { type: 'options'; options: string[] }
+  | { type: 'suggestions'; suggestions: string[] }
   | { type: 'usage'; usage: AssistantUsage }
   | { type: 'done' }
   | { type: 'error'; message: string };
+
+export interface AssistantDigest {
+  day: string;
+  content: string;
+  generatedAt: string;
+  cached: boolean;
+}

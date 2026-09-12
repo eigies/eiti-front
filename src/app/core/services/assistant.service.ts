@@ -1,21 +1,38 @@
 import { Injectable, NgZone } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import {
   AssistantChatMessage,
+  AssistantDigest,
   AssistantStreamEvent,
   ScreenContext
 } from '../models/assistant.models';
+
+interface DigestDto {
+  day: string;
+  content: string;
+  generated_at: string;
+  cached: boolean;
+}
 
 /**
  * Talks to the standalone agent service (`agentApiUrl`). Chat is consumed as an
  * SSE stream via the Fetch API (HttpClient doesn't expose progressive bodies well),
  * re-entering the Angular zone on each event so OnPush views update.
+ * The auth interceptor only covers `apiUrl`, so the JWT is attached here explicitly.
  */
 @Injectable({ providedIn: 'root' })
 export class AssistantService {
-  constructor(private readonly auth: AuthService, private readonly zone: NgZone) {}
+  private readonly baseUrl = environment.agentApiUrl;
+
+  constructor(
+    private readonly auth: AuthService,
+    private readonly zone: NgZone,
+    private readonly http: HttpClient
+  ) {}
 
   chat(
     messages: AssistantChatMessage[],
@@ -25,7 +42,7 @@ export class AssistantService {
       const controller = new AbortController();
       const emit = (e: AssistantStreamEvent) => this.zone.run(() => subscriber.next(e));
 
-      fetch(`${environment.agentApiUrl}/chat`, {
+      fetch(`${this.baseUrl}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,6 +86,35 @@ export class AssistantService {
     });
   }
 
+  sendFeedback(requestId: number, rating: 1 | -1, comment?: string): Observable<void> {
+    const body: Record<string, unknown> = { request_id: requestId, rating };
+    if (comment?.trim()) {
+      body['comment'] = comment.trim().slice(0, 1000);
+    }
+    return this.http.post<void>(`${this.baseUrl}/feedback`, body, { headers: this.authHeaders() });
+  }
+
+  getDigest(day?: string): Observable<AssistantDigest> {
+    let params = new HttpParams();
+    if (day) {
+      params = params.set('day', day);
+    }
+    return this.http
+      .get<DigestDto>(`${this.baseUrl}/digest`, { headers: this.authHeaders(), params })
+      .pipe(
+        map(d => ({
+          day: d.day,
+          content: d.content,
+          generatedAt: d.generated_at,
+          cached: d.cached
+        }))
+      );
+  }
+
+  private authHeaders(): HttpHeaders {
+    return new HttpHeaders({ Authorization: `Bearer ${this.auth.getToken() ?? ''}` });
+  }
+
   private parseFrame(frame: string, emit: (e: AssistantStreamEvent) => void): void {
     let event = 'message';
     let data = '';
@@ -92,16 +138,33 @@ export class AssistantService {
       case 'delta':
         emit({ type: 'delta', text: String(parsed['text'] ?? '') });
         break;
-      case 'usage':
+      case 'options': {
+        const options = this.stringList(parsed['options']);
+        if (options.length) {
+          emit({ type: 'options', options });
+        }
+        break;
+      }
+      case 'suggestions': {
+        const suggestions = this.stringList(parsed['suggestions']);
+        if (suggestions.length) {
+          emit({ type: 'suggestions', suggestions });
+        }
+        break;
+      }
+      case 'usage': {
+        const rawId = parsed['request_id'];
         emit({
           type: 'usage',
           usage: {
             inputTokens: Number(parsed['input_tokens'] ?? 0),
             outputTokens: Number(parsed['output_tokens'] ?? 0),
-            total: Number(parsed['total'] ?? 0)
+            total: Number(parsed['total'] ?? 0),
+            requestId: typeof rawId === 'number' ? rawId : undefined
           }
         });
         break;
+      }
       case 'error':
         emit({ type: 'error', message: String(parsed['message'] ?? 'Error') });
         break;
@@ -109,5 +172,12 @@ export class AssistantService {
         emit({ type: 'done' });
         break;
     }
+  }
+
+  private stringList(raw: unknown): string[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.filter((o): o is string => typeof o === 'string' && o.trim().length > 0);
   }
 }

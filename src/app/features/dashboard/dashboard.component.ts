@@ -23,6 +23,10 @@ import { DashboardPreferencesService } from '../../core/services/dashboard-prefe
 import { DashboardService } from '../../core/services/dashboard.service';
 import { ProductCategoryService } from '../../core/services/product-category.service';
 import { ToastService } from '../../shared/services/toast.service';
+import { AssistantService } from '../../core/services/assistant.service';
+import { AssistantContextService } from '../../core/services/assistant-context.service';
+import { AssistantDigest } from '../../core/models/assistant.models';
+import { MarkdownLitePipe } from '../../shared/pipes/markdown-lite.pipe';
 
 interface DashboardAlert {
   tone: 'success' | 'warn' | 'danger';
@@ -64,13 +68,16 @@ interface ComparisonEndpoint {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MarkdownLitePipe],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
   readonly permissionCodes = PermissionCodes;
   summary: DashboardSummaryResponse | null = null;
+  digest: AssistantDigest | null = null;
+  digestLoading = false;
+  digestFailed = false;
   branches: BranchResponse[] = [];
   categories: ProductCategoryResponse[] = [];
   categoryIds: string[] = [];
@@ -94,10 +101,13 @@ export class DashboardComponent implements OnInit {
     private readonly preferences: DashboardPreferencesService,
     private readonly branchService: BranchService,
     private readonly productCategoryService: ProductCategoryService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly assistant: AssistantService,
+    private readonly assistantContext: AssistantContextService
   ) {}
 
   ngOnInit(): void {
+    this.loadDigest();
     this.chartSegment = this.preferences.readChartSegment();
     this.chartView = this.preferences.readChartView();
     const storedMetric = this.preferences.readChartMetric();
@@ -171,6 +181,49 @@ export class DashboardComponent implements OnInit {
 
   get canViewFinancials(): boolean {
     return this.auth.hasPermission(PermissionCodes.dashboardViewFinancials);
+  }
+
+  get canUseAssistant(): boolean {
+    return this.auth.hasPermission(PermissionCodes.assistantUse);
+  }
+
+  get digestTitle(): string {
+    if (!this.digest?.day) {
+      return 'Novedades de ayer';
+    }
+    const [y, m, d] = this.digest.day.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const weekday = date.toLocaleDateString('es-AR', { weekday: 'long' });
+    return `Novedades del ${weekday} ${d}/${m}`;
+  }
+
+  loadDigest(): void {
+    if (!this.canUseAssistant || this.digestLoading) {
+      return;
+    }
+    this.digestLoading = true;
+    this.digestFailed = false;
+    this.assistant.getDigest().subscribe({
+      next: digest => {
+        this.digest = digest;
+        this.digestLoading = false;
+      },
+      error: () => {
+        this.digestFailed = true;
+        this.digestLoading = false;
+      },
+      complete: () => {
+        // The auth interceptor swallows 429s into EMPTY; treat a silent completion as failure.
+        if (this.digestLoading) {
+          this.digestFailed = true;
+          this.digestLoading = false;
+        }
+      }
+    });
+  }
+
+  askEitisito(): void {
+    this.assistantContext.requestOpen();
   }
 
   get canViewAllBranches(): boolean {

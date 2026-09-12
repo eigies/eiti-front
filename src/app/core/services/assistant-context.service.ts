@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ScreenContext } from '../models/assistant.models';
 
@@ -16,6 +16,10 @@ import { ScreenContext } from '../models/assistant.models';
 export class AssistantContextService {
   private readonly _ctx$ = new BehaviorSubject<ScreenContext>({});
   readonly ctx$ = this._ctx$.asObservable();
+
+  private readonly _open$ = new Subject<void>();
+  /** Emits when some screen asks the bubble to open (e.g. "Preguntarle a Eitisito"). */
+  readonly open$ = this._open$.asObservable();
 
   // Route fragment -> human label. First match wins; falls back to a prettified segment.
   private readonly labels: ReadonlyArray<[string, string]> = [
@@ -53,6 +57,10 @@ export class AssistantContextService {
 
   snapshot(): ScreenContext {
     return this._ctx$.value;
+  }
+
+  requestOpen(): void {
+    this._open$.next();
   }
 
   private labelFor(url: string): string {
