@@ -19,7 +19,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AssistantService } from '../../../core/services/assistant.service';
 import { AssistantContextService } from '../../../core/services/assistant-context.service';
 import { PermissionCodes } from '../../../core/models/permission.models';
-import { AssistantChatMessage, ScreenContext } from '../../../core/models/assistant.models';
+import { AssistantChatMessage } from '../../../core/models/assistant.models';
 import { MarkdownLitePipe } from '../../pipes/markdown-lite.pipe';
 
 @Component({
@@ -38,7 +38,6 @@ export class AssistantBubbleComponent implements AfterViewChecked {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly visible$: Observable<boolean>;
-  readonly context$: Observable<ScreenContext>;
   readonly suggestions$: Observable<string[]>;
 
   private static readonly THOUGHT_INTERVAL_MS = 180_000;
@@ -66,7 +65,6 @@ export class AssistantBubbleComponent implements AfterViewChecked {
     this.visible$ = this.auth.currentUser$.pipe(
       map(u => !!u?.permissions?.includes(PermissionCodes.assistantUse))
     );
-    this.context$ = this.context.ctx$;
     this.suggestions$ = this.context.ctx$.pipe(
       map(ctx => this.suggestionsFor(ctx.screen))
     );
@@ -300,8 +298,8 @@ export class AssistantBubbleComponent implements AfterViewChecked {
     }
   }
 
-  hasScreenData(context: ScreenContext): boolean {
-    return context.data !== undefined && context.data !== null;
+  get username(): string {
+    return this.auth.currentUser?.username ?? 'Tu consulta';
   }
 
   trackMessage(index: number): number {
@@ -360,7 +358,7 @@ export class AssistantBubbleComponent implements AfterViewChecked {
       ];
     }
     return [
-      'Resumí lo más importante de esta pantalla.',
+      '¿Cómo viene el negocio hoy?',
       '¿Qué dato debería revisar primero?',
       'Detectá algo fuera de lo normal.'
     ];

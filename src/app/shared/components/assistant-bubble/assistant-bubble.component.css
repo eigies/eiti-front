@@ -224,14 +224,16 @@ button {
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 8%, var(--bg));
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+  transform-origin: center;
+  animation: assistant-mark-in .42s cubic-bezier(.34, 1.56, .64, 1) both;
 }
 
 .assistant-brand__mark svg {
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 1.7rem;
+  height: 1.7rem;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -247,12 +249,6 @@ button {
   line-height: 1.15;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.assistant-brand__role {
-  color: var(--text-dim);
-  font-size: .88em;
-  font-weight: 500;
 }
 
 .assistant-panel__actions {
@@ -289,102 +285,6 @@ button {
   border-color: color-mix(in srgb, var(--amber) 25%, var(--border));
   color: var(--text);
   background: color-mix(in srgb, var(--amber) 7%, transparent);
-}
-
-/* ── Transparent context rail ─────────────────────────────── */
-.assistant-context {
-  position: relative;
-  display: grid;
-  grid-template-columns: 2.4rem minmax(0, 1fr) auto;
-  gap: .75rem;
-  align-items: center;
-  flex: 0 0 auto;
-  padding: .6rem 1rem;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 58%, var(--bg-panel));
-}
-
-.assistant-context__icon {
-  display: grid;
-  place-items: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  border: 1px solid color-mix(in srgb, var(--amber) 20%, var(--border));
-  border-radius: 9px;
-  color: var(--amber);
-  background: color-mix(in srgb, var(--amber) 5%, transparent);
-}
-
-.assistant-context__icon svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.assistant-context__copy {
-  display: grid;
-  gap: .2rem;
-  min-width: 0;
-}
-
-.assistant-context__copy span {
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: .64rem;
-  font-weight: 500;
-  letter-spacing: .1em;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.assistant-context__copy strong {
-  overflow: hidden;
-  color: var(--text);
-  font-family: 'Crimson Pro', serif;
-  font-size: .96rem;
-  font-weight: 600;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.assistant-context__status {
-  display: inline-flex;
-  align-items: center;
-  gap: .4rem;
-  padding: .38rem .55rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-dim);
-  background: color-mix(in srgb, var(--bg-panel) 65%, transparent);
-  font-family: 'DM Mono', monospace;
-  font-size: .64rem;
-  font-weight: 500;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.assistant-context__status i {
-  width: .34rem;
-  height: .34rem;
-  border-radius: 50%;
-  background: var(--text-mute);
-}
-
-.assistant-context__status--linked {
-  border-color: color-mix(in srgb, var(--success) 24%, var(--border));
-  color: var(--success);
-  background: color-mix(in srgb, var(--success) 6%, transparent);
-}
-
-.assistant-context__status--linked i {
-  background: currentColor;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 10%, transparent);
 }
 
 /* ── Conversation ─────────────────────────────────────────── */
@@ -449,11 +349,12 @@ button {
 }
 
 .assistant-empty__signal svg {
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2.3rem;
+  height: 2.3rem;
+  color: var(--amber);
   fill: none;
-  stroke: var(--amber);
-  stroke-width: 1.5;
+  stroke: currentColor;
+  stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -500,15 +401,6 @@ button {
   opacity: .52;
 }
 
-.assistant-empty__eyebrow {
-  margin-bottom: .5rem;
-  color: var(--amber);
-  font-family: 'DM Mono', monospace;
-  font-size: .66rem;
-  font-weight: 500;
-  letter-spacing: .15em;
-  text-transform: uppercase;
-}
 
 .assistant-empty h3 {
   max-width: 20rem;
@@ -618,50 +510,18 @@ button {
   text-transform: uppercase;
 }
 
-.assistant-msg__author i {
-  display: grid;
-  place-items: center;
-  width: 1.65rem;
-  height: 1.65rem;
-  border: 1px solid color-mix(in srgb, var(--amber) 25%, var(--border));
-  border-radius: 5px;
-  color: var(--amber);
-  background: color-mix(in srgb, var(--amber) 6%, transparent);
-  font-style: normal;
-  letter-spacing: 0;
-}
-
-.assistant-msg__author i svg {
-  width: 1rem;
-  height: 1rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.assistant-msg--user .assistant-msg__author i {
-  border-color: var(--border);
-  color: var(--text-dim);
-  background: var(--bg);
-}
-
 .assistant-copy {
-  display: inline-flex;
-  align-items: center;
-  gap: .35rem;
-  padding: .3rem .45rem;
-  border: 1px solid transparent;
-  border-radius: 5px;
+  display: inline-grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
   color: var(--text-mute);
   background: transparent;
-  font-family: 'DM Mono', monospace;
-  font-size: .61rem;
-  font-weight: 500;
-  letter-spacing: .05em;
-  text-transform: uppercase;
   cursor: pointer;
+  transition: color .16s ease, background .16s ease;
 }
 
 .assistant-copy svg {
@@ -675,9 +535,12 @@ button {
 }
 
 .assistant-copy:hover {
-  border-color: var(--border);
-  color: var(--text-dim);
-  background: var(--bg);
+  color: var(--text);
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+}
+
+.assistant-copy--done {
+  color: var(--success);
 }
 
 .assistant-msg__bubble {
@@ -705,22 +568,20 @@ button {
 }
 
 .assistant-msg__content ::ng-deep ul {
-  list-style: none;
-  padding-left: 0;
-  display: flex;
-  flex-direction: column;
-  gap: .3rem;
+  list-style: disc;
+  padding-left: 1.2rem;
 }
 
 .assistant-msg__content ::ng-deep li {
-  display: flex;
-  align-items: baseline;
-  gap: .55rem;
+  display: list-item;
+  margin-bottom: .3rem;
 }
 
-.assistant-msg__content ::ng-deep li::before {
-  content: '•';
-  flex: 0 0 auto;
+.assistant-msg__content ::ng-deep li:last-child {
+  margin-bottom: 0;
+}
+
+.assistant-msg__content ::ng-deep li::marker {
   color: var(--amber);
 }
 
@@ -1125,34 +986,30 @@ button {
   filter: grayscale(.25);
 }
 
-.assistant-composer__meta {
+.assistant-composer__note {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: .3rem .8rem;
+  justify-content: center;
+  gap: .35rem;
   padding-inline: .15rem;
-  overflow: hidden;
-  color: var(--text-mute);
-  font-family: 'DM Mono', monospace;
-  font-size: .61rem;
-  font-weight: 500;
-  letter-spacing: .01em;
-}
-
-.assistant-composer__meta > span {
-  white-space: nowrap;
-}
-
-.assistant-composer__meta kbd {
   color: var(--text-dim);
-  font-family: inherit;
-  font-size: inherit;
+  font-family: 'DM Mono', monospace;
+  font-size: .64rem;
+  font-weight: 500;
+  letter-spacing: .02em;
+  text-align: center;
 }
 
-.assistant-composer__meta i {
-  margin-inline: .15rem;
-  font-style: normal;
+.assistant-composer__note svg {
+  width: .9rem;
+  height: .9rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .8;
 }
 
 .assistant-icon-btn:focus-visible,
@@ -1204,6 +1061,12 @@ button {
   96% { transform: scaleY(.12); }
 }
 
+@keyframes assistant-mark-in {
+  0% { opacity: 0; transform: scale(.3) rotate(-12deg); }
+  60% { opacity: 1; transform: scale(1.12) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
 @keyframes assistant-thought-in {
   0% { opacity: 0; transform: translateY(6px) scale(.8); }
   12% { opacity: 1; transform: translateY(0) scale(1.04); }
@@ -1251,15 +1114,6 @@ button {
     transform: translateY(8px) scale(.9);
   }
 
-  .assistant-context {
-    grid-template-columns: 2.4rem minmax(0, 1fr);
-    padding-inline: .85rem;
-  }
-
-  .assistant-context__status {
-    display: none;
-  }
-
   .assistant-panel__messages {
     padding: 1rem;
   }
@@ -1279,13 +1133,6 @@ button {
     padding: .8rem;
   }
 
-  .assistant-composer__meta > span:first-child {
-    display: none;
-  }
-
-  .assistant-composer__meta {
-    justify-content: flex-end;
-  }
 }
 
 @media (max-height: 650px) and (min-width: 641px) {
@@ -1314,7 +1161,8 @@ button {
   .assistant-streaming i,
   .assistant-fab__antenna-dot,
   .assistant-fab__eyes,
-  .assistant-fab__thought {
+  .assistant-fab__thought,
+  .assistant-brand__mark {
     animation-duration: .01ms;
     animation-iteration-count: 1;
   }

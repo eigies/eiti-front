@@ -1027,22 +1027,20 @@ button.pulse-card:hover {
 }
 
 .digest-content ::ng-deep ul {
-  display: flex;
-  flex-direction: column;
-  gap: .35rem;
-  padding-left: 0;
-  list-style: none;
+  padding-left: 1.2rem;
+  list-style: disc;
 }
 
 .digest-content ::ng-deep li {
-  display: flex;
-  align-items: baseline;
-  gap: .55rem;
+  display: list-item;
+  margin-bottom: .35rem;
 }
 
-.digest-content ::ng-deep li::before {
-  content: '•';
-  flex: 0 0 auto;
+.digest-content ::ng-deep li:last-child {
+  margin-bottom: 0;
+}
+
+.digest-content ::ng-deep li::marker {
   color: var(--amber);
 }
 
