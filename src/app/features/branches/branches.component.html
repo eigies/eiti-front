@@ -248,6 +248,8 @@
                 <input class="control" type="text" placeholder="Nombre" formControlName="name" />
                 <input class="control" type="text" placeholder="Codigo" formControlName="code" />
                 <input class="control" type="text" placeholder="Direccion" formControlName="address" />
+                <app-searchable-select formControlName="automaticInvoicing" [options]="automaticInvoicingOptions"
+                    placeholder="Facturacion automatica" searchPlaceholder="Buscar opcion..."></app-searchable-select>
                 <div class="modal__actions">
                     <button class="btn btn--ghost" type="button" (click)="closeEdit()">Cerrar</button>
                     <button class="btn btn--primary" type="submit" [disabled]="savingEdit">Guardar cambios</button>

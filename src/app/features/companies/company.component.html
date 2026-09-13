@@ -87,9 +87,33 @@
                 </div>
             </div>
 
-            <div class="config-card config-card--delay-4 config-card--wide">
+            <div class="config-card config-card--delay-4">
                 <div class="config-card__head">
                     <span class="config-card__num">04</span>
+                    <div class="config-card__meta">
+                        <span class="config-card__eyebrow">Facturacion</span>
+                        <h2 class="config-card__title">Factura electronica</h2>
+                    </div>
+                </div>
+                <div class="config-card__body">
+                    <p class="config-card__desc">Con la opcion activa, cada venta se factura al confirmarse. Con la opcion desactivada, aparece un check para elegir venta por venta. En los dos casos podes facturar despues desde el detalle de la venta.</p>
+                    <div class="toggle-row">
+                        <div class="toggle-row__copy">
+                            <span class="toggle-row__name">Facturar automaticamente</span>
+                            <p class="toggle-row__desc">Cada sucursal puede tener su propia configuracion y sobrescribir esta.</p>
+                        </div>
+                        <label class="toggle-check">
+                            <input type="checkbox" formControlName="automaticInvoicing" />
+                            <span class="toggle-check__track"></span>
+                            <span class="toggle-check__text">{{ form.get('automaticInvoicing')?.value ? 'Activo' : 'Off' }}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-card config-card--delay-5 config-card--wide">
+                <div class="config-card__head">
+                    <span class="config-card__num">05</span>
                     <div class="config-card__meta">
                         <span class="config-card__eyebrow">PDF</span>
                         <h2 class="config-card__title">Identidad documental</h2>

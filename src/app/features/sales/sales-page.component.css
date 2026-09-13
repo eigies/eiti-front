@@ -3034,3 +3034,65 @@
         transition: none !important;
     }
 }
+
+/* ---------------- Facturacion electronica ---------------- */
+
+.chip--invoicing {
+    font-variant-numeric: tabular-nums;
+}
+
+.chip--invoicing-none {
+    background: color-mix(in srgb, var(--text-dim) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-dim) 35%, transparent);
+}
+
+.chip--invoicing-progress {
+    background: color-mix(in srgb, #f0be73 18%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #f0be73 50%, transparent);
+}
+
+.chip--invoicing-done {
+    background: color-mix(in srgb, #8fd3a8 22%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #8fd3a8 58%, transparent);
+}
+
+.chip--invoicing-rejected {
+    background: color-mix(in srgb, #e08585 20%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #e08585 55%, transparent);
+}
+
+.invoicing-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-2);
+}
+
+.invoicing-bar__state {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.invoicing-bar__label {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.invoicing-bar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip--invoicing-voided {
+    background: color-mix(in srgb, var(--text-dim) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-dim) 45%, transparent);
+    text-decoration: line-through;
+}

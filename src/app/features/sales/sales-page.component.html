@@ -119,6 +119,15 @@
                 <span class="toggle-check__text">{{ lineForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
               </label>
             </div>
+
+            <div class="field" *ngIf="showInvoicingCheck">
+              <span class="field__label">Factura electronica</span>
+              <label class="toggle-check">
+                <input type="checkbox" formControlName="requestInvoicing" />
+                <span class="toggle-check__track"></span>
+                <span class="toggle-check__text">{{ lineForm.get('requestInvoicing')?.value ? 'Emitir factura' : 'No facturar' }}</span>
+              </label>
+            </div>
           </form>
         </section>
 
@@ -637,6 +646,9 @@
             <div class="sale-card__status">
               <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">{{ saleStatusLabel(sale) }}</span>
               <small *ngIf="sale.isCuentaCorriente">Cuenta corriente</small>
+              <span class="chip chip--invoicing"
+                    *ngIf="(sale.invoicingStatus ?? 1) !== 1"
+                    [ngClass]="invoicingChipClass(sale)">{{ invoicingChipLabel(sale) }}</span>
             </div>
 
             <div class="sale-card__delivery">
@@ -722,6 +734,29 @@
               <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, -1)" [disabled]="saleDetailPage(sale.id) <= 1">←</button>
               <span>{{ saleDetailPage(sale.id) }} / {{ totalSaleDetailPages(sale) }}</span>
               <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, 1)" [disabled]="saleDetailPage(sale.id) >= totalSaleDetailPages(sale)">→</button>
+            </div>
+
+            <div class="invoicing-bar" *ngIf="canInvoice">
+              <div class="invoicing-bar__state">
+                <span class="invoicing-bar__label">Facturacion</span>
+                <span class="chip chip--invoicing" [ngClass]="invoicingChipClass(sale)">{{ invoicingChipLabel(sale) }}</span>
+              </div>
+
+              <div class="invoicing-bar__actions">
+                <button class="btn btn--ghost btn--sm"
+                        type="button"
+                        *ngIf="canTriggerInvoicing(sale)"
+                        [disabled]="invoicingSaleId === sale.id"
+                        (click)="invoiceSale(sale)">
+                  {{ invoicingSaleId === sale.id ? invoiceActionBusyLabel(sale) : invoiceActionLabel(sale) }}
+                </button>
+                <button class="btn btn--ghost btn--sm"
+                        type="button"
+                        *ngIf="canDownloadInvoice(sale)"
+                        (click)="downloadInvoicePdf(sale)">
+                  Descargar comprobante
+                </button>
+              </div>
             </div>
 
           </div>

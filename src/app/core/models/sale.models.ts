@@ -21,6 +21,35 @@ export function saleSourceChannelLabel(channel: SaleSourceChannel | null | undef
     return found ? `${found.icon} ${found.label}` : '';
 }
 
+export type SaleInvoicingStatus = 1 | 2 | 3 | 4 | 5;
+
+export const SALE_INVOICING_STATUS = {
+    notInvoiced: 1 as SaleInvoicingStatus,
+    inProgress: 2 as SaleInvoicingStatus,
+    invoiced: 3 as SaleInvoicingStatus,
+    rejected: 4 as SaleInvoicingStatus,
+    /** Anulada por una nota de credito. Su comprobante existio y se puede reimprimir. */
+    voided: 5 as SaleInvoicingStatus
+};
+
+export function saleInvoicingStatusLabel(status: SaleInvoicingStatus | null | undefined): string {
+    switch (status) {
+        case 2: return 'En tramite';
+        case 3: return 'Facturado';
+        case 4: return 'Rechazado';
+        case 5: return 'Anulada';
+        default: return 'Sin facturar';
+    }
+}
+
+/** Numero de comprobante con el formato de AFIP: 00003-00001045. */
+export function fiscalNumberLabel(pointOfSale: number | null | undefined, number: number | null | undefined): string {
+    if (pointOfSale === null || pointOfSale === undefined || number === null || number === undefined) {
+        return '';
+    }
+    return `${String(pointOfSale).padStart(5, '0')}-${String(number).padStart(8, '0')}`;
+}
+
 export interface CreateSaleRequest {
     branchId: string;
     customerId?: string | null;
@@ -34,6 +63,8 @@ export interface CreateSaleRequest {
     sourceChannel?: SaleSourceChannel | null;
     deliveryAddress?: string | null;
     contactPhone?: string | null;
+    /** Opt-in por venta. Se ignora si la empresa/sucursal factura automaticamente. */
+    requestInvoicing?: boolean;
 }
 
 export interface CreateSaleDetailRequest {
@@ -78,6 +109,9 @@ export interface SaleResponse {
     changeAmount?: number;
     noDeliverySurchargeTotal?: number | null;
     sourceChannel?: SaleSourceChannel | null;
+    invoicingStatus?: SaleInvoicingStatus | null;
+    fiscalNumber?: number | null;
+    fiscalPointOfSale?: number | null;
     generalDiscountPercent?: number;
     originalTotal?: number;
     manualOverridePrice?: number | null;
@@ -198,6 +232,20 @@ export interface CreateCcSaleResponse {
     tradeIns?: SaleTradeInDetail[];
 }
 
+export interface InvoiceSaleResponse {
+    saleId: string;
+    invoicingStatus: SaleInvoicingStatus;
+    invoicingStatusName: string;
+    fiscalDocumentId?: string | null;
+    fiscalDocumentType?: string | null;
+    pointOfSale?: number | null;
+    number?: number | null;
+    cae?: string | null;
+    caeExpiry?: string | null;
+    qrUrl?: string | null;
+    message?: string | null;
+}
+
 export interface SaleByIdResponse {
     id: string;
     code?: string | null;
@@ -226,6 +274,19 @@ export interface SaleByIdResponse {
     createdAt: string;
     paidAt?: string | null;
     updatedAt?: string | null;
+    invoicingStatus: SaleInvoicingStatus;
+    invoicingStatusName: string;
+    fiscalDocumentId?: string | null;
+    fiscalDocumentType?: string | null;
+    fiscalPointOfSale?: number | null;
+    fiscalNumber?: number | null;
+    cae?: string | null;
+    caeExpiry?: string | null;
+    fiscalQrUrl?: string | null;
+    fiscalRejectionReason?: string | null;
+    invoicedAt?: string | null;
+    creditNoteStatus?: SaleInvoicingStatus | null;
+    creditNoteNumber?: number | null;
     details: SaleDetailResponse[];
     payments: { idPaymentMethod: number; paymentMethod: string; amount: number; reference?: string | null }[];
     ccPayments: CcPaymentResponse[];

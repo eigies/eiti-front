@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SaleInvoicingStatus, SALE_SOURCE_CHANNELS, fiscalNumberLabel, saleInvoicingStatusLabel } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -153,6 +153,8 @@ export class SalesPageComponent implements OnInit {
     infoModal: { title: string; rows: Array<{ label: string; value: string }> } | null = null;
     cancelSaleModal: SaleResponse | null = null;
     expandedSaleId: string | null = null;
+    invoicingSaleId: string | null = null;
+    companyAutomaticInvoicing = false;
     whatsAppEnabled = false;
     whatsAppPhoneNumber: string | null = null;
     readonly salesPageSizeOptions = [10, 25, 50];
@@ -213,6 +215,7 @@ export class SalesPageComponent implements OnInit {
             sourceChannel: [null, Validators.required],
             deliveryAddress: [''],
             contactPhone: [''],
+            requestInvoicing: [false],
             productId: ['', Validators.required],
             quantity: [1, [Validators.required, Validators.min(1)]]
         });
@@ -746,7 +749,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
-        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '' });
+        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '', requestInvoicing: false });
         this.createPaymentState = createEmptySalePaymentDraftState();
         this.createProductModalOpen = false;
         this.createPickerRows = [];
@@ -1582,6 +1585,7 @@ handleDocumentClick(event: MouseEvent): void {
             this.whatsAppEnabled = Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled);
             this.whatsAppPhoneNumber = company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? null;
             this.defaultNoDeliverySurcharge = company.defaultNoDeliverySurcharge ?? 0;
+            this.companyAutomaticInvoicing = Boolean(company.automaticInvoicing);
         }
     });
 }
@@ -1730,6 +1734,131 @@ if (form === this.editLineForm) {
         return this.auth.hasPermission(PermissionCodes.salesPriceOverride);
     }
 
+    // ---------------- Facturacion electronica ----------------
+
+    get canInvoice(): boolean {
+        return this.auth.hasPermission(PermissionCodes.salesInvoice);
+    }
+
+    /** Config efectiva de la sucursal elegida: la sucursal manda si definio un valor, si no hereda. */
+    get automaticInvoicingForSelectedBranch(): boolean {
+        const branchId = this.lineForm.get('branchId')?.value;
+        const branch = this.branches.find(b => b.id === branchId);
+        return branch?.automaticInvoicing ?? this.companyAutomaticInvoicing;
+    }
+
+    /**
+     * El check solo aparece cuando la facturacion NO es automatica: si ya factura sola,
+     * pedirle al usuario que lo tilde seria mentirle sobre lo que hace el sistema.
+     */
+    get showInvoicingCheck(): boolean {
+        return this.canInvoice && !this.automaticInvoicingForSelectedBranch;
+    }
+
+    invoicingChipLabel(sale: SaleResponse): string {
+        const status = sale.invoicingStatus ?? 1;
+        if (status === 5) {
+            const voidedNumber = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
+            return voidedNumber ? `Anulada ${voidedNumber}` : 'Anulada';
+        }
+        if (status === 3) {
+            const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
+            return number ? `Facturado ${number}` : 'Facturado';
+        }
+        return saleInvoicingStatusLabel(status as SaleInvoicingStatus);
+    }
+
+    invoicingChipClass(sale: SaleResponse): string {
+        switch (sale.invoicingStatus ?? 1) {
+            case 2: return 'chip--invoicing-progress';
+            case 3: return 'chip--invoicing-done';
+            case 4: return 'chip--invoicing-rejected';
+            case 5: return 'chip--invoicing-voided';
+            default: return 'chip--invoicing-none';
+        }
+    }
+
+    /**
+     * Se puede disparar la accion de facturacion: emitir, reintentar tras un rechazo, o reconciliar
+     * un tramite en curso. Incluye InProgress a proposito: si el callback nunca llego, esta es la
+     * unica salida y ocultar el boton dejaba la venta trabada.
+     */
+    canTriggerInvoicing(sale: SaleResponse): boolean {
+        const status = sale.invoicingStatus ?? 1;
+        return this.canInvoice && sale.idSaleStatus !== 3 && (status === 1 || status === 2 || status === 4);
+    }
+
+    /**
+     * Con un tramite en curso la accion NO emite nada: re-envia el mismo pedido y trae el estado
+     * real del servicio. Llamarla "Facturar" ahi seria mentir sobre lo que hace.
+     */
+    invoiceActionLabel(sale: SaleResponse): string {
+        return (sale.invoicingStatus ?? 1) === 2 ? 'Consultar estado' : 'Facturar';
+    }
+
+    invoiceActionBusyLabel(sale: SaleResponse): string {
+        return (sale.invoicingStatus ?? 1) === 2 ? 'Consultando...' : 'Emitiendo...';
+    }
+
+    /** Una factura anulada sigue teniendo comprobante: se puede reimprimir. */
+    canDownloadInvoice(sale: SaleResponse): boolean {
+        const status = sale.invoicingStatus ?? 1;
+        return status === 3 || status === 5;
+    }
+
+    invoiceSale(sale: SaleResponse): void {
+        if (!this.canTriggerInvoicing(sale) || this.invoicingSaleId) {
+            return;
+        }
+
+        const wasInProgress = (sale.invoicingStatus ?? 1) === 2;
+
+        this.invoicingSaleId = sale.id;
+        this.saleService.invoiceSale(sale.id).subscribe({
+            next: response => {
+                this.invoicingSaleId = null;
+                sale.invoicingStatus = response.invoicingStatus;
+                sale.fiscalNumber = response.number ?? null;
+                sale.fiscalPointOfSale = response.pointOfSale ?? null;
+
+                if (response.invoicingStatus === 3) {
+                    const number = fiscalNumberLabel(response.pointOfSale, response.number);
+                    this.toast.success(number ? `Comprobante ${number} autorizado.` : 'Comprobante autorizado.');
+                } else if (wasInProgress) {
+                    this.toast.success('El comprobante sigue en tramite en el servicio de facturacion.');
+                } else {
+                    this.toast.success('El comprobante quedo en tramite. Te avisamos cuando se autorice.');
+                }
+            },
+            error: error => {
+                this.invoicingSaleId = null;
+                // El motivo real del rechazo viene del fisco y es lo unico accionable para el usuario
+                // (ej. "falta el CUIT del receptor"): se muestra tal cual en vez de un generico.
+                this.toast.error(error?.error?.detail ?? 'No se pudo emitir el comprobante.');
+                // Solo se degrada el chip si la venta no venia ya con un tramite abierto: un fallo
+                // al consultar no significa que el comprobante se haya rechazado.
+                if (!wasInProgress) {
+                    sale.invoicingStatus = 4;
+                }
+            }
+        });
+    }
+
+    downloadInvoicePdf(sale: SaleResponse): void {
+        this.saleService.downloadInvoicePdf(sale.id).subscribe({
+            next: blob => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
+                link.download = number ? `comprobante-${number}.pdf` : `comprobante-${sale.id}.pdf`;
+                link.click();
+                URL.revokeObjectURL(url);
+            },
+            error: () => this.toast.error('No se pudo descargar el comprobante.')
+        });
+    }
+
     setDraftItemPrice(item: DraftItem, price: number): void {
         const numeric = parseFloat(price as any);
         item.unitPriceOverride = isNaN(numeric) ? 0 : numeric;
@@ -1758,6 +1887,7 @@ if (form === this.editLineForm) {
         sourceChannel: (rawChannel !== null && rawChannel !== '' && rawChannel !== undefined) ? Number(rawChannel) as SaleSourceChannel : null,
         deliveryAddress: raw.deliveryAddress || null,
         contactPhone: (raw.contactPhone || '').trim() || null,
+        requestInvoicing: Boolean(raw.requestInvoicing),
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,

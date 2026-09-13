@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, SaleByIdResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
+import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, InvoiceSaleResponse, SaleByIdResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -61,6 +61,18 @@ export class SaleService {
 
     deleteSale(id: string): Observable<void> {
         return this.http.delete<void>(`${this.base}/${id}`);
+    }
+
+    invoiceSale(id: string): Observable<InvoiceSaleResponse> {
+        return this.http.post<InvoiceSaleResponse>(`${this.base}/${id}/invoice`, {});
+    }
+
+    /**
+     * El PDF sale por la API de EITI, no por el servicio fiscal: ese endpoint exige la API key
+     * de servicio y el navegador no la tiene (ni debe tenerla).
+     */
+    downloadInvoicePdf(id: string): Observable<Blob> {
+        return this.http.get(`${this.base}/${id}/invoice/pdf`, { responseType: 'blob' });
     }
 
     getTransport(id: string): Observable<SaleTransportResponse> {

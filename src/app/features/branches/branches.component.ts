@@ -32,6 +32,13 @@ type BranchView = {
   styleUrls: ['./branches.component.css']
 })
 export class BranchesComponent implements OnInit {
+  /** '' = hereda de la empresa. El override explicito solo tiene sentido si difiere del default. */
+  readonly automaticInvoicingOptions: SearchableSelectOption[] = [
+    { value: '', label: 'Facturacion: hereda de la empresa' },
+    { value: 'true', label: 'Facturacion: automatica' },
+    { value: 'false', label: 'Facturacion: manual' }
+  ];
+
   createForm: FormGroup;
   editForm: FormGroup;
   transferForm: FormGroup;
@@ -70,7 +77,9 @@ export class BranchesComponent implements OnInit {
     this.editForm = this.fb.group({
       name: ['', Validators.required],
       code: [''],
-      address: ['']
+      // '' = hereda de la empresa; 'true'/'false' = override explicito de la sucursal.
+      address: [''],
+      automaticInvoicing: ['']
     });
     this.transferForm = this.fb.group({
       sourceBranchId: ['', Validators.required],
@@ -342,7 +351,10 @@ export class BranchesComponent implements OnInit {
     this.editForm.reset({
       name: branch.name,
       code: branch.code || '',
-      address: branch.address || ''
+      address: branch.address || '',
+      automaticInvoicing: branch.automaticInvoicing === null || branch.automaticInvoicing === undefined
+        ? ''
+        : String(branch.automaticInvoicing)
     });
   }
 
@@ -353,7 +365,13 @@ export class BranchesComponent implements OnInit {
     }
 
     this.savingEdit = true;
-    this.branchService.updateBranch(this.editingBranch.id, this.editForm.getRawValue()).subscribe({
+    const raw = this.editForm.getRawValue();
+    this.branchService.updateBranch(this.editingBranch.id, {
+      name: raw.name,
+      code: raw.code,
+      address: raw.address,
+      automaticInvoicing: raw.automaticInvoicing === '' ? null : raw.automaticInvoicing === 'true'
+    }).subscribe({
       next: () => {
         const editedBranchId = this.editingBranch?.id;
         this.savingEdit = false;

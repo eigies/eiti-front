@@ -31,7 +31,8 @@ export class CompanyComponent implements OnInit {
       whatsAppPhoneNumber: [''],
       defaultNoDeliverySurcharge: [null, [Validators.min(0)]],
       pdfLogoUrl: [''],
-      pdfWatermarkUrl: ['']
+      pdfWatermarkUrl: [''],
+      automaticInvoicing: [false]
     });
   }
 
@@ -65,7 +66,8 @@ export class CompanyComponent implements OnInit {
       whatsAppSenderPhone: this.nullIfEmpty(this.form.get('whatsAppPhoneNumber')?.value),
       defaultNoDeliverySurcharge: rawSurcharge === null || rawSurcharge === '' ? null : Number(rawSurcharge),
       pdfLogoUrl: this.nullIfEmpty(this.form.get('pdfLogoUrl')?.value),
-      pdfWatermarkUrl: this.nullIfEmpty(this.form.get('pdfWatermarkUrl')?.value)
+      pdfWatermarkUrl: this.nullIfEmpty(this.form.get('pdfWatermarkUrl')?.value),
+      automaticInvoicing: Boolean(this.form.get('automaticInvoicing')?.value)
     }).subscribe({
       next: (company) => {
         this.company = company;
@@ -145,7 +147,8 @@ export class CompanyComponent implements OnInit {
       whatsAppPhoneNumber: company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? '',
       defaultNoDeliverySurcharge: company.defaultNoDeliverySurcharge ?? null,
       pdfLogoUrl: company.pdfLogoUrl ?? '',
-      pdfWatermarkUrl: company.pdfWatermarkUrl ?? ''
+      pdfWatermarkUrl: company.pdfWatermarkUrl ?? '',
+      automaticInvoicing: Boolean(company.automaticInvoicing)
     };
   }
 }
