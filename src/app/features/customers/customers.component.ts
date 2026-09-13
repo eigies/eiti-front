@@ -43,6 +43,14 @@ export class CustomersComponent implements OnInit, OnDestroy {
     label: type.label
   }));
 
+  readonly ivaConditionOptions: SearchableSelectOption[] = [
+    { value: null, label: 'Sin especificar' },
+    { value: 1, label: 'Responsable Inscripto' },
+    { value: 2, label: 'Monotributo' },
+    { value: 3, label: 'Consumidor Final' },
+    { value: 4, label: 'Exento' }
+  ];
+
   constructor(
     private fb: FormBuilder,
     private customerService: CustomerService,
@@ -61,6 +69,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
       documentType: [1],
       documentNumber: [''],
       taxId: [''],
+      ivaCondition: [null],
       street: [''],
       streetNumber: [''],
       postalCode: [''],
@@ -190,6 +199,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
           documentType: c.documentType ?? 1,
           documentNumber: c.documentNumber || '',
           taxId: c.taxId || '',
+          ivaCondition: c.ivaCondition ?? null,
           street: c.address?.street || '',
           streetNumber: c.address?.streetNumber || '',
           postalCode: c.address?.postalCode || '',
@@ -284,6 +294,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
       documentType: Number(raw.documentType),
       documentNumber: String(raw.documentNumber || ''),
       taxId: this.nullIfEmpty(raw.taxId),
+      ivaCondition: raw.ivaCondition != null ? Number(raw.ivaCondition) : null,
       address: {
         street: String(raw.street || ''),
         streetNumber: String(raw.streetNumber || ''),
@@ -308,6 +319,7 @@ export class CustomersComponent implements OnInit, OnDestroy {
       documentType: 1,
       documentNumber: '',
       taxId: '',
+      ivaCondition: null,
       street: '',
       streetNumber: '',
       postalCode: '',

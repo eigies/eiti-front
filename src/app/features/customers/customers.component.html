@@ -129,6 +129,15 @@
                         <label class="field__label">CUIT</label>
                         <input class="field__input" type="text" formControlName="taxId" placeholder="20-30111222-9" />
                     </div>
+                    <div class="field">
+                        <label class="field__label">Condición IVA</label>
+                        <app-searchable-select
+                            formControlName="ivaCondition"
+                            [options]="ivaConditionOptions"
+                            placeholder="Condición frente al IVA"
+                            searchPlaceholder="Buscar condición...">
+                        </app-searchable-select>
+                    </div>
                 </div>
             </section>
 
