@@ -6,7 +6,9 @@ export interface CreateProductRequest {
     description?: string | null;
     publicPrice?: number | null;
     price?: number | null;
-    costPrice: number;
+    // null cuando el usuario no tiene products.view_cost: el back lo interpreta como
+    // "no tocar el costo" en el update y como 0 en el alta. Nunca mandar el 0 enmascarado.
+    costPrice: number | null;
     unitPrice?: number | null;
     allowsManualValueInSale: boolean;
     noDeliverySurcharge?: number | null;
@@ -54,7 +56,8 @@ export interface UpdateProductRequest {
     description?: string | null;
     publicPrice?: number | null;
     price?: number | null;
-    costPrice: number;
+    // Ver CreateProductRequest.costPrice.
+    costPrice: number | null;
     unitPrice?: number | null;
     allowsManualValueInSale: boolean;
     noDeliverySurcharge?: number | null;

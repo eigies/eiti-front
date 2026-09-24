@@ -315,7 +315,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   get showCostPriceAlert(): boolean {
+    // Sin permiso de ver costo todos llegan en null y el conteo daria "faltan todos".
     return !this.costPriceAlertDismissed
+      && this.canViewCostPrice
       && this.auth.hasPermission(PermissionCodes.productsCostPriceAlert)
       && this.noCostProductCount > 0
       && this.viewMode === 'list';
@@ -1890,7 +1892,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
       description: raw.description?.trim() ? raw.description.trim() : null,
       publicPrice,
       price: publicPrice,
-      costPrice: Number(raw.costPrice ?? 0),
+      // Sin products.view_cost el costo que muestra la API viene enmascarado (null), asi que
+      // el formulario tiene un 0 que no representa nada: se manda null para que el back lo
+      // preserve. Mandar ese 0 fue lo que borro los costos de MOURA el 21/09/2026.
+      costPrice: this.canViewCostPrice ? Number(raw.costPrice ?? 0) : null,
       unitPrice: raw.unitPrice === null || raw.unitPrice === '' ? null : Number(raw.unitPrice),
       allowsManualValueInSale: allowsManualSaleValue,
       noDeliverySurcharge: raw.noDeliverySurcharge === null || raw.noDeliverySurcharge === '' ? null : Number(raw.noDeliverySurcharge),

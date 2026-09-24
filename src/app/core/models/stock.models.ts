@@ -18,7 +18,7 @@ export interface BranchProductStockResponse {
     costOverride?: number | null;
     salePriceOverride?: number | null;
     effectivePrice?: number;
-    effectiveCost?: number;
+    effectiveCost?: number | null;
 }
 
 export interface SetBranchProductPricingRequest {
