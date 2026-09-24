@@ -66,36 +66,6 @@
     cursor: not-allowed;
 }
 
-.quote-form__field--checkbox {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: .6rem;
-    text-transform: none;
-}
-
-.quote-form__field--checkbox input {
-    width: 18px;
-    min-height: 0;
-    height: 18px;
-    flex: 0 0 auto;
-    cursor: pointer;
-}
-
-.quote-form__field--checkbox span {
-    text-transform: none;
-    letter-spacing: normal;
-    font-size: .8rem;
-    color: var(--text);
-}
-
-.quote-form__field--checkbox span small {
-    display: block;
-    color: var(--text-dim);
-    font-size: .68rem;
-    margin-top: .1rem;
-}
-
 .quote-form__customer-selected {
     display: flex;
     align-items: center;
@@ -190,24 +160,6 @@
     flex: 0 1 180px;
 }
 
-.quote-form__check {
-    display: flex;
-    align-items: center;
-    gap: .55rem;
-    flex: 1 1 240px;
-    min-height: 2.65rem;
-    color: var(--text);
-    font-size: .8rem;
-}
-
-.quote-form__check input {
-    width: 18px;
-    min-height: 0;
-    height: 18px;
-    flex: 0 0 auto;
-    cursor: pointer;
-}
-
 .quote-form__summary {
     justify-self: end;
     display: grid;
@@ -255,4 +207,89 @@
     .quote-form__table {
         min-width: 720px;
     }
+}
+
+/* Toggle de la app. Nota: este estilo esta duplicado en 5 componentes mas y las copias ya
+   divergieron entre si; consolidarlo en styles.css es una limpieza aparte. */
+.toggle-check {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: .7rem;
+    min-height: 44px;
+    padding: .58rem .82rem;
+    border: 1px solid var(--border-2);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+    transition: border-color .18s ease, background .18s ease, transform .12s ease;
+}
+
+.toggle-check:hover {
+    border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 7%, transparent);
+    transform: translateY(-1px);
+}
+
+.toggle-check input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.toggle-check__track {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 2.2rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-2) 75%, transparent);
+    transition: background .2s ease;
+}
+
+.toggle-check__track::after {
+    content: '';
+    position: absolute;
+    top: .17rem;
+    left: .13rem;
+    width: .9rem;
+    height: .9rem;
+    border-radius: 50%;
+    background: var(--bg-panel);
+    box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    transition: transform .2s ease;
+}
+
+.toggle-check input:checked ~ .toggle-check__track {
+    background: color-mix(in srgb, var(--amber) 42%, transparent);
+}
+
+.toggle-check input:checked ~ .toggle-check__track::after {
+    transform: translateX(.93rem);
+    background: var(--amber);
+}
+
+.toggle-check__text {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+/* La aclaracion que antes iba pegada al check: en minuscula, sin el uppercase del rotulo. */
+.quote-form__hint {
+    color: var(--text-dim);
+    font-size: .68rem;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+/* El toggle no debe estirarse al ancho de la grilla del campo. */
+.quote-form__field > .toggle-check {
+    justify-self: start;
 }

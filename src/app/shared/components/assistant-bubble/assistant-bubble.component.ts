@@ -131,7 +131,7 @@ export class AssistantBubbleComponent implements AfterViewChecked {
 
     this.messages = [...this.messages, { role: 'user', content: text }];
     this.draft = '';
-    const assistantMsg: AssistantChatMessage = { role: 'assistant', content: '' };
+    const assistantMsg: AssistantChatMessage = { role: 'assistant', content: '', question: text };
     this.messages = [...this.messages, assistantMsg];
     this.activeAssistantMessage = assistantMsg;
     this.isStreaming = true;
@@ -218,7 +218,7 @@ export class AssistantBubbleComponent implements AfterViewChecked {
     this.cdr.markForCheck();
 
     this.assistant
-      .sendFeedback(m.requestId, rating)
+      .sendFeedback(m.requestId, rating, undefined, m.question)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         error: () => {
@@ -241,7 +241,7 @@ export class AssistantBubbleComponent implements AfterViewChecked {
       return;
     }
     this.assistant
-      .sendFeedback(m.requestId, -1, comment)
+      .sendFeedback(m.requestId, -1, comment, m.question)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ error: () => undefined });
   }

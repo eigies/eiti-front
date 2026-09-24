@@ -6,10 +6,15 @@
     </app-searchable-select>
   </label>
 
-  <label class="quote-form__field quote-form__field--checkbox">
-    <input type="checkbox" [(ngModel)]="isProspectMode" [ngModelOptions]="{ standalone: true }" />
-    <span>Cliente sin cargar <small>(prospecto sin cuenta en el sistema)</small></span>
-  </label>
+  <div class="quote-form__field">
+    <span>Tipo de cliente</span>
+    <label class="toggle-check">
+      <input type="checkbox" [(ngModel)]="isProspectMode" [ngModelOptions]="{ standalone: true }" />
+      <span class="toggle-check__track"></span>
+      <span class="toggle-check__text">{{ isProspectMode ? 'Prospecto' : 'Cliente existente' }}</span>
+    </label>
+    <small class="quote-form__hint">Prospecto sin cuenta en el sistema.</small>
+  </div>
 
   <ng-container *ngIf="customerMode === 'existing'">
     <div *ngIf="!selectedCustomer" class="quote-form__customer-search">
@@ -41,6 +46,7 @@
         <th>Cant.</th>
         <th>Precio unit.</th>
         <th>Desc. %</th>
+        <th *ngIf="hasLineDiscount">Unit. c/desc.</th>
         <th>Total</th>
         <th></th>
       </tr>
@@ -51,6 +57,7 @@
         <td>{{ item.quantity }}</td>
         <td><input type="number" [value]="item.unitPrice" (change)="setItemPrice(item.stock.productId, $any($event.target).valueAsNumber)"></td>
         <td><input type="number" [value]="item.discountPercent" (change)="setItemDiscount(item.stock.productId, $any($event.target).value)"></td>
+        <td *ngIf="hasLineDiscount">{{ discountedUnitPrice(item) | number: '1.2-2' }}</td>
         <td>{{ item.total | number: '1.2-2' }}</td>
         <td><button type="button" (click)="removeItem(item.stock.productId)">Quitar</button></td>
       </tr>
@@ -65,10 +72,15 @@
     <label class="quote-form__field">IVA
       <app-searchable-select [(ngModel)]="vatRate" (ngModelChange)="setVatRate($event)" [options]="vatRateSelectOptions"></app-searchable-select>
     </label>
-    <label class="quote-form__check">
-      <input type="checkbox" [checked]="includesVat" (change)="setIncludesVat($any($event.target).checked)">
-      <span>Cobrar IVA (los precios se cargan sin IVA)</span>
-    </label>
+    <div class="quote-form__field">
+      <span>Cobrar IVA</span>
+      <label class="toggle-check">
+        <input type="checkbox" [checked]="includesVat" (change)="setIncludesVat($any($event.target).checked)">
+        <span class="toggle-check__track"></span>
+        <span class="toggle-check__text">{{ includesVat ? 'Sumar IVA' : 'Sin IVA' }}</span>
+      </label>
+      <small class="quote-form__hint">Los precios se cargan sin IVA.</small>
+    </div>
   </div>
 
   <div class="quote-form__summary">

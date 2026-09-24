@@ -95,6 +95,19 @@ export class QuoteFormComponent implements OnInit {
         return date.toLocaleDateString('en-CA');
     }
 
+    /**
+     * Lo que sale cada unidad ya con el descuento de la linea. Se muestra al cargar para que el
+     * vendedor pueda decirle el precio final al cliente sin hacer la cuenta de cabeza.
+     */
+    discountedUnitPrice(item: { quantity: number; unitPrice: number; total: number }): number {
+        return item.quantity > 0 ? item.total / item.quantity : item.unitPrice;
+    }
+
+    /** Hay descuento por linea: si no lo hay, la columna seria identica al precio unitario. */
+    get hasLineDiscount(): boolean {
+        return this.draftItems.some(item => item.discountPercent > 0);
+    }
+
     // Subtotal NETO (los precios cargados son netos), ya con el descuento general aplicado.
     get total(): number {
         const subtotal = this.draftItems.reduce((sum, item) => sum + item.total, 0);

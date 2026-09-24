@@ -123,7 +123,24 @@ export class QuoteDetailModalComponent implements OnChanges {
 
     get hasDiscount(): boolean {
         if (!this.quote) { return false; }
-        return this.quote.generalDiscountPercent > 0 || this.quote.details.some(detail => detail.discountPercent > 0);
+        return this.quote.generalDiscountPercent > 0 || this.hasLineDiscount;
+    }
+
+    /**
+     * Descuento POR LINEA. El general se aplica al subtotal y no cambia el precio de cada
+     * renglon, asi que no habilita la columna "Unit. c/desc.": seria identica al unitario.
+     */
+    get hasLineDiscount(): boolean {
+        if (!this.quote) { return false; }
+        return this.quote.details.some(detail => detail.discountPercent > 0);
+    }
+
+    /**
+     * Lo que sale cada unidad ya con el descuento. Sin esto hay que dividir el subtotal por la
+     * cantidad para saberlo, y es la cuenta que el cliente no hace.
+     */
+    discountedUnitPrice(detail: { quantity: number; unitPrice: number; lineTotal: number }): number {
+        return detail.quantity > 0 ? detail.lineTotal / detail.quantity : detail.unitPrice;
     }
 
     get subtotal(): number {

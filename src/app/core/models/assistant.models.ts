@@ -5,6 +5,8 @@ export interface AssistantChatMessage {
   suggestions?: string[];
   requestId?: number;
   rating?: 1 | -1;
+  /** Consulta que originó esta respuesta; se envía solo al marcar pulgar abajo. */
+  question?: string;
 }
 
 /** Lo que el usuario está viendo en la pantalla actual, enviado con cada consulta. */

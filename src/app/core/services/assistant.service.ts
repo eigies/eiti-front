@@ -86,10 +86,18 @@ export class AssistantService {
     });
   }
 
-  sendFeedback(requestId: number, rating: 1 | -1, comment?: string): Observable<void> {
+  /**
+   * Pulgar arriba/abajo sobre una respuesta. En el pulgar abajo se manda además la
+   * consulta del usuario: es lo único que permite saber después qué no pudo responder
+   * (el agente no guarda las conversaciones).
+   */
+  sendFeedback(requestId: number, rating: 1 | -1, comment?: string, question?: string): Observable<void> {
     const body: Record<string, unknown> = { request_id: requestId, rating };
     if (comment?.trim()) {
       body['comment'] = comment.trim().slice(0, 1000);
+    }
+    if (rating === -1 && question?.trim()) {
+      body['question'] = question.trim().slice(0, 2000);
     }
     return this.http.post<void>(`${this.baseUrl}/feedback`, body, { headers: this.authHeaders() });
   }

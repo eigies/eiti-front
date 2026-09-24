@@ -489,7 +489,6 @@ button {
 .assistant-msg__meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   min-height: 1.6rem;
   padding-inline: .1rem;
 }
@@ -695,10 +694,16 @@ button {
   text-transform: uppercase;
 }
 
+/* Van DEBAJO de la respuesta: puntuar o copiar es algo que se decide despues de leerla,
+   no antes. Como hermanas de la burbuja quedan sobre el fondo de la pagina y no compiten
+   con el contenido dentro del panel. */
 .assistant-msg__actions {
   display: inline-flex;
   align-items: center;
   gap: .15rem;
+  /* .assistant-msg--bot estira sus hijos; sin esto la fila de iconos toma todo el ancho. */
+  align-self: flex-start;
+  padding-inline: .1rem;
 }
 
 .assistant-rate svg {
