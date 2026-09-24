@@ -10,6 +10,8 @@ import { DashboardPreferencesService } from '../../core/services/dashboard-prefe
 import { DashboardService } from '../../core/services/dashboard.service';
 import { ProductCategoryService } from '../../core/services/product-category.service';
 import { ToastService } from '../../shared/services/toast.service';
+import { AssistantService } from '../../core/services/assistant.service';
+import { AssistantContextService } from '../../core/services/assistant-context.service';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { DashboardComponent } from './dashboard.component';
 
@@ -90,9 +92,13 @@ describe('DashboardComponent', () => {
     const categories = jasmine.createSpyObj<ProductCategoryService>('ProductCategoryService', ['list']);
     categories.list.and.returnValue(of([]));
     const toast = jasmine.createSpyObj<ToastService>('ToastService', ['error']);
-    const component = new DashboardComponent(auth, dashboard, prefs, branch, categories, toast);
+    const assistant = jasmine.createSpyObj<AssistantService>('AssistantService', ['getDigest']);
+    assistant.getDigest.and.returnValue(of({ day: '', content: '', generatedAt: '', cached: false }));
+    const assistantContext = jasmine.createSpyObj<AssistantContextService>('AssistantContextService', ['requestOpen']);
+    const component = new DashboardComponent(
+      auth, dashboard, prefs, branch, categories, toast, assistant, assistantContext);
 
-    return { component, auth, dashboard, prefs, branch, categories, toast };
+    return { component, auth, dashboard, prefs, branch, categories, toast, assistant, assistantContext };
   }
 
   async function setupFixture() {
@@ -106,7 +112,9 @@ describe('DashboardComponent', () => {
         { provide: DashboardPreferencesService, useValue: dependencies.prefs },
         { provide: BranchService, useValue: dependencies.branch },
         { provide: ProductCategoryService, useValue: dependencies.categories },
-        { provide: ToastService, useValue: dependencies.toast }
+        { provide: ToastService, useValue: dependencies.toast },
+        { provide: AssistantService, useValue: dependencies.assistant },
+        { provide: AssistantContextService, useValue: dependencies.assistantContext }
       ]
     }).compileComponents();
 
