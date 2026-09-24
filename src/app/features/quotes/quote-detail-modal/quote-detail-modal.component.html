@@ -49,6 +49,7 @@
               <th class="text-right">Cant.</th>
               <th class="text-right">Unitario</th>
               <th class="text-right" *ngIf="hasDiscount">Desc.</th>
+              <th class="text-right" *ngIf="hasLineDiscount">Unit. c/desc.</th>
               <th class="text-right">Subtotal</th>
             </tr>
           </thead>
@@ -59,6 +60,9 @@
               <td class="text-right">${{ detail.unitPrice | number: '1.2-2' }}</td>
               <td class="text-right" *ngIf="hasDiscount">
                 <span *ngIf="detail.discountPercent > 0">{{ detail.discountPercent }}%</span>
+              </td>
+              <td class="text-right cell--discounted" *ngIf="hasLineDiscount">
+                ${{ discountedUnitPrice(detail) | number: '1.2-2' }}
               </td>
               <td class="text-right">${{ detail.lineTotal | number: '1.2-2' }}</td>
             </tr>

@@ -21,24 +21,32 @@ export class QuotePdfService {
     const margin = 14;
     const contentWidth = pageWidth - margin * 2;
     const printableBottom = pageHeight - 18;
-    const hasDiscount = quote.generalDiscountPercent > 0 || quote.details.some(detail => detail.discountPercent > 0);
+    // El descuento por linea y el general son cosas distintas: el general se aplica al subtotal
+    // y se muestra en el resumen, asi que NO cambia el precio de cada renglon.
+    const hasLineDiscount = quote.details.some(detail => detail.discountPercent > 0);
+    const hasDiscount = quote.generalDiscountPercent > 0 || hasLineDiscount;
 
-    const itemColumns: PdfTableColumn[] = hasDiscount
-      ? [
-        { header: '#', width: 12 },
-        { header: 'Producto', width: 76 },
-        { header: 'Cant.', width: 16, align: 'right' },
-        { header: 'Unitario', width: 30, align: 'right' },
-        { header: 'Desc.', width: 16, align: 'right' },
-        { header: 'Subtotal', width: 32, align: 'right' }
-      ]
-      : [
-        { header: '#', width: 12 },
-        { header: 'Producto', width: 84 },
-        { header: 'Cant.', width: 18, align: 'right' },
-        { header: 'Unitario', width: 34, align: 'right' },
-        { header: 'Subtotal', width: 34, align: 'right' }
-      ];
+    // "Unit. c/desc." existe porque el cliente lee el precio de lista, le parece caro y no hace la
+    // cuenta: sin esta columna hay que dividir el subtotal por la cantidad para saber cuanto sale
+    // cada unidad. Solo aparece si hay descuento POR LINEA; con descuento general seria identico
+    // al unitario y no aportaria nada.
+    const itemColumns: PdfTableColumn[] = [
+      { header: '#', width: 10 },
+      { header: 'Producto', width: 0 },
+      { header: 'Cant.', width: 14, align: 'right' },
+      { header: 'Unitario', width: 28, align: 'right' }
+    ];
+    if (hasDiscount) {
+      itemColumns.push({ header: 'Desc.', width: 14, align: 'right' });
+    }
+    if (hasLineDiscount) {
+      itemColumns.push({ header: 'Unit. c/desc.', width: 28, align: 'right' });
+    }
+    itemColumns.push({ header: 'Subtotal', width: 30, align: 'right' });
+
+    // Producto absorbe lo que sobra: la tabla ocupa siempre el ancho exacto, sin anchos magicos
+    // que haya que recalcular a mano cada vez que se agrega o saca una columna.
+    itemColumns[1].width = contentWidth - itemColumns.reduce((sum, column) => sum + column.width, 0);
     const itemTableColumns = this.pdfLayout.resolveColumns(margin, itemColumns);
     const [numberCol, productCol, quantityCol] = itemTableColumns;
 
@@ -185,6 +193,10 @@ export class QuotePdfService {
       ];
       if (hasDiscount) {
         row.push(detail.discountPercent > 0 ? `${detail.discountPercent}%` : '-');
+      }
+      if (hasLineDiscount) {
+        // Se deriva del subtotal que ya se muestra, para que Cant. x Unit. c/desc. cierre con el.
+        row.push(formatCurrency(detail.quantity > 0 ? detail.lineTotal / detail.quantity : detail.unitPrice));
       }
       row.push(formatCurrency(detail.lineTotal));
       drawItemRow(row);

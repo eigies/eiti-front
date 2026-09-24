@@ -251,6 +251,14 @@
   text-align: right;
 }
 
+/* Es el numero que el cliente tiene que ver: el precio real por unidad. Se destaca apenas,
+   lo justo para que gane la mirada por encima del precio de lista sin gritar. */
+.cell--discounted {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 .detalle-totals {
   padding-top: .4rem;
 }
