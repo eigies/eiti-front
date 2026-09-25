@@ -88,6 +88,19 @@
           <input class="field__input" type="text" [(ngModel)]="newNotes" [ngModelOptions]="{ standalone: true }" placeholder="Observaciones opcionales" />
         </div>
 
+        <!-- Transferencia: banco o billetera que la recibió (para conciliar el extracto) -->
+        <div class="field field--card-bank" *ngIf="isTransferMethod && transferBankOptions.length">
+          <label class="field__label">Banco receptor</label>
+          <app-searchable-select
+            [ngModel]="newTransferBankId"
+            (ngModelChange)="onTransferBankChange($event)"
+            [ngModelOptions]="{ standalone: true }"
+            [options]="transferBankOptions"
+            placeholder="¿A qué cuenta entró?"
+            searchPlaceholder="Buscar banco o billetera...">
+          </app-searchable-select>
+        </div>
+
         <!-- Tarjeta: banco + cuotas -->
         <ng-container *ngIf="isCardMethod">
           <div class="field field--card-bank">

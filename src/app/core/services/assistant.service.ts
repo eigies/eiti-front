@@ -8,8 +8,26 @@ import {
   AssistantChatMessage,
   AssistantDigest,
   AssistantStreamEvent,
+  StatementSummary,
   ScreenContext
 } from '../models/assistant.models';
+
+interface StatementSummaryDto {
+  statement_id: number;
+  file_name: string;
+  movements: number;
+  credits_count: number;
+  credits_total: string;
+  debits_count: number;
+  debits_total: string;
+  period_from: string;
+  period_to: string;
+  skipped_rows: number;
+  bank_detected: string | null;
+  bank_id: number | null;
+  bank_options: { id: number; name: string }[];
+  balance_check: { status: 'ok' | 'mismatch' | 'unknown' };
+}
 
 interface DigestDto {
   day: string;
@@ -36,7 +54,8 @@ export class AssistantService {
 
   chat(
     messages: AssistantChatMessage[],
-    context: ScreenContext | null
+    context: ScreenContext | null,
+    attachments: number[] = []
   ): Observable<AssistantStreamEvent> {
     return new Observable<AssistantStreamEvent>(subscriber => {
       const controller = new AbortController();
@@ -48,7 +67,7 @@ export class AssistantService {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.auth.getToken() ?? ''}`
         },
-        body: JSON.stringify({ messages, context }),
+        body: JSON.stringify({ messages, context, attachments }),
         signal: controller.signal
       })
         .then(async res => {
@@ -115,6 +134,32 @@ export class AssistantService {
           content: d.content,
           generatedAt: d.generated_at,
           cached: d.cached
+        }))
+      );
+  }
+
+  /** Sube un extracto (Excel, CSV, PDF o foto) para conciliarlo desde el chat. */
+  uploadStatement(file: File): Observable<StatementSummary> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http
+      .post<StatementSummaryDto>(`${this.baseUrl}/statements`, form, { headers: this.authHeaders() })
+      .pipe(
+        map(d => ({
+          statementId: d.statement_id,
+          fileName: d.file_name,
+          movements: d.movements,
+          creditsCount: d.credits_count,
+          creditsTotal: Number(d.credits_total),
+          debitsCount: d.debits_count,
+          debitsTotal: Number(d.debits_total),
+          periodFrom: d.period_from,
+          periodTo: d.period_to,
+          skippedRows: d.skipped_rows,
+          bankDetected: d.bank_detected,
+          bankId: d.bank_id,
+          bankOptions: d.bank_options,
+          balanceStatus: d.balance_check.status
         }))
       );
   }

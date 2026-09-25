@@ -70,7 +70,38 @@
         </div>
       </div>
 
-      <div *ngFor="let m of messages; let i = index; trackBy: trackMessage"
+      <ng-container *ngFor="let m of messages; let i = index; trackBy: trackMessage">
+      <!-- Extracto adjunto: talón con el resumen de lo que se leyó -->
+      <div class="assistant-slip" *ngIf="m.attachment as a" [class.assistant-slip--error]="a.status === 'error'" aria-live="polite">
+        <div class="assistant-slip__head">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h4"></path></svg>
+          <span class="assistant-slip__name">{{ a.fileName }}</span>
+        </div>
+
+        <p class="assistant-slip__status" *ngIf="a.status === 'uploading'">
+          <span class="assistant-typing__wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          Leyendo el extracto…
+        </p>
+
+        <p class="assistant-slip__status" *ngIf="a.status === 'error'">{{ a.error }}</p>
+
+        <ng-container *ngIf="a.status === 'ready' && a.summary as s">
+          <dl class="assistant-slip__figures">
+            <div><dt>Movimientos</dt><dd>{{ s.movements }}</dd></div>
+            <div><dt>Ingresos</dt><dd>{{ formatArs(s.creditsTotal) }}</dd></div>
+            <div><dt>Período</dt><dd>{{ s.periodFrom.slice(0, 5) }} → {{ s.periodTo.slice(0, 5) }}</dd></div>
+          </dl>
+          <p class="assistant-slip__bank">{{ s.bankDetected || 'Banco sin identificar: Eitisito te lo va a preguntar' }}</p>
+          <p class="assistant-slip__warn" *ngIf="s.balanceStatus === 'mismatch'">Los saldos del extracto no cierran con lo leído: revisá el resultado.</p>
+          <p class="assistant-slip__warn" *ngIf="s.skippedRows > 0">{{ s.skippedRows }} fila(s) sin fecha o importe no se tuvieron en cuenta.</p>
+          <button type="button" class="assistant-slip__cta" *ngIf="!isStreaming" (click)="askSuggestion('Conciliá este extracto')">
+            Conciliá este extracto
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"></path></svg>
+          </button>
+        </ng-container>
+      </div>
+
+      <div *ngIf="!m.attachment"
            class="assistant-msg"
            [class.assistant-msg--user]="m.role === 'user'"
            [class.assistant-msg--bot]="m.role === 'assistant'">
@@ -148,6 +179,7 @@
           <button type="button" class="assistant-feedback__skip" (click)="dismissFeedbackComment()" aria-label="Omitir comentario">Omitir</button>
         </form>
       </div>
+      </ng-container>
     </div>
 
     <footer class="assistant-composer">
@@ -156,7 +188,25 @@
         <button type="button" (click)="stop()">Detener</button>
       </div>
 
+      <div class="assistant-attached" *ngIf="activeAttachment as a">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 11-8.6 8.6a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4L15.6 7"></path></svg>
+        <span>{{ a.fileName }}</span>
+        <button type="button" (click)="detachAttachment()" aria-label="Quitar el extracto adjunto" title="Quitar">×</button>
+      </div>
+
       <div class="assistant-composer__field">
+        <input #fileInput type="file" class="assistant-file" [accept]="statementAccept" (change)="onFileSelected($event)" tabindex="-1" aria-hidden="true" />
+        <button
+          type="button"
+          class="assistant-attach"
+          (click)="fileInput.click()"
+          [disabled]="isStreaming"
+          aria-label="Adjuntar un extracto bancario"
+          title="Adjuntar extracto (Excel, CSV, PDF o foto)">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m21 11-8.6 8.6a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4L15.6 7"></path>
+          </svg>
+        </button>
         <textarea
           #composer
           rows="1"

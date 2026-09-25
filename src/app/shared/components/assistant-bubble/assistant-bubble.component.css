@@ -913,8 +913,8 @@ button {
 
 .assistant-composer__field {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 2.75rem;
-  gap: .55rem;
+  grid-template-columns: 2.4rem minmax(0, 1fr) 2.75rem;
+  gap: .35rem;
   align-items: end;
   padding: .42rem;
   border: 1px solid var(--border-2);
@@ -948,8 +948,11 @@ button {
 }
 
 .assistant-composer textarea::placeholder {
+  overflow: hidden;
   color: var(--text-mute);
   opacity: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .assistant-send {
@@ -1181,5 +1184,225 @@ button {
 
   .assistant-panel__messages {
     scroll-behavior: auto;
+  }
+}
+
+/* ── Extractos adjuntos ─────────────────────────────────────── */
+.assistant-file {
+  display: none;
+}
+
+.assistant-attach {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.65rem;
+  border: 0;
+  border-radius: 9px;
+  color: var(--text-dim);
+  background: transparent;
+  cursor: pointer;
+  transition: color .16s ease, background .16s ease;
+}
+
+.assistant-attach:hover:not(:disabled) {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+}
+
+.assistant-attach:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.assistant-attach svg,
+.assistant-attached svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.assistant-attach:focus-visible,
+.assistant-attached button:focus-visible,
+.assistant-slip__cta:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* El extracto activo viaja con cada mensaje: se muestra encima del campo para que se note. */
+.assistant-attached {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  max-width: 100%;
+  margin-bottom: .45rem;
+  padding: .2rem .25rem .2rem .55rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--border-2));
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+}
+
+.assistant-attached span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assistant-attached button {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 .25rem;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.assistant-attached button:hover {
+  color: var(--amber);
+}
+
+/* Talón del extracto: el borde superior perforado lo distingue de un mensaje. */
+.assistant-slip {
+  max-width: 88%;
+  margin-left: auto;
+  padding: .75rem .9rem .8rem;
+  border: 1px solid var(--border-2);
+  border-top: 2px dashed color-mix(in srgb, var(--amber) 55%, var(--border-2));
+  border-radius: 4px 4px 12px 12px;
+  background: color-mix(in srgb, var(--bg) 80%, var(--bg-panel));
+}
+
+.assistant-slip--error {
+  border-top-color: color-mix(in srgb, var(--danger) 60%, var(--border-2));
+}
+
+.assistant-slip__head {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  min-width: 0;
+  color: var(--text);
+}
+
+.assistant-slip__head svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.assistant-slip__name {
+  overflow: hidden;
+  font-family: 'Crimson Pro', serif;
+  font-size: .98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assistant-slip__status,
+.assistant-slip__bank {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: .55rem 0 0;
+  color: var(--text-dim);
+  font-family: 'Crimson Pro', serif;
+  font-size: .9rem;
+}
+
+.assistant-slip--error .assistant-slip__status {
+  color: var(--danger);
+}
+
+.assistant-slip__figures {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  gap: .3rem 1.1rem;
+  margin: .65rem 0 0;
+}
+
+.assistant-slip__figures dt {
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.assistant-slip__figures dd {
+  margin: .1rem 0 0;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .82rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.assistant-slip__warn {
+  margin: .35rem 0 0;
+  color: var(--amber);
+  font-family: 'Crimson Pro', serif;
+  font-size: .86rem;
+}
+
+.assistant-slip__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 32px;
+  margin-top: .55rem;
+  padding: .3rem 0;
+  border: 0;
+  color: var(--amber);
+  background: transparent;
+  font-family: 'Crimson Pro', serif;
+  font-size: .94rem;
+  cursor: pointer;
+}
+
+.assistant-slip__cta svg {
+  width: .95rem;
+  height: .95rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .16s ease;
+}
+
+.assistant-slip__cta:hover svg {
+  transform: translateX(2px);
+}
+
+@media (max-width: 480px) {
+  .assistant-slip {
+    max-width: 100%;
+  }
+
+  .assistant-slip__figures {
+    grid-template-columns: repeat(2, auto);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-attach,
+  .assistant-slip__cta svg {
+    transition: none;
   }
 }
