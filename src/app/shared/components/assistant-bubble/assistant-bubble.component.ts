@@ -9,6 +9,7 @@ import {
   inject,
   ViewChild
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,8 +20,10 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AssistantService } from '../../../core/services/assistant.service';
 import { AssistantContextService } from '../../../core/services/assistant-context.service';
 import { PermissionCodes } from '../../../core/models/permission.models';
-import { AssistantChatMessage } from '../../../core/models/assistant.models';
+import { AssistantChatMessage, StatementSummary } from '../../../core/models/assistant.models';
 import { MarkdownLitePipe } from '../../pipes/markdown-lite.pipe';
+
+const MAX_STATEMENT_BYTES = 10 * 1024 * 1024;
 
 @Component({
   selector: 'app-assistant-bubble',
@@ -36,6 +39,10 @@ export class AssistantBubbleComponent implements AfterViewChecked {
   @ViewChild('launcher') private launcherRef?: ElementRef<HTMLButtonElement>;
 
   private readonly destroyRef = inject(DestroyRef);
+
+  /** Extracto que acompaña a los próximos mensajes hasta quitarlo o limpiar la conversación. */
+  activeAttachment: StatementSummary | null = null;
+  readonly statementAccept = '.xlsx,.xlsm,.csv,.pdf,.png,.jpg,.jpeg,.webp';
 
   readonly visible$: Observable<boolean>;
   readonly suggestions$: Observable<string[]>;
@@ -145,7 +152,7 @@ export class AssistantBubbleComponent implements AfterViewChecked {
       .map(m => ({ role: m.role, content: m.content }));
 
     this.streamSubscription = this.assistant
-      .chat(payload, this.context.snapshot())
+      .chat(payload, this.context.snapshot(), this.activeAttachment ? [this.activeAttachment.statementId] : [])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ev => {
@@ -189,6 +196,61 @@ export class AssistantBubbleComponent implements AfterViewChecked {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  // ── Extractos adjuntos ─────────────────────────────────────
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) {
+      this.attachFile(file);
+    }
+  }
+
+  attachFile(file: File): void {
+    const card: AssistantChatMessage = {
+      role: 'user',
+      content: '',
+      attachment: { fileName: file.name, status: 'uploading' }
+    };
+    this.messages = [...this.messages, card];
+    this.shouldScroll = true;
+
+    if (file.size > MAX_STATEMENT_BYTES) {
+      card.attachment = { fileName: file.name, status: 'error', error: 'El archivo supera los 10 MB. Mandalo por períodos más cortos.' };
+      this.cdr.markForCheck();
+      return;
+    }
+    this.cdr.markForCheck();
+
+    this.assistant
+      .uploadStatement(file)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: summary => {
+          card.attachment = { fileName: file.name, status: 'ready', summary };
+          this.activeAttachment = summary;
+          this.shouldScroll = true;
+          this.cdr.markForCheck();
+        },
+        error: (err: unknown) => {
+          const detail = err instanceof HttpErrorResponse && typeof err.error?.detail === 'string'
+            ? err.error.detail
+            : 'No pude leer el archivo. Probá de nuevo en unos minutos.';
+          card.attachment = { fileName: file.name, status: 'error', error: detail };
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  formatArs(value: number): string {
+    return `$ ${value.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
+  }
+
+  detachAttachment(): void {
+    this.activeAttachment = null;
+    this.cdr.markForCheck();
   }
 
   askSuggestion(text: string): void {
@@ -309,6 +371,7 @@ export class AssistantBubbleComponent implements AfterViewChecked {
   clear(): void {
     this.stop();
     this.messages = [];
+    this.activeAttachment = null;
     this.draft = '';
     this.feedbackCommentFor = null;
     this.feedbackComment = '';

@@ -27,6 +27,7 @@ import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 
+const PAYMENT_METHOD_TRANSFER = 2;
 const PAYMENT_METHOD_CARD = 3;
 const PAYMENT_METHOD_CHECK = 4;
 
@@ -70,6 +71,7 @@ export class CustomerAccountComponent implements OnInit {
 
   // Tarjeta
   newCardBankId: number | null = null;
+  newTransferBankId: number | null = null;
   newCardCuotas: number | null = null;
 
   // Cheque recibido del cliente (se crea, entra a cartera)
@@ -231,8 +233,24 @@ export class CustomerAccountComponent implements OnInit {
     return this.newMethod === PAYMENT_METHOD_CARD;
   }
 
+  get isTransferMethod(): boolean {
+    return this.newMethod === PAYMENT_METHOD_TRANSFER;
+  }
+
   get isChequeMethod(): boolean {
     return this.newMethod === PAYMENT_METHOD_CHECK;
+  }
+
+  // ── Transferencia: banco receptor (para conciliar contra el extracto) ──
+  get transferBankOptions(): SearchableSelectOption[] {
+    return this.banks
+      .filter(b => b.active && b.useForTransfer)
+      .map(b => ({ value: b.id, label: b.name }));
+  }
+
+  onTransferBankChange(bankId: number | null): void {
+    this.newTransferBankId = bankId;
+    this.cdr.markForCheck();
   }
 
   // ── Tarjeta ────────────────────────────────────────────────
@@ -293,6 +311,7 @@ export class CustomerAccountComponent implements OnInit {
   onMethodChange(method: number): void {
     this.newMethod = method;
     this.newCardBankId = null;
+    this.newTransferBankId = null;
     this.newCardCuotas = null;
     this.newCheque = this.emptyCheque();
     this.cdr.markForCheck();
@@ -320,6 +339,8 @@ export class CustomerAccountComponent implements OnInit {
     if (this.addingPayment || this.newAmount <= 0 || !this.newDate) return false;
     if (this.isCardMethod && (!this.newCardBankId || !this.newCardCuotas)) return false;
     if (this.isChequeMethod && !this.isChequeComplete) return false;
+    // Obligatorio solo si la empresa tiene bancos de transferencia: si no, no se puede elegir y bloquearía el cobro.
+    if (this.isTransferMethod && this.transferBankOptions.length > 0 && !this.newTransferBankId) return false;
     return true;
   }
 
@@ -334,6 +355,7 @@ export class CustomerAccountComponent implements OnInit {
       notes: this.newNotes.trim() || null,
       cardBankId: this.isCardMethod ? this.newCardBankId : null,
       cardCuotas: this.isCardMethod ? this.newCardCuotas : null,
+      transferBankId: this.isTransferMethod ? this.newTransferBankId : null,
       cheque: this.isChequeMethod ? {
         ...this.newCheque,
         monto: this.newAmount,
@@ -660,6 +682,7 @@ export class CustomerAccountComponent implements OnInit {
     this.newReference = '';
     this.newNotes = '';
     this.newCardBankId = null;
+    this.newTransferBankId = null;
     this.newCardCuotas = null;
     this.newCheque = this.emptyCheque();
   }
