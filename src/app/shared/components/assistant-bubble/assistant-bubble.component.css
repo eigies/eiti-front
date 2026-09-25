@@ -948,8 +948,11 @@ button {
 }
 
 .assistant-composer textarea::placeholder {
+  overflow: hidden;
   color: var(--text-mute);
   opacity: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .assistant-send {
