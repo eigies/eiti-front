@@ -68,6 +68,8 @@ export interface AddCustomerPaymentRequest {
   notes?: string | null;
   cardBankId?: number | null;
   cardCuotas?: number | null;
+  /** Banco o billetera que recibió la transferencia (se usa para conciliar extractos). */
+  transferBankId?: number | null;
   cheque?: AddCustomerPaymentCheque | null;
 }
 
