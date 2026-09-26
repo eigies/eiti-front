@@ -261,6 +261,7 @@
             <div *ngIf="createCustomerId" class="customer-selected-chip">
               Cliente asignado: <strong>{{ createCustomerQuery }}</strong>
             </div>
+            <span class="field__error" role="alert" *ngIf="createInvoicingIssue as issue">{{ issue }}</span>
           </div>
 
           <app-sale-payment-inline

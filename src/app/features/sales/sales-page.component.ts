@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SaleInvoicingStatus, SALE_SOURCE_CHANNELS, fiscalNumberLabel, saleInvoicingStatusLabel } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SaleInvoicingStatus, SALE_SOURCE_CHANNELS, fiscalNumberLabel, invoicingCustomerIssue, saleInvoicingStatusLabel } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -132,6 +132,8 @@ export class SalesPageComponent implements OnInit {
     createProductModalOpen = false;
     createPickerRows: ProductPickerRow[] = [];
     createCustomerId: string | null = null;
+    /** Cliente elegido en el alta; hace falta su condicion de IVA y CUIT para validar la factura. */
+    createCustomer: CustomerSearchItem | null = null;
     createCustomerQuery = '';
     createCustomerSuggestions: CustomerSearchItem[] = [];
     showCreateCustomerResults = false;
@@ -599,15 +601,22 @@ export class SalesPageComponent implements OnInit {
         this.addItem(this.editLineForm, this.editItems);
     }
 
+    /** Motivo por el que no se puede facturar al cliente elegido, si se pidio factura. */
+    get createInvoicingIssue(): string | null {
+        return this.lineForm.get('requestInvoicing')?.value ? invoicingCustomerIssue(this.createCustomer) : null;
+    }
+
     handleCreateCustomerInput(query: string): void {
     this.createCustomerQuery = query;
     this.createCustomerId = null;
+    this.createCustomer = null;
     this.showCreateCustomerResults = true;
     this.customerSearch$.next(query);
 }
 
 selectCreateCustomer(customer: CustomerSearchItem): void {
     this.createCustomerId = customer.id;
+    this.createCustomer = customer;
     this.createCustomerQuery = customer.fullName || customer.name || customer.email;
     this.showCreateCustomerResults = false;
     this.createCustomerSuggestions = [];
@@ -615,6 +624,7 @@ selectCreateCustomer(customer: CustomerSearchItem): void {
 
 clearCreateCustomer(): void {
     this.createCustomerId = null;
+    this.createCustomer = null;
     this.createCustomerQuery = '';
     this.createCustomerSuggestions = [];
     this.showCreateCustomerResults = false;
@@ -646,6 +656,8 @@ submitQuickCreateCustomer(): void {
             this.quickCreateCustomerSaving = false;
             this.quickCreateCustomerOpen = false;
             this.createCustomerId = customer.id;
+            // El alta rapida no carga condicion de IVA: queda como Consumidor Final.
+            this.createCustomer = null;
             this.createCustomerQuery = customer.fullName || customer.name || name;
             this.quickCreateCustomerName = '';
             this.quickCreateCustomerPhone = '';
@@ -742,6 +754,14 @@ if (!await this.validatePaymentState(this.lineForm, this.draftTotal, this.create
     return;
 }
 
+// Se corta antes de crear la venta: si no, queda guardada con la factura rechazada.
+const invoicingIssue = this.createInvoicingIssue;
+if (invoicingIssue) {
+    this.activeCreateStage = 'payment';
+    this.toast.error(invoicingIssue);
+    return;
+}
+
 this.saving = true;
 this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId, this.createAutoSurcharge)).subscribe({
     next: (response) => {
@@ -756,6 +776,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.createProductModalOpen = false;
         this.createPickerRows = [];
         this.createCustomerId = null;
+        this.createCustomer = null;
         this.createCustomerQuery = '';
         this.createCustomerSuggestions = [];
         this.showCreateCustomerResults = false;

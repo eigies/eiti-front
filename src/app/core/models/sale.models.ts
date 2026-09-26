@@ -42,6 +42,47 @@ export function saleInvoicingStatusLabel(status: SaleInvoicingStatus | null | un
     }
 }
 
+/** Datos del cliente que pide ARCA para facturar; mismos criterios que SaleInvoicingReceiverRules del back. */
+export interface InvoicingCustomer {
+    fullName?: string | null;
+    name?: string | null;
+    taxId?: string | null;
+    ivaCondition?: number | null;
+}
+
+const IVA_CONDITION_REGISTERED = 1;
+const IVA_CONDITION_MONOTRIBUTE = 2;
+const CUIT_WEIGHTS = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+
+/** 11 digitos con digito verificador modulo 11, el mismo calculo que hace ARCA. */
+export function isValidCuit(value: string | null | undefined): boolean {
+    const digits = (value ?? '').replace(/\D/g, '');
+    if (digits.length !== 11) {
+        return false;
+    }
+    const sum = CUIT_WEIGHTS.reduce((acc, weight, index) => acc + Number(digits[index]) * weight, 0);
+    const raw = 11 - (sum % 11);
+    const expected = raw === 11 ? 0 : raw === 10 ? 9 : raw;
+    return Number(digits[10]) === expected;
+}
+
+/**
+ * Null si se puede facturar al cliente; si no, que dato falta. Sin cliente es Consumidor Final:
+ * se factura siempre (el tope de ARCA para consumidor final lo valida el servicio de facturacion).
+ */
+export function invoicingCustomerIssue(customer: InvoicingCustomer | null | undefined): string | null {
+    const condition = customer?.ivaCondition;
+    if (!customer || (condition !== IVA_CONDITION_REGISTERED && condition !== IVA_CONDITION_MONOTRIBUTE)) {
+        return null;
+    }
+    const name = customer.fullName || customer.name || 'el cliente';
+    const label = condition === IVA_CONDITION_REGISTERED ? 'Responsable Inscripto' : 'Monotributista';
+    if (!(customer.taxId ?? '').replace(/\D/g, '')) {
+        return `Para facturar a ${name} (${label}) hay que cargar su CUIT en la ficha del cliente.`;
+    }
+    return isValidCuit(customer.taxId) ? null : `El CUIT de ${name} no es válido. Revisalo en la ficha del cliente.`;
+}
+
 /** Numero de comprobante con el formato de AFIP: 00003-00001045. */
 export function fiscalNumberLabel(pointOfSale: number | null | undefined, number: number | null | undefined): string {
     if (pointOfSale === null || pointOfSale === undefined || number === null || number === undefined) {
