@@ -648,7 +648,8 @@
               <small *ngIf="sale.isCuentaCorriente">Cuenta corriente</small>
               <span class="chip chip--invoicing"
                     *ngIf="(sale.invoicingStatus ?? 1) !== 1"
-                    [ngClass]="invoicingChipClass(sale)">{{ invoicingChipLabel(sale) }}</span>
+                    [ngClass]="invoicingChipClass(sale)"
+                    [title]="invoicingChipLabel(sale)">{{ invoicingChipShortLabel(sale) }}</span>
             </div>
 
             <div class="sale-card__delivery">
@@ -744,20 +745,20 @@
               </div>
 
               <div class="invoicing-bar__actions">
-                <button class="btn btn--ghost btn--sm"
+                <button class="invoicing-bar__btn"
                         type="button"
                         *ngIf="canTriggerInvoicing(sale)"
                         [disabled]="invoicingSaleId === sale.id"
                         (click)="invoiceSale(sale)">
                   {{ invoicingSaleId === sale.id ? invoiceActionBusyLabel(sale) : invoiceActionLabel(sale) }}
                 </button>
-                <button class="btn btn--ghost btn--sm"
+                <button class="invoicing-bar__btn"
                         type="button"
                         *ngIf="canDownloadInvoice(sale)"
                         (click)="downloadInvoicePdf(sale)">
                   Descargar factura
                 </button>
-                <button class="btn btn--ghost btn--sm"
+                <button class="invoicing-bar__btn"
                         type="button"
                         *ngIf="canDownloadCreditNote(sale)"
                         (click)="downloadCreditNotePdf(sale)">

@@ -1770,6 +1770,11 @@ if (form === this.editLineForm) {
         return saleInvoicingStatusLabel(status as SaleInvoicingStatus);
     }
 
+    /** Version corta para la columna de estado: el numero completo va en el tooltip y en la barra de facturacion. */
+    invoicingChipShortLabel(sale: SaleResponse): string {
+        return saleInvoicingStatusLabel((sale.invoicingStatus ?? 1) as SaleInvoicingStatus);
+    }
+
     invoicingChipClass(sale: SaleResponse): string {
         switch (sale.invoicingStatus ?? 1) {
             case 2: return 'chip--invoicing-progress';

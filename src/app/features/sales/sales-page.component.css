@@ -2692,7 +2692,11 @@
 
 .sale-card__status .chip {
     width: max-content;
+    max-width: 100%;
     margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .sale-card__amount-block {
@@ -3092,7 +3096,40 @@
 }
 
 .chip--invoicing-voided {
-    background: color-mix(in srgb, var(--text-dim) 16%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-dim) 45%, transparent);
-    text-decoration: line-through;
+    background: color-mix(in srgb, #b39ddb 20%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #b39ddb 56%, transparent);
+    color: var(--text);
+}
+
+/* Mismo lenguaje que "Ver/Ocultar" de la tarjeta: borde y texto plenos, para que no parezcan deshabilitados. */
+.invoicing-bar__btn {
+    min-height: 34px;
+    padding: .5rem .8rem;
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .64rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.invoicing-bar__btn:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--amber) 40%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 10%, var(--bg));
+    transform: translateY(-1px);
+}
+
+.invoicing-bar__btn:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--amber) 72%, white);
+    outline-offset: 2px;
+}
+
+.invoicing-bar__btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
 }
