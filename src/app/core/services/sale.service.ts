@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, InvoiceSaleResponse, SaleByIdResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
+import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, InvoiceSaleResponse, SaleByIdResponse, SaleInvoicePrintResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -68,11 +68,16 @@ export class SaleService {
     }
 
     /**
-     * El PDF sale por la API de EITI, no por el servicio fiscal: ese endpoint exige la API key
-     * de servicio y el navegador no la tiene (ni debe tenerla).
+     * Datos para armar el PDF de la factura con el diseno de EITI (InvoicePdfService).
+     * Salen por la API de EITI, no por el servicio fiscal: ese exige la API key de servicio.
      */
-    downloadInvoicePdf(id: string): Observable<Blob> {
-        return this.http.get(`${this.base}/${id}/invoice/pdf`, { responseType: 'blob' });
+    getInvoicePrint(id: string): Observable<SaleInvoicePrintResponse> {
+        return this.http.get<SaleInvoicePrintResponse>(`${this.base}/${id}/invoice/print`);
+    }
+
+    /** Idem para la nota de credito que anulo la factura. */
+    getCreditNotePrint(id: string): Observable<SaleInvoicePrintResponse> {
+        return this.http.get<SaleInvoicePrintResponse>(`${this.base}/${id}/credit-note/print`);
     }
 
     getTransport(id: string): Observable<SaleTransportResponse> {

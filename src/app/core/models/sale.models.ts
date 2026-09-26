@@ -50,6 +50,80 @@ export function fiscalNumberLabel(pointOfSale: number | null | undefined, number
     return `${String(pointOfSale).padStart(5, '0')}-${String(number).padStart(8, '0')}`;
 }
 
+/**
+ * Datos para imprimir la factura o la nota de credito con el diseno de EITI.
+ * Comprobante, emisor, receptor, importes y asociado son los que autorizo ARCA;
+ * items, ajustes, domicilio y condicion de venta salen de la venta.
+ * Los precios de los items vienen CON IVA incluido, como se vendieron.
+ */
+export interface SaleInvoicePrintResponse {
+    kind: 'invoice' | 'creditNote';
+    letter: 'A' | 'B';
+    typeCode: number;
+    title: string;
+    pointOfSale: number;
+    number: number;
+    date: string;
+    authorizationCode: string;
+    authorizationExpiry: string;
+    qrUrl: string;
+    isVoided: boolean;
+    issuer: SaleInvoicePrintIssuer;
+    receiver: SaleInvoicePrintReceiver;
+    associatedDocument?: SaleInvoicePrintAssociatedDocument | null;
+    saleCode: string;
+    saleCondition: string;
+    vatRate: number;
+    items: SaleInvoicePrintItem[];
+    adjustments: SaleInvoicePrintAdjustments;
+    amounts: SaleInvoicePrintAmounts;
+}
+
+export interface SaleInvoicePrintIssuer {
+    legalName: string;
+    cuit: string;
+    vatCondition: string;
+    iibb?: string | null;
+    activityStartDate: string;
+    commercialAddress?: string | null;
+    branchName?: string | null;
+}
+
+export interface SaleInvoicePrintReceiver {
+    name: string;
+    vatCondition: string;
+    identification?: string | null;
+}
+
+export interface SaleInvoicePrintAssociatedDocument {
+    label: string;
+    pointOfSale: number;
+    number: number;
+    date: string;
+}
+
+export interface SaleInvoicePrintItem {
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    discountPercent: number;
+    total: number;
+}
+
+export interface SaleInvoicePrintAdjustments {
+    itemsSubtotal: number;
+    noDeliverySurcharge: number;
+    generalDiscountPercent: number;
+    agreedPrice?: number | null;
+}
+
+export interface SaleInvoicePrintAmounts {
+    net: number;
+    vat: { rate: number; base: number; amount: number }[];
+    exempt: number;
+    total: number;
+}
+
 export interface CreateSaleRequest {
     branchId: string;
     customerId?: string | null;

@@ -228,7 +228,8 @@ export class PdfBrandingService {
     return canvas.toDataURL('image/png');
   }
 
-  private drawContainedImage(doc: jsPDF, image: PreparedPdfImage, x: number, y: number, maxWidth: number, maxHeight: number): void {
+  /** Dibuja la imagen dentro de la caja, sin deformarla y centrada. Lo usa también el comprobante fiscal. */
+  drawContainedImage(doc: jsPDF, image: PreparedPdfImage, x: number, y: number, maxWidth: number, maxHeight: number): void {
     const ratio = image.width / image.height;
     let width = maxWidth;
     let height = width / ratio;

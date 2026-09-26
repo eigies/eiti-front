@@ -30,6 +30,7 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
+import { InvoicePdfService } from '../../shared/services/invoice-pdf.service';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
@@ -204,6 +205,7 @@ export class SalesPageComponent implements OnInit {
         private onboardingService: OnboardingService,
         private bankService: BankService,
         private remitoPdf: RemitoPdfService,
+        private invoicePdf: InvoicePdfService,
         private router: Router,
         public auth: AuthService
     ) {
@@ -1844,18 +1846,24 @@ if (form === this.editLineForm) {
         });
     }
 
+    /** La venta anulada tiene su nota de credito autorizada: se puede descargar. */
+    canDownloadCreditNote(sale: SaleResponse): boolean {
+        return (sale.invoicingStatus ?? 1) === 5;
+    }
+
     downloadInvoicePdf(sale: SaleResponse): void {
-        this.saleService.downloadInvoicePdf(sale.id).subscribe({
-            next: blob => {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
-                link.download = number ? `comprobante-${number}.pdf` : `comprobante-${sale.id}.pdf`;
-                link.click();
-                URL.revokeObjectURL(url);
-            },
-            error: () => this.toast.error('No se pudo descargar el comprobante.')
+        this.saleService.getInvoicePrint(sale.id).subscribe({
+            next: print => this.invoicePdf.generate(print)
+                .catch(() => this.toast.error('No se pudo generar el PDF de la factura.')),
+            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la factura.')
+        });
+    }
+
+    downloadCreditNotePdf(sale: SaleResponse): void {
+        this.saleService.getCreditNotePrint(sale.id).subscribe({
+            next: print => this.invoicePdf.generate(print)
+                .catch(() => this.toast.error('No se pudo generar el PDF de la nota de crédito.')),
+            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la nota de crédito.')
         });
     }
 

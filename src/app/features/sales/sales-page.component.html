@@ -736,7 +736,8 @@
               <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, 1)" [disabled]="saleDetailPage(sale.id) >= totalSaleDetailPages(sale)">→</button>
             </div>
 
-            <div class="invoicing-bar" *ngIf="canInvoice">
+            <!-- La tarjeta entera pliega/despliega con un click: las acciones de facturacion no deben cerrarla. -->
+            <div class="invoicing-bar" *ngIf="canInvoice" (click)="$event.stopPropagation()">
               <div class="invoicing-bar__state">
                 <span class="invoicing-bar__label">Facturacion</span>
                 <span class="chip chip--invoicing" [ngClass]="invoicingChipClass(sale)">{{ invoicingChipLabel(sale) }}</span>
@@ -754,7 +755,13 @@
                         type="button"
                         *ngIf="canDownloadInvoice(sale)"
                         (click)="downloadInvoicePdf(sale)">
-                  Descargar comprobante
+                  Descargar factura
+                </button>
+                <button class="btn btn--ghost btn--sm"
+                        type="button"
+                        *ngIf="canDownloadCreditNote(sale)"
+                        (click)="downloadCreditNotePdf(sale)">
+                  Descargar nota de crédito
                 </button>
               </div>
             </div>
