@@ -33,7 +33,12 @@
                 <button type="button" class="branch-card__summary" (click)="toggleBranch(item.branch.id)">
                     <div class="branch-card__headline">
                         <strong>{{ item.branch.name }}</strong>
-                        <span class="branch-card__code">{{ item.branch.code || 'Sin codigo' }}</span>
+                        <span class="branch-card__tags">
+                            <span class="branch-card__invoicing"
+                                [class.branch-card__invoicing--auto]="branchInvoicesAutomatically(item.branch) === true"
+                                [title]="'Facturación ' + branchInvoicingOrigin(item.branch)">{{ branchInvoicingLabel(item.branch) }}</span>
+                            <span class="branch-card__code">{{ item.branch.code || 'Sin codigo' }}</span>
+                        </span>
                     </div>
                     <div class="branch-card__metrics" *ngIf="canViewFinancials">
                         <span class="branch-metric">
@@ -60,6 +65,10 @@
                         <div class="branch-detail">
                             <span class="branch-detail__label">Direccion</span>
                             <strong>{{ item.branch.address || 'Sin direccion' }}</strong>
+                        </div>
+                        <div class="branch-detail">
+                            <span class="branch-detail__label">Facturacion</span>
+                            <strong>{{ branchInvoicingLabel(item.branch) }} · {{ branchInvoicingOrigin(item.branch) }}</strong>
                         </div>
                         <div class="branch-detail">
                             <span class="branch-detail__label">Creada</span>

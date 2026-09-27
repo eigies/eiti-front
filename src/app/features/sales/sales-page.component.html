@@ -261,7 +261,12 @@
             <div *ngIf="createCustomerId" class="customer-selected-chip">
               Cliente asignado: <strong>{{ createCustomerQuery }}</strong>
             </div>
-            <span class="field__error" role="alert" *ngIf="createInvoicingIssue as issue">{{ issue }}</span>
+            <ng-container *ngIf="createInvoicingIssue as issue">
+              <span class="field__error" role="alert" *ngIf="createInvoicingRequested">{{ issue }}</span>
+              <span class="field__warning" role="status" *ngIf="!createInvoicingRequested">
+                Esta sucursal factura automáticamente. {{ issue }} Si confirmás así, la venta se guarda y la factura queda rechazada.
+              </span>
+            </ng-container>
           </div>
 
           <app-sale-payment-inline

@@ -601,9 +601,19 @@ export class SalesPageComponent implements OnInit {
         this.addItem(this.editLineForm, this.editItems);
     }
 
-    /** Motivo por el que no se puede facturar al cliente elegido, si se pidio factura. */
+    /** El vendedor tildo "Emitir factura" (solo existe cuando la sucursal no factura sola). */
+    get createInvoicingRequested(): boolean {
+        return this.showInvoicingCheck && Boolean(this.lineForm.get('requestInvoicing')?.value);
+    }
+
+    /** Se sabe que la venta se va a facturar: la sucursal factura sola, o el vendedor lo pidio. */
+    get createWillInvoice(): boolean {
+        return this.automaticInvoicingForSelectedBranch || this.createInvoicingRequested;
+    }
+
+    /** Motivo por el que no se va a poder facturar al cliente elegido, si la venta se va a facturar. */
     get createInvoicingIssue(): string | null {
-        return this.lineForm.get('requestInvoicing')?.value ? invoicingCustomerIssue(this.createCustomer) : null;
+        return this.createWillInvoice ? invoicingCustomerIssue(this.createCustomer) : null;
     }
 
     handleCreateCustomerInput(query: string): void {
@@ -754,8 +764,10 @@ if (!await this.validatePaymentState(this.lineForm, this.draftTotal, this.create
     return;
 }
 
-// Se corta antes de crear la venta: si no, queda guardada con la factura rechazada.
-const invoicingIssue = this.createInvoicingIssue;
+// Si el vendedor pidio factura se corta antes de crear la venta: si no, queda guardada con la
+// factura rechazada. Con facturacion automatica no se bloquea (el back tampoco): el aviso ya
+// esta a la vista y la factura queda rechazada con el motivo, para reintentar desde la venta.
+const invoicingIssue = this.createInvoicingRequested ? this.createInvoicingIssue : null;
 if (invoicingIssue) {
     this.activeCreateStage = 'payment';
     this.toast.error(invoicingIssue);
@@ -1921,7 +1933,9 @@ if (form === this.editLineForm) {
         sourceChannel: (rawChannel !== null && rawChannel !== '' && rawChannel !== undefined) ? Number(rawChannel) as SaleSourceChannel : null,
         deliveryAddress: raw.deliveryAddress || null,
         contactPhone: (raw.contactPhone || '').trim() || null,
-        requestInvoicing: Boolean(raw.requestInvoicing),
+        // Con la sucursal en automatico el check no se ve: un valor que quedo tildado de otra
+        // sucursal no tiene que viajar (el back lo tomaria como pedido explicito y bloquearia).
+        requestInvoicing: this.showInvoicingCheck && Boolean(raw.requestInvoicing),
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,

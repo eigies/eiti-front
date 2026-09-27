@@ -2963,6 +2963,14 @@
     line-height: 1.4;
 }
 
+/* Aviso que no bloquea: mismo formato que el error, en el tono de acento. */
+.field__warning {
+    color: color-mix(in srgb, var(--amber) 78%, var(--text));
+    font-family: 'DM Mono', monospace;
+    font-size: .65rem;
+    line-height: 1.4;
+}
+
 .filters {
     gap: .75rem;
     padding: .85rem;

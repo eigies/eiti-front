@@ -5,6 +5,7 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { Router } from '@angular/router';
 import { BranchResponse, TransferTargetResponse } from '../../core/models/branch.models';
 import { BranchService } from '../../core/services/branch.service';
+import { CompanyService } from '../../core/services/company.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingStatusResponse } from '../../core/models/onboarding.models';
@@ -53,6 +54,8 @@ export class BranchesComponent implements OnInit {
   transferTargets: TransferTargetResponse[] = [];
   transferStockLoading = false;
   deletingBranchId: string | null = null;
+  /** Config de la empresa, para resolver las sucursales que heredan. Null = todavia no se sabe. */
+  companyAutomaticInvoicing: boolean | null = null;
   private sourceAvailableById = new Map<string, number>();
 
   private readonly destroyRef = inject(DestroyRef);
@@ -67,7 +70,8 @@ export class BranchesComponent implements OnInit {
     private readonly productService: ProductService,
     private readonly stockService: StockService,
     private readonly confirmation: ConfirmationService,
-    private readonly stockTransferPdf: StockTransferPdfService
+    private readonly stockTransferPdf: StockTransferPdfService,
+    private readonly companyService: CompanyService
   ) {
     this.createForm = this.fb.group({
       name: ['', Validators.required],
@@ -92,6 +96,7 @@ export class BranchesComponent implements OnInit {
   ngOnInit(): void {
     this.refreshOnboarding();
     this.loadBranches();
+    this.loadCompanyInvoicing();
 
     if (this.canTransferStock) {
       this.loadProducts();
@@ -309,6 +314,35 @@ export class BranchesComponent implements OnInit {
 
   get isOnboardingFocusLocked(): boolean {
     return this.isOnboardingStep && !this.onboardingService.isStepAccepted('Branch');
+  }
+
+  /** Facturacion efectiva: la sucursal manda si definio un valor, si no hereda de la empresa. */
+  branchInvoicesAutomatically(branch: BranchResponse): boolean | null {
+    return branch.automaticInvoicing ?? this.companyAutomaticInvoicing;
+  }
+
+  branchInvoicingLabel(branch: BranchResponse): string {
+    const automatic = this.branchInvoicesAutomatically(branch);
+    if (automatic === null) {
+      return 'Factura según empresa';
+    }
+    return automatic ? 'Factura automática' : 'Factura manual';
+  }
+
+  branchInvoicingOrigin(branch: BranchResponse): string {
+    return branch.automaticInvoicing === null || branch.automaticInvoicing === undefined
+      ? 'heredada de la empresa'
+      : 'definida en la sucursal';
+  }
+
+  private loadCompanyInvoicing(): void {
+    // Dato secundario: si no se puede leer, las sucursales que heredan muestran "segun empresa".
+    this.companyService.getCurrentCompany()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: company => this.companyAutomaticInvoicing = Boolean(company.automaticInvoicing),
+        error: () => this.companyAutomaticInvoicing = null
+      });
   }
 
   loadBranches(expandBranchId?: string): void {
