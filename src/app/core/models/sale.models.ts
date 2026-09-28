@@ -110,6 +110,13 @@ export function invoicingCustomerIssue(customer: InvoicingCustomer | null | unde
     return isValidCuit(customer.taxId) ? null : `El CUIT de ${name} no es válido. Revisalo en la ficha del cliente.`;
 }
 
+/** "invoiceA" -> "Factura A". El tipo viene del servicio de facturacion en camelCase. */
+export function fiscalDocumentLabel(documentType: string | null | undefined): string {
+    const letter = (documentType ?? '').slice(-1).toUpperCase();
+    const kind = (documentType ?? '').startsWith('creditNote') ? 'Nota de credito' : 'Factura';
+    return letter === 'A' || letter === 'B' || letter === 'C' ? `${kind} ${letter}` : kind;
+}
+
 /** Numero de comprobante con el formato de AFIP: 00003-00001045. */
 export function fiscalNumberLabel(pointOfSale: number | null | undefined, number: number | null | undefined): string {
     if (pointOfSale === null || pointOfSale === undefined || number === null || number === undefined) {
@@ -218,6 +225,16 @@ export interface CreateSaleDetailRequest {
     discountPercent?: number;
 }
 
+/** Como termino el pedido de factura hecho al crear la venta. */
+export interface CreateSaleInvoicingResult {
+    status: SaleInvoicingStatus;
+    statusName: string;
+    documentType?: string | null;
+    pointOfSale?: number | null;
+    number?: number | null;
+    message?: string | null;
+}
+
 export interface SaleResponse {
     id: string;
     code?: string | null;
@@ -264,6 +281,11 @@ export interface SaleResponse {
     payments?: SalePaymentResponse[];
     tradeIns?: SaleTradeInResponse[];
     details: SaleDetailResponse[];
+}
+
+/** Respuesta del alta: la venta mas como termino la factura, si se facturo. */
+export interface CreateSaleResponse extends SaleResponse {
+    invoicing?: CreateSaleInvoicingResult | null;
 }
 
 export interface SaleDetailResponse {

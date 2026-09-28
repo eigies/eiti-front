@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SaleInvoicingStatus, SALE_SOURCE_CHANNELS, fiscalNumberLabel, invoicingCustomerIssue, InvoiceLetter, saleInvoicingStatusLabel, suggestedInvoiceLetter } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SaleInvoicingStatus, SALE_SOURCE_CHANNELS, CreateSaleResponse, fiscalDocumentLabel, fiscalNumberLabel, invoicingCustomerIssue, InvoiceLetter, saleInvoicingStatusLabel, suggestedInvoiceLetter } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -614,6 +614,31 @@ export class SalesPageComponent implements OnInit {
         this.addItem(this.editLineForm, this.editItems);
     }
 
+    /**
+     * Aviso final del alta: si se facturo, dice como termino. El vendedor tiene que enterarse ahi
+     * mismo de un rechazo, no cuando abre la venta.
+     */
+    private notifySaleCreated(response: CreateSaleResponse): void {
+        const sale = response.code ? `Venta ${response.code} creada` : 'Venta creada';
+        const invoicing = response.invoicing;
+        if (!invoicing) {
+            this.toast.success(sale);
+            return;
+        }
+        switch (invoicing.status) {
+            case 3: {
+                const number = fiscalNumberLabel(invoicing.pointOfSale, invoicing.number);
+                this.toast.success(`${sale} · ${fiscalDocumentLabel(invoicing.documentType)}${number ? ' ' + number : ''}`);
+                return;
+            }
+            case 4:
+                this.toast.show(`${sale} · la factura fue rechazada: ${invoicing.message || 'sin motivo informado'}`, 'error', 9000);
+                return;
+            default:
+                this.toast.show(`${sale} · la factura quedó en trámite y se completa sola`, 'info', 6000);
+        }
+    }
+
     /** El vendedor tildo "Emitir factura" (solo existe cuando la sucursal no factura sola). */
     get createInvoicingRequested(): boolean {
         return this.showInvoicingCheck && Boolean(this.lineForm.get('requestInvoicing')?.value);
@@ -837,7 +862,7 @@ if (invoicingIssue) {
 this.saving = true;
 this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId, this.createAutoSurcharge)).subscribe({
     next: (response) => {
-        this.toast.success('Venta creada');
+        this.notifySaleCreated(response);
         if ((response?.changeAmount ?? 0) > 0) {
             this.toast.show(`Vuelto a entregar: $${response.changeAmount!.toFixed(2)}`, 'info');
         }

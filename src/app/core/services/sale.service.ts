@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, InvoiceSaleResponse, SaleByIdResponse, SaleInvoicePrintResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
+import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, CreateSaleResponse, InvoiceSaleResponse, SaleByIdResponse, SaleInvoicePrintResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -11,8 +11,8 @@ export class SaleService {
 
     constructor(private http: HttpClient) { }
 
-    createSale(request: CreateSaleRequest): Observable<SaleResponse> {
-        return this.http.post<SaleResponse>(this.base, request);
+    createSale(request: CreateSaleRequest): Observable<CreateSaleResponse> {
+        return this.http.post<CreateSaleResponse>(this.base, request);
     }
 
     listSales(filters: {
