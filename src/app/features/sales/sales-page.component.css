@@ -3168,6 +3168,21 @@
     color: var(--text-dim);
 }
 
+/* Anulada con nota de credito: color propio, en gris se perdia. */
+.sale-card__status .sale-invoicing--voided,
+.invoicing-bar__summary.sale-invoicing--voided {
+    color: color-mix(in srgb, #8e7cc3 82%, var(--text));
+}
+
+/* La venta abierta se separa de las vecinas: aire arriba y abajo y un marco suave. */
+.sales-stack .sale-card[aria-expanded="true"] {
+    margin: .6rem .5rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, var(--border));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--amber) 4%, var(--bg-panel));
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .07);
+}
+
 .invoicing-bar {
     display: flex;
     flex-wrap: wrap;
@@ -3200,11 +3215,16 @@
     padding: .3rem .1rem;
     border: 0;
     background: transparent;
-    color: var(--text-dim);
+    color: var(--text);
     font-family: 'DM Mono', monospace;
-    font-size: .7rem;
+    font-size: .72rem;
+    font-weight: 600;
     cursor: pointer;
     transition: color .16s ease;
+}
+
+.invoicing-bar__link svg {
+    color: var(--amber);
 }
 
 .invoicing-bar__link svg {
@@ -3218,7 +3238,7 @@
 }
 
 .invoicing-bar__link:hover:not(:disabled) {
-    color: var(--text);
+    color: var(--amber);
 }
 
 .invoicing-bar__link--primary {

@@ -1905,12 +1905,13 @@ if (form === this.editLineForm) {
         }
     }
 
-    /** Solo el color del texto: verde vigente, ambar en tramite, rojo rechazada, gris anulada o sin facturar. */
+    /** Solo el color del texto: verde vigente, ambar en tramite, rojo rechazada, violeta anulada, gris sin facturar. */
     invoicingToneClass(sale: SaleResponse): string {
         switch (sale.invoicingStatus ?? 1) {
             case 2: return 'sale-invoicing--progress';
             case 3: return 'sale-invoicing--done';
             case 4: return 'sale-invoicing--rejected';
+            case 5: return 'sale-invoicing--voided';
             default: return 'sale-invoicing--muted';
         }
     }
