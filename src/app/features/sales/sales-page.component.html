@@ -568,11 +568,11 @@
             </span>
             <span class="filters__more-copy">
               <strong>Más filtros</strong>
-              <small>Transporte, teléfono y dirección</small>
+              <small>Facturación, producto, transporte, teléfono y dirección</small>
             </span>
             <span
               class="filters__active"
-              *ngIf="filterForm.get('transportStatus')?.value || filterForm.get('phone')?.value || filterForm.get('deliveryAddress')?.value">
+              *ngIf="filterForm.get('invoicingStatus')?.value || filterForm.get('productId')?.value || filterForm.get('transportStatus')?.value || filterForm.get('phone')?.value || filterForm.get('deliveryAddress')?.value">
               Activos
             </span>
             <svg class="filters__more-chevron" viewBox="0 0 24 24" aria-hidden="true">
@@ -581,6 +581,32 @@
           </summary>
 
           <div class="filters__secondary">
+            <label class="field">
+              <span class="field__label">Facturación</span>
+              <app-searchable-select
+                formControlName="invoicingStatus"
+                [options]="invoicingFilterOptions"
+                [allowClear]="true"
+                clearLabel="Todas"
+                clearValue=""
+                placeholder="Todas"
+                searchPlaceholder="Buscar estado...">
+              </app-searchable-select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Producto</span>
+              <app-searchable-select
+                formControlName="productId"
+                [options]="productFilterOptions"
+                [allowClear]="true"
+                clearLabel="Todos"
+                clearValue=""
+                placeholder="Todos"
+                searchPlaceholder="Buscar producto...">
+              </app-searchable-select>
+            </label>
+
             <label class="field">
               <span class="field__label">Transporte</span>
               <app-searchable-select

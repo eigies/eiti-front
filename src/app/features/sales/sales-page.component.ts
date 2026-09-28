@@ -183,6 +183,16 @@ export class SalesPageComponent implements OnInit {
         { value: 2, label: 'Pagada' },
         { value: 3, label: 'Cancelada' }
     ];
+    /** Mismos estados que la linea de facturacion del listado. */
+    readonly invoicingFilterOptions: SearchableSelectOption[] = [
+        { value: 1, label: 'Sin facturar' },
+        { value: 3, label: 'Facturada' },
+        { value: 2, label: 'En trámite' },
+        { value: 4, label: 'Rechazada' },
+        { value: 5, label: 'Anulada' }
+    ];
+    /** Se arma una vez al cargar productos: como getter se recalcularia en cada ciclo de deteccion. */
+    productFilterOptions: SearchableSelectOption[] = [];
     readonly transportStatusOptions: SearchableSelectOption[] = [
         { value: 'pending', label: 'Pendiente' },
         { value: '1', label: 'Asignado' },
@@ -255,7 +265,7 @@ export class SalesPageComponent implements OnInit {
             notes: ['']
         });
         const today = localDateString();
-        this.filterForm = this.fb.group({ dateFrom: [today], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], code: [''], phone: [''], deliveryAddress: [''] });
+        this.filterForm = this.fb.group({ dateFrom: [today], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], code: [''], phone: [''], deliveryAddress: [''], invoicingStatus: [''], productId: [''] });
     }
 
     ngOnInit(): void {
@@ -934,6 +944,14 @@ loadSales(): void {
                     (sale.customerPhone || '').replace(/\D/g, '').includes(phoneQuery) ||
                     (sale.contactPhone || '').replace(/\D/g, '').includes(phoneQuery)
                 );
+            }
+            const invoicingStatus = this.optionalNumber(this.filterForm.get('invoicingStatus')?.value);
+            if (invoicingStatus) {
+                filtered = filtered.filter(sale => (sale.invoicingStatus ?? 1) === invoicingStatus);
+            }
+            const productId = this.filterForm.get('productId')?.value;
+            if (productId) {
+                filtered = filtered.filter(sale => sale.details.some(detail => detail.productId === productId));
             }
             const addressQuery = (this.filterForm.get('deliveryAddress')?.value || '').trim().toLowerCase();
             if (addressQuery) {
@@ -1638,7 +1656,7 @@ applySaleFilters(): void {
 
 clearSaleFilters(): void {
     const today = localDateString();
-    this.filterForm.reset({ dateFrom: today, dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', code: '', phone: '', deliveryAddress: '' });
+    this.filterForm.reset({ dateFrom: today, dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', code: '', phone: '', deliveryAddress: '', invoicingStatus: '', productId: '' });
     this.currentSalesPage = 1;
     this.loadSales();
 }
@@ -1680,6 +1698,7 @@ handleDocumentClick(event: MouseEvent): void {
     this.productService.listProducts().subscribe({
         next: products => {
             this.products = [...products].sort((left, right) => this.productLabel(left).localeCompare(this.productLabel(right)));
+            this.productFilterOptions = this.products.map(product => ({ value: product.id, label: this.productLabel(product) }));
             this.loadingProducts = false;
         },
         error: err => {
