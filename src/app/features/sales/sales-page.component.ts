@@ -527,6 +527,12 @@ export class SalesPageComponent implements OnInit {
             case 'remito':
                 this.exportRemitoTraslado(sale);
                 break;
+            case 'invoice':
+                this.downloadInvoicePdf(sale);
+                break;
+            case 'creditNote':
+                this.downloadCreditNotePdf(sale);
+                break;
             case 'whatsapp':
                 this.sendSaleWhatsApp(sale);
                 break;
@@ -1898,6 +1904,12 @@ if (form === this.editLineForm) {
             case 5: return `${this.invoiceKindLabel(sale)} · anulada`;
             default: return 'Sin facturar';
         }
+    }
+
+    /** "Factura A 00001-00000008": el comprobante que descarga el menu de documentos. */
+    invoiceDocumentLabel(sale: SaleResponse): string {
+        const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
+        return number ? `${this.invoiceKindLabel(sale)} ${number}` : this.invoiceKindLabel(sale);
     }
 
     /** Una sola linea con todo lo que hay que saber de la factura de la venta. */
