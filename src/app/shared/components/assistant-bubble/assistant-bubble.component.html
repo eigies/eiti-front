@@ -188,14 +188,16 @@
         <button type="button" (click)="stop()">Detener</button>
       </div>
 
-      <div class="assistant-attached" *ngIf="activeAttachment as a">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 11-8.6 8.6a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4L15.6 7"></path></svg>
-        <span>{{ a.fileName }}</span>
-        <button type="button" (click)="detachAttachment()" aria-label="Quitar el extracto adjunto" title="Quitar">×</button>
+      <div class="assistant-attached-list" *ngIf="activeAttachments.length">
+        <div class="assistant-attached" *ngFor="let a of activeAttachments; trackBy: trackAttachment">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 11-8.6 8.6a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4L15.6 7"></path></svg>
+          <span>{{ a.fileName }}</span>
+          <button type="button" (click)="detachAttachment(a.statementId)" [attr.aria-label]="'Quitar ' + a.fileName" title="Quitar">×</button>
+        </div>
       </div>
 
       <div class="assistant-composer__field">
-        <input #fileInput type="file" class="assistant-file" [accept]="statementAccept" (change)="onFileSelected($event)" tabindex="-1" aria-hidden="true" />
+        <input #fileInput type="file" multiple class="assistant-file" [accept]="statementAccept" (change)="onFileSelected($event)" tabindex="-1" aria-hidden="true" />
         <button
           type="button"
           class="assistant-attach"

@@ -40,7 +40,7 @@ describe('AssistantBubbleComponent · extractos adjuntos', () => {
     const card = component.messages[component.messages.length - 1].attachment!;
     expect(card.status).toBe('ready');
     expect(card.summary).toEqual(SUMMARY);
-    expect(component.activeAttachment?.statementId).toBe(7);
+    expect(component.activeAttachments.map(a => a.statementId)).toEqual([7]);
   });
 
   it('rechaza archivos de más de 10 MB sin subirlos', () => {
@@ -65,7 +65,7 @@ describe('AssistantBubbleComponent · extractos adjuntos', () => {
     const card = component.messages[component.messages.length - 1].attachment!;
     expect(card.status).toBe('error');
     expect(card.error).toBe('No encontré movimientos en el archivo.');
-    expect(component.activeAttachment).toBeNull();
+    expect(component.activeAttachments).toEqual([]);
   });
 
   it('el siguiente mensaje lleva el extracto activo, y deja de llevarlo al quitarlo', () => {
@@ -77,7 +77,7 @@ describe('AssistantBubbleComponent · extractos adjuntos', () => {
     component.send();
     expect(assistant.chat.calls.mostRecent().args[2]).toEqual([7]);
 
-    component.detachAttachment();
+    component.detachAttachment(7);
     component.draft = 'otra cosa';
     component.send();
     expect(assistant.chat.calls.mostRecent().args[2]).toEqual([]);
@@ -95,13 +95,45 @@ describe('AssistantBubbleComponent · extractos adjuntos', () => {
     expect(history).toEqual([{ role: 'user', content: 'conciliá este extracto' }]);
   });
 
-  it('limpiar la conversación suelta el adjunto', () => {
+  it('varias capturas se acumulan y viajan juntas; se pueden quitar de a una', () => {
+    const { component, assistant } = setup();
+    assistant.uploadStatement.and.returnValues(of(SUMMARY), of({ ...SUMMARY, statementId: 8, fileName: 'captura2.jpg' }));
+    component.attachFile(csv());
+    component.attachFile(csv());
+
+    component.draft = 'conciliá las dos del 23/9';
+    component.send();
+    expect(assistant.chat.calls.mostRecent().args[2]).toEqual([7, 8]);
+
+    component.detachAttachment(7);
+    component.draft = 'y solo la segunda';
+    component.send();
+    expect(assistant.chat.calls.mostRecent().args[2]).toEqual([8]);
+  });
+
+  it('elegir varios archivos a la vez los sube todos', () => {
+    const { component, assistant } = setup();
+    assistant.uploadStatement.and.returnValues(of(SUMMARY), of({ ...SUMMARY, statementId: 8 }));
+    const files = new DataTransfer();
+    files.items.add(csv());
+    files.items.add(csv());
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.files = files.files;
+
+    component.onFileSelected({ target: input } as unknown as Event);
+
+    expect(assistant.uploadStatement).toHaveBeenCalledTimes(2);
+    expect(component.activeAttachments.map(a => a.statementId)).toEqual([7, 8]);
+  });
+
+  it('limpiar la conversación suelta los adjuntos', () => {
     const { component, assistant } = setup();
     assistant.uploadStatement.and.returnValue(of(SUMMARY));
     component.attachFile(csv());
 
     component.clear();
 
-    expect(component.activeAttachment).toBeNull();
+    expect(component.activeAttachments).toEqual([]);
   });
 });

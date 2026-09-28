@@ -1234,7 +1234,18 @@ button {
   outline-offset: 2px;
 }
 
-/* El extracto activo viaja con cada mensaje: se muestra encima del campo para que se note. */
+/* Los extractos activos viajan con cada mensaje: se muestran encima del campo para que se note. */
+.assistant-attached-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin-bottom: .45rem;
+}
+
+.assistant-attached-list .assistant-attached {
+  margin-bottom: 0;
+}
+
 .assistant-attached {
   display: inline-flex;
   align-items: center;
