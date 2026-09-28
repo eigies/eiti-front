@@ -501,6 +501,16 @@
         linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, transparent), color-mix(in srgb, var(--bg-soft) 96%, transparent));
 }
 
+/* La animacion de entrada deja un transform aplicado (fill-mode both): cada seccion queda como
+   su propio contexto de apilamiento y las siguientes se pintan encima de las anteriores. Sin esto,
+   el menu de un select (z-index dentro de su seccion) se abre por debajo de la seccion de abajo.
+   La seccion en la que se esta trabajando sube por encima de sus hermanas. */
+.form-section:focus-within,
+.form-section:has(.search-select--open) {
+    position: relative;
+    z-index: 2;
+}
+
 .customer-drawer:not(.customer-drawer--closing) .drawer__head,
 .customer-drawer:not(.customer-drawer--closing) .form-section,
 .customer-drawer:not(.customer-drawer--closing) .form-actions {

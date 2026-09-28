@@ -18,6 +18,11 @@ export class SaleActionsMenuComponent {
     @Input() canEdit = false;
     @Input() canDelete = false;
     @Input() canRemitoAmounts = false;
+    /** Factura y nota de credito en PDF: solo si existen y el usuario puede facturar. */
+    @Input() canDownloadInvoice = false;
+    @Input() canDownloadCreditNote = false;
+    /** "Factura A 00001-00000008": que el menu diga que comprobante se descarga. */
+    @Input() invoiceLabel = 'Factura';
     @Input() canSendWhatsApp = false;
     @Input() paying = false;
     @Input() canceling = false;

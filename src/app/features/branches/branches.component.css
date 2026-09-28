@@ -230,6 +230,35 @@
     letter-spacing: .12em;
 }
 
+.branch-card__tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+}
+
+/* Misma forma que el codigo; la automatica se distingue en verde porque es la que emite sola. */
+.branch-card__invoicing {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: .24rem .52rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--text-dim) 20%, var(--border));
+    background: color-mix(in srgb, var(--text-dim) 7%, transparent);
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+.branch-card__invoicing--auto {
+    border-color: color-mix(in srgb, var(--success) 38%, var(--border));
+    background: color-mix(in srgb, var(--success) 10%, transparent);
+    color: color-mix(in srgb, var(--success) 70%, var(--text));
+}
+
 .branch-card__metrics {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -3,6 +3,8 @@ export interface BranchResponse {
     name: string;
     code?: string | null;
     address?: string | null;
+    /** Override de la config de la empresa. Null = hereda. */
+    automaticInvoicing?: boolean | null;
     salesCount: number;
     cashValue: number;
     createdAt: string;
@@ -13,6 +15,8 @@ export interface CreateBranchRequest {
     name: string;
     code?: string | null;
     address?: string | null;
+    /** Null = hereda la config de la empresa. */
+    automaticInvoicing?: boolean | null;
 }
 
 export interface TransferTargetResponse {

@@ -63,6 +63,17 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z"></path><circle cx="7" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
         <span>Remito de traslado</span>
       </button>
+      <ng-container *ngIf="canDownloadInvoice || canDownloadCreditNote">
+        <span class="sale-actions__group-label">Facturación</span>
+        <button *ngIf="canDownloadInvoice" type="button" (click)="emitAction('invoice', $event)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v5h5M12 11v6m0 0-2.5-2.5M12 17l2.5-2.5"></path></svg>
+          <span>{{ invoiceLabel }}</span>
+        </button>
+        <button *ngIf="canDownloadCreditNote" type="button" (click)="emitAction('creditNote', $event)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v5h5M12 11v6m0 0-2.5-2.5M12 17l2.5-2.5"></path></svg>
+          <span>Nota de crédito</span>
+        </button>
+      </ng-container>
     </div>
   </div>
 

@@ -34,6 +34,7 @@ export interface CreateCustomerRequest {
     documentType?: number | null;
     documentNumber?: string | null;
     taxId?: string | null;
+    ivaCondition?: number | null;
     address?: AddressRequest | null;
 }
 
@@ -53,6 +54,8 @@ export interface CustomerResponse {
     documentTypeName?: string | null;
     documentNumber?: string | null;
     taxId?: string | null;
+    ivaCondition?: number | null;
+    ivaConditionName?: string | null;
     addressId?: string | null;
     address?: AddressResponse | null;
     createdAt: string;
@@ -70,6 +73,8 @@ export interface CustomerSearchItem {
     documentTypeName?: string | null;
     documentNumber?: string | null;
     taxId?: string | null;
+    ivaCondition?: number | null;
+    ivaConditionName?: string | null;
     creditBalance: number;
 }
 
@@ -84,6 +89,8 @@ export function toCustomerSearchItem(customer: CustomerResponse): CustomerSearch
         documentTypeName: customer.documentTypeName,
         documentNumber: customer.documentNumber,
         taxId: customer.taxId,
+        ivaCondition: customer.ivaCondition,
+        ivaConditionName: customer.ivaConditionName,
         creditBalance: customer.creditBalance
     };
 }

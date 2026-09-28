@@ -581,6 +581,9 @@
         </div>
       </div>
 
+      <p class="cancel-fiscal" *ngIf="cancelInvoicingNotice as notice"
+         [class.cancel-fiscal--warning]="notice.tone === 'warning'">{{ notice.text }}</p>
+
       <ng-container *ngIf="detalleHasCobros">
         <div class="cancel-paid">
           <span class="cancel-paid__label">Monto ya cobrado</span>

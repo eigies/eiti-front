@@ -1,4 +1,6 @@
 import { of } from 'rxjs';
+import { CompanyService } from '../../../core/services/company.service';
+import { CompanyResponse } from '../../../core/models/company.models';
 import { SalesCcComponent } from './sales-cc.component';
 import { BranchService } from '../../../core/services/branch.service';
 import { CustomerService } from '../../../core/services/customer.service';
@@ -75,13 +77,16 @@ function buildCcComponent() {
   const quoteService = jasmine.createSpyObj<QuoteService>('QuoteService', ['convertQuote']);
   quoteService.convertQuote.and.returnValue(of({ id: 'sale-from-quote' }));
 
-  const toast = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error']);
+  const toast = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'show']);
   const auth = jasmine.createSpyObj<AuthService>('AuthService', ['hasPermission']);
   auth.hasPermission.and.returnValue(true);
 
   const pendingTradeIn = jasmine.createSpyObj<PendingTradeInService>(
     'PendingTradeInService', ['confirmDiscard']);
   pendingTradeIn.confirmDiscard.and.resolveTo(true);
+
+  const companyService = jasmine.createSpyObj<CompanyService>('CompanyService', ['getCurrentCompany']);
+  companyService.getCurrentCompany.and.returnValue(of({ automaticInvoicing: false } as CompanyResponse));
 
   const component = new (SalesCcComponent as any)(
     branchService,
@@ -91,7 +96,8 @@ function buildCcComponent() {
     quoteService,
     toast,
     pendingTradeIn,
-    auth
+    auth,
+    companyService
   );
 
   return { component, branchService, customerService, stockService, saleService, quoteService, toast, pendingTradeIn };

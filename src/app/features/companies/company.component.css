@@ -69,6 +69,7 @@
 .config-card--delay-2 { animation-delay: .2s; }
 .config-card--delay-3 { animation-delay: .3s; }
 .config-card--delay-4 { animation-delay: .4s; }
+.config-card--delay-5 { animation-delay: .5s; }
 
 .config-card--wide {
     grid-column: 1 / -1;

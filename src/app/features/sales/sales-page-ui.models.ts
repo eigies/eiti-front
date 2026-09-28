@@ -12,6 +12,8 @@ export type SaleUiAction =
     | 'excel'
     | 'pdf'
     | 'remito'
+    | 'invoice'
+    | 'creditNote'
     | 'whatsapp'
     | 'cancel'
     | 'edit'

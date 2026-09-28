@@ -9,6 +9,8 @@ export interface CompanyResponse {
     defaultNoDeliverySurcharge?: number | null;
     pdfLogoUrl?: string | null;
     pdfWatermarkUrl?: string | null;
+    /** Facturar automaticamente cada venta al confirmarla. */
+    automaticInvoicing?: boolean | null;
     createdAt: string;
 }
 
@@ -22,4 +24,5 @@ export interface UpdateCompanyRequest {
     defaultNoDeliverySurcharge?: number | null;
     pdfLogoUrl?: string | null;
     pdfWatermarkUrl?: string | null;
+    automaticInvoicing?: boolean | null;
 }
