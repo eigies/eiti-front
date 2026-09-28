@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SaleInvoicingStatus, SALE_SOURCE_CHANNELS, CreateSaleResponse, fiscalDocumentLabel, fiscalNumberLabel, invoicingCustomerIssue, InvoiceLetter, saleInvoicingStatusLabel, suggestedInvoiceLetter } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, fiscalDocumentLabel, fiscalNumberLabel, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -1876,31 +1876,42 @@ if (form === this.editLineForm) {
         return this.canInvoice && !this.automaticInvoicingForSelectedBranch;
     }
 
-    invoicingChipLabel(sale: SaleResponse): string {
-        const status = sale.invoicingStatus ?? 1;
-        if (status === 5) {
-            const voidedNumber = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
-            return voidedNumber ? `Anulada ${voidedNumber}` : 'Anulada';
-        }
-        if (status === 3) {
-            const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
-            return number ? `Facturado ${number}` : 'Facturado';
-        }
-        return saleInvoicingStatusLabel(status as SaleInvoicingStatus);
+    /** "Factura B" a partir del tipo de comprobante; sin tipo (datos viejos) queda "Factura". */
+    private invoiceKindLabel(sale: SaleResponse): string {
+        return fiscalDocumentLabel(sale.fiscalDocumentType);
     }
 
-    /** Version corta para la columna de estado: el numero completo va en el tooltip y en la barra de facturacion. */
-    invoicingChipShortLabel(sale: SaleResponse): string {
-        return saleInvoicingStatusLabel((sale.invoicingStatus ?? 1) as SaleInvoicingStatus);
-    }
-
-    invoicingChipClass(sale: SaleResponse): string {
+    /** Linea corta debajo del estado de la venta. El detalle completo va en el tooltip y en la barra. */
+    invoicingRowLabel(sale: SaleResponse): string {
         switch (sale.invoicingStatus ?? 1) {
-            case 2: return 'chip--invoicing-progress';
-            case 3: return 'chip--invoicing-done';
-            case 4: return 'chip--invoicing-rejected';
-            case 5: return 'chip--invoicing-voided';
-            default: return 'chip--invoicing-none';
+            case 2: return 'Factura en trámite';
+            case 3: return this.invoiceKindLabel(sale);
+            case 4: return 'Factura rechazada';
+            case 5: return `${this.invoiceKindLabel(sale)} · anulada`;
+            default: return 'Sin facturar';
+        }
+    }
+
+    /** Una sola linea con todo lo que hay que saber de la factura de la venta. */
+    invoicingSummary(sale: SaleResponse): string {
+        const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
+        const invoice = number ? `${this.invoiceKindLabel(sale)} ${number}` : this.invoiceKindLabel(sale);
+        switch (sale.invoicingStatus ?? 1) {
+            case 2: return 'Factura en trámite';
+            case 3: return invoice;
+            case 4: return 'Factura rechazada';
+            case 5: return `${invoice} · anulada con nota de crédito`;
+            default: return 'Sin facturar';
+        }
+    }
+
+    /** Solo el color del texto: verde vigente, ambar en tramite, rojo rechazada, gris anulada o sin facturar. */
+    invoicingToneClass(sale: SaleResponse): string {
+        switch (sale.invoicingStatus ?? 1) {
+            case 2: return 'sale-invoicing--progress';
+            case 3: return 'sale-invoicing--done';
+            case 4: return 'sale-invoicing--rejected';
+            default: return 'sale-invoicing--muted';
         }
     }
 

@@ -273,6 +273,8 @@ export interface SaleResponse {
     invoicingStatus?: SaleInvoicingStatus | null;
     fiscalNumber?: number | null;
     fiscalPointOfSale?: number | null;
+    /** "invoiceA" / "invoiceB": de aca sale la letra que muestra el listado. */
+    fiscalDocumentType?: string | null;
     generalDiscountPercent?: number;
     originalTotal?: number;
     manualOverridePrice?: number | null;

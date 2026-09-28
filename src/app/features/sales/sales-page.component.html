@@ -666,10 +666,10 @@
             <div class="sale-card__status">
               <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">{{ saleStatusLabel(sale) }}</span>
               <small *ngIf="sale.isCuentaCorriente">Cuenta corriente</small>
-              <span class="chip chip--invoicing"
-                    *ngIf="(sale.invoicingStatus ?? 1) !== 1"
-                    [ngClass]="invoicingChipClass(sale)"
-                    [title]="invoicingChipLabel(sale)">{{ invoicingChipShortLabel(sale) }}</span>
+              <small class="sale-invoicing"
+                     *ngIf="(sale.invoicingStatus ?? 1) !== 1"
+                     [ngClass]="invoicingToneClass(sale)"
+                     [title]="invoicingSummary(sale)">{{ invoicingRowLabel(sale) }}</small>
             </div>
 
             <div class="sale-card__delivery">
@@ -759,30 +759,31 @@
 
             <!-- La tarjeta entera pliega/despliega con un click: las acciones de facturacion no deben cerrarla. -->
             <div class="invoicing-bar" *ngIf="canInvoice" (click)="$event.stopPropagation()">
-              <div class="invoicing-bar__state">
-                <span class="invoicing-bar__label">Facturacion</span>
-                <span class="chip chip--invoicing" [ngClass]="invoicingChipClass(sale)">{{ invoicingChipLabel(sale) }}</span>
-              </div>
+              <span class="invoicing-bar__summary sale-invoicing" [ngClass]="invoicingToneClass(sale)">{{ invoicingSummary(sale) }}</span>
 
               <div class="invoicing-bar__actions">
-                <button class="invoicing-bar__btn"
+                <button class="invoicing-bar__link invoicing-bar__link--primary"
                         type="button"
                         *ngIf="canTriggerInvoicing(sale)"
                         [disabled]="invoicingSaleId === sale.id"
                         (click)="invoiceSale(sale)">
                   {{ invoicingSaleId === sale.id ? invoiceActionBusyLabel(sale) : invoiceActionLabel(sale) }}
                 </button>
-                <button class="invoicing-bar__btn"
+                <button class="invoicing-bar__link"
                         type="button"
                         *ngIf="canDownloadInvoice(sale)"
+                        title="Descargar la factura en PDF"
                         (click)="downloadInvoicePdf(sale)">
-                  Descargar factura
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+                  Factura
                 </button>
-                <button class="invoicing-bar__btn"
+                <button class="invoicing-bar__link"
                         type="button"
                         *ngIf="canDownloadCreditNote(sale)"
+                        title="Descargar la nota de credito en PDF"
                         (click)="downloadCreditNotePdf(sale)">
-                  Descargar nota de crédito
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+                  Nota de crédito
                 </button>
               </div>
             </div>
