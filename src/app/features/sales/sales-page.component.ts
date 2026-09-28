@@ -149,10 +149,8 @@ export class SalesPageComponent implements OnInit {
     quickCreateCustomerIvaCondition: number | null = null;
     /** El vendedor eligio la letra a mano: desde ahi elegir cliente ya no la cambia sola. */
     invoiceLetterTouched = false;
-    readonly invoiceLetterOptions: SearchableSelectOption[] = [
-        { value: InvoiceLetter.B, label: 'Factura B' },
-        { value: InvoiceLetter.A, label: 'Factura A' }
-    ];
+    /** Para el switch B|A del template. */
+    readonly invoiceLetter = InvoiceLetter;
     readonly quickCustomerIvaConditionOptions: SearchableSelectOption[] = [
         { value: null, label: 'Consumidor Final' },
         { value: 1, label: 'Responsable Inscripto' },

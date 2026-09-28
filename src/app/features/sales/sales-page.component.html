@@ -120,25 +120,27 @@
               </label>
             </div>
 
-            <div class="field" *ngIf="showInvoicingCheck">
+            <div class="field field--invoicing" *ngIf="showInvoicingCheck || createWillInvoice">
               <span class="field__label">Factura electronica</span>
-              <label class="toggle-check">
-                <input type="checkbox" formControlName="requestInvoicing" />
-                <span class="toggle-check__track"></span>
-                <span class="toggle-check__text">{{ lineForm.get('requestInvoicing')?.value ? 'Emitir factura' : 'No facturar' }}</span>
-              </label>
-            </div>
-
-            <div class="field" *ngIf="createWillInvoice">
-              <span class="field__label">Tipo de factura</span>
-              <app-searchable-select
-                [ngModel]="createInvoiceLetter"
-                (ngModelChange)="setInvoiceLetter($event)"
-                [ngModelOptions]="{ standalone: true }"
-                [options]="invoiceLetterOptions"
-                placeholder="Tipo de factura"
-                searchPlaceholder="Buscar tipo..."></app-searchable-select>
-              <span class="field__hint">A para Responsable Inscripto o Monotributista; B para el resto.</span>
+              <div class="invoicing-control">
+                <label class="toggle-check" *ngIf="showInvoicingCheck">
+                  <input type="checkbox" formControlName="requestInvoicing" />
+                  <span class="toggle-check__track"></span>
+                  <span class="toggle-check__text">{{ lineForm.get('requestInvoicing')?.value ? 'Emitir factura' : 'No facturar' }}</span>
+                </label>
+                <span class="invoicing-control__auto" *ngIf="!showInvoicingCheck">Automatica</span>
+                <div class="letter-switch" role="radiogroup" aria-label="Tipo de factura" *ngIf="createWillInvoice"
+                     title="A para Responsable Inscripto o Monotributista; B para el resto">
+                  <button type="button" role="radio" class="letter-switch__option"
+                          [class.letter-switch__option--active]="createInvoiceLetter === invoiceLetter.B"
+                          [attr.aria-checked]="createInvoiceLetter === invoiceLetter.B"
+                          (click)="setInvoiceLetter(invoiceLetter.B)">B</button>
+                  <button type="button" role="radio" class="letter-switch__option"
+                          [class.letter-switch__option--active]="createInvoiceLetter === invoiceLetter.A"
+                          [attr.aria-checked]="createInvoiceLetter === invoiceLetter.A"
+                          (click)="setInvoiceLetter(invoiceLetter.A)">A</button>
+                </div>
+              </div>
             </div>
           </form>
         </section>
