@@ -117,6 +117,31 @@ export function fiscalDocumentLabel(documentType: string | null | undefined): st
     return letter === 'A' || letter === 'B' || letter === 'C' ? `${kind} ${letter}` : kind;
 }
 
+/** Aviso al cancelar una venta segun su factura. Null si no tiene nada que avisar. */
+export interface CancelInvoicingNotice {
+    text: string;
+    tone: 'info' | 'warning';
+}
+
+export function cancelInvoicingNotice(sale: {
+    invoicingStatus?: number | null;
+    fiscalDocumentType?: string | null;
+    fiscalPointOfSale?: number | null;
+    fiscalNumber?: number | null;
+}): CancelInvoicingNotice | null {
+    const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
+    const invoice = `${fiscalDocumentLabel(sale.fiscalDocumentType)}${number ? ' ' + number : ''}`;
+    switch (sale.invoicingStatus) {
+        case 3:
+            return { text: `Esta venta tiene la ${invoice}. Al cancelarla se emite automáticamente la nota de crédito que la anula.`, tone: 'info' };
+        case 2:
+            // Anular solo emite NC sobre una factura autorizada: si la que esta en tramite se autoriza despues, queda viva.
+            return { text: 'La factura de esta venta todavía está en trámite: la nota de crédito no se emite sola. Esperá a que se autorice antes de cancelar.', tone: 'warning' };
+        default:
+            return null;
+    }
+}
+
 /** Numero de comprobante con el formato de AFIP: 00003-00001045. */
 export function fiscalNumberLabel(pointOfSale: number | null | undefined, number: number | null | undefined): string {
     if (pointOfSale === null || pointOfSale === undefined || number === null || number === undefined) {

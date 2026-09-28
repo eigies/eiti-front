@@ -910,6 +910,8 @@
       <span><strong>Cliente:</strong> {{ cancelSaleModal.customerFullName || 'Sin cliente' }}</span>
       <span><strong>Total:</strong> {{ cancelSaleModal.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
     </div>
+    <p class="confirm-fiscal" *ngIf="cancelSaleInvoicingNotice as notice"
+       [class.confirm-fiscal--warning]="notice.tone === 'warning'">{{ notice.text }}</p>
     <div class="modal-panel__actions">
       <button class="btn btn--ghost" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">Volver</button>
       <button class="btn btn--danger-solid" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="confirmCancelSale()">{{ cancelingSaleId === cancelSaleModal.id ? 'Cancelando...' : 'Confirmar cancelacion' }}</button>
