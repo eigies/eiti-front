@@ -1,0 +1,142 @@
+:host {
+    display: block;
+}
+
+/* Copia del toggle de la pantalla de ventas: cada componente lleva sus estilos (patron del proyecto). */
+.toggle-check {
+    position: relative;
+    font-family: 'DM Mono', monospace;
+    border: 1px solid var(--border-2);
+}
+
+.toggle-check:hover {
+    border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
+}
+
+.toggle-check:has(input:focus-visible) {
+    outline: 2px solid color-mix(in srgb, var(--amber) 72%, white);
+    outline-offset: 2px;
+}
+
+.toggle-check {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: .75rem;
+    min-height: 44px;
+    padding: .62rem .88rem;
+    border-radius: 10px;
+    cursor: pointer;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--bg) 92%, transparent),
+        color-mix(in srgb, var(--bg-soft) 96%, transparent));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+}
+
+.toggle-check input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.toggle-check__track {
+    position: relative;
+    display: inline-flex;
+    width: 2.25rem;
+    height: 1.3rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border-2) 75%, transparent);
+    transition: background .2s ease;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+}
+
+.toggle-check__track::after {
+    content: '';
+    position: absolute;
+    top: .19rem;
+    left: .14rem;
+    width: .92rem;
+    height: .92rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+    transition: transform .2s ease;
+}
+
+.toggle-check input:checked + .toggle-check__track {
+    background: color-mix(in srgb, var(--amber) 40%, transparent);
+}
+
+.toggle-check input:checked + .toggle-check__track::after {
+    transform: translateX(.95rem);
+    background: var(--amber);
+}
+
+.toggle-check__text {
+    position: relative;
+    z-index: 1;
+    color: var(--text);
+    font-size: .74rem;
+    letter-spacing: .03em;
+}
+
+/* Factura electronica: toggle (o "Automatica") y al costado el switch de letra, misma altura. */
+
+.invoicing-control {
+    display: flex;
+    align-items: stretch;
+    gap: .5rem;
+}
+
+.invoicing-control__auto {
+    align-self: center;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .74rem;
+    letter-spacing: .03em;
+}
+
+.letter-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-2);
+    border-radius: 10px;
+    background: var(--bg);
+}
+
+.letter-switch__option {
+    min-width: 2.35rem;
+    align-self: stretch;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .78rem;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+}
+
+.letter-switch__option:hover:not(.letter-switch__option--active) {
+    color: var(--text);
+}
+
+.letter-switch__option--active {
+    background: color-mix(in srgb, var(--amber) 22%, transparent);
+    color: var(--text);
+}
+
+.letter-switch__option:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--amber) 72%, white);
+    outline-offset: 1px;
+}
+
+.toggle-check {
+    min-height: 42px;
+    border-radius: 8px;
+}

@@ -612,3 +612,21 @@ h1 {
 
 .control--price { width: 7rem; text-align: right; }
 .control--price.is-overridden { border-color: var(--amber); color: var(--amber); font-weight: 600; }
+
+/* Aviso de facturacion debajo del cliente: rojo si bloquea (factura pedida), acento si solo avisa. */
+.field__error,
+.field__warning {
+    display: block;
+    margin-top: .5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .65rem;
+    line-height: 1.4;
+}
+
+.field__error {
+    color: color-mix(in srgb, var(--danger) 76%, var(--text));
+}
+
+.field__warning {
+    color: color-mix(in srgb, var(--amber) 78%, var(--text));
+}

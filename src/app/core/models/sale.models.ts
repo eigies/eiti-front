@@ -285,6 +285,29 @@ export interface SaleResponse {
     details: SaleDetailResponse[];
 }
 
+/** Aviso final al crear una venta: si se facturo, dice como termino. Igual en mostrador y CC. */
+export interface SaleCreatedNotice {
+    message: string;
+    type: 'success' | 'error' | 'info';
+    duration: number;
+}
+
+export function saleCreatedNotice(saleLabel: string, invoicing: CreateSaleInvoicingResult | null | undefined): SaleCreatedNotice {
+    if (!invoicing) {
+        return { message: saleLabel, type: 'success', duration: 4000 };
+    }
+    switch (invoicing.status) {
+        case 3: {
+            const number = fiscalNumberLabel(invoicing.pointOfSale, invoicing.number);
+            return { message: `${saleLabel} · ${fiscalDocumentLabel(invoicing.documentType)}${number ? ' ' + number : ''}`, type: 'success', duration: 5000 };
+        }
+        case 4:
+            return { message: `${saleLabel} · la factura fue rechazada: ${invoicing.message || 'sin motivo informado'}`, type: 'error', duration: 9000 };
+        default:
+            return { message: `${saleLabel} · la factura quedó en trámite y se completa sola`, type: 'info', duration: 6000 };
+    }
+}
+
 /** Respuesta del alta: la venta mas como termino la factura, si se facturo. */
 export interface CreateSaleResponse extends SaleResponse {
     invoicing?: CreateSaleInvoicingResult | null;
@@ -315,6 +338,9 @@ export interface CreateCcSaleRequest {
     tradeIns?: SaleTradeInRequest[];
     generalDiscountPercent?: number;
     manualOverridePrice?: number | null;
+    /** Igual que en mostrador: pedido explicito de factura y la letra elegida. */
+    requestInvoicing?: boolean;
+    invoiceLetter?: InvoiceLetter | null;
 }
 
 export interface SaleTradeInDetail {
@@ -393,6 +419,8 @@ export interface AddCcPaymentGroupResponse {
 export interface CreateCcSaleResponse {
     id: string;
     code?: string | null;
+    /** Como termino la factura, si se facturo al crear la venta. */
+    invoicing?: CreateSaleInvoicingResult | null;
     creditApplied?: number;
     remainingCustomerCredit?: number;
     tradeInAmount?: number;

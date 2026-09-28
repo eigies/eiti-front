@@ -2991,71 +2991,7 @@
     line-height: 1.4;
 }
 
-/* Factura electronica: toggle (o "Automatica") y al costado el switch de letra, misma altura. */
-/* Ocupa dos columnas de la grilla para que el switch quede al lado del toggle. */
-.field--invoicing {
-    grid-column: span 2;
-}
 
-/* A 720px la grilla pasa a una columna: pedir dos crearia una columna implicita y desbordaria. */
-@media (max-width: 720px) {
-    .field--invoicing {
-        grid-column: auto;
-    }
-}
-
-.invoicing-control {
-    display: flex;
-    align-items: stretch;
-    gap: .5rem;
-}
-
-.invoicing-control__auto {
-    align-self: center;
-    color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-    font-size: .74rem;
-    letter-spacing: .03em;
-}
-
-.letter-switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    padding: 3px;
-    box-sizing: border-box;
-    border: 1px solid var(--border-2);
-    border-radius: 10px;
-    background: var(--bg);
-}
-
-.letter-switch__option {
-    min-width: 2.35rem;
-    align-self: stretch;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-    font-size: .78rem;
-    letter-spacing: .04em;
-    cursor: pointer;
-    transition: background .18s ease, color .18s ease;
-}
-
-.letter-switch__option:hover:not(.letter-switch__option--active) {
-    color: var(--text);
-}
-
-.letter-switch__option--active {
-    background: color-mix(in srgb, var(--amber) 22%, transparent);
-    color: var(--text);
-}
-
-.letter-switch__option:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--amber) 72%, white);
-    outline-offset: 1px;
-}
 
 /* Aviso que no bloquea: mismo formato que el error, en el tono de acento. */
 .field__warning {
@@ -3142,6 +3078,19 @@
 }
 
 /* ---------------- Facturacion electronica ---------------- */
+
+/* El campo de facturacion ocupa dos columnas para que el switch quede al lado del toggle. */
+.field--invoicing {
+    grid-column: span 2;
+}
+
+/* A 720px la grilla pasa a una columna: pedir dos crearia una columna implicita y desbordaria. */
+@media (max-width: 720px) {
+    .field--invoicing {
+        grid-column: auto;
+    }
+}
+
 
 /* La facturacion se lee como texto, no como pill: el pill queda solo para el estado de la venta. */
 .sale-invoicing {

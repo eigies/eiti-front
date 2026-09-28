@@ -122,25 +122,13 @@
 
             <div class="field field--invoicing" *ngIf="showInvoicingCheck || createWillInvoice">
               <span class="field__label">Factura electronica</span>
-              <div class="invoicing-control">
-                <label class="toggle-check" *ngIf="showInvoicingCheck">
-                  <input type="checkbox" formControlName="requestInvoicing" />
-                  <span class="toggle-check__track"></span>
-                  <span class="toggle-check__text">{{ lineForm.get('requestInvoicing')?.value ? 'Emitir factura' : 'No facturar' }}</span>
-                </label>
-                <span class="invoicing-control__auto" *ngIf="!showInvoicingCheck">Automatica</span>
-                <div class="letter-switch" role="radiogroup" aria-label="Tipo de factura" *ngIf="createWillInvoice"
-                     title="A para Responsable Inscripto o Monotributista; B para el resto">
-                  <button type="button" role="radio" class="letter-switch__option"
-                          [class.letter-switch__option--active]="createInvoiceLetter === invoiceLetter.B"
-                          [attr.aria-checked]="createInvoiceLetter === invoiceLetter.B"
-                          (click)="setInvoiceLetter(invoiceLetter.B)">B</button>
-                  <button type="button" role="radio" class="letter-switch__option"
-                          [class.letter-switch__option--active]="createInvoiceLetter === invoiceLetter.A"
-                          [attr.aria-checked]="createInvoiceLetter === invoiceLetter.A"
-                          (click)="setInvoiceLetter(invoiceLetter.A)">A</button>
-                </div>
-              </div>
+              <app-invoicing-control
+                [showToggle]="showInvoicingCheck"
+                [requested]="!!lineForm.get('requestInvoicing')?.value"
+                [willInvoice]="createWillInvoice"
+                [letter]="createInvoiceLetter"
+                (requestedChange)="setInvoicingRequested($event)"
+                (letterChange)="setInvoiceLetter($event)"></app-invoicing-control>
             </div>
           </form>
         </section>

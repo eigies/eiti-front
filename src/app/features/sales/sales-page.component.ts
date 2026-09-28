@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, fiscalDocumentLabel, fiscalNumberLabel, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -33,6 +33,7 @@ import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { InvoicePdfService } from '../../shared/services/invoice-pdf.service';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { InvoicingControlComponent } from './components/invoicing-control/invoicing-control.component';
 import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
 import {
     QuickSaleSummaryComponent,
@@ -80,6 +81,7 @@ function localDateString(date = new Date()): string {
         OnboardingBannerComponent,
         SalePaymentInlineComponent,
         SearchableSelectComponent,
+        InvoicingControlComponent,
         QuickSaleWorkspaceComponent,
         QuickSaleSummaryComponent,
         SaleActionsMenuComponent,
@@ -149,8 +151,6 @@ export class SalesPageComponent implements OnInit {
     quickCreateCustomerIvaCondition: number | null = null;
     /** El vendedor eligio la letra a mano: desde ahi elegir cliente ya no la cambia sola. */
     invoiceLetterTouched = false;
-    /** Para el switch B|A del template. */
-    readonly invoiceLetter = InvoiceLetter;
     readonly quickCustomerIvaConditionOptions: SearchableSelectOption[] = [
         { value: null, label: 'Consumidor Final' },
         { value: 1, label: 'Responsable Inscripto' },
@@ -614,29 +614,9 @@ export class SalesPageComponent implements OnInit {
         this.addItem(this.editLineForm, this.editItems);
     }
 
-    /**
-     * Aviso final del alta: si se facturo, dice como termino. El vendedor tiene que enterarse ahi
-     * mismo de un rechazo, no cuando abre la venta.
-     */
     private notifySaleCreated(response: CreateSaleResponse): void {
-        const sale = response.code ? `Venta ${response.code} creada` : 'Venta creada';
-        const invoicing = response.invoicing;
-        if (!invoicing) {
-            this.toast.success(sale);
-            return;
-        }
-        switch (invoicing.status) {
-            case 3: {
-                const number = fiscalNumberLabel(invoicing.pointOfSale, invoicing.number);
-                this.toast.success(`${sale} · ${fiscalDocumentLabel(invoicing.documentType)}${number ? ' ' + number : ''}`);
-                return;
-            }
-            case 4:
-                this.toast.show(`${sale} · la factura fue rechazada: ${invoicing.message || 'sin motivo informado'}`, 'error', 9000);
-                return;
-            default:
-                this.toast.show(`${sale} · la factura quedó en trámite y se completa sola`, 'info', 6000);
-        }
+        const notice = saleCreatedNotice(response.code ? `Venta ${response.code} creada` : 'Venta creada', response.invoicing);
+        this.toast.show(notice.message, notice.type, notice.duration);
     }
 
     /** El vendedor tildo "Emitir factura" (solo existe cuando la sucursal no factura sola). */
@@ -656,6 +636,10 @@ export class SalesPageComponent implements OnInit {
     /** Motivo por el que no se va a poder facturar al cliente elegido, si la venta se va a facturar. */
     get createInvoicingIssue(): string | null {
         return this.createWillInvoice ? invoicingCustomerIssue(this.createCustomer, this.createInvoiceLetter) : null;
+    }
+
+    setInvoicingRequested(requested: boolean): void {
+        this.lineForm.patchValue({ requestInvoicing: requested });
     }
 
     setInvoiceLetter(value: InvoiceLetter | null): void {
