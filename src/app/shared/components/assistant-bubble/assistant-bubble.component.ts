@@ -41,7 +41,8 @@ export class AssistantBubbleComponent implements AfterViewChecked {
   private readonly destroyRef = inject(DestroyRef);
 
   /** Extracto que acompaña a los próximos mensajes hasta quitarlo o limpiar la conversación. */
-  activeAttachment: StatementSummary | null = null;
+  /** Extractos que viajan con cada mensaje: varias capturas de un mismo día se concilian juntas. */
+  activeAttachments: StatementSummary[] = [];
   readonly statementAccept = '.xlsx,.xlsm,.csv,.pdf,.png,.jpg,.jpeg,.webp';
 
   readonly visible$: Observable<boolean>;
@@ -152,7 +153,7 @@ export class AssistantBubbleComponent implements AfterViewChecked {
       .map(m => ({ role: m.role, content: m.content }));
 
     this.streamSubscription = this.assistant
-      .chat(payload, this.context.snapshot(), this.activeAttachment ? [this.activeAttachment.statementId] : [])
+      .chat(payload, this.context.snapshot(), this.activeAttachments.map(a => a.statementId))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ev => {
@@ -201,11 +202,9 @@ export class AssistantBubbleComponent implements AfterViewChecked {
   // ── Extractos adjuntos ─────────────────────────────────────
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const files = Array.from(input.files ?? []);
     input.value = '';
-    if (file) {
-      this.attachFile(file);
-    }
+    files.forEach(file => this.attachFile(file));
   }
 
   attachFile(file: File): void {
@@ -230,7 +229,7 @@ export class AssistantBubbleComponent implements AfterViewChecked {
       .subscribe({
         next: summary => {
           card.attachment = { fileName: file.name, status: 'ready', summary };
-          this.activeAttachment = summary;
+          this.activeAttachments = [...this.activeAttachments, summary];
           this.shouldScroll = true;
           this.cdr.markForCheck();
         },
@@ -248,8 +247,8 @@ export class AssistantBubbleComponent implements AfterViewChecked {
     return `$ ${value.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
   }
 
-  detachAttachment(): void {
-    this.activeAttachment = null;
+  detachAttachment(statementId: number): void {
+    this.activeAttachments = this.activeAttachments.filter(a => a.statementId !== statementId);
     this.cdr.markForCheck();
   }
 
@@ -368,10 +367,14 @@ export class AssistantBubbleComponent implements AfterViewChecked {
     return index;
   }
 
+  trackAttachment(_: number, a: StatementSummary): number {
+    return a.statementId;
+  }
+
   clear(): void {
     this.stop();
     this.messages = [];
-    this.activeAttachment = null;
+    this.activeAttachments = [];
     this.draft = '';
     this.feedbackCommentFor = null;
     this.feedbackComment = '';
