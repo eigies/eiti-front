@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -30,8 +30,10 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
+import { InvoicePdfService } from '../../shared/services/invoice-pdf.service';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { InvoicingControlComponent } from './components/invoicing-control/invoicing-control.component';
 import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
 import {
     QuickSaleSummaryComponent,
@@ -79,6 +81,7 @@ function localDateString(date = new Date()): string {
         OnboardingBannerComponent,
         SalePaymentInlineComponent,
         SearchableSelectComponent,
+        InvoicingControlComponent,
         QuickSaleWorkspaceComponent,
         QuickSaleSummaryComponent,
         SaleActionsMenuComponent,
@@ -131,6 +134,8 @@ export class SalesPageComponent implements OnInit {
     createProductModalOpen = false;
     createPickerRows: ProductPickerRow[] = [];
     createCustomerId: string | null = null;
+    /** Cliente elegido en el alta; hace falta su condicion de IVA y CUIT para validar la factura. */
+    createCustomer: CustomerSearchItem | null = null;
     createCustomerQuery = '';
     createCustomerSuggestions: CustomerSearchItem[] = [];
     showCreateCustomerResults = false;
@@ -142,6 +147,16 @@ export class SalesPageComponent implements OnInit {
     quickCreateCustomerName = '';
     quickCreateCustomerPhone = '';
     quickCreateCustomerSaving = false;
+    quickCreateCustomerTaxId = '';
+    quickCreateCustomerIvaCondition: number | null = null;
+    /** El vendedor eligio la letra a mano: desde ahi elegir cliente ya no la cambia sola. */
+    invoiceLetterTouched = false;
+    readonly quickCustomerIvaConditionOptions: SearchableSelectOption[] = [
+        { value: null, label: 'Consumidor Final' },
+        { value: 1, label: 'Responsable Inscripto' },
+        { value: 2, label: 'Monotributo' },
+        { value: 4, label: 'Exento' }
+    ];
     deliveryAddressSuggestions: string[] = [];
     showDeliveryAddressSuggestions = false;
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
@@ -153,6 +168,8 @@ export class SalesPageComponent implements OnInit {
     infoModal: { title: string; rows: Array<{ label: string; value: string }> } | null = null;
     cancelSaleModal: SaleResponse | null = null;
     expandedSaleId: string | null = null;
+    invoicingSaleId: string | null = null;
+    companyAutomaticInvoicing = false;
     whatsAppEnabled = false;
     whatsAppPhoneNumber: string | null = null;
     readonly salesPageSizeOptions = [10, 25, 50];
@@ -166,6 +183,16 @@ export class SalesPageComponent implements OnInit {
         { value: 2, label: 'Pagada' },
         { value: 3, label: 'Cancelada' }
     ];
+    /** Mismos estados que la linea de facturacion del listado. */
+    readonly invoicingFilterOptions: SearchableSelectOption[] = [
+        { value: 1, label: 'Sin facturar' },
+        { value: 3, label: 'Facturada' },
+        { value: 2, label: 'En trámite' },
+        { value: 4, label: 'Rechazada' },
+        { value: 5, label: 'Anulada' }
+    ];
+    /** Se arma una vez al cargar productos: como getter se recalcularia en cada ciclo de deteccion. */
+    productFilterOptions: SearchableSelectOption[] = [];
     readonly transportStatusOptions: SearchableSelectOption[] = [
         { value: 'pending', label: 'Pendiente' },
         { value: '1', label: 'Asignado' },
@@ -202,6 +229,7 @@ export class SalesPageComponent implements OnInit {
         private onboardingService: OnboardingService,
         private bankService: BankService,
         private remitoPdf: RemitoPdfService,
+        private invoicePdf: InvoicePdfService,
         private router: Router,
         public auth: AuthService
     ) {
@@ -213,6 +241,8 @@ export class SalesPageComponent implements OnInit {
             sourceChannel: [null, Validators.required],
             deliveryAddress: [''],
             contactPhone: [''],
+            requestInvoicing: [false],
+            invoiceLetter: [InvoiceLetter.B],
             productId: ['', Validators.required],
             quantity: [1, [Validators.required, Validators.min(1)]]
         });
@@ -235,7 +265,7 @@ export class SalesPageComponent implements OnInit {
             notes: ['']
         });
         const today = localDateString();
-        this.filterForm = this.fb.group({ dateFrom: [today], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], code: [''], phone: [''], deliveryAddress: [''] });
+        this.filterForm = this.fb.group({ dateFrom: [today], dateTo: [''], idSaleStatus: [''], sourceChannel: [''], transportStatus: [''], code: [''], phone: [''], deliveryAddress: [''], invoicingStatus: [''], productId: [''] });
     }
 
     ngOnInit(): void {
@@ -497,6 +527,12 @@ export class SalesPageComponent implements OnInit {
             case 'remito':
                 this.exportRemitoTraslado(sale);
                 break;
+            case 'invoice':
+                this.downloadInvoicePdf(sale);
+                break;
+            case 'creditNote':
+                this.downloadCreditNotePdf(sale);
+                break;
             case 'whatsapp':
                 this.sendSaleWhatsApp(sale);
                 break;
@@ -594,22 +630,90 @@ export class SalesPageComponent implements OnInit {
         this.addItem(this.editLineForm, this.editItems);
     }
 
+    /** Aviso fiscal del modal de cancelar: la NC se emite sola si la venta esta facturada. */
+    get cancelSaleInvoicingNotice(): CancelInvoicingNotice | null {
+        return this.cancelSaleModal ? cancelInvoicingNotice(this.cancelSaleModal) : null;
+    }
+
+    private notifySaleCreated(response: CreateSaleResponse): void {
+        const notice = saleCreatedNotice(response.code ? `Venta ${response.code} creada` : 'Venta creada', response.invoicing);
+        this.toast.show(notice.message, notice.type, notice.duration);
+    }
+
+    /** El vendedor tildo "Emitir factura" (solo existe cuando la sucursal no factura sola). */
+    get createInvoicingRequested(): boolean {
+        return this.showInvoicingCheck && Boolean(this.lineForm.get('requestInvoicing')?.value);
+    }
+
+    /** Se sabe que la venta se va a facturar: la sucursal factura sola, o el vendedor lo pidio. */
+    get createWillInvoice(): boolean {
+        return this.automaticInvoicingForSelectedBranch || this.createInvoicingRequested;
+    }
+
+    get createInvoiceLetter(): InvoiceLetter {
+        return Number(this.lineForm.get('invoiceLetter')?.value) === InvoiceLetter.A ? InvoiceLetter.A : InvoiceLetter.B;
+    }
+
+    /** Motivo por el que no se va a poder facturar al cliente elegido, si la venta se va a facturar. */
+    get createInvoicingIssue(): string | null {
+        return this.createWillInvoice ? invoicingCustomerIssue(this.createCustomer, this.createInvoiceLetter) : null;
+    }
+
+    setInvoicingRequested(requested: boolean): void {
+        this.lineForm.patchValue({ requestInvoicing: requested });
+    }
+
+    setInvoiceLetter(value: InvoiceLetter | null): void {
+        this.invoiceLetterTouched = true;
+        this.lineForm.patchValue({ invoiceLetter: value ?? InvoiceLetter.B });
+    }
+
+    /** La letra la sugiere el cliente elegido, salvo que el vendedor ya la haya elegido a mano. */
+    private applySuggestedInvoiceLetter(): void {
+        if (!this.invoiceLetterTouched) {
+            this.lineForm.patchValue({ invoiceLetter: suggestedInvoiceLetter(this.createCustomer) });
+        }
+    }
+
+    /** El alta rapida pide datos de facturacion cuando la venta se va a facturar. */
+    get quickCreateShowsBilling(): boolean {
+        return this.createWillInvoice;
+    }
+
+    /** Para Factura A el alta rapida exige condicion A y CUIT valido: si no, la venta no se podria crear. */
+    get quickCreateBillingIssue(): string | null {
+        if (!this.quickCreateShowsBilling || this.createInvoiceLetter !== InvoiceLetter.A) {
+            return null;
+        }
+        return invoicingCustomerIssue({
+            name: this.quickCreateCustomerName.trim() || 'el cliente',
+            taxId: this.quickCreateCustomerTaxId,
+            ivaCondition: this.quickCreateCustomerIvaCondition
+        }, InvoiceLetter.A);
+    }
+
     handleCreateCustomerInput(query: string): void {
     this.createCustomerQuery = query;
     this.createCustomerId = null;
+    this.createCustomer = null;
+    this.applySuggestedInvoiceLetter();
     this.showCreateCustomerResults = true;
     this.customerSearch$.next(query);
 }
 
 selectCreateCustomer(customer: CustomerSearchItem): void {
     this.createCustomerId = customer.id;
+    this.createCustomer = customer;
     this.createCustomerQuery = customer.fullName || customer.name || customer.email;
+    this.applySuggestedInvoiceLetter();
     this.showCreateCustomerResults = false;
     this.createCustomerSuggestions = [];
 }
 
 clearCreateCustomer(): void {
     this.createCustomerId = null;
+    this.createCustomer = null;
+    this.applySuggestedInvoiceLetter();
     this.createCustomerQuery = '';
     this.createCustomerSuggestions = [];
     this.showCreateCustomerResults = false;
@@ -618,6 +722,9 @@ clearCreateCustomer(): void {
 openQuickCreateCustomer(): void {
     this.quickCreateCustomerName = this.createCustomerQuery.trim();
     this.quickCreateCustomerPhone = '';
+    this.quickCreateCustomerTaxId = '';
+    // Si el vendedor va a hacer Factura A, lo mas probable es un Responsable Inscripto.
+    this.quickCreateCustomerIvaCondition = this.createWillInvoice && this.createInvoiceLetter === InvoiceLetter.A ? 1 : null;
     this.quickCreateCustomerOpen = true;
     this.showCreateCustomerResults = false;
 }
@@ -626,24 +733,34 @@ closeQuickCreateCustomer(): void {
     this.quickCreateCustomerOpen = false;
     this.quickCreateCustomerName = '';
     this.quickCreateCustomerPhone = '';
+    this.quickCreateCustomerTaxId = '';
+    this.quickCreateCustomerIvaCondition = null;
 }
 
 submitQuickCreateCustomer(): void {
     const name = this.quickCreateCustomerName.trim();
-    if (!name) return;
+    if (!name || this.quickCreateBillingIssue) return;
+    const withBilling = this.quickCreateShowsBilling;
     this.quickCreateCustomerSaving = true;
     this.customerService.createCustomer({
         name,
         email: null,
         phone: this.quickCreateCustomerPhone.trim() || null,
+        taxId: withBilling ? (this.quickCreateCustomerTaxId.trim() || null) : null,
+        ivaCondition: withBilling ? this.quickCreateCustomerIvaCondition : null,
     }).subscribe({
         next: (customer) => {
             this.quickCreateCustomerSaving = false;
             this.quickCreateCustomerOpen = false;
             this.createCustomerId = customer.id;
+            // Lo que haga falta para validar la factura (condicion y CUIT) sale de la respuesta.
+            this.createCustomer = { ...customer, creditBalance: customer.creditBalance ?? 0 };
             this.createCustomerQuery = customer.fullName || customer.name || name;
+            this.applySuggestedInvoiceLetter();
             this.quickCreateCustomerName = '';
             this.quickCreateCustomerPhone = '';
+            this.quickCreateCustomerTaxId = '';
+            this.quickCreateCustomerIvaCondition = null;
             this.toast.success('Cliente creado');
         },
         error: () => {
@@ -737,20 +854,32 @@ if (!await this.validatePaymentState(this.lineForm, this.draftTotal, this.create
     return;
 }
 
+// Si el vendedor pidio factura se corta antes de crear la venta: si no, queda guardada con la
+// factura rechazada. Con facturacion automatica no se bloquea (el back tampoco): el aviso ya
+// esta a la vista y la factura queda rechazada con el motivo, para reintentar desde la venta.
+const invoicingIssue = this.createInvoicingRequested ? this.createInvoicingIssue : null;
+if (invoicingIssue) {
+    this.activeCreateStage = 'payment';
+    this.toast.error(invoicingIssue);
+    return;
+}
+
 this.saving = true;
 this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId, this.createAutoSurcharge)).subscribe({
     next: (response) => {
-        this.toast.success('Venta creada');
+        this.notifySaleCreated(response);
         if ((response?.changeAmount ?? 0) > 0) {
             this.toast.show(`Vuelto a entregar: $${response.changeAmount!.toFixed(2)}`, 'info');
         }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
-        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '' });
+        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '', requestInvoicing: false, invoiceLetter: InvoiceLetter.B });
+        this.invoiceLetterTouched = false;
         this.createPaymentState = createEmptySalePaymentDraftState();
         this.createProductModalOpen = false;
         this.createPickerRows = [];
         this.createCustomerId = null;
+        this.createCustomer = null;
         this.createCustomerQuery = '';
         this.createCustomerSuggestions = [];
         this.showCreateCustomerResults = false;
@@ -821,6 +950,14 @@ loadSales(): void {
                     (sale.customerPhone || '').replace(/\D/g, '').includes(phoneQuery) ||
                     (sale.contactPhone || '').replace(/\D/g, '').includes(phoneQuery)
                 );
+            }
+            const invoicingStatus = this.optionalNumber(this.filterForm.get('invoicingStatus')?.value);
+            if (invoicingStatus) {
+                filtered = filtered.filter(sale => (sale.invoicingStatus ?? 1) === invoicingStatus);
+            }
+            const productId = this.filterForm.get('productId')?.value;
+            if (productId) {
+                filtered = filtered.filter(sale => sale.details.some(detail => detail.productId === productId));
             }
             const addressQuery = (this.filterForm.get('deliveryAddress')?.value || '').trim().toLowerCase();
             if (addressQuery) {
@@ -1525,7 +1662,7 @@ applySaleFilters(): void {
 
 clearSaleFilters(): void {
     const today = localDateString();
-    this.filterForm.reset({ dateFrom: today, dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', code: '', phone: '', deliveryAddress: '' });
+    this.filterForm.reset({ dateFrom: today, dateTo: '', idSaleStatus: '', sourceChannel: '', transportStatus: '', code: '', phone: '', deliveryAddress: '', invoicingStatus: '', productId: '' });
     this.currentSalesPage = 1;
     this.loadSales();
 }
@@ -1567,6 +1704,7 @@ handleDocumentClick(event: MouseEvent): void {
     this.productService.listProducts().subscribe({
         next: products => {
             this.products = [...products].sort((left, right) => this.productLabel(left).localeCompare(this.productLabel(right)));
+            this.productFilterOptions = this.products.map(product => ({ value: product.id, label: this.productLabel(product) }));
             this.loadingProducts = false;
         },
         error: err => {
@@ -1582,6 +1720,7 @@ handleDocumentClick(event: MouseEvent): void {
             this.whatsAppEnabled = Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled);
             this.whatsAppPhoneNumber = company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? null;
             this.defaultNoDeliverySurcharge = company.defaultNoDeliverySurcharge ?? 0;
+            this.companyAutomaticInvoicing = Boolean(company.automaticInvoicing);
         }
     });
 }
@@ -1730,6 +1869,160 @@ if (form === this.editLineForm) {
         return this.auth.hasPermission(PermissionCodes.salesPriceOverride);
     }
 
+    // ---------------- Facturacion electronica ----------------
+
+    get canInvoice(): boolean {
+        return this.auth.hasPermission(PermissionCodes.salesInvoice);
+    }
+
+    /** Config efectiva de la sucursal elegida: la sucursal manda si definio un valor, si no hereda. */
+    get automaticInvoicingForSelectedBranch(): boolean {
+        const branchId = this.lineForm.get('branchId')?.value;
+        const branch = this.branches.find(b => b.id === branchId);
+        return branch?.automaticInvoicing ?? this.companyAutomaticInvoicing;
+    }
+
+    /**
+     * El check solo aparece cuando la facturacion NO es automatica: si ya factura sola,
+     * pedirle al usuario que lo tilde seria mentirle sobre lo que hace el sistema.
+     */
+    get showInvoicingCheck(): boolean {
+        return this.canInvoice && !this.automaticInvoicingForSelectedBranch;
+    }
+
+    /** "Factura B" a partir del tipo de comprobante; sin tipo (datos viejos) queda "Factura". */
+    private invoiceKindLabel(sale: SaleResponse): string {
+        return fiscalDocumentLabel(sale.fiscalDocumentType);
+    }
+
+    /** Linea corta debajo del estado de la venta. El detalle completo va en el tooltip y en la barra. */
+    invoicingRowLabel(sale: SaleResponse): string {
+        switch (sale.invoicingStatus ?? 1) {
+            case 2: return 'Factura en trámite';
+            case 3: return this.invoiceKindLabel(sale);
+            case 4: return 'Factura rechazada';
+            case 5: return `${this.invoiceKindLabel(sale)} · anulada`;
+            default: return 'Sin facturar';
+        }
+    }
+
+    /** "Factura A 00001-00000008": el comprobante que descarga el menu de documentos. */
+    invoiceDocumentLabel(sale: SaleResponse): string {
+        const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
+        return number ? `${this.invoiceKindLabel(sale)} ${number}` : this.invoiceKindLabel(sale);
+    }
+
+    /** Una sola linea con todo lo que hay que saber de la factura de la venta. */
+    invoicingSummary(sale: SaleResponse): string {
+        const number = fiscalNumberLabel(sale.fiscalPointOfSale, sale.fiscalNumber);
+        const invoice = number ? `${this.invoiceKindLabel(sale)} ${number}` : this.invoiceKindLabel(sale);
+        switch (sale.invoicingStatus ?? 1) {
+            case 2: return 'Factura en trámite';
+            case 3: return invoice;
+            case 4: return 'Factura rechazada';
+            case 5: return `${invoice} · anulada con nota de crédito`;
+            default: return 'Sin facturar';
+        }
+    }
+
+    /** Solo el color del texto: verde vigente, ambar en tramite, rojo rechazada, violeta anulada, gris sin facturar. */
+    invoicingToneClass(sale: SaleResponse): string {
+        switch (sale.invoicingStatus ?? 1) {
+            case 2: return 'sale-invoicing--progress';
+            case 3: return 'sale-invoicing--done';
+            case 4: return 'sale-invoicing--rejected';
+            case 5: return 'sale-invoicing--voided';
+            default: return 'sale-invoicing--muted';
+        }
+    }
+
+    /**
+     * Se puede disparar la accion de facturacion: emitir, reintentar tras un rechazo, o reconciliar
+     * un tramite en curso. Incluye InProgress a proposito: si el callback nunca llego, esta es la
+     * unica salida y ocultar el boton dejaba la venta trabada.
+     */
+    canTriggerInvoicing(sale: SaleResponse): boolean {
+        const status = sale.invoicingStatus ?? 1;
+        return this.canInvoice && sale.idSaleStatus !== 3 && (status === 1 || status === 2 || status === 4);
+    }
+
+    /**
+     * Con un tramite en curso la accion NO emite nada: re-envia el mismo pedido y trae el estado
+     * real del servicio. Llamarla "Facturar" ahi seria mentir sobre lo que hace.
+     */
+    invoiceActionLabel(sale: SaleResponse): string {
+        return (sale.invoicingStatus ?? 1) === 2 ? 'Consultar estado' : 'Facturar';
+    }
+
+    invoiceActionBusyLabel(sale: SaleResponse): string {
+        return (sale.invoicingStatus ?? 1) === 2 ? 'Consultando...' : 'Emitiendo...';
+    }
+
+    /** Una factura anulada sigue teniendo comprobante: se puede reimprimir. */
+    canDownloadInvoice(sale: SaleResponse): boolean {
+        const status = sale.invoicingStatus ?? 1;
+        return status === 3 || status === 5;
+    }
+
+    invoiceSale(sale: SaleResponse): void {
+        if (!this.canTriggerInvoicing(sale) || this.invoicingSaleId) {
+            return;
+        }
+
+        const wasInProgress = (sale.invoicingStatus ?? 1) === 2;
+
+        this.invoicingSaleId = sale.id;
+        this.saleService.invoiceSale(sale.id).subscribe({
+            next: response => {
+                this.invoicingSaleId = null;
+                sale.invoicingStatus = response.invoicingStatus;
+                sale.fiscalNumber = response.number ?? null;
+                sale.fiscalPointOfSale = response.pointOfSale ?? null;
+
+                if (response.invoicingStatus === 3) {
+                    const number = fiscalNumberLabel(response.pointOfSale, response.number);
+                    this.toast.success(number ? `Comprobante ${number} autorizado.` : 'Comprobante autorizado.');
+                } else if (wasInProgress) {
+                    this.toast.success('El comprobante sigue en tramite en el servicio de facturacion.');
+                } else {
+                    this.toast.success('El comprobante quedo en tramite. Te avisamos cuando se autorice.');
+                }
+            },
+            error: error => {
+                this.invoicingSaleId = null;
+                // El motivo real del rechazo viene del fisco y es lo unico accionable para el usuario
+                // (ej. "falta el CUIT del receptor"): se muestra tal cual en vez de un generico.
+                this.toast.error(error?.error?.detail ?? 'No se pudo emitir el comprobante.');
+                // Solo se degrada el chip si la venta no venia ya con un tramite abierto: un fallo
+                // al consultar no significa que el comprobante se haya rechazado.
+                if (!wasInProgress) {
+                    sale.invoicingStatus = 4;
+                }
+            }
+        });
+    }
+
+    /** La venta anulada tiene su nota de credito autorizada: se puede descargar. */
+    canDownloadCreditNote(sale: SaleResponse): boolean {
+        return (sale.invoicingStatus ?? 1) === 5;
+    }
+
+    downloadInvoicePdf(sale: SaleResponse): void {
+        this.saleService.getInvoicePrint(sale.id).subscribe({
+            next: print => this.invoicePdf.generate(print)
+                .catch(() => this.toast.error('No se pudo generar el PDF de la factura.')),
+            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la factura.')
+        });
+    }
+
+    downloadCreditNotePdf(sale: SaleResponse): void {
+        this.saleService.getCreditNotePrint(sale.id).subscribe({
+            next: print => this.invoicePdf.generate(print)
+                .catch(() => this.toast.error('No se pudo generar el PDF de la nota de crédito.')),
+            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la nota de crédito.')
+        });
+    }
+
     setDraftItemPrice(item: DraftItem, price: number): void {
         const numeric = parseFloat(price as any);
         item.unitPriceOverride = isNaN(numeric) ? 0 : numeric;
@@ -1758,6 +2051,11 @@ if (form === this.editLineForm) {
         sourceChannel: (rawChannel !== null && rawChannel !== '' && rawChannel !== undefined) ? Number(rawChannel) as SaleSourceChannel : null,
         deliveryAddress: raw.deliveryAddress || null,
         contactPhone: (raw.contactPhone || '').trim() || null,
+        // Con la sucursal en automatico el check no se ve: un valor que quedo tildado de otra
+        // sucursal no tiene que viajar (el back lo tomaria como pedido explicito y bloquearia).
+        requestInvoicing: this.showInvoicingCheck && Boolean(raw.requestInvoicing),
+        // Solo el alta la usa, y solo cuando se pidio factura: es lo que el back valida.
+        invoiceLetter: form === this.lineForm && this.createInvoicingRequested ? this.createInvoiceLetter : null,
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, SaleByIdResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
+import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, CreateSaleResponse, InvoiceSaleResponse, SaleByIdResponse, SaleInvoicePrintResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -11,8 +11,8 @@ export class SaleService {
 
     constructor(private http: HttpClient) { }
 
-    createSale(request: CreateSaleRequest): Observable<SaleResponse> {
-        return this.http.post<SaleResponse>(this.base, request);
+    createSale(request: CreateSaleRequest): Observable<CreateSaleResponse> {
+        return this.http.post<CreateSaleResponse>(this.base, request);
     }
 
     listSales(filters: {
@@ -61,6 +61,23 @@ export class SaleService {
 
     deleteSale(id: string): Observable<void> {
         return this.http.delete<void>(`${this.base}/${id}`);
+    }
+
+    invoiceSale(id: string): Observable<InvoiceSaleResponse> {
+        return this.http.post<InvoiceSaleResponse>(`${this.base}/${id}/invoice`, {});
+    }
+
+    /**
+     * Datos para armar el PDF de la factura con el diseno de EITI (InvoicePdfService).
+     * Salen por la API de EITI, no por el servicio fiscal: ese exige la API key de servicio.
+     */
+    getInvoicePrint(id: string): Observable<SaleInvoicePrintResponse> {
+        return this.http.get<SaleInvoicePrintResponse>(`${this.base}/${id}/invoice/print`);
+    }
+
+    /** Idem para la nota de credito que anulo la factura. */
+    getCreditNotePrint(id: string): Observable<SaleInvoicePrintResponse> {
+        return this.http.get<SaleInvoicePrintResponse>(`${this.base}/${id}/credit-note/print`);
     }
 
     getTransport(id: string): Observable<SaleTransportResponse> {

@@ -21,7 +21,7 @@ import {
   CustomerPaymentImputacion
 } from '../../core/models/customer-account.models';
 import { BankResponse, BankInstallmentPlanResponse } from '../../core/models/bank.models';
-import { SaleByIdResponse } from '../../core/models/sale.models';
+import { cancelInvoicingNotice, CancelInvoicingNotice, SaleByIdResponse } from '../../core/models/sale.models';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
@@ -546,6 +546,11 @@ export class CustomerAccountComponent implements OnInit {
 
   get detalleHasCobros(): boolean {
     return this.detalleCcPaidTotal > 0;
+  }
+
+  /** Aviso fiscal del modal de anular: la NC se emite sola si la venta esta facturada. */
+  get cancelInvoicingNotice(): CancelInvoicingNotice | null {
+    return this.detalleModalSale ? cancelInvoicingNotice(this.detalleModalSale) : null;
   }
 
   openCancelModal(): void {

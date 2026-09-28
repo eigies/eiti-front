@@ -1284,6 +1284,34 @@
     margin-bottom: 1.4rem;
 }
 
+/* Aparece solo si la venta se va a facturar: separa lo fiscal de los datos de contacto. */
+.quick-customer-billing {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-2);
+}
+
+.quick-customer-billing__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.quick-customer-billing__letter {
+    padding: .2rem .55rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 40%, var(--border-2));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
+    color: color-mix(in srgb, var(--amber) 70%, var(--text));
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
 .field__required {
     color: var(--danger, #e74c3c);
     font-weight: 600;
@@ -2692,7 +2720,11 @@
 
 .sale-card__status .chip {
     width: max-content;
+    max-width: 100%;
     margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .sale-card__amount-block {
@@ -2959,6 +2991,16 @@
     line-height: 1.4;
 }
 
+
+
+/* Aviso que no bloquea: mismo formato que el error, en el tono de acento. */
+.field__warning {
+    color: color-mix(in srgb, var(--amber) 78%, var(--text));
+    font-family: 'DM Mono', monospace;
+    font-size: .65rem;
+    line-height: 1.4;
+}
+
 .filters {
     gap: .75rem;
     padding: .85rem;
@@ -3033,4 +3075,150 @@
         animation: none !important;
         transition: none !important;
     }
+}
+
+/* ---------------- Facturacion electronica ---------------- */
+
+/* El campo de facturacion ocupa dos columnas para que el switch quede al lado del toggle. */
+.field--invoicing {
+    grid-column: span 2;
+}
+
+/* A 720px la grilla pasa a una columna: pedir dos crearia una columna implicita y desbordaria. */
+@media (max-width: 720px) {
+    .field--invoicing {
+        grid-column: auto;
+    }
+}
+
+
+/* La facturacion se lee como texto, no como pill: el pill queda solo para el estado de la venta. */
+.sale-invoicing {
+    font-variant-numeric: tabular-nums;
+}
+
+.sale-card__status .sale-invoicing--done,
+.invoicing-bar__summary.sale-invoicing--done {
+    color: color-mix(in srgb, var(--success) 72%, var(--text));
+}
+
+.sale-card__status .sale-invoicing--progress,
+.invoicing-bar__summary.sale-invoicing--progress {
+    color: color-mix(in srgb, var(--amber) 78%, var(--text));
+}
+
+.sale-card__status .sale-invoicing--rejected,
+.invoicing-bar__summary.sale-invoicing--rejected {
+    color: color-mix(in srgb, var(--danger) 76%, var(--text));
+}
+
+.sale-card__status .sale-invoicing--muted,
+.invoicing-bar__summary.sale-invoicing--muted {
+    color: var(--text-dim);
+}
+
+/* Anulada con nota de credito: color propio, en gris se perdia. */
+.sale-card__status .sale-invoicing--voided,
+.invoicing-bar__summary.sale-invoicing--voided {
+    color: color-mix(in srgb, #8e7cc3 82%, var(--text));
+}
+
+/* La venta abierta se separa de las vecinas: aire arriba y abajo y un marco suave. */
+.sales-stack .sale-card[aria-expanded="true"] {
+    margin: .6rem .5rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, var(--border));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--amber) 4%, var(--bg-panel));
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .07);
+}
+
+.invoicing-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1rem;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-2);
+}
+
+.invoicing-bar__summary {
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: .02em;
+}
+
+.invoicing-bar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem 1rem;
+}
+
+/* Acciones como links chicos: se usan de vez en cuando, no tienen que pesar mas que la venta. */
+.invoicing-bar__link {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .3rem .1rem;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .16s ease;
+}
+
+.invoicing-bar__link svg {
+    color: var(--amber);
+}
+
+.invoicing-bar__link svg {
+    width: .9rem;
+    height: .9rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.invoicing-bar__link:hover:not(:disabled) {
+    color: var(--amber);
+}
+
+.invoicing-bar__link--primary {
+    color: color-mix(in srgb, var(--amber) 80%, var(--text));
+}
+
+.invoicing-bar__link:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--amber) 72%, white);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.invoicing-bar__link:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+/* Aviso fiscal al cancelar: info si la NC se emite sola, advertencia si la factura sigue en tramite. */
+.confirm-fiscal {
+    /* Arriba ya separa el margin-bottom de .confirm-meta; abajo, aire antes de los botones. */
+    margin: 0 0 1.25rem;
+    padding: .7rem .85rem;
+    border-left: 3px solid color-mix(in srgb, #8e7cc3 70%, var(--border-2));
+    border-radius: 4px;
+    background: color-mix(in srgb, #8e7cc3 9%, transparent);
+    color: var(--text);
+    font-size: .8rem;
+    line-height: 1.45;
+}
+
+.confirm-fiscal--warning {
+    border-left-color: color-mix(in srgb, var(--amber) 80%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
 }

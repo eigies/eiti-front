@@ -5,6 +5,7 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { Router } from '@angular/router';
 import { BranchResponse, TransferTargetResponse } from '../../core/models/branch.models';
 import { BranchService } from '../../core/services/branch.service';
+import { CompanyService } from '../../core/services/company.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { OnboardingStatusResponse } from '../../core/models/onboarding.models';
@@ -32,6 +33,13 @@ type BranchView = {
   styleUrls: ['./branches.component.css']
 })
 export class BranchesComponent implements OnInit {
+  /** '' = hereda de la empresa. El override explicito solo tiene sentido si difiere del default. */
+  readonly automaticInvoicingOptions: SearchableSelectOption[] = [
+    { value: '', label: 'Facturacion: hereda de la empresa' },
+    { value: 'true', label: 'Facturacion: automatica' },
+    { value: 'false', label: 'Facturacion: manual' }
+  ];
+
   createForm: FormGroup;
   editForm: FormGroup;
   transferForm: FormGroup;
@@ -46,6 +54,8 @@ export class BranchesComponent implements OnInit {
   transferTargets: TransferTargetResponse[] = [];
   transferStockLoading = false;
   deletingBranchId: string | null = null;
+  /** Config de la empresa, para resolver las sucursales que heredan. Null = todavia no se sabe. */
+  companyAutomaticInvoicing: boolean | null = null;
   private sourceAvailableById = new Map<string, number>();
 
   private readonly destroyRef = inject(DestroyRef);
@@ -60,7 +70,8 @@ export class BranchesComponent implements OnInit {
     private readonly productService: ProductService,
     private readonly stockService: StockService,
     private readonly confirmation: ConfirmationService,
-    private readonly stockTransferPdf: StockTransferPdfService
+    private readonly stockTransferPdf: StockTransferPdfService,
+    private readonly companyService: CompanyService
   ) {
     this.createForm = this.fb.group({
       name: ['', Validators.required],
@@ -70,7 +81,9 @@ export class BranchesComponent implements OnInit {
     this.editForm = this.fb.group({
       name: ['', Validators.required],
       code: [''],
-      address: ['']
+      // '' = hereda de la empresa; 'true'/'false' = override explicito de la sucursal.
+      address: [''],
+      automaticInvoicing: ['']
     });
     this.transferForm = this.fb.group({
       sourceBranchId: ['', Validators.required],
@@ -83,6 +96,7 @@ export class BranchesComponent implements OnInit {
   ngOnInit(): void {
     this.refreshOnboarding();
     this.loadBranches();
+    this.loadCompanyInvoicing();
 
     if (this.canTransferStock) {
       this.loadProducts();
@@ -302,6 +316,35 @@ export class BranchesComponent implements OnInit {
     return this.isOnboardingStep && !this.onboardingService.isStepAccepted('Branch');
   }
 
+  /** Facturacion efectiva: la sucursal manda si definio un valor, si no hereda de la empresa. */
+  branchInvoicesAutomatically(branch: BranchResponse): boolean | null {
+    return branch.automaticInvoicing ?? this.companyAutomaticInvoicing;
+  }
+
+  branchInvoicingLabel(branch: BranchResponse): string {
+    const automatic = this.branchInvoicesAutomatically(branch);
+    if (automatic === null) {
+      return 'Factura según empresa';
+    }
+    return automatic ? 'Factura automática' : 'Factura manual';
+  }
+
+  branchInvoicingOrigin(branch: BranchResponse): string {
+    return branch.automaticInvoicing === null || branch.automaticInvoicing === undefined
+      ? 'heredada de la empresa'
+      : 'definida en la sucursal';
+  }
+
+  private loadCompanyInvoicing(): void {
+    // Dato secundario: si no se puede leer, las sucursales que heredan muestran "segun empresa".
+    this.companyService.getCurrentCompany()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: company => this.companyAutomaticInvoicing = Boolean(company.automaticInvoicing),
+        error: () => this.companyAutomaticInvoicing = null
+      });
+  }
+
   loadBranches(expandBranchId?: string): void {
     this.branchService.listBranches().subscribe({
       next: branches => {
@@ -342,7 +385,10 @@ export class BranchesComponent implements OnInit {
     this.editForm.reset({
       name: branch.name,
       code: branch.code || '',
-      address: branch.address || ''
+      address: branch.address || '',
+      automaticInvoicing: branch.automaticInvoicing === null || branch.automaticInvoicing === undefined
+        ? ''
+        : String(branch.automaticInvoicing)
     });
   }
 
@@ -353,7 +399,13 @@ export class BranchesComponent implements OnInit {
     }
 
     this.savingEdit = true;
-    this.branchService.updateBranch(this.editingBranch.id, this.editForm.getRawValue()).subscribe({
+    const raw = this.editForm.getRawValue();
+    this.branchService.updateBranch(this.editingBranch.id, {
+      name: raw.name,
+      code: raw.code,
+      address: raw.address,
+      automaticInvoicing: raw.automaticInvoicing === '' ? null : raw.automaticInvoicing === 'true'
+    }).subscribe({
       next: () => {
         const editedBranchId = this.editingBranch?.id;
         this.savingEdit = false;

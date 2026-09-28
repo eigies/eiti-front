@@ -16,7 +16,9 @@ import { BranchResponse } from '../../../core/models/branch.models';
 import { CustomerSearchItem, toCustomerSearchItem } from '../../../core/models/customer.models';
 import { BranchProductStockResponse } from '../../../core/models/stock.models';
 import { describeTradeInLine } from '../../../core/models/sale-payment.models';
-import { CreateCcSaleRequest, CreateSaleDetailRequest } from '../../../core/models/sale.models';
+import { CreateCcSaleRequest, CreateSaleDetailRequest, InvoiceLetter, invoicingCustomerIssue, saleCreatedNotice, suggestedInvoiceLetter } from '../../../core/models/sale.models';
+import { CompanyService } from '../../../core/services/company.service';
+import { InvoicingControlComponent } from '../components/invoicing-control/invoicing-control.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { ProductPickerModalComponent } from '../../../shared/components/product-picker-modal/product-picker-modal.component';
 import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../../shared/components/product-picker-modal/product-picker-modal.models';
@@ -63,7 +65,7 @@ interface QuotePrefill {
 @Component({
   selector: 'app-sales-cc',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent, ProductPickerModalComponent, QuickCustomerModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent, ProductPickerModalComponent, QuickCustomerModalComponent, InvoicingControlComponent],
   templateUrl: './sales-cc.component.html',
   styleUrls: ['./sales-cc.component.css']
 })
@@ -105,6 +107,13 @@ export class SalesCcComponent implements OnInit {
   canjeQuantity = 1;
   canjeAmount: number | null = null;
 
+  // Facturacion al crear la venta: igual que en mostrador.
+  companyAutomaticInvoicing = false;
+  invoicingRequestedFlag = false;
+  invoiceLetter: InvoiceLetter = InvoiceLetter.B;
+  /** El vendedor eligio la letra a mano: desde ahi elegir cliente ya no la cambia sola. */
+  private invoiceLetterTouched = false;
+
   constructor(
     private readonly branchService: BranchService,
     private readonly customerService: CustomerService,
@@ -113,10 +122,12 @@ export class SalesCcComponent implements OnInit {
     private readonly quoteService: QuoteService,
     private readonly toast: ToastService,
     private readonly pendingTradeIn: PendingTradeInService,
-    public readonly auth: AuthService
+    public readonly auth: AuthService,
+    private readonly companyService: CompanyService
   ) {}
 
   ngOnInit(): void {
+    this.loadCompanyInvoicing();
     const state = history.state as { quotePrefill?: QuotePrefill } | null;
     this.pendingQuotePrefill = state?.quotePrefill ?? null;
 
@@ -212,10 +223,69 @@ export class SalesCcComponent implements OnInit {
     this.selectedCustomer = customer;
     this.searchResults = [];
     this.customerQuery = '';
+    this.applySuggestedInvoiceLetter();
   }
 
   clearCustomer(): void {
     this.selectedCustomer = null;
+    this.applySuggestedInvoiceLetter();
+  }
+
+  // ---------------- Facturacion electronica ----------------
+
+  get canInvoice(): boolean {
+    return this.auth.hasPermission(PermissionCodes.salesInvoice);
+  }
+
+  /** Config efectiva de la sucursal elegida: la sucursal manda si definio un valor, si no hereda. */
+  get automaticInvoicingForSelectedBranch(): boolean {
+    const branch = this.branches.find(b => b.id === this.selectedBranchId);
+    return branch?.automaticInvoicing ?? this.companyAutomaticInvoicing;
+  }
+
+  /** Convertir un presupuesto va por otro camino que no factura: ahi no se ofrece. */
+  get showInvoicingControl(): boolean {
+    return !this.convertingQuoteId && (this.showInvoicingCheck || this.willInvoice);
+  }
+
+  get showInvoicingCheck(): boolean {
+    return this.canInvoice && !this.automaticInvoicingForSelectedBranch;
+  }
+
+  get invoicingRequested(): boolean {
+    return this.showInvoicingCheck && this.invoicingRequestedFlag;
+  }
+
+  get willInvoice(): boolean {
+    return !this.convertingQuoteId && (this.automaticInvoicingForSelectedBranch || this.invoicingRequested);
+  }
+
+  /** Motivo por el que no se va a poder facturar al cliente elegido, si la venta se va a facturar. */
+  get invoicingIssue(): string | null {
+    return this.willInvoice ? invoicingCustomerIssue(this.selectedCustomer, this.invoiceLetter) : null;
+  }
+
+  setInvoicingRequested(requested: boolean): void {
+    this.invoicingRequestedFlag = requested;
+  }
+
+  setInvoiceLetter(letter: InvoiceLetter): void {
+    this.invoiceLetterTouched = true;
+    this.invoiceLetter = letter;
+  }
+
+  private applySuggestedInvoiceLetter(): void {
+    if (!this.invoiceLetterTouched) {
+      this.invoiceLetter = suggestedInvoiceLetter(this.selectedCustomer);
+    }
+  }
+
+  private loadCompanyInvoicing(): void {
+    this.companyService.getCurrentCompany().subscribe({
+      next: company => this.companyAutomaticInvoicing = Boolean(company.automaticInvoicing),
+      // Sin el dato de la empresa se asume manual: el tilde sigue disponible.
+      error: () => this.companyAutomaticInvoicing = false
+    });
   }
 
   openProductModal(): void {
@@ -327,6 +397,7 @@ export class SalesCcComponent implements OnInit {
 
   onQuickCustomerCreated(customer: CustomerSearchItem): void {
     this.selectedCustomer = customer;
+    this.applySuggestedInvoiceLetter();
     this.searchResults = [];
     this.customerQuery = '';
     this.showQuickCustomerModal = false;
@@ -513,6 +584,13 @@ export class SalesCcComponent implements OnInit {
       return;
     }
 
+    // Si se pidio factura y el cliente no la permite, se corta antes de crear la venta (igual que mostrador).
+    const invoicingIssue = this.invoicingRequested ? this.invoicingIssue : null;
+    if (invoicingIssue) {
+      this.toast.error(invoicingIssue);
+      return;
+    }
+
     // Ultimo chequeo antes de guardar: lo que quedo en el formulario de canje no viaja.
     if (!await this.pendingTradeIn.confirmDiscard(this.pendingTradeInLabels())) {
       return;
@@ -537,7 +615,9 @@ export class SalesCcComponent implements OnInit {
         ? this.tradeInDrafts.map(t => ({ productId: t.productId, quantity: t.quantity, amount: t.amount }))
         : undefined,
       generalDiscountPercent: this.generalDiscountPercent || undefined,
-      manualOverridePrice: this.manualOverridePrice ?? undefined
+      manualOverridePrice: this.manualOverridePrice ?? undefined,
+      requestInvoicing: this.invoicingRequested,
+      invoiceLetter: this.invoicingRequested ? this.invoiceLetter : null
     };
 
     const request$ = this.convertingQuoteId
@@ -547,9 +627,12 @@ export class SalesCcComponent implements OnInit {
     request$.subscribe({
       next: (res) => {
         this.saving = false;
-        this.toast.success(this.convertingQuoteId
-          ? 'Presupuesto convertido a venta CC exitosamente'
-          : 'Venta CC creada exitosamente');
+        if (this.convertingQuoteId) {
+          this.toast.success('Presupuesto convertido a venta CC exitosamente');
+        } else {
+          const notice = saleCreatedNotice(res?.code ? `Venta CC ${res.code} creada` : 'Venta CC creada', res?.invoicing);
+          this.toast.show(notice.message, notice.type, notice.duration);
+        }
         if (res?.creditApplied && res.creditApplied > 0) {
           const applied = res.creditApplied.toLocaleString('es-AR', { minimumFractionDigits: 2 });
           const remaining = res.remainingCustomerCredit?.toLocaleString('es-AR', { minimumFractionDigits: 2 }) ?? '0,00';
@@ -572,6 +655,9 @@ export class SalesCcComponent implements OnInit {
         this.convertWithVat = false;
         this.convertVatRate = 0;
         this.pickerRows = [];
+        this.invoicingRequestedFlag = false;
+        this.invoiceLetter = InvoiceLetter.B;
+        this.invoiceLetterTouched = false;
       },
       error: err => {
         this.saving = false;

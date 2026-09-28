@@ -29,6 +29,16 @@
         <span class="field__label">Sucursal</span>
         <app-searchable-select [(ngModel)]="selectedBranchId" (ngModelChange)="onBranchChange()" [options]="branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
       </label>
+      <div class="field" *ngIf="showInvoicingControl">
+        <span class="field__label">Factura electronica</span>
+        <app-invoicing-control
+          [showToggle]="showInvoicingCheck"
+          [requested]="invoicingRequested"
+          [willInvoice]="willInvoice"
+          [letter]="invoiceLetter"
+          (requestedChange)="setInvoicingRequested($event)"
+          (letterChange)="setInvoiceLetter($event)"></app-invoicing-control>
+      </div>
     </div>
 
     <div class="block">
@@ -57,6 +67,12 @@
         </div>
         <button class="btn btn--ghost btn--sm" type="button" (click)="clearCustomer()">Cambiar cliente</button>
       </div>
+      <ng-container *ngIf="invoicingIssue as issue">
+        <span class="field__error" role="alert" *ngIf="invoicingRequested">{{ issue }}</span>
+        <span class="field__warning" role="status" *ngIf="!invoicingRequested">
+          Esta sucursal factura automáticamente. {{ issue }} Si confirmás así, la venta se guarda y la factura queda rechazada.
+        </span>
+      </ng-container>
     </div>
 
     <div class="block">

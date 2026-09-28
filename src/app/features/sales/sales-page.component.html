@@ -119,6 +119,17 @@
                 <span class="toggle-check__text">{{ lineForm.get('hasDelivery')?.value ? 'Con envio' : 'Retiro / sin envio' }}</span>
               </label>
             </div>
+
+            <div class="field field--invoicing" *ngIf="showInvoicingCheck || createWillInvoice">
+              <span class="field__label">Factura electronica</span>
+              <app-invoicing-control
+                [showToggle]="showInvoicingCheck"
+                [requested]="!!lineForm.get('requestInvoicing')?.value"
+                [willInvoice]="createWillInvoice"
+                [letter]="createInvoiceLetter"
+                (requestedChange)="setInvoicingRequested($event)"
+                (letterChange)="setInvoiceLetter($event)"></app-invoicing-control>
+            </div>
           </form>
         </section>
 
@@ -252,6 +263,12 @@
             <div *ngIf="createCustomerId" class="customer-selected-chip">
               Cliente asignado: <strong>{{ createCustomerQuery }}</strong>
             </div>
+            <ng-container *ngIf="createInvoicingIssue as issue">
+              <span class="field__error" role="alert" *ngIf="createInvoicingRequested">{{ issue }}</span>
+              <span class="field__warning" role="status" *ngIf="!createInvoicingRequested">
+                Esta sucursal factura automáticamente. {{ issue }} Si confirmás así, la venta se guarda y la factura queda rechazada.
+              </span>
+            </ng-container>
           </div>
 
           <app-sale-payment-inline
@@ -551,11 +568,11 @@
             </span>
             <span class="filters__more-copy">
               <strong>Más filtros</strong>
-              <small>Transporte, teléfono y dirección</small>
+              <small>Facturación, producto, transporte, teléfono y dirección</small>
             </span>
             <span
               class="filters__active"
-              *ngIf="filterForm.get('transportStatus')?.value || filterForm.get('phone')?.value || filterForm.get('deliveryAddress')?.value">
+              *ngIf="filterForm.get('invoicingStatus')?.value || filterForm.get('productId')?.value || filterForm.get('transportStatus')?.value || filterForm.get('phone')?.value || filterForm.get('deliveryAddress')?.value">
               Activos
             </span>
             <svg class="filters__more-chevron" viewBox="0 0 24 24" aria-hidden="true">
@@ -564,6 +581,32 @@
           </summary>
 
           <div class="filters__secondary">
+            <label class="field">
+              <span class="field__label">Facturación</span>
+              <app-searchable-select
+                formControlName="invoicingStatus"
+                [options]="invoicingFilterOptions"
+                [allowClear]="true"
+                clearLabel="Todas"
+                clearValue=""
+                placeholder="Todas"
+                searchPlaceholder="Buscar estado...">
+              </app-searchable-select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Producto</span>
+              <app-searchable-select
+                formControlName="productId"
+                [options]="productFilterOptions"
+                [allowClear]="true"
+                clearLabel="Todos"
+                clearValue=""
+                placeholder="Todos"
+                searchPlaceholder="Buscar producto...">
+              </app-searchable-select>
+            </label>
+
             <label class="field">
               <span class="field__label">Transporte</span>
               <app-searchable-select
@@ -637,6 +680,11 @@
             <div class="sale-card__status">
               <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">{{ saleStatusLabel(sale) }}</span>
               <small *ngIf="sale.isCuentaCorriente">Cuenta corriente</small>
+              <!-- "Sin facturar" tambien se ve en la fila (para quien puede facturar): sin abrir la venta no habia forma de saberlo. -->
+              <small class="sale-invoicing"
+                     *ngIf="(sale.invoicingStatus ?? 1) !== 1 || canInvoice"
+                     [ngClass]="invoicingToneClass(sale)"
+                     [title]="invoicingSummary(sale)">{{ invoicingRowLabel(sale) }}</small>
             </div>
 
             <div class="sale-card__delivery">
@@ -674,6 +722,9 @@
               [canEdit]="auth.hasPermission(permissionCodes.salesUpdate)"
               [canDelete]="auth.hasPermission(permissionCodes.salesDelete)"
               [canRemitoAmounts]="auth.hasPermission(permissionCodes.salesRemitoAmounts)"
+              [canDownloadInvoice]="canInvoice && canDownloadInvoice(sale)"
+              [canDownloadCreditNote]="canInvoice && canDownloadCreditNote(sale)"
+              [invoiceLabel]="invoiceDocumentLabel(sale)"
               [canSendWhatsApp]="canSendSaleWhatsApp(sale) && auth.hasPermission(permissionCodes.salesPay)"
               [paying]="quickPayingSaleId === sale.id"
               [canceling]="cancelingSaleId === sale.id"
@@ -724,6 +775,37 @@
               <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, 1)" [disabled]="saleDetailPage(sale.id) >= totalSaleDetailPages(sale)">→</button>
             </div>
 
+            <!-- La tarjeta entera pliega/despliega con un click: las acciones de facturacion no deben cerrarla. -->
+            <div class="invoicing-bar" *ngIf="canInvoice" (click)="$event.stopPropagation()">
+              <span class="invoicing-bar__summary sale-invoicing" [ngClass]="invoicingToneClass(sale)">{{ invoicingSummary(sale) }}</span>
+
+              <div class="invoicing-bar__actions">
+                <button class="invoicing-bar__link invoicing-bar__link--primary"
+                        type="button"
+                        *ngIf="canTriggerInvoicing(sale)"
+                        [disabled]="invoicingSaleId === sale.id"
+                        (click)="invoiceSale(sale)">
+                  {{ invoicingSaleId === sale.id ? invoiceActionBusyLabel(sale) : invoiceActionLabel(sale) }}
+                </button>
+                <button class="invoicing-bar__link"
+                        type="button"
+                        *ngIf="canDownloadInvoice(sale)"
+                        title="Descargar la factura en PDF"
+                        (click)="downloadInvoicePdf(sale)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+                  Factura
+                </button>
+                <button class="invoicing-bar__link"
+                        type="button"
+                        *ngIf="canDownloadCreditNote(sale)"
+                        title="Descargar la nota de credito en PDF"
+                        (click)="downloadCreditNotePdf(sale)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+                  Nota de crédito
+                </button>
+              </div>
+            </div>
+
           </div>
         </article>
       </div>
@@ -761,7 +843,7 @@
     <div class="transport-modal__summary">
       <div class="transport-summary-card">
         <span class="transport-summary-card__label">Venta</span>
-        <strong>#{{ transportingSale.id }}</strong>
+        <strong>{{ transportingSale.code || 'Sin código' }}</strong>
       </div>
       <div class="transport-summary-card">
         <span class="transport-summary-card__label">Sucursal</span>
@@ -852,11 +934,13 @@
       <strong>Cancelar venta</strong>
       <button class="modal-panel__close" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">x</button>
     </div>
-    <p class="confirm-copy">Vas a cancelar la venta <strong>#{{ cancelSaleModal.id }}</strong>. Esta accion cambia el estado a <strong>Cancelada</strong>.</p>
+    <p class="confirm-copy">Vas a cancelar la venta <strong>{{ cancelSaleModal.code || 'seleccionada' }}</strong>. Esta accion cambia el estado a <strong>Cancelada</strong>.</p>
     <div class="confirm-meta">
       <span><strong>Cliente:</strong> {{ cancelSaleModal.customerFullName || 'Sin cliente' }}</span>
       <span><strong>Total:</strong> {{ cancelSaleModal.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
     </div>
+    <p class="confirm-fiscal" *ngIf="cancelSaleInvoicingNotice as notice"
+       [class.confirm-fiscal--warning]="notice.tone === 'warning'">{{ notice.text }}</p>
     <div class="modal-panel__actions">
       <button class="btn btn--ghost" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">Volver</button>
       <button class="btn btn--danger-solid" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="confirmCancelSale()">{{ cancelingSaleId === cancelSaleModal.id ? 'Cancelando...' : 'Confirmar cancelacion' }}</button>
@@ -939,17 +1023,38 @@
     </div>
     <div class="quick-customer-form">
       <label class="field">
-        <span class="field__label">Nombre <span class="field__required">*</span></span>
+        <span class="field__label">{{ quickCreateShowsBilling ? 'Nombre o razón social' : 'Nombre' }} <span class="field__required">*</span></span>
         <input class="control" type="text" [(ngModel)]="quickCreateCustomerName" placeholder="Nombre completo" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
       </label>
       <label class="field">
         <span class="field__label">Teléfono <span class="field__optional">(opcional)</span></span>
         <input class="control" type="tel" [(ngModel)]="quickCreateCustomerPhone" placeholder="Ej: +54 9 11 1234-5678" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
       </label>
+
+      <div class="quick-customer-billing" *ngIf="quickCreateShowsBilling">
+        <div class="quick-customer-billing__head">
+          <span class="quick-customer-modal__eyebrow">Datos de facturación</span>
+          <span class="quick-customer-billing__letter">Factura {{ createInvoiceLetter === 1 ? 'A' : 'B' }}</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Condición frente al IVA</span>
+          <app-searchable-select
+            [(ngModel)]="quickCreateCustomerIvaCondition"
+            [options]="quickCustomerIvaConditionOptions"
+            [disabled]="quickCreateCustomerSaving"
+            placeholder="Condición frente al IVA"
+            searchPlaceholder="Buscar condición..."></app-searchable-select>
+        </div>
+        <label class="field">
+          <span class="field__label">CUIT <span class="field__optional" *ngIf="createInvoiceLetter !== 1">(opcional)</span></span>
+          <input class="control" type="text" inputmode="numeric" [(ngModel)]="quickCreateCustomerTaxId" placeholder="20-30111222-9" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
+        </label>
+        <span class="field__error" role="alert" *ngIf="quickCreateBillingIssue as issue">{{ issue }}</span>
+      </div>
     </div>
     <div class="modal-panel__actions">
       <button class="btn btn--ghost" type="button" [disabled]="quickCreateCustomerSaving" (click)="closeQuickCreateCustomer()">Cancelar</button>
-      <button class="btn" type="button" [disabled]="quickCreateCustomerSaving || !quickCreateCustomerName.trim()" (click)="submitQuickCreateCustomer()">
+      <button class="btn" type="button" [disabled]="quickCreateCustomerSaving || !quickCreateCustomerName.trim() || quickCreateBillingIssue" (click)="submitQuickCreateCustomer()">
         {{ quickCreateCustomerSaving ? 'Creando...' : 'Crear cliente' }}
       </button>
     </div>
