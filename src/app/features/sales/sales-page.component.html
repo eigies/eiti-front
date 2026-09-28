@@ -666,8 +666,9 @@
             <div class="sale-card__status">
               <span class="chip chip--status" [ngClass]="saleStatusChipClass(sale)">{{ saleStatusLabel(sale) }}</span>
               <small *ngIf="sale.isCuentaCorriente">Cuenta corriente</small>
+              <!-- "Sin facturar" tambien se ve en la fila (para quien puede facturar): sin abrir la venta no habia forma de saberlo. -->
               <small class="sale-invoicing"
-                     *ngIf="(sale.invoicingStatus ?? 1) !== 1"
+                     *ngIf="(sale.invoicingStatus ?? 1) !== 1 || canInvoice"
                      [ngClass]="invoicingToneClass(sale)"
                      [title]="invoicingSummary(sale)">{{ invoicingRowLabel(sale) }}</small>
             </div>
