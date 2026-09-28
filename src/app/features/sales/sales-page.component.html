@@ -814,7 +814,7 @@
     <div class="transport-modal__summary">
       <div class="transport-summary-card">
         <span class="transport-summary-card__label">Venta</span>
-        <strong>#{{ transportingSale.id }}</strong>
+        <strong>{{ transportingSale.code || 'Sin código' }}</strong>
       </div>
       <div class="transport-summary-card">
         <span class="transport-summary-card__label">Sucursal</span>
@@ -905,7 +905,7 @@
       <strong>Cancelar venta</strong>
       <button class="modal-panel__close" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">x</button>
     </div>
-    <p class="confirm-copy">Vas a cancelar la venta <strong>#{{ cancelSaleModal.id }}</strong>. Esta accion cambia el estado a <strong>Cancelada</strong>.</p>
+    <p class="confirm-copy">Vas a cancelar la venta <strong>{{ cancelSaleModal.code || 'seleccionada' }}</strong>. Esta accion cambia el estado a <strong>Cancelada</strong>.</p>
     <div class="confirm-meta">
       <span><strong>Cliente:</strong> {{ cancelSaleModal.customerFullName || 'Sin cliente' }}</span>
       <span><strong>Total:</strong> {{ cancelSaleModal.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
