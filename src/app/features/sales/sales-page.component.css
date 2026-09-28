@@ -3207,7 +3207,8 @@
 
 /* Aviso fiscal al cancelar: info si la NC se emite sola, advertencia si la factura sigue en tramite. */
 .confirm-fiscal {
-    margin: .9rem 0 0;
+    /* Arriba ya separa el margin-bottom de .confirm-meta; abajo, aire antes de los botones. */
+    margin: 0 0 1.25rem;
     padding: .7rem .85rem;
     border-left: 3px solid color-mix(in srgb, #8e7cc3 70%, var(--border-2));
     border-radius: 4px;
