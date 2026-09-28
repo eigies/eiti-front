@@ -66,17 +66,44 @@ export function isValidCuit(value: string | null | undefined): boolean {
     return Number(digits[10]) === expected;
 }
 
-/**
- * Null si se puede facturar al cliente; si no, que dato falta. Sin cliente es Consumidor Final:
- * se factura siempre (el tope de ARCA para consumidor final lo valida el servicio de facturacion).
- */
-export function invoicingCustomerIssue(customer: InvoicingCustomer | null | undefined): string | null {
+/** Letra que elige el vendedor. Mismos valores que InvoiceLetter del back. */
+export enum InvoiceLetter {
+    A = 1,
+    B = 2
+}
+
+/** Letra que le corresponde al cliente: A si es Responsable Inscripto o Monotributista, B para el resto. */
+export function suggestedInvoiceLetter(customer: InvoicingCustomer | null | undefined): InvoiceLetter {
     const condition = customer?.ivaCondition;
-    if (!customer || (condition !== IVA_CONDITION_REGISTERED && condition !== IVA_CONDITION_MONOTRIBUTE)) {
+    return condition === IVA_CONDITION_REGISTERED || condition === IVA_CONDITION_MONOTRIBUTE
+        ? InvoiceLetter.A
+        : InvoiceLetter.B;
+}
+
+/**
+ * Null si se puede facturar al cliente; si no, que dato falta. Mismos criterios que
+ * SaleInvoicingReceiverRules del back. Sin cliente es Consumidor Final: se factura B siempre
+ * (el tope de ARCA para consumidor final lo valida el servicio de facturacion). Con letra, ademas
+ * exige que sea la que le corresponde al cliente: ARCA rechaza A a un consumidor final y B a un
+ * Responsable Inscripto.
+ */
+export function invoicingCustomerIssue(customer: InvoicingCustomer | null | undefined, letter?: InvoiceLetter | null): string | null {
+    const suggested = suggestedInvoiceLetter(customer);
+    const name = customer?.fullName || customer?.name || 'el cliente';
+
+    if (letter === InvoiceLetter.A && suggested !== InvoiceLetter.A) {
+        return customer
+            ? `${name} no está cargado como Responsable Inscripto ni Monotributista: le corresponde Factura B. Para hacer Factura A actualizá su condición frente al IVA.`
+            : 'Para hacer Factura A elegí el cliente o dalo de alta con su CUIT y su condición frente al IVA.';
+    }
+    if (!customer || suggested !== InvoiceLetter.A) {
         return null;
     }
-    const name = customer.fullName || customer.name || 'el cliente';
-    const label = condition === IVA_CONDITION_REGISTERED ? 'Responsable Inscripto' : 'Monotributista';
+
+    const label = customer.ivaCondition === IVA_CONDITION_REGISTERED ? 'Responsable Inscripto' : 'Monotributista';
+    if (letter === InvoiceLetter.B) {
+        return `${name} es ${label}: le corresponde Factura A.`;
+    }
     if (!(customer.taxId ?? '').replace(/\D/g, '')) {
         return `Para facturar a ${name} (${label}) hay que cargar su CUIT en la ficha del cliente.`;
     }
@@ -180,6 +207,8 @@ export interface CreateSaleRequest {
     contactPhone?: string | null;
     /** Opt-in por venta. Se ignora si la empresa/sucursal factura automaticamente. */
     requestInvoicing?: boolean;
+    /** Letra elegida por el vendedor; el back frena la venta si no coincide con el cliente. */
+    invoiceLetter?: InvoiceLetter | null;
 }
 
 export interface CreateSaleDetailRequest {

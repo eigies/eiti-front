@@ -128,6 +128,18 @@
                 <span class="toggle-check__text">{{ lineForm.get('requestInvoicing')?.value ? 'Emitir factura' : 'No facturar' }}</span>
               </label>
             </div>
+
+            <div class="field" *ngIf="createWillInvoice">
+              <span class="field__label">Tipo de factura</span>
+              <app-searchable-select
+                [ngModel]="createInvoiceLetter"
+                (ngModelChange)="setInvoiceLetter($event)"
+                [ngModelOptions]="{ standalone: true }"
+                [options]="invoiceLetterOptions"
+                placeholder="Tipo de factura"
+                searchPlaceholder="Buscar tipo..."></app-searchable-select>
+              <span class="field__hint">A para Responsable Inscripto o Monotributista; B para el resto.</span>
+            </div>
           </form>
         </section>
 
@@ -988,17 +1000,38 @@
     </div>
     <div class="quick-customer-form">
       <label class="field">
-        <span class="field__label">Nombre <span class="field__required">*</span></span>
+        <span class="field__label">{{ quickCreateShowsBilling ? 'Nombre o razón social' : 'Nombre' }} <span class="field__required">*</span></span>
         <input class="control" type="text" [(ngModel)]="quickCreateCustomerName" placeholder="Nombre completo" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
       </label>
       <label class="field">
         <span class="field__label">Teléfono <span class="field__optional">(opcional)</span></span>
         <input class="control" type="tel" [(ngModel)]="quickCreateCustomerPhone" placeholder="Ej: +54 9 11 1234-5678" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
       </label>
+
+      <div class="quick-customer-billing" *ngIf="quickCreateShowsBilling">
+        <div class="quick-customer-billing__head">
+          <span class="quick-customer-modal__eyebrow">Datos de facturación</span>
+          <span class="quick-customer-billing__letter">Factura {{ createInvoiceLetter === 1 ? 'A' : 'B' }}</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Condición frente al IVA</span>
+          <app-searchable-select
+            [(ngModel)]="quickCreateCustomerIvaCondition"
+            [options]="quickCustomerIvaConditionOptions"
+            [disabled]="quickCreateCustomerSaving"
+            placeholder="Condición frente al IVA"
+            searchPlaceholder="Buscar condición..."></app-searchable-select>
+        </div>
+        <label class="field">
+          <span class="field__label">CUIT <span class="field__optional" *ngIf="createInvoiceLetter !== 1">(opcional)</span></span>
+          <input class="control" type="text" inputmode="numeric" [(ngModel)]="quickCreateCustomerTaxId" placeholder="20-30111222-9" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
+        </label>
+        <span class="field__error" role="alert" *ngIf="quickCreateBillingIssue as issue">{{ issue }}</span>
+      </div>
     </div>
     <div class="modal-panel__actions">
       <button class="btn btn--ghost" type="button" [disabled]="quickCreateCustomerSaving" (click)="closeQuickCreateCustomer()">Cancelar</button>
-      <button class="btn" type="button" [disabled]="quickCreateCustomerSaving || !quickCreateCustomerName.trim()" (click)="submitQuickCreateCustomer()">
+      <button class="btn" type="button" [disabled]="quickCreateCustomerSaving || !quickCreateCustomerName.trim() || quickCreateBillingIssue" (click)="submitQuickCreateCustomer()">
         {{ quickCreateCustomerSaving ? 'Creando...' : 'Crear cliente' }}
       </button>
     </div>

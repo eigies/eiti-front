@@ -1284,6 +1284,34 @@
     margin-bottom: 1.4rem;
 }
 
+/* Aparece solo si la venta se va a facturar: separa lo fiscal de los datos de contacto. */
+.quick-customer-billing {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-2);
+}
+
+.quick-customer-billing__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.quick-customer-billing__letter {
+    padding: .2rem .55rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 40%, var(--border-2));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--amber) 10%, transparent);
+    color: color-mix(in srgb, var(--amber) 70%, var(--text));
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
 .field__required {
     color: var(--danger, #e74c3c);
     font-weight: 600;
@@ -2960,6 +2988,14 @@
     color: color-mix(in srgb, var(--danger) 76%, var(--text));
     font-family: 'DM Mono', monospace;
     font-size: .65rem;
+    line-height: 1.4;
+}
+
+/* Ayuda debajo de un campo: mismo formato que el error, en el tono atenuado. */
+.field__hint {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
     line-height: 1.4;
 }
 

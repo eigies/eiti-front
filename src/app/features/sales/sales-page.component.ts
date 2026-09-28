@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SaleInvoicingStatus, SALE_SOURCE_CHANNELS, fiscalNumberLabel, invoicingCustomerIssue, saleInvoicingStatusLabel } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SaleInvoicingStatus, SALE_SOURCE_CHANNELS, fiscalNumberLabel, invoicingCustomerIssue, InvoiceLetter, saleInvoicingStatusLabel, suggestedInvoiceLetter } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -145,6 +145,20 @@ export class SalesPageComponent implements OnInit {
     quickCreateCustomerName = '';
     quickCreateCustomerPhone = '';
     quickCreateCustomerSaving = false;
+    quickCreateCustomerTaxId = '';
+    quickCreateCustomerIvaCondition: number | null = null;
+    /** El vendedor eligio la letra a mano: desde ahi elegir cliente ya no la cambia sola. */
+    invoiceLetterTouched = false;
+    readonly invoiceLetterOptions: SearchableSelectOption[] = [
+        { value: InvoiceLetter.B, label: 'Factura B' },
+        { value: InvoiceLetter.A, label: 'Factura A' }
+    ];
+    readonly quickCustomerIvaConditionOptions: SearchableSelectOption[] = [
+        { value: null, label: 'Consumidor Final' },
+        { value: 1, label: 'Responsable Inscripto' },
+        { value: 2, label: 'Monotributo' },
+        { value: 4, label: 'Exento' }
+    ];
     deliveryAddressSuggestions: string[] = [];
     showDeliveryAddressSuggestions = false;
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
@@ -220,6 +234,7 @@ export class SalesPageComponent implements OnInit {
             deliveryAddress: [''],
             contactPhone: [''],
             requestInvoicing: [false],
+            invoiceLetter: [InvoiceLetter.B],
             productId: ['', Validators.required],
             quantity: [1, [Validators.required, Validators.min(1)]]
         });
@@ -611,15 +626,49 @@ export class SalesPageComponent implements OnInit {
         return this.automaticInvoicingForSelectedBranch || this.createInvoicingRequested;
     }
 
+    get createInvoiceLetter(): InvoiceLetter {
+        return Number(this.lineForm.get('invoiceLetter')?.value) === InvoiceLetter.A ? InvoiceLetter.A : InvoiceLetter.B;
+    }
+
     /** Motivo por el que no se va a poder facturar al cliente elegido, si la venta se va a facturar. */
     get createInvoicingIssue(): string | null {
-        return this.createWillInvoice ? invoicingCustomerIssue(this.createCustomer) : null;
+        return this.createWillInvoice ? invoicingCustomerIssue(this.createCustomer, this.createInvoiceLetter) : null;
+    }
+
+    setInvoiceLetter(value: InvoiceLetter | null): void {
+        this.invoiceLetterTouched = true;
+        this.lineForm.patchValue({ invoiceLetter: value ?? InvoiceLetter.B });
+    }
+
+    /** La letra la sugiere el cliente elegido, salvo que el vendedor ya la haya elegido a mano. */
+    private applySuggestedInvoiceLetter(): void {
+        if (!this.invoiceLetterTouched) {
+            this.lineForm.patchValue({ invoiceLetter: suggestedInvoiceLetter(this.createCustomer) });
+        }
+    }
+
+    /** El alta rapida pide datos de facturacion cuando la venta se va a facturar. */
+    get quickCreateShowsBilling(): boolean {
+        return this.createWillInvoice;
+    }
+
+    /** Para Factura A el alta rapida exige condicion A y CUIT valido: si no, la venta no se podria crear. */
+    get quickCreateBillingIssue(): string | null {
+        if (!this.quickCreateShowsBilling || this.createInvoiceLetter !== InvoiceLetter.A) {
+            return null;
+        }
+        return invoicingCustomerIssue({
+            name: this.quickCreateCustomerName.trim() || 'el cliente',
+            taxId: this.quickCreateCustomerTaxId,
+            ivaCondition: this.quickCreateCustomerIvaCondition
+        }, InvoiceLetter.A);
     }
 
     handleCreateCustomerInput(query: string): void {
     this.createCustomerQuery = query;
     this.createCustomerId = null;
     this.createCustomer = null;
+    this.applySuggestedInvoiceLetter();
     this.showCreateCustomerResults = true;
     this.customerSearch$.next(query);
 }
@@ -628,6 +677,7 @@ selectCreateCustomer(customer: CustomerSearchItem): void {
     this.createCustomerId = customer.id;
     this.createCustomer = customer;
     this.createCustomerQuery = customer.fullName || customer.name || customer.email;
+    this.applySuggestedInvoiceLetter();
     this.showCreateCustomerResults = false;
     this.createCustomerSuggestions = [];
 }
@@ -635,6 +685,7 @@ selectCreateCustomer(customer: CustomerSearchItem): void {
 clearCreateCustomer(): void {
     this.createCustomerId = null;
     this.createCustomer = null;
+    this.applySuggestedInvoiceLetter();
     this.createCustomerQuery = '';
     this.createCustomerSuggestions = [];
     this.showCreateCustomerResults = false;
@@ -643,6 +694,9 @@ clearCreateCustomer(): void {
 openQuickCreateCustomer(): void {
     this.quickCreateCustomerName = this.createCustomerQuery.trim();
     this.quickCreateCustomerPhone = '';
+    this.quickCreateCustomerTaxId = '';
+    // Si el vendedor va a hacer Factura A, lo mas probable es un Responsable Inscripto.
+    this.quickCreateCustomerIvaCondition = this.createWillInvoice && this.createInvoiceLetter === InvoiceLetter.A ? 1 : null;
     this.quickCreateCustomerOpen = true;
     this.showCreateCustomerResults = false;
 }
@@ -651,26 +705,34 @@ closeQuickCreateCustomer(): void {
     this.quickCreateCustomerOpen = false;
     this.quickCreateCustomerName = '';
     this.quickCreateCustomerPhone = '';
+    this.quickCreateCustomerTaxId = '';
+    this.quickCreateCustomerIvaCondition = null;
 }
 
 submitQuickCreateCustomer(): void {
     const name = this.quickCreateCustomerName.trim();
-    if (!name) return;
+    if (!name || this.quickCreateBillingIssue) return;
+    const withBilling = this.quickCreateShowsBilling;
     this.quickCreateCustomerSaving = true;
     this.customerService.createCustomer({
         name,
         email: null,
         phone: this.quickCreateCustomerPhone.trim() || null,
+        taxId: withBilling ? (this.quickCreateCustomerTaxId.trim() || null) : null,
+        ivaCondition: withBilling ? this.quickCreateCustomerIvaCondition : null,
     }).subscribe({
         next: (customer) => {
             this.quickCreateCustomerSaving = false;
             this.quickCreateCustomerOpen = false;
             this.createCustomerId = customer.id;
-            // El alta rapida no carga condicion de IVA: queda como Consumidor Final.
-            this.createCustomer = null;
+            // Lo que haga falta para validar la factura (condicion y CUIT) sale de la respuesta.
+            this.createCustomer = { ...customer, creditBalance: customer.creditBalance ?? 0 };
             this.createCustomerQuery = customer.fullName || customer.name || name;
+            this.applySuggestedInvoiceLetter();
             this.quickCreateCustomerName = '';
             this.quickCreateCustomerPhone = '';
+            this.quickCreateCustomerTaxId = '';
+            this.quickCreateCustomerIvaCondition = null;
             this.toast.success('Cliente creado');
         },
         error: () => {
@@ -783,7 +845,8 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
-        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '', requestInvoicing: false });
+        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '', requestInvoicing: false, invoiceLetter: InvoiceLetter.B });
+        this.invoiceLetterTouched = false;
         this.createPaymentState = createEmptySalePaymentDraftState();
         this.createProductModalOpen = false;
         this.createPickerRows = [];
@@ -1936,6 +1999,8 @@ if (form === this.editLineForm) {
         // Con la sucursal en automatico el check no se ve: un valor que quedo tildado de otra
         // sucursal no tiene que viajar (el back lo tomaria como pedido explicito y bloquearia).
         requestInvoicing: this.showInvoicingCheck && Boolean(raw.requestInvoicing),
+        // Solo el alta la usa, y solo cuando se pidio factura: es lo que el back valida.
+        invoiceLetter: form === this.lineForm && this.createInvoicingRequested ? this.createInvoiceLetter : null,
         details: items.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
