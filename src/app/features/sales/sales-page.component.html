@@ -927,6 +927,45 @@
   </div>
 </section>
 
+<div class="modal-backdrop" *ngIf="invoiceModalSale" (click)="closeInvoiceModal()"></div>
+<section class="modal-panel" *ngIf="invoiceModalSale as sale">
+  <div class="modal-panel__card modal-panel__card--confirm" (click)="$event.stopPropagation()">
+    <div class="modal-panel__head">
+      <strong>Facturar venta</strong>
+      <button class="modal-panel__close" type="button" [disabled]="invoicingSaleId === sale.id" (click)="closeInvoiceModal()">x</button>
+    </div>
+    <p class="confirm-copy">Vas a emitir la factura de la venta <strong>{{ sale.code || 'seleccionada' }}</strong> por <strong>{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</strong>.</p>
+
+    <div class="confirm-meta">
+      <span *ngIf="invoiceModalLoading">Leyendo los datos del cliente...</span>
+      <ng-container *ngIf="!invoiceModalLoading">
+        <span><strong>Cliente:</strong> {{ invoiceModalCustomer?.fullName || invoiceModalCustomer?.name || 'Consumidor final (sin cliente)' }}</span>
+        <span><strong>Condición IVA:</strong> {{ invoiceModalConditionLabel(invoiceModalCustomer) }}</span>
+        <span><strong>CUIT:</strong> {{ invoiceModalCustomer?.taxId || 'Sin cargar' }}</span>
+      </ng-container>
+    </div>
+
+    <div class="invoice-modal__letter">
+      <span class="field__label">Tipo de factura</span>
+      <app-invoice-letter-switch
+        [letter]="invoiceModalLetter"
+        [disabled]="invoiceModalLoading || invoicingSaleId === sale.id"
+        (letterChange)="setInvoiceModalLetter($event)"></app-invoice-letter-switch>
+    </div>
+
+    <p class="field__error invoice-modal__issue" role="alert" *ngIf="!invoiceModalLoading && (invoiceModalError || invoiceModalIssue) as issue">{{ issue }}</p>
+
+    <div class="modal-panel__actions">
+      <button class="btn btn--ghost" type="button" [disabled]="invoicingSaleId === sale.id" (click)="closeInvoiceModal()">Volver</button>
+      <button class="btn" type="button"
+              [disabled]="invoiceModalLoading || !!invoiceModalIssue || invoicingSaleId === sale.id"
+              (click)="confirmInvoiceModal()">
+        {{ invoicingSaleId === sale.id ? 'Emitiendo...' : 'Emitir Factura ' + (invoiceModalLetter === 1 ? 'A' : 'B') }}
+      </button>
+    </div>
+  </div>
+</section>
+
 <div class="modal-backdrop" *ngIf="cancelSaleModal" (click)="closeCancelSaleModal()"></div>
 <section class="modal-panel" *ngIf="cancelSaleModal">
   <div class="modal-panel__card modal-panel__card--confirm" (click)="$event.stopPropagation()">

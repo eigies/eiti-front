@@ -1,0 +1,42 @@
+:host {
+    display: inline-flex;
+}
+
+.letter-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-2);
+    border-radius: 10px;
+    background: var(--bg);
+}
+
+.letter-switch__option {
+    min-width: 2.35rem;
+    align-self: stretch;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .78rem;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+}
+
+.letter-switch__option:hover:not(.letter-switch__option--active) {
+    color: var(--text);
+}
+
+.letter-switch__option--active {
+    background: color-mix(in srgb, var(--amber) 22%, transparent);
+    color: var(--text);
+}
+
+.letter-switch__option:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--amber) 72%, white);
+    outline-offset: 1px;
+}

@@ -9,7 +9,7 @@ import { ProductService } from '../../core/services/product.service';
 import { SaleService } from '../../core/services/sale.service';
 import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
-import { CustomerSearchItem } from '../../core/models/customer.models';
+import { CustomerResponse, CustomerSearchItem } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
 import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
@@ -34,6 +34,7 @@ import { InvoicePdfService } from '../../shared/services/invoice-pdf.service';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { InvoicingControlComponent } from './components/invoicing-control/invoicing-control.component';
+import { InvoiceLetterSwitchComponent } from './components/invoice-letter-switch/invoice-letter-switch.component';
 import { QuickSaleWorkspaceComponent } from './components/quick-sale-workspace/quick-sale-workspace.component';
 import {
     QuickSaleSummaryComponent,
@@ -82,6 +83,7 @@ function localDateString(date = new Date()): string {
         SalePaymentInlineComponent,
         SearchableSelectComponent,
         InvoicingControlComponent,
+        InvoiceLetterSwitchComponent,
         QuickSaleWorkspaceComponent,
         QuickSaleSummaryComponent,
         SaleActionsMenuComponent,
@@ -1964,20 +1966,98 @@ if (form === this.editLineForm) {
         return status === 3 || status === 5;
     }
 
+    // ---------- Facturar despues del alta: popup para elegir A o B ----------
+
+    invoiceModalSale: SaleResponse | null = null;
+    invoiceModalCustomer: CustomerResponse | null = null;
+    invoiceModalLoading = false;
+    invoiceModalLetter: InvoiceLetter = InvoiceLetter.B;
+    /** Motivo que devolvio el back al rechazar la letra; se muestra en el popup, no en un toast. */
+    invoiceModalError: string | null = null;
+
+    /**
+     * "Facturar" abre el popup para elegir la letra. "Consultar estado" (tramite abierto) va directo:
+     * re-envia el pedido que ya salio, no hay letra que elegir.
+     */
     invoiceSale(sale: SaleResponse): void {
         if (!this.canTriggerInvoicing(sale) || this.invoicingSaleId) {
             return;
         }
+        if ((sale.invoicingStatus ?? 1) === 2) {
+            this.submitInvoice(sale);
+            return;
+        }
 
+        this.invoiceModalSale = sale;
+        this.invoiceModalCustomer = null;
+        this.invoiceModalError = null;
+        this.invoiceModalLetter = InvoiceLetter.B;
+        if (!sale.customerId) {
+            return;
+        }
+        this.invoiceModalLoading = true;
+        this.customerService.getCustomerById(sale.customerId).subscribe({
+            next: customer => {
+                this.invoiceModalLoading = false;
+                this.invoiceModalCustomer = customer;
+                this.invoiceModalLetter = suggestedInvoiceLetter(customer);
+            },
+            error: () => {
+                this.invoiceModalLoading = false;
+                this.invoiceModalError = 'No se pudieron leer los datos del cliente. Cerrá y volvé a intentar.';
+            }
+        });
+    }
+
+    closeInvoiceModal(): void {
+        if (this.invoicingSaleId) {
+            return;
+        }
+        this.invoiceModalSale = null;
+        this.invoiceModalCustomer = null;
+        this.invoiceModalError = null;
+    }
+
+    setInvoiceModalLetter(letter: InvoiceLetter): void {
+        this.invoiceModalLetter = letter;
+        this.invoiceModalError = null;
+    }
+
+    /** Lo que falta para emitir la letra elegida (mismas reglas que el alta y que el back). */
+    get invoiceModalIssue(): string | null {
+        return invoicingCustomerIssue(this.invoiceModalCustomer, this.invoiceModalLetter);
+    }
+
+    invoiceModalConditionLabel(customer: CustomerResponse | null): string {
+        switch (customer?.ivaCondition) {
+            case 1: return 'Responsable Inscripto';
+            case 2: return 'Monotributista';
+            case 4: return 'Exento';
+            default: return 'Consumidor Final';
+        }
+    }
+
+    confirmInvoiceModal(): void {
+        const sale = this.invoiceModalSale;
+        if (!sale || this.invoiceModalLoading || this.invoiceModalIssue || this.invoicingSaleId) {
+            return;
+        }
+        this.submitInvoice(sale, this.invoiceModalLetter);
+    }
+
+    private submitInvoice(sale: SaleResponse, letter?: InvoiceLetter): void {
         const wasInProgress = (sale.invoicingStatus ?? 1) === 2;
 
         this.invoicingSaleId = sale.id;
-        this.saleService.invoiceSale(sale.id).subscribe({
+        this.saleService.invoiceSale(sale.id, letter).subscribe({
             next: response => {
                 this.invoicingSaleId = null;
+                this.invoiceModalSale = null;
+                this.invoiceModalCustomer = null;
                 sale.invoicingStatus = response.invoicingStatus;
                 sale.fiscalNumber = response.number ?? null;
                 sale.fiscalPointOfSale = response.pointOfSale ?? null;
+                sale.fiscalDocumentType = response.fiscalDocumentType ?? sale.fiscalDocumentType;
 
                 if (response.invoicingStatus === 3) {
                     const number = fiscalNumberLabel(response.pointOfSale, response.number);
@@ -1990,6 +2070,13 @@ if (form === this.editLineForm) {
             },
             error: error => {
                 this.invoicingSaleId = null;
+                // La letra no le corresponde al cliente: no se pidio nada al servicio, la venta queda
+                // como estaba y el motivo se muestra en el popup para corregirlo ahi.
+                if (error?.error?.errorCode === 'Sales.Invoice.ReceiverInvalid' && this.invoiceModalSale) {
+                    this.invoiceModalError = error.error.detail;
+                    return;
+                }
+                this.invoiceModalSale = null;
                 // El motivo real del rechazo viene del fisco y es lo unico accionable para el usuario
                 // (ej. "falta el CUIT del receptor"): se muestra tal cual en vez de un generico.
                 this.toast.error(error?.error?.detail ?? 'No se pudo emitir el comprobante.');
