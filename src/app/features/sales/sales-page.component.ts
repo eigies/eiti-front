@@ -1974,6 +1974,11 @@ if (form === this.editLineForm) {
     invoiceModalLetter: InvoiceLetter = InvoiceLetter.B;
     /** Motivo que devolvio el back al rechazar la letra; se muestra en el popup, no en un toast. */
     invoiceModalError: string | null = null;
+    /** Datos fiscales editables del cliente: si faltan, se completan ahi mismo y se guardan antes de emitir. */
+    invoiceModalIvaCondition: number | null = null;
+    invoiceModalTaxId = '';
+    invoiceModalSavingCustomer = false;
+    private invoiceModalLetterTouched = false;
 
     /**
      * "Facturar" abre el popup para elegir la letra. "Consultar estado" (tramite abierto) va directo:
@@ -1992,6 +1997,9 @@ if (form === this.editLineForm) {
         this.invoiceModalCustomer = null;
         this.invoiceModalError = null;
         this.invoiceModalLetter = InvoiceLetter.B;
+        this.invoiceModalIvaCondition = null;
+        this.invoiceModalTaxId = '';
+        this.invoiceModalLetterTouched = false;
         if (!sale.customerId) {
             return;
         }
@@ -2000,6 +2008,8 @@ if (form === this.editLineForm) {
             next: customer => {
                 this.invoiceModalLoading = false;
                 this.invoiceModalCustomer = customer;
+                this.invoiceModalIvaCondition = customer.ivaCondition ?? null;
+                this.invoiceModalTaxId = customer.taxId ?? '';
                 this.invoiceModalLetter = suggestedInvoiceLetter(customer);
             },
             error: () => {
@@ -2010,7 +2020,7 @@ if (form === this.editLineForm) {
     }
 
     closeInvoiceModal(): void {
-        if (this.invoicingSaleId) {
+        if (this.invoicingSaleId || this.invoiceModalSavingCustomer) {
             return;
         }
         this.invoiceModalSale = null;
@@ -2019,30 +2029,85 @@ if (form === this.editLineForm) {
     }
 
     setInvoiceModalLetter(letter: InvoiceLetter): void {
+        this.invoiceModalLetterTouched = true;
         this.invoiceModalLetter = letter;
         this.invoiceModalError = null;
     }
 
-    /** Lo que falta para emitir la letra elegida (mismas reglas que el alta y que el back). */
-    get invoiceModalIssue(): string | null {
-        return invoicingCustomerIssue(this.invoiceModalCustomer, this.invoiceModalLetter);
+    /** Cambiar la condicion re-sugiere la letra, salvo que el usuario ya la haya elegido a mano. */
+    setInvoiceModalIvaCondition(condition: number | null): void {
+        this.invoiceModalIvaCondition = condition;
+        this.invoiceModalError = null;
+        if (!this.invoiceModalLetterTouched) {
+            this.invoiceModalLetter = suggestedInvoiceLetter(this.invoiceModalEditedCustomer);
+        }
     }
 
-    invoiceModalConditionLabel(customer: CustomerResponse | null): string {
-        switch (customer?.ivaCondition) {
-            case 1: return 'Responsable Inscripto';
-            case 2: return 'Monotributista';
-            case 4: return 'Exento';
-            default: return 'Consumidor Final';
+    setInvoiceModalTaxId(taxId: string): void {
+        this.invoiceModalTaxId = taxId;
+        this.invoiceModalError = null;
+    }
+
+    /** El cliente con los datos fiscales tal como estan en el popup (editados o no). */
+    get invoiceModalEditedCustomer(): CustomerResponse | null {
+        const customer = this.invoiceModalCustomer;
+        return customer
+            ? { ...customer, ivaCondition: this.invoiceModalIvaCondition, taxId: this.invoiceModalTaxId.trim() || null }
+            : null;
+    }
+
+    get invoiceModalCustomerChanged(): boolean {
+        const customer = this.invoiceModalCustomer;
+        if (!customer) {
+            return false;
         }
+        return (customer.ivaCondition ?? null) !== this.invoiceModalIvaCondition
+            || (customer.taxId ?? '').trim() !== this.invoiceModalTaxId.trim();
+    }
+
+    /** Lo que falta para emitir la letra elegida (mismas reglas que el alta y que el back). */
+    get invoiceModalIssue(): string | null {
+        return invoicingCustomerIssue(this.invoiceModalEditedCustomer, this.invoiceModalLetter);
     }
 
     confirmInvoiceModal(): void {
         const sale = this.invoiceModalSale;
-        if (!sale || this.invoiceModalLoading || this.invoiceModalIssue || this.invoicingSaleId) {
+        const customer = this.invoiceModalCustomer;
+        if (!sale || this.invoiceModalLoading || this.invoiceModalIssue || this.invoicingSaleId || this.invoiceModalSavingCustomer) {
             return;
         }
-        this.submitInvoice(sale, this.invoiceModalLetter);
+        if (!customer || !this.invoiceModalCustomerChanged) {
+            this.submitInvoice(sale, this.invoiceModalLetter);
+            return;
+        }
+
+        // Se guarda el cliente con TODOS sus datos actuales y solo cambian condicion y CUIT: el PUT
+        // reemplaza el cliente completo. El domicilio va null y el back conserva el que tenia.
+        this.invoiceModalSavingCustomer = true;
+        this.customerService.updateCustomer({
+            id: customer.id,
+            name: customer.fullName || customer.name,
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+            email: customer.email || null,
+            phone: customer.phone || null,
+            documentType: customer.documentType ?? null,
+            documentNumber: customer.documentNumber ?? null,
+            taxId: this.invoiceModalTaxId.trim() || null,
+            ivaCondition: this.invoiceModalIvaCondition,
+            address: null
+        }).subscribe({
+            next: updated => {
+                this.invoiceModalSavingCustomer = false;
+                this.invoiceModalCustomer = updated;
+                sale.customerTaxId = updated.taxId ?? null;
+                this.submitInvoice(sale, this.invoiceModalLetter);
+            },
+            error: error => {
+                this.invoiceModalSavingCustomer = false;
+                this.invoiceModalError = error?.error?.detail ?? 'No se pudieron guardar los datos del cliente.';
+            }
+        });
     }
 
     private submitInvoice(sale: SaleResponse, letter?: InvoiceLetter): void {

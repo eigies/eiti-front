@@ -940,27 +940,53 @@
       <span *ngIf="invoiceModalLoading">Leyendo los datos del cliente...</span>
       <ng-container *ngIf="!invoiceModalLoading">
         <span><strong>Cliente:</strong> {{ invoiceModalCustomer?.fullName || invoiceModalCustomer?.name || 'Consumidor final (sin cliente)' }}</span>
-        <span><strong>Condición IVA:</strong> {{ invoiceModalConditionLabel(invoiceModalCustomer) }}</span>
-        <span><strong>CUIT:</strong> {{ invoiceModalCustomer?.taxId || 'Sin cargar' }}</span>
+        <ng-container *ngIf="!invoiceModalCustomer">
+          <span><strong>Condición IVA:</strong> Consumidor Final</span>
+        </ng-container>
       </ng-container>
+    </div>
+
+    <!-- Datos fiscales del cliente, editables: si falta el CUIT o la condicion, se completan aca. -->
+    <div class="invoice-modal__fiscal" *ngIf="!invoiceModalLoading && invoiceModalCustomer">
+      <div class="field">
+        <span class="field__label">Condición frente al IVA</span>
+        <app-searchable-select
+          [ngModel]="invoiceModalIvaCondition"
+          (ngModelChange)="setInvoiceModalIvaCondition($event)"
+          [ngModelOptions]="{ standalone: true }"
+          [options]="quickCustomerIvaConditionOptions"
+          [disabled]="invoiceModalSavingCustomer || invoicingSaleId === sale.id"
+          placeholder="Condición frente al IVA"
+          searchPlaceholder="Buscar condición..."></app-searchable-select>
+      </div>
+      <label class="field">
+        <span class="field__label">CUIT</span>
+        <input class="control" type="text" inputmode="numeric" autocomplete="off" placeholder="20-30111222-9"
+               [ngModel]="invoiceModalTaxId" (ngModelChange)="setInvoiceModalTaxId($event)"
+               [ngModelOptions]="{ standalone: true }"
+               [disabled]="invoiceModalSavingCustomer || invoicingSaleId === sale.id" />
+      </label>
+      <span class="invoice-modal__note" *ngIf="invoiceModalCustomerChanged">Los cambios se guardan en la ficha del cliente al emitir.</span>
     </div>
 
     <div class="invoice-modal__letter">
       <span class="field__label">Tipo de factura</span>
       <app-invoice-letter-switch
         [letter]="invoiceModalLetter"
-        [disabled]="invoiceModalLoading || invoicingSaleId === sale.id"
+        [disabled]="invoiceModalLoading || invoiceModalSavingCustomer || invoicingSaleId === sale.id"
         (letterChange)="setInvoiceModalLetter($event)"></app-invoice-letter-switch>
     </div>
 
     <p class="field__error invoice-modal__issue" role="alert" *ngIf="!invoiceModalLoading && (invoiceModalError || invoiceModalIssue) as issue">{{ issue }}</p>
 
     <div class="modal-panel__actions">
-      <button class="btn btn--ghost" type="button" [disabled]="invoicingSaleId === sale.id" (click)="closeInvoiceModal()">Volver</button>
+      <button class="btn btn--ghost" type="button" [disabled]="invoiceModalSavingCustomer || invoicingSaleId === sale.id" (click)="closeInvoiceModal()">Volver</button>
       <button class="btn" type="button"
-              [disabled]="invoiceModalLoading || !!invoiceModalIssue || invoicingSaleId === sale.id"
+              [disabled]="invoiceModalLoading || !!invoiceModalIssue || invoiceModalSavingCustomer || invoicingSaleId === sale.id"
               (click)="confirmInvoiceModal()">
-        {{ invoicingSaleId === sale.id ? 'Emitiendo...' : 'Emitir Factura ' + (invoiceModalLetter === 1 ? 'A' : 'B') }}
+        {{ invoiceModalSavingCustomer ? 'Guardando cliente...'
+           : invoicingSaleId === sale.id ? 'Emitiendo...'
+           : (invoiceModalCustomerChanged ? 'Guardar y emitir Factura ' : 'Emitir Factura ') + (invoiceModalLetter === 1 ? 'A' : 'B') }}
       </button>
     </div>
   </div>
