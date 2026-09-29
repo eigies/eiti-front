@@ -119,6 +119,18 @@
           <div class="assistant-options" *ngIf="m.role === 'assistant' && m.options?.length && !isStreaming" role="group" aria-label="Opciones">
             <button type="button" *ngFor="let opt of m.options" (click)="pickOption(opt)">{{ opt }}</button>
           </div>
+          <div class="assistant-docs" *ngIf="m.role === 'assistant' && m.documents?.length && !isStreaming && canDownloadInvoices" role="group" aria-label="Comprobantes para descargar">
+            <button type="button"
+                    class="assistant-docs__link"
+                    *ngFor="let d of m.documents"
+                    [disabled]="downloadingDocument !== null"
+                    [attr.aria-busy]="downloadingDocument === d"
+                    [title]="'Descargar ' + d.label + ' en PDF'"
+                    (click)="downloadDocument(d)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+              {{ downloadingDocument === d ? 'Descargando…' : d.label }}
+            </button>
+          </div>
           <div class="assistant-followups" *ngIf="m.role === 'assistant' && m.suggestions?.length && !isStreaming" role="group" aria-label="Preguntas sugeridas">
             <button type="button" *ngFor="let s of m.suggestions" (click)="askSuggestion(s)">
               {{ s }}

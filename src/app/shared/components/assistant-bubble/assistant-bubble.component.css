@@ -771,6 +771,62 @@ button {
   background: transparent !important;
 }
 
+/* Comprobantes descargables: mismo lenguaje que los links de la barra de facturación de Ventas. */
+.assistant-docs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .15rem .9rem;
+  margin-top: .6rem;
+}
+
+.assistant-docs__link {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  min-height: 32px;
+  padding: .3rem .1rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .16s ease;
+}
+
+.assistant-docs__link svg {
+  width: .9rem;
+  height: .9rem;
+  flex: 0 0 auto;
+  color: var(--amber);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.assistant-docs__link:hover:not(:disabled) {
+  color: var(--amber);
+}
+
+.assistant-docs__link:disabled {
+  cursor: progress;
+  opacity: .6;
+}
+
+.assistant-docs__link:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-docs__link {
+    transition: none;
+  }
+}
+
 .assistant-followups {
   display: flex;
   flex-direction: column;

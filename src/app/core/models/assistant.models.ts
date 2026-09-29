@@ -3,6 +3,8 @@ export interface AssistantChatMessage {
   content: string;
   options?: string[];
   suggestions?: string[];
+  /** Factura / nota de crédito que el usuario puede descargar desde la respuesta. */
+  documents?: AssistantFiscalDocument[];
   requestId?: number;
   rating?: 1 | -1;
   /** Consulta que originó esta respuesta; se envía solo al marcar pulgar abajo. */
@@ -26,10 +28,19 @@ export interface AssistantUsage {
   requestId?: number;
 }
 
+/** Comprobante descargable que ofrece el asistente (el PDF se arma con los datos de impresión de EITI). */
+export interface AssistantFiscalDocument {
+  saleId: string;
+  saleCode: string;
+  kind: 'invoice' | 'creditNote';
+  label: string;
+}
+
 export type AssistantStreamEvent =
   | { type: 'delta'; text: string }
   | { type: 'options'; options: string[] }
   | { type: 'suggestions'; suggestions: string[] }
+  | { type: 'documents'; documents: AssistantFiscalDocument[] }
   | { type: 'usage'; usage: AssistantUsage }
   | { type: 'done' }
   | { type: 'error'; message: string };
