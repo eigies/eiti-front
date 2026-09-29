@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InvoiceLetter } from '../../../../core/models/sale.models';
+import { InvoiceLetterSwitchComponent } from '../invoice-letter-switch/invoice-letter-switch.component';
 
 /**
  * "Factura electronica" al crear una venta, igual en mostrador y cuenta corriente: el tilde para
@@ -9,7 +10,7 @@ import { InvoiceLetter } from '../../../../core/models/sale.models';
 @Component({
     selector: 'app-invoicing-control',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, InvoiceLetterSwitchComponent],
     templateUrl: './invoicing-control.component.html',
     styleUrls: ['./invoicing-control.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -25,7 +26,6 @@ export class InvoicingControlComponent {
     @Output() readonly requestedChange = new EventEmitter<boolean>();
     @Output() readonly letterChange = new EventEmitter<InvoiceLetter>();
 
-    readonly invoiceLetter = InvoiceLetter;
 
     toggle(event: Event): void {
         this.requestedChange.emit((event.target as HTMLInputElement).checked);

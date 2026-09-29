@@ -1,0 +1,13 @@
+<div class="letter-switch" role="radiogroup" aria-label="Tipo de factura"
+     title="A para Responsable Inscripto o Monotributista; B para el resto">
+  <button type="button" role="radio" class="letter-switch__option"
+          [class.letter-switch__option--active]="letter === invoiceLetter.B"
+          [attr.aria-checked]="letter === invoiceLetter.B"
+          [disabled]="disabled"
+          (click)="letterChange.emit(invoiceLetter.B)">B</button>
+  <button type="button" role="radio" class="letter-switch__option"
+          [class.letter-switch__option--active]="letter === invoiceLetter.A"
+          [attr.aria-checked]="letter === invoiceLetter.A"
+          [disabled]="disabled"
+          (click)="letterChange.emit(invoiceLetter.A)">A</button>
+</div>

@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import {
   AssistantChatMessage,
   AssistantDigest,
+  AssistantFiscalDocument,
   AssistantStreamEvent,
   StatementSummary,
   ScreenContext
@@ -205,6 +206,13 @@ export class AssistantService {
         }
         break;
       }
+      case 'documents': {
+        const documents = this.fiscalDocuments(parsed['documents']);
+        if (documents.length) {
+          emit({ type: 'documents', documents });
+        }
+        break;
+      }
       case 'usage': {
         const rawId = parsed['request_id'];
         emit({
@@ -225,6 +233,22 @@ export class AssistantService {
         emit({ type: 'done' });
         break;
     }
+  }
+
+  /** snake_case del agente -> camelCase; descarta lo que no tenga forma de comprobante. */
+  private fiscalDocuments(raw: unknown): AssistantFiscalDocument[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.flatMap((item: unknown) => {
+      const d = (item ?? {}) as Record<string, unknown>;
+      const kind = d['kind'] === 'invoice' ? 'invoice' : d['kind'] === 'credit_note' ? 'creditNote' : null;
+      const saleId = typeof d['sale_id'] === 'string' ? d['sale_id'] : '';
+      if (!kind || !saleId) {
+        return [];
+      }
+      return [{ saleId, saleCode: String(d['sale_code'] ?? ''), kind, label: String(d['label'] ?? '') }];
+    });
   }
 
   private stringList(raw: unknown): string[] {
