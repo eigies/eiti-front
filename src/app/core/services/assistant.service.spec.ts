@@ -1,6 +1,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
+import { AssistantStreamEvent } from '../models/assistant.models';
 import { AssistantService } from './assistant.service';
 
 describe('AssistantService', () => {
@@ -73,5 +74,22 @@ describe('AssistantService', () => {
     await new Promise<void>(resolve => service.chat([], null, [7]).subscribe({ complete: () => resolve() }));
     const body = JSON.parse(fetchSpy.calls.mostRecent().args[1]!.body as string);
     expect(body.attachments).toEqual([7]);
+  });
+
+  it('traduce el evento documents a camelCase y descarta lo que no es un comprobante', async () => {
+    const sse = 'event: documents\ndata: {"documents":[' +
+      '{"sale_id":"s1","sale_code":"SUCU-123-179","kind":"invoice","label":"Factura A 00001-00000005"},' +
+      '{"sale_id":"s1","sale_code":"SUCU-123-179","kind":"credit_note","label":"Nota de crédito A 00001-00000002"},' +
+      '{"sale_id":"","kind":"invoice","label":"sin venta"}]}\n\nevent: done\ndata: {}\n\n';
+    spyOn(window, 'fetch').and.resolveTo(new Response(sse, { status: 200 }));
+    const events: AssistantStreamEvent[] = [];
+    await new Promise<void>(resolve => service.chat([], null).subscribe({ next: e => events.push(e), complete: () => resolve() }));
+    expect(events[0]).toEqual({
+      type: 'documents',
+      documents: [
+        { saleId: 's1', saleCode: 'SUCU-123-179', kind: 'invoice', label: 'Factura A 00001-00000005' },
+        { saleId: 's1', saleCode: 'SUCU-123-179', kind: 'creditNote', label: 'Nota de crédito A 00001-00000002' }
+      ]
+    });
   });
 });

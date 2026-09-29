@@ -3222,3 +3222,37 @@
     border-left-color: color-mix(in srgb, var(--amber) 80%, var(--border-2));
     background: color-mix(in srgb, var(--amber) 10%, transparent);
 }
+
+/* Popup de facturar: la letra al lado de su etiqueta y aire antes de los botones. */
+.invoice-modal__letter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.invoice-modal__issue {
+    margin: 0 0 1.25rem;
+}
+
+/* Condicion y CUIT del cliente, editables en el popup de facturar. */
+.invoice-modal__fiscal {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.invoice-modal__note {
+    grid-column: 1 / -1;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+}
+
+@media (max-width: 520px) {
+    .invoice-modal__fiscal {
+        grid-template-columns: 1fr;
+    }
+}

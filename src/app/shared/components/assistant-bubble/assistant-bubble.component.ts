@@ -20,7 +20,10 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AssistantService } from '../../../core/services/assistant.service';
 import { AssistantContextService } from '../../../core/services/assistant-context.service';
 import { PermissionCodes } from '../../../core/models/permission.models';
-import { AssistantChatMessage, StatementSummary } from '../../../core/models/assistant.models';
+import { AssistantChatMessage, AssistantFiscalDocument, StatementSummary } from '../../../core/models/assistant.models';
+import { SaleService } from '../../../core/services/sale.service';
+import { InvoicePdfService } from '../../services/invoice-pdf.service';
+import { ToastService } from '../../services/toast.service';
 import { MarkdownLitePipe } from '../../pipes/markdown-lite.pipe';
 
 const MAX_STATEMENT_BYTES = 10 * 1024 * 1024;
@@ -39,6 +42,11 @@ export class AssistantBubbleComponent implements AfterViewChecked {
   @ViewChild('launcher') private launcherRef?: ElementRef<HTMLButtonElement>;
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sales = inject(SaleService);
+  private readonly invoicePdf = inject(InvoicePdfService);
+  private readonly toast = inject(ToastService);
+  /** Comprobante que se está descargando (evita el doble clic). */
+  downloadingDocument: AssistantFiscalDocument | null = null;
 
   /** Extracto que acompaña a los próximos mensajes hasta quitarlo o limpiar la conversación. */
   /** Extractos que viajan con cada mensaje: varias capturas de un mismo día se concilian juntas. */
@@ -163,6 +171,9 @@ export class AssistantBubbleComponent implements AfterViewChecked {
           } else if (ev.type === 'options') {
             assistantMsg.options = ev.options;
             this.shouldScroll = true;
+          } else if (ev.type === 'documents') {
+            assistantMsg.documents = ev.documents;
+            this.shouldScroll = true;
           } else if (ev.type === 'suggestions') {
             assistantMsg.suggestions = ev.suggestions;
             this.shouldScroll = true;
@@ -241,6 +252,36 @@ export class AssistantBubbleComponent implements AfterViewChecked {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  /** Los links de descarga se muestran solo a quien puede facturar (igual que en Ventas). */
+  get canDownloadInvoices(): boolean {
+    return this.auth.hasPermission(PermissionCodes.salesInvoice);
+  }
+
+  downloadDocument(doc: AssistantFiscalDocument): void {
+    if (this.downloadingDocument) {
+      return;
+    }
+    this.downloadingDocument = doc;
+    this.cdr.markForCheck();
+    const isInvoice = doc.kind === 'invoice';
+    const what = isInvoice ? 'la factura' : 'la nota de crédito';
+    const print$ = isInvoice ? this.sales.getInvoicePrint(doc.saleId) : this.sales.getCreditNotePrint(doc.saleId);
+    const done = () => {
+      this.downloadingDocument = null;
+      this.cdr.markForCheck();
+    };
+    print$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: print => this.invoicePdf.generate(print)
+        .catch(() => this.toast.error(`No se pudo generar el PDF de ${what}.`))
+        .finally(done),
+      error: (err: unknown) => {
+        const detail = err instanceof HttpErrorResponse && typeof err.error?.detail === 'string' ? err.error.detail : null;
+        this.toast.error(detail ?? `No se pudo obtener ${what} de la venta ${doc.saleCode}.`);
+        done();
+      }
+    });
   }
 
   formatArs(value: number): string {

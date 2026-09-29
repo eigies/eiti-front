@@ -5,15 +5,6 @@
     <span class="toggle-check__text">{{ requested ? 'Emitir factura' : 'No facturar' }}</span>
   </label>
   <span class="invoicing-control__auto" *ngIf="!showToggle">Automatica</span>
-  <div class="letter-switch" role="radiogroup" aria-label="Tipo de factura" *ngIf="willInvoice"
-       title="A para Responsable Inscripto o Monotributista; B para el resto">
-    <button type="button" role="radio" class="letter-switch__option"
-            [class.letter-switch__option--active]="letter === invoiceLetter.B"
-            [attr.aria-checked]="letter === invoiceLetter.B"
-            (click)="letterChange.emit(invoiceLetter.B)">B</button>
-    <button type="button" role="radio" class="letter-switch__option"
-            [class.letter-switch__option--active]="letter === invoiceLetter.A"
-            [attr.aria-checked]="letter === invoiceLetter.A"
-            (click)="letterChange.emit(invoiceLetter.A)">A</button>
-  </div>
+  <app-invoice-letter-switch *ngIf="willInvoice" [letter]="letter"
+                             (letterChange)="letterChange.emit($event)"></app-invoice-letter-switch>
 </div>

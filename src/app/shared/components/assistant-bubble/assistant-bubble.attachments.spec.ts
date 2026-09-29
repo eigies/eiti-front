@@ -6,6 +6,9 @@ import { StatementSummary } from '../../../core/models/assistant.models';
 import { AssistantContextService } from '../../../core/services/assistant-context.service';
 import { AssistantService } from '../../../core/services/assistant.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SaleService } from '../../../core/services/sale.service';
+import { InvoicePdfService } from '../../services/invoice-pdf.service';
+import { ToastService } from '../../services/toast.service';
 import { AssistantBubbleComponent } from './assistant-bubble.component';
 
 const SUMMARY: StatementSummary = {
@@ -24,6 +27,13 @@ describe('AssistantBubbleComponent · extractos adjuntos', () => {
     });
     context.snapshot.and.returnValue({});
     const cdr = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: SaleService, useValue: jasmine.createSpyObj<SaleService>('SaleService', ['getInvoicePrint', 'getCreditNotePrint']) },
+        { provide: InvoicePdfService, useValue: jasmine.createSpyObj<InvoicePdfService>('InvoicePdfService', ['generate']) },
+        { provide: ToastService, useValue: jasmine.createSpyObj<ToastService>('ToastService', ['error']) }
+      ]
+    });
     const component = TestBed.runInInjectionContext(() => new AssistantBubbleComponent(auth, assistant, context, cdr));
     return { component, assistant };
   }

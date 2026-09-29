@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, CreateSaleResponse, InvoiceSaleResponse, SaleByIdResponse, SaleInvoicePrintResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
+import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, CreateSaleResponse, InvoiceLetter, InvoiceSaleResponse, SaleByIdResponse, SaleInvoicePrintResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -63,8 +63,9 @@ export class SaleService {
         return this.http.delete<void>(`${this.base}/${id}`);
     }
 
-    invoiceSale(id: string): Observable<InvoiceSaleResponse> {
-        return this.http.post<InvoiceSaleResponse>(`${this.base}/${id}/invoice`, {});
+    /** Sin letra la decide el cliente; con letra, el back la valida contra el cliente antes de emitir. */
+    invoiceSale(id: string, invoiceLetter?: InvoiceLetter | null): Observable<InvoiceSaleResponse> {
+        return this.http.post<InvoiceSaleResponse>(`${this.base}/${id}/invoice`, invoiceLetter ? { invoiceLetter } : {});
     }
 
     /**
