@@ -1293,6 +1293,30 @@
     border-top: 1px dashed var(--border-2);
 }
 
+/* Cerrado por defecto: el alta sigue siendo rapida cuando no hace falta facturar. */
+.quick-customer-billing__toggle {
+    align-self: flex-start;
+    padding: .35rem 0;
+    border: 0;
+    background: none;
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .03em;
+    text-align: left;
+    cursor: pointer;
+}
+
+.quick-customer-billing__toggle:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.quick-customer-billing__toggle:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--amber) 60%, transparent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
 .quick-customer-billing__head {
     display: flex;
     align-items: center;

@@ -316,4 +316,52 @@ describe('SalesPageComponent (price override)', () => {
         }
         expect(badge.scrollWidth).toBeLessThanOrEqual(badge.clientWidth);
     });
+
+    describe('alta rápida de cliente: datos de facturación', () => {
+        beforeEach(() => {
+            authSpy.hasPermission.and.returnValue(false);
+            (component as any).companyAutomaticInvoicing = false;
+        });
+
+        it('si la venta no se factura arrancan cerrados y se pueden abrir', () => {
+            component.openQuickCreateCustomer();
+            expect(component.quickCreateShowsBilling).toBeFalse();
+
+            component.quickCreateBillingOpen = true;
+
+            expect(component.quickCreateShowsBilling).toBeTrue();
+        });
+
+        it('sin facturar el CUIT es opcional, pero si se carga tiene que ser válido', () => {
+            component.openQuickCreateCustomer();
+            component.quickCreateBillingOpen = true;
+            component.quickCreateCustomerName = 'Juan Perez';
+
+            expect(component.quickCreateBillingIssue).toBeNull();
+            component.quickCreateCustomerTaxId = '20-39758385-8';
+            expect(component.quickCreateBillingIssue).toContain('CUIT no es válido');
+            component.quickCreateCustomerTaxId = '20-39758385-7';
+            expect(component.quickCreateBillingIssue).toBeNull();
+        });
+
+        it('al crear manda CUIT y condición solo si se abrieron los datos', () => {
+            const customers = TestBed.inject(CustomerService) as any;
+            customers.createCustomer = jasmine.createSpy('createCustomer').and.returnValue(of({ id: 'c1', name: 'Juan Perez', fullName: 'Juan Perez' }));
+
+            component.openQuickCreateCustomer();
+            component.quickCreateCustomerName = 'Juan Perez';
+            component.quickCreateCustomerTaxId = '20-39758385-7';
+            component.quickCreateCustomerIvaCondition = 1;
+            component.submitQuickCreateCustomer();
+            expect(customers.createCustomer.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ taxId: null, ivaCondition: null }));
+
+            component.openQuickCreateCustomer();
+            component.quickCreateBillingOpen = true;
+            component.quickCreateCustomerName = 'Juan Perez';
+            component.quickCreateCustomerTaxId = '20-39758385-7';
+            component.quickCreateCustomerIvaCondition = 1;
+            component.submitQuickCreateCustomer();
+            expect(customers.createCustomer.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ taxId: '20-39758385-7', ivaCondition: 1 }));
+        });
+    });
 });

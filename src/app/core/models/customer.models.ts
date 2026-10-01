@@ -94,3 +94,14 @@ export function toCustomerSearchItem(customer: CustomerResponse): CustomerSearch
         creditBalance: customer.creditBalance
     };
 }
+
+/**
+ * Condiciones frente al IVA que se ofrecen al dar de alta un cliente desde una venta. Null =
+ * Consumidor Final (lo que se asume si no se completa). Mismos valores que IvaCondition del back.
+ */
+export const BILLING_IVA_CONDITION_OPTIONS: ReadonlyArray<{ value: number | null; label: string }> = [
+    { value: null, label: 'Consumidor Final' },
+    { value: 1, label: 'Responsable Inscripto' },
+    { value: 2, label: 'Monotributo' },
+    { value: 4, label: 'Exento' }
+];
