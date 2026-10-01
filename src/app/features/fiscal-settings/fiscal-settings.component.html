@@ -1,5 +1,10 @@
-<section class="fiscal" *ngIf="canConfigure">
-    <div class="fiscal__kicker">_ FACTURACION ELECTRONICA · ARCA</div>
+<div class="page">
+
+    <header class="page-hero">
+        <div class="page-hero__kicker">_ CONFIGURACION · FACTURACION</div>
+        <h1 class="page-hero__title">Facturación electrónica</h1>
+        <p class="page-hero__sub">Cómo factura la empresa, con qué datos y desde qué punto de venta de ARCA.</p>
+    </header>
 
     <div class="loading-state" *ngIf="loading">
         <span class="loading-state__dot"></span>
@@ -8,18 +13,43 @@
         Cargando facturación electrónica...
     </div>
 
-    <div class="config-card fiscal__off" *ngIf="!loading && settings && !settings.enabled">
+    <div class="config-card" *ngIf="!loading && settings && !settings.enabled">
         <div class="config-card__body">
             <p class="config-card__desc">La facturación electrónica todavía no está activada para tu empresa.</p>
         </div>
     </div>
 
-    <div class="config-grid" *ngIf="!loading && settings?.enabled">
+    <div class="config-grid fiscal" *ngIf="!loading && settings?.enabled">
+
+        <!-- Emision -->
+        <div class="config-card config-card--delay-1 fiscal__full">
+            <div class="config-card__head">
+                <span class="config-card__num">01</span>
+                <div class="config-card__meta">
+                    <span class="config-card__eyebrow">Emisión</span>
+                    <h2 class="config-card__title">Cuándo se factura</h2>
+                </div>
+            </div>
+            <div class="config-card__body">
+                <div class="toggle-row">
+                    <div class="toggle-row__copy">
+                        <span class="toggle-row__name">Facturar automáticamente</span>
+                        <p class="toggle-row__desc">Activo: cada venta se factura al confirmarse. Apagado: aparece un check para elegir venta por venta. En los dos casos se puede facturar después desde el detalle de la venta. Cada sucursal puede tener su propia configuración.</p>
+                    </div>
+                    <label class="toggle-check">
+                        <input type="checkbox" [checked]="settings?.automaticInvoicing" [disabled]="savingAutomatic"
+                            (change)="setAutomaticInvoicing($event)" />
+                        <span class="toggle-check__track"></span>
+                        <span class="toggle-check__text">{{ settings?.automaticInvoicing ? 'Activo' : 'Off' }}</span>
+                    </label>
+                </div>
+            </div>
+        </div>
 
         <!-- Emisor -->
-        <div class="config-card config-card--delay-1 fiscal__issuer">
+        <div class="config-card config-card--delay-2 fiscal__issuer">
             <div class="config-card__head">
-                <span class="config-card__num">06</span>
+                <span class="config-card__num">02</span>
                 <div class="config-card__meta">
                     <span class="config-card__eyebrow">Emisor</span>
                     <h2 class="config-card__title">Datos fiscales</h2>
@@ -80,9 +110,9 @@
         </div>
 
         <!-- Puntos de venta -->
-        <div class="config-card config-card--delay-2">
+        <div class="config-card config-card--delay-3">
             <div class="config-card__head">
-                <span class="config-card__num">07</span>
+                <span class="config-card__num">03</span>
                 <div class="config-card__meta">
                     <span class="config-card__eyebrow">ARCA</span>
                     <h2 class="config-card__title">Puntos de venta</h2>
@@ -120,4 +150,6 @@
         </div>
 
     </div>
-</section>
+
+    <p class="config-card__desc fiscal__denied" *ngIf="!canConfigure">Configurar la facturación electrónica requiere el permiso de facturar.</p>
+</div>

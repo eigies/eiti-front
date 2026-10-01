@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, of, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { BranchResponse, TransferTargetResponse, formatPointOfSale } from '../../core/models/branch.models';
 import { FiscalPointOfSaleResponse } from '../../core/models/fiscal-settings.models';
 import { FiscalSettingsService } from '../../core/services/fiscal-settings.service';
@@ -31,7 +31,7 @@ type BranchView = {
 @Component({
   selector: 'app-branches',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, OnboardingBannerComponent, SearchableSelectComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, OnboardingBannerComponent, SearchableSelectComponent],
   templateUrl: './branches.component.html',
   styleUrls: ['./branches.component.css']
 })

@@ -267,7 +267,7 @@
                     <app-searchable-select formControlName="fiscalPointOfSaleId" [options]="pointOfSaleOptions"
                         placeholder="Punto de venta de ARCA" searchPlaceholder="Buscar punto de venta..."
                         ariaLabel="Punto de venta de ARCA de la sucursal"></app-searchable-select>
-                    <small class="modal__hint">Los puntos de venta se cargan en Empresa → Facturación electrónica.</small>
+                    <small class="modal__hint">Los puntos de venta se cargan en <a routerLink="/fiscal-settings">Facturación electrónica</a>.</small>
                 </ng-container>
                 <div class="modal__actions">
                     <button class="btn btn--ghost" type="button" (click)="closeEdit()">Cerrar</button>

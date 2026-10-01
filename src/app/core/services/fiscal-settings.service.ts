@@ -20,6 +20,10 @@ export class FiscalSettingsService {
         return this.http.get<FiscalSettingsResponse>(this.base);
     }
 
+    setAutomaticInvoicing(enabled: boolean): Observable<void> {
+        return this.http.put<void>(`${this.base}/automatic-invoicing`, { enabled });
+    }
+
     updateIssuer(request: UpdateFiscalIssuerRequest): Observable<FiscalIssuerResponse> {
         return this.http.put<FiscalIssuerResponse>(`${this.base}/issuer`, request);
     }

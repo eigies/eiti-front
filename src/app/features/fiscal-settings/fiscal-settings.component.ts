@@ -3,39 +3,40 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
-import { BranchResponse, formatPointOfSale } from '../../../core/models/branch.models';
+import { BranchResponse, formatPointOfSale } from '../../core/models/branch.models';
 import {
     FiscalPointOfSaleResponse,
     FiscalSettingsResponse,
     ISSUER_IVA_CONDITIONS,
     formatCuit
-} from '../../../core/models/fiscal-settings.models';
-import { PermissionCodes } from '../../../core/models/permission.models';
-import { AuthService } from '../../../core/services/auth.service';
-import { BranchService } from '../../../core/services/branch.service';
-import { FiscalSettingsService } from '../../../core/services/fiscal-settings.service';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
-import { ConfirmationService } from '../../../shared/services/confirmation.service';
-import { ToastService } from '../../../shared/services/toast.service';
+} from '../../core/models/fiscal-settings.models';
+import { PermissionCodes } from '../../core/models/permission.models';
+import { AuthService } from '../../core/services/auth.service';
+import { BranchService } from '../../core/services/branch.service';
+import { FiscalSettingsService } from '../../core/services/fiscal-settings.service';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { ToastService } from '../../shared/services/toast.service';
 
 /** Dias antes del vencimiento del certificado en que se avisa. */
 const CERTIFICATE_WARNING_DAYS = 30;
 
 /**
- * "Facturacion electronica" en Empresa: los datos del emisor que van impresos en la factura y los
- * puntos de venta de ARCA, cada uno atado a la sucursal que factura con el (1:1).
+ * Pantalla "Facturacion electronica": si la empresa factura sola, los datos del emisor que van
+ * impresos en la factura y los puntos de venta de ARCA, cada uno atado a su sucursal (1:1).
  */
 @Component({
     selector: 'app-fiscal-settings',
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, FormsModule, SearchableSelectComponent],
     templateUrl: './fiscal-settings.component.html',
-    styleUrls: ['../company.component.css', './fiscal-settings.component.css']
+    styleUrls: ['../../shared/styles/config-page.css', './fiscal-settings.component.css']
 })
 export class FiscalSettingsComponent implements OnInit {
     readonly ivaOptions: SearchableSelectOption[] = ISSUER_IVA_CONDITIONS.map(c => ({ value: c.value, label: c.label }));
     readonly issuerForm: FormGroup;
     readonly canConfigure: boolean;
+    savingAutomatic = false;
 
     settings: FiscalSettingsResponse | null = null;
     branches: BranchResponse[] = [];
@@ -135,6 +136,29 @@ export class FiscalSettingsComponent implements OnInit {
                 this.toast.error(this.errorMessage(err, 'No se pudieron guardar los datos fiscales'));
             }
         });
+    }
+
+    /** Se guarda al tocarlo, igual que los puntos de venta: no hay nada mas que confirmar. */
+    setAutomaticInvoicing(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const enabled = input.checked;
+        this.savingAutomatic = true;
+        this.fiscalSettings.setAutomaticInvoicing(enabled)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.savingAutomatic = false;
+                    if (this.settings) {
+                        this.settings = { ...this.settings, automaticInvoicing: enabled };
+                    }
+                    this.toast.success(enabled ? 'Facturación automática activada' : 'Facturación automática desactivada');
+                },
+                error: err => {
+                    this.savingAutomatic = false;
+                    input.checked = !enabled;
+                    this.toast.error(this.errorMessage(err, 'No se pudo cambiar la facturación automática'));
+                }
+            });
     }
 
     addPointOfSale(): void {

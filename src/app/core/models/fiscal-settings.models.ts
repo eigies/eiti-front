@@ -2,6 +2,8 @@
 export interface FiscalSettingsResponse {
     /** False si la instalacion no tiene el servicio de facturacion configurado. */
     enabled: boolean;
+    /** Default de la empresa: cada venta se factura al confirmarse. Cada sucursal puede sobrescribirlo. */
+    automaticInvoicing: boolean;
     issuer: FiscalIssuerResponse | null;
     /** Por que no se pudieron leer los datos del emisor (ej. todavia no hay perfil fiscal). */
     issuerUnavailableReason: string | null;

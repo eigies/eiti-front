@@ -1,29 +1,20 @@
-/* Reutiliza las tarjetas de Empresa (company.component.css); aca solo lo propio de la seccion. */
+/* Lo comun de las pantallas de configuracion esta en shared/styles/config-page.css. */
 
 :host {
     display: block;
 }
 
-.fiscal {
-    display: grid;
-    gap: .85rem;
-    margin-top: 2.2rem;
-}
-
-.fiscal__kicker {
-    color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-    font-size: .62rem;
-    letter-spacing: .18em;
+.fiscal__full {
+    grid-column: 1 / -1;
 }
 
 /* Emisor y puntos de venta lado a lado (3:2); el selector de sucursal necesita ancho. */
-.fiscal .config-grid {
+.config-grid.fiscal {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     align-items: start;
 }
 
-/* La tarjeta de Empresa recorta (overflow hidden): aca cortaria el desplegable de sucursales. */
+/* La tarjeta recorta (overflow hidden): aca cortaria el desplegable de sucursales. */
 .fiscal .config-card {
     overflow: visible;
     grid-template-rows: auto 1fr;
@@ -131,7 +122,7 @@
 }
 
 @media (max-width: 900px) {
-    .fiscal .config-grid {
+    .config-grid.fiscal {
         grid-template-columns: 1fr;
     }
 }
