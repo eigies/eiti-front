@@ -1884,6 +1884,13 @@ if (form === this.editLineForm) {
         return branch?.automaticInvoicing ?? this.companyAutomaticInvoicing;
     }
 
+    /** Sin punto de venta la sucursal no puede facturar: se avisa antes de vender. */
+    get selectedBranchMissingPointOfSale(): boolean {
+        const branchId = this.lineForm.get('branchId')?.value;
+        const branch = this.branches.find(b => b.id === branchId);
+        return !!branch && !branch.fiscalPointOfSaleNumber;
+    }
+
     /**
      * El check solo aparece cuando la facturacion NO es automatica: si ya factura sola,
      * pedirle al usuario que lo tilde seria mentirle sobre lo que hace el sistema.

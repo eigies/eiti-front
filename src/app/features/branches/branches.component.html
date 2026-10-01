@@ -71,6 +71,10 @@
                             <strong>{{ branchInvoicingLabel(item.branch) }} · {{ branchInvoicingOrigin(item.branch) }}</strong>
                         </div>
                         <div class="branch-detail">
+                            <span class="branch-detail__label">Punto de venta ARCA</span>
+                            <strong>{{ branchPointOfSaleLabel(item.branch) }}</strong>
+                        </div>
+                        <div class="branch-detail">
                             <span class="branch-detail__label">Creada</span>
                             <strong>{{ item.branch.createdAt | date: 'shortDate' }}</strong>
                         </div>
@@ -259,6 +263,12 @@
                 <input class="control" type="text" placeholder="Direccion" formControlName="address" />
                 <app-searchable-select formControlName="automaticInvoicing" [options]="automaticInvoicingOptions"
                     placeholder="Facturacion automatica" searchPlaceholder="Buscar opcion..."></app-searchable-select>
+                <input class="control" type="number" min="1" max="99999" step="1" inputmode="numeric"
+                    placeholder="Punto de venta de ARCA (ej. 3)" formControlName="fiscalPointOfSaleNumber"
+                    title="El punto de venta Web Services que tu contador dio de alta en ARCA para esta sucursal" />
+                <small class="modal__hint" *ngIf="editForm.get('fiscalPointOfSaleNumber')?.invalid">
+                    Tiene que ser un número entre 1 y 99999.
+                </small>
                 <div class="modal__actions">
                     <button class="btn btn--ghost" type="button" (click)="closeEdit()">Cerrar</button>
                     <button class="btn btn--primary" type="submit" [disabled]="savingEdit">Guardar cambios</button>

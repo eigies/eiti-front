@@ -127,6 +127,7 @@
                 [requested]="!!lineForm.get('requestInvoicing')?.value"
                 [willInvoice]="createWillInvoice"
                 [letter]="createInvoiceLetter"
+                [missingPointOfSale]="selectedBranchMissingPointOfSale"
                 (requestedChange)="setInvoicingRequested($event)"
                 (letterChange)="setInvoiceLetter($event)"></app-invoicing-control>
             </div>

@@ -22,6 +22,8 @@ export class InvoicingControlComponent {
     /** Se sabe que la venta se va a facturar (tilde o automatica): recien ahi importa la letra. */
     @Input() willInvoice = false;
     @Input() letter: InvoiceLetter = InvoiceLetter.B;
+    /** La sucursal elegida no tiene punto de venta de ARCA: la factura se va a rechazar. */
+    @Input() missingPointOfSale = false;
 
     @Output() readonly requestedChange = new EventEmitter<boolean>();
     @Output() readonly letterChange = new EventEmitter<InvoiceLetter>();

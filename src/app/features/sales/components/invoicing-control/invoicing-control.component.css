@@ -89,6 +89,14 @@
     gap: .5rem;
 }
 
+.invoicing-control__warn {
+    align-self: center;
+    color: var(--danger);
+    font-family: 'DM Mono', monospace;
+    font-size: .74rem;
+    letter-spacing: .03em;
+}
+
 .invoicing-control__auto {
     align-self: center;
     color: var(--text-dim);

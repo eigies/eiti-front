@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { BranchResponse, CreateBranchRequest, TransferTargetResponse } from '../models/branch.models';
+import { BranchResponse, CreateBranchRequest, SetBranchPointOfSaleRequest, TransferTargetResponse } from '../models/branch.models';
 
 @Injectable({ providedIn: 'root' })
 export class BranchService {
@@ -24,6 +24,11 @@ export class BranchService {
 
     updateBranch(id: string, request: CreateBranchRequest): Observable<BranchResponse> {
         return this.http.put<BranchResponse>(`${this.base}/${id}`, request);
+    }
+
+    /** Va aparte de editar la sucursal: un "editar" que no lo mande no lo borra. */
+    setFiscalPointOfSale(id: string, request: SetBranchPointOfSaleRequest): Observable<BranchResponse> {
+        return this.http.put<BranchResponse>(`${this.base}/${id}/fiscal-point-of-sale`, request);
     }
 
     deleteBranch(id: string): Observable<void> {

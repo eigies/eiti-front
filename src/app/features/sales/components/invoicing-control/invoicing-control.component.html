@@ -5,6 +5,8 @@
     <span class="toggle-check__text">{{ requested ? 'Emitir factura' : 'No facturar' }}</span>
   </label>
   <span class="invoicing-control__auto" *ngIf="!showToggle">Automatica</span>
-  <app-invoice-letter-switch *ngIf="willInvoice" [letter]="letter"
+  <app-invoice-letter-switch *ngIf="willInvoice && !missingPointOfSale" [letter]="letter"
                              (letterChange)="letterChange.emit($event)"></app-invoice-letter-switch>
+  <span class="invoicing-control__warn" *ngIf="willInvoice && missingPointOfSale"
+        title="Asignale su punto de venta de ARCA en Sucursales para poder facturar">Sucursal sin punto de venta</span>
 </div>
