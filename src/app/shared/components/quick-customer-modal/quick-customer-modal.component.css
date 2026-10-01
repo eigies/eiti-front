@@ -106,3 +106,45 @@
     color: var(--text);
     border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
 }
+
+/* Datos de facturacion: cerrados por defecto, para facturar la venta despues (ej. Factura A). */
+.billing-toggle {
+    display: block;
+    margin: -.2rem 0 .9rem;
+    padding: .3rem 0;
+    border: 0;
+    background: none;
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.billing-toggle:hover {
+    text-decoration: underline;
+}
+
+.billing-toggle:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--amber) 60%, transparent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.billing {
+    padding-top: .9rem;
+    border-top: 1px dashed var(--border-2);
+}
+
+.optional {
+    color: var(--text-dim);
+    font-size: .64rem;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.field__error {
+    color: var(--danger);
+    font-family: 'DM Mono', monospace;
+    font-size: .64rem;
+}

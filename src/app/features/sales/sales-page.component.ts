@@ -9,9 +9,9 @@ import { ProductService } from '../../core/services/product.service';
 import { SaleService } from '../../core/services/sale.service';
 import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
-import { CustomerResponse, CustomerSearchItem } from '../../core/models/customer.models';
+import { CustomerResponse, CustomerSearchItem, BILLING_IVA_CONDITION_OPTIONS } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -153,12 +153,9 @@ export class SalesPageComponent implements OnInit {
     quickCreateCustomerIvaCondition: number | null = null;
     /** El vendedor eligio la letra a mano: desde ahi elegir cliente ya no la cambia sola. */
     invoiceLetterTouched = false;
-    readonly quickCustomerIvaConditionOptions: SearchableSelectOption[] = [
-        { value: null, label: 'Consumidor Final' },
-        { value: 1, label: 'Responsable Inscripto' },
-        { value: 2, label: 'Monotributo' },
-        { value: 4, label: 'Exento' }
-    ];
+    readonly quickCustomerIvaConditionOptions: SearchableSelectOption[] = [...BILLING_IVA_CONDITION_OPTIONS];
+    /** El vendedor abrio "Datos de facturacion" en el alta rapida aunque la venta no se facture. */
+    quickCreateBillingOpen = false;
     deliveryAddressSuggestions: string[] = [];
     showDeliveryAddressSuggestions = false;
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
@@ -677,21 +674,32 @@ export class SalesPageComponent implements OnInit {
         }
     }
 
-    /** El alta rapida pide datos de facturacion cuando la venta se va a facturar. */
+    /**
+     * Los datos de facturacion se pueden cargar siempre (la venta puede facturarse despues, por
+     * ejemplo como Factura A): cerrados por defecto, abiertos si la venta se va a facturar.
+     */
     get quickCreateShowsBilling(): boolean {
-        return this.createWillInvoice;
+        return this.createWillInvoice || this.quickCreateBillingOpen;
     }
 
-    /** Para Factura A el alta rapida exige condicion A y CUIT valido: si no, la venta no se podria crear. */
+    /**
+     * Para Factura A el alta rapida exige condicion A y CUIT valido: si no, la venta no se podria crear.
+     * En cualquier otro caso los datos son opcionales, pero un CUIT cargado tiene que ser valido.
+     */
     get quickCreateBillingIssue(): string | null {
-        if (!this.quickCreateShowsBilling || this.createInvoiceLetter !== InvoiceLetter.A) {
+        if (!this.quickCreateShowsBilling) {
             return null;
         }
-        return invoicingCustomerIssue({
-            name: this.quickCreateCustomerName.trim() || 'el cliente',
-            taxId: this.quickCreateCustomerTaxId,
-            ivaCondition: this.quickCreateCustomerIvaCondition
-        }, InvoiceLetter.A);
+        const name = this.quickCreateCustomerName.trim() || 'el cliente';
+        if (this.createWillInvoice && this.createInvoiceLetter === InvoiceLetter.A) {
+            return invoicingCustomerIssue({
+                name,
+                taxId: this.quickCreateCustomerTaxId,
+                ivaCondition: this.quickCreateCustomerIvaCondition
+            }, InvoiceLetter.A);
+        }
+        const taxId = this.quickCreateCustomerTaxId.trim();
+        return taxId && !isValidCuit(taxId) ? 'El CUIT no es válido: revisá los 11 dígitos.' : null;
     }
 
     handleCreateCustomerInput(query: string): void {
@@ -727,6 +735,7 @@ openQuickCreateCustomer(): void {
     this.quickCreateCustomerTaxId = '';
     // Si el vendedor va a hacer Factura A, lo mas probable es un Responsable Inscripto.
     this.quickCreateCustomerIvaCondition = this.createWillInvoice && this.createInvoiceLetter === InvoiceLetter.A ? 1 : null;
+    this.quickCreateBillingOpen = false;
     this.quickCreateCustomerOpen = true;
     this.showCreateCustomerResults = false;
 }
@@ -737,6 +746,7 @@ closeQuickCreateCustomer(): void {
     this.quickCreateCustomerPhone = '';
     this.quickCreateCustomerTaxId = '';
     this.quickCreateCustomerIvaCondition = null;
+    this.quickCreateBillingOpen = false;
 }
 
 submitQuickCreateCustomer(): void {
