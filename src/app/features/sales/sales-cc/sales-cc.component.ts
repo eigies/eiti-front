@@ -243,6 +243,12 @@ export class SalesCcComponent implements OnInit {
     return branch?.automaticInvoicing ?? this.companyAutomaticInvoicing;
   }
 
+  /** Sin punto de venta la sucursal no puede facturar: se avisa antes de vender. */
+  get selectedBranchMissingPointOfSale(): boolean {
+    const branch = this.branches.find(b => b.id === this.selectedBranchId);
+    return !!branch && !branch.fiscalPointOfSaleNumber;
+  }
+
   /** Convertir un presupuesto va por otro camino que no factura: ahi no se ofrece. */
   get showInvoicingControl(): boolean {
     return !this.convertingQuoteId && (this.showInvoicingCheck || this.willInvoice);

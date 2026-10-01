@@ -10,7 +10,7 @@ import { ToastService } from '../../shared/services/toast.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './company.component.html',
-  styleUrls: ['./company.component.css']
+  styleUrls: ['../../shared/styles/config-page.css', './company.component.css']
 })
 export class CompanyComponent implements OnInit {
   form: FormGroup;
@@ -31,8 +31,7 @@ export class CompanyComponent implements OnInit {
       whatsAppPhoneNumber: [''],
       defaultNoDeliverySurcharge: [null, [Validators.min(0)]],
       pdfLogoUrl: [''],
-      pdfWatermarkUrl: [''],
-      automaticInvoicing: [false]
+      pdfWatermarkUrl: ['']
     });
   }
 
@@ -66,8 +65,8 @@ export class CompanyComponent implements OnInit {
       whatsAppSenderPhone: this.nullIfEmpty(this.form.get('whatsAppPhoneNumber')?.value),
       defaultNoDeliverySurcharge: rawSurcharge === null || rawSurcharge === '' ? null : Number(rawSurcharge),
       pdfLogoUrl: this.nullIfEmpty(this.form.get('pdfLogoUrl')?.value),
-      pdfWatermarkUrl: this.nullIfEmpty(this.form.get('pdfWatermarkUrl')?.value),
-      automaticInvoicing: Boolean(this.form.get('automaticInvoicing')?.value)
+      // automaticInvoicing no va: se configura en Facturacion electronica y null no lo toca.
+      pdfWatermarkUrl: this.nullIfEmpty(this.form.get('pdfWatermarkUrl')?.value)
     }).subscribe({
       next: (company) => {
         this.company = company;
@@ -147,8 +146,7 @@ export class CompanyComponent implements OnInit {
       whatsAppPhoneNumber: company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? '',
       defaultNoDeliverySurcharge: company.defaultNoDeliverySurcharge ?? null,
       pdfLogoUrl: company.pdfLogoUrl ?? '',
-      pdfWatermarkUrl: company.pdfWatermarkUrl ?? '',
-      automaticInvoicing: Boolean(company.automaticInvoicing)
+      pdfWatermarkUrl: company.pdfWatermarkUrl ?? ''
     };
   }
 }

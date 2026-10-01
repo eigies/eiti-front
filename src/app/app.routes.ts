@@ -33,6 +33,13 @@ export const routes: Routes = [
             import('./features/customers/customers.component').then(m => m.CustomersComponent)
     },
     {
+        path: 'fiscal-settings',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.salesInvoice },
+        loadComponent: () =>
+            import('./features/fiscal-settings/fiscal-settings.component').then(m => m.FiscalSettingsComponent)
+    },
+    {
         path: 'branches',
         canActivate: [authGuard],
         loadComponent: () =>
