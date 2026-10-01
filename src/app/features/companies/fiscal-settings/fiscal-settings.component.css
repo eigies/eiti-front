@@ -17,8 +17,16 @@
     letter-spacing: .18em;
 }
 
-.fiscal__issuer {
-    grid-column: span 2;
+/* Emisor y puntos de venta lado a lado (3:2); el selector de sucursal necesita ancho. */
+.fiscal .config-grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+}
+
+/* La tarjeta de Empresa recorta (overflow hidden): aca cortaria el desplegable de sucursales. */
+.fiscal .config-card {
+    overflow: visible;
+    grid-template-rows: auto 1fr;
 }
 
 .fiscal__facts {
@@ -77,7 +85,7 @@
 .pos-row,
 .pos-add {
     display: grid;
-    grid-template-columns: 5.2rem minmax(0, 1fr) auto;
+    grid-template-columns: 4.6rem minmax(0, 1fr) auto;
     align-items: center;
     gap: .55rem;
 }
@@ -123,8 +131,8 @@
 }
 
 @media (max-width: 900px) {
-    .fiscal__issuer {
-        grid-column: 1 / -1;
+    .fiscal .config-grid {
+        grid-template-columns: 1fr;
     }
 }
 

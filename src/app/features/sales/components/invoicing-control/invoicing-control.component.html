@@ -8,5 +8,5 @@
   <app-invoice-letter-switch *ngIf="willInvoice && !missingPointOfSale" [letter]="letter"
                              (letterChange)="letterChange.emit($event)"></app-invoice-letter-switch>
   <span class="invoicing-control__warn" *ngIf="willInvoice && missingPointOfSale"
-        title="Asignale su punto de venta de ARCA en Sucursales para poder facturar">Sucursal sin punto de venta</span>
+        title="Asignale un punto de venta de ARCA en Empresa → Facturación electrónica para poder facturar">Sucursal sin punto de venta</span>
 </div>
