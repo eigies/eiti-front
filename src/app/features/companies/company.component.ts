@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CompanyService } from '../../core/services/company.service';
 import { CompanyResponse } from '../../core/models/company.models';
 import { ToastService } from '../../shared/services/toast.service';
+import { FiscalSettingsComponent } from './fiscal-settings/fiscal-settings.component';
 
 @Component({
   selector: 'app-company',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FiscalSettingsComponent],
   templateUrl: './company.component.html',
   styleUrls: ['./company.component.css']
 })

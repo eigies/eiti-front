@@ -1,0 +1,135 @@
+/* Reutiliza las tarjetas de Empresa (company.component.css); aca solo lo propio de la seccion. */
+
+:host {
+    display: block;
+}
+
+.fiscal {
+    display: grid;
+    gap: .85rem;
+    margin-top: 2.2rem;
+}
+
+.fiscal__kicker {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .18em;
+}
+
+.fiscal__issuer {
+    grid-column: span 2;
+}
+
+.fiscal__facts {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .6rem .9rem;
+}
+
+.fiscal__env {
+    padding: .18rem .5rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border));
+    border-radius: 999px;
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    font-size: .6rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.fiscal__env--prod {
+    border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+    color: var(--success);
+}
+
+.fiscal__expiring,
+.fiscal__expiring strong {
+    color: var(--danger);
+}
+
+.fiscal__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
+}
+
+.fiscal__wide {
+    grid-column: 1 / -1;
+}
+
+.fiscal__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Puntos de venta: el numero va como en el comprobante (00003). */
+
+.pos-list {
+    display: grid;
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pos-row,
+.pos-add {
+    display: grid;
+    grid-template-columns: 5.2rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .55rem;
+}
+
+.pos-row--busy {
+    opacity: .55;
+}
+
+.pos-row__number {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    letter-spacing: .12em;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-row__branch {
+    min-width: 0;
+}
+
+.pos-add {
+    padding-top: .8rem;
+    border-top: 1px dashed var(--border);
+}
+
+.pos-add__number {
+    min-height: 38px;
+    padding: .5rem .6rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-empty {
+    margin: 0;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    line-height: 1.6;
+}
+
+.btn-inline:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+    .fiscal__issuer {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 560px) {
+    .fiscal__fields {
+        grid-template-columns: 1fr;
+    }
+}

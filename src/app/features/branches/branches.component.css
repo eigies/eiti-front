@@ -974,6 +974,6 @@
 
 .modal__hint {
     margin-top: -.35rem;
-    color: var(--danger);
+    color: var(--text-dim);
     font-size: .74rem;
 }

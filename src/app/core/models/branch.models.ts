@@ -7,6 +7,7 @@ export interface BranchResponse {
     automaticInvoicing?: boolean | null;
     /** Punto de venta de ARCA donde factura la sucursal. Null = todavia no puede facturar. */
     fiscalPointOfSaleNumber?: number | null;
+    fiscalPointOfSaleId?: string | null;
     salesCount: number;
     cashValue: number;
     createdAt: string;
@@ -19,11 +20,6 @@ export interface CreateBranchRequest {
     address?: string | null;
     /** Null = hereda la config de la empresa. */
     automaticInvoicing?: boolean | null;
-}
-
-/** Null quita el punto de venta de la sucursal. */
-export interface SetBranchPointOfSaleRequest {
-    number: number | null;
 }
 
 /** Como ARCA muestra el punto de venta en los comprobantes: 5 digitos (00003). */

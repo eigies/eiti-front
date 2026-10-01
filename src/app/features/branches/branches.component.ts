@@ -1,10 +1,12 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { switchMap } from 'rxjs';
+import { Observable, of, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BranchResponse, TransferTargetResponse, formatPointOfSale } from '../../core/models/branch.models';
+import { FiscalPointOfSaleResponse } from '../../core/models/fiscal-settings.models';
+import { FiscalSettingsService } from '../../core/services/fiscal-settings.service';
 import { BranchService } from '../../core/services/branch.service';
 import { CompanyService } from '../../core/services/company.service';
 import { ToastService } from '../../shared/services/toast.service';
@@ -57,6 +59,7 @@ export class BranchesComponent implements OnInit {
   deletingBranchId: string | null = null;
   /** Config de la empresa, para resolver las sucursales que heredan. Null = todavia no se sabe. */
   companyAutomaticInvoicing: boolean | null = null;
+  pointsOfSale: FiscalPointOfSaleResponse[] = [];
   private sourceAvailableById = new Map<string, number>();
 
   private readonly destroyRef = inject(DestroyRef);
@@ -72,7 +75,8 @@ export class BranchesComponent implements OnInit {
     private readonly stockService: StockService,
     private readonly confirmation: ConfirmationService,
     private readonly stockTransferPdf: StockTransferPdfService,
-    private readonly companyService: CompanyService
+    private readonly companyService: CompanyService,
+    private readonly fiscalSettings: FiscalSettingsService
   ) {
     this.createForm = this.fb.group({
       name: ['', Validators.required],
@@ -85,8 +89,8 @@ export class BranchesComponent implements OnInit {
       // '' = hereda de la empresa; 'true'/'false' = override explicito de la sucursal.
       address: [''],
       automaticInvoicing: [''],
-      // Punto de venta "Web Services" que el contador dio de alta en ARCA para esta sucursal.
-      fiscalPointOfSaleNumber: [null as number | null, [Validators.min(1), Validators.max(99999)]]
+      // Uno de los puntos de venta cargados en Empresa > Facturacion electronica (1:1). Null = ninguno.
+      fiscalPointOfSaleId: [null as string | null]
     });
     this.transferForm = this.fb.group({
       sourceBranchId: ['', Validators.required],
@@ -100,6 +104,7 @@ export class BranchesComponent implements OnInit {
     this.refreshOnboarding();
     this.loadBranches();
     this.loadCompanyInvoicing();
+    this.loadPointsOfSale();
 
     if (this.canTransferStock) {
       this.loadProducts();
@@ -118,6 +123,11 @@ export class BranchesComponent implements OnInit {
 
   get canViewFinancials(): boolean {
     return this.auth.hasPermission(PermissionCodes.dashboardViewFinancials);
+  }
+
+  /** Los puntos de venta los administra quien factura (Empresa > Facturacion electronica). */
+  get canAssignPointOfSale(): boolean {
+    return this.auth.hasPermission(PermissionCodes.salesInvoice);
   }
 
   get canManageBranches(): boolean {
@@ -338,6 +348,16 @@ export class BranchesComponent implements OnInit {
       : 'definida en la sucursal';
   }
 
+  /** Puntos de venta que puede tomar la sucursal en edicion: los libres y el que ya tiene. */
+  get pointOfSaleOptions(): SearchableSelectOption[] {
+    const branchId = this.editingBranch?.id;
+    const available = this.pointsOfSale.filter(p => !p.branchId || p.branchId === branchId);
+    return [
+      { value: null, label: 'Sin punto de venta (no factura)' },
+      ...available.map(p => ({ value: p.id, label: `Punto de venta ${formatPointOfSale(p.number)}` }))
+    ];
+  }
+
   branchPointOfSaleLabel(branch: BranchResponse): string {
     return branch.fiscalPointOfSaleNumber ? formatPointOfSale(branch.fiscalPointOfSaleNumber) : 'Sin asignar';
   }
@@ -396,7 +416,7 @@ export class BranchesComponent implements OnInit {
       automaticInvoicing: branch.automaticInvoicing === null || branch.automaticInvoicing === undefined
         ? ''
         : String(branch.automaticInvoicing),
-      fiscalPointOfSaleNumber: branch.fiscalPointOfSaleNumber ?? null
+      fiscalPointOfSaleId: branch.fiscalPointOfSaleId ?? null
     });
   }
 
@@ -409,7 +429,7 @@ export class BranchesComponent implements OnInit {
     this.savingEdit = true;
     const branch = this.editingBranch;
     const raw = this.editForm.getRawValue();
-    const pointOfSale: number | null = raw.fiscalPointOfSaleNumber || null;
+    const pointOfSaleId: string | null = raw.fiscalPointOfSaleId ?? null;
     const update$ = this.branchService.updateBranch(branch.id, {
       name: raw.name,
       code: raw.code,
@@ -417,15 +437,14 @@ export class BranchesComponent implements OnInit {
       automaticInvoicing: raw.automaticInvoicing === '' ? null : raw.automaticInvoicing === 'true'
     });
     // El punto de venta se habilita en el servicio de facturacion: solo se manda si cambio.
-    const save$ = pointOfSale === (branch.fiscalPointOfSaleNumber ?? null)
-      ? update$
-      : update$.pipe(switchMap(() => this.branchService.setFiscalPointOfSale(branch.id, { number: pointOfSale })));
+    const save$ = update$.pipe(switchMap(() => this.applyPointOfSale(branch, pointOfSaleId)));
 
     save$.subscribe({
       next: () => {
         this.savingEdit = false;
         this.editingBranch = null;
         this.loadBranches(branch.id);
+        this.loadPointsOfSale();
         this.toast.success('Sucursal actualizada');
       },
       error: err => {
@@ -435,6 +454,30 @@ export class BranchesComponent implements OnInit {
         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo actualizar la sucursal');
       }
     });
+  }
+
+  /** Solo si cambio: atar el elegido a la sucursal, o liberar el que tenia. */
+  private applyPointOfSale(branch: BranchResponse, pointOfSaleId: string | null): Observable<unknown> {
+    const currentId = branch.fiscalPointOfSaleId ?? null;
+    if (!this.canAssignPointOfSale || pointOfSaleId === currentId) {
+      return of(null);
+    }
+    return pointOfSaleId
+      ? this.fiscalSettings.assignPointOfSale(pointOfSaleId, branch.id)
+      : this.fiscalSettings.assignPointOfSale(currentId!, null); // currentId no es null: difiere de pointOfSaleId, que lo es
+  }
+
+  private loadPointsOfSale(): void {
+    if (!this.canAssignPointOfSale) {
+      return;
+    }
+    // Dato secundario: si no se puede leer, el selector queda solo con "Sin punto de venta".
+    this.fiscalSettings.get()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: settings => this.pointsOfSale = settings.pointsOfSale,
+        error: () => this.pointsOfSale = []
+      });
   }
 
   closeEdit(): void {

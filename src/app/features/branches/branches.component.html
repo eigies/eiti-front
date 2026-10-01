@@ -263,12 +263,12 @@
                 <input class="control" type="text" placeholder="Direccion" formControlName="address" />
                 <app-searchable-select formControlName="automaticInvoicing" [options]="automaticInvoicingOptions"
                     placeholder="Facturacion automatica" searchPlaceholder="Buscar opcion..."></app-searchable-select>
-                <input class="control" type="number" min="1" max="99999" step="1" inputmode="numeric"
-                    placeholder="Punto de venta de ARCA (ej. 3)" formControlName="fiscalPointOfSaleNumber"
-                    title="El punto de venta Web Services que tu contador dio de alta en ARCA para esta sucursal" />
-                <small class="modal__hint" *ngIf="editForm.get('fiscalPointOfSaleNumber')?.invalid">
-                    Tiene que ser un número entre 1 y 99999.
-                </small>
+                <ng-container *ngIf="canAssignPointOfSale">
+                    <app-searchable-select formControlName="fiscalPointOfSaleId" [options]="pointOfSaleOptions"
+                        placeholder="Punto de venta de ARCA" searchPlaceholder="Buscar punto de venta..."
+                        ariaLabel="Punto de venta de ARCA de la sucursal"></app-searchable-select>
+                    <small class="modal__hint">Los puntos de venta se cargan en Empresa → Facturación electrónica.</small>
+                </ng-container>
                 <div class="modal__actions">
                     <button class="btn btn--ghost" type="button" (click)="closeEdit()">Cerrar</button>
                     <button class="btn btn--primary" type="submit" [disabled]="savingEdit">Guardar cambios</button>

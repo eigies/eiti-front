@@ -1,0 +1,123 @@
+<section class="fiscal" *ngIf="canConfigure">
+    <div class="fiscal__kicker">_ FACTURACION ELECTRONICA · ARCA</div>
+
+    <div class="loading-state" *ngIf="loading">
+        <span class="loading-state__dot"></span>
+        <span class="loading-state__dot"></span>
+        <span class="loading-state__dot"></span>
+        Cargando facturación electrónica...
+    </div>
+
+    <div class="config-card fiscal__off" *ngIf="!loading && settings && !settings.enabled">
+        <div class="config-card__body">
+            <p class="config-card__desc">La facturación electrónica todavía no está activada para tu empresa.</p>
+        </div>
+    </div>
+
+    <div class="config-grid" *ngIf="!loading && settings?.enabled">
+
+        <!-- Emisor -->
+        <div class="config-card config-card--delay-1 fiscal__issuer">
+            <div class="config-card__head">
+                <span class="config-card__num">06</span>
+                <div class="config-card__meta">
+                    <span class="config-card__eyebrow">Emisor</span>
+                    <h2 class="config-card__title">Datos fiscales</h2>
+                </div>
+            </div>
+
+            <div class="config-card__body" *ngIf="!settings?.issuer">
+                <p class="config-card__desc">{{ settings?.issuerUnavailableReason || 'No se pudieron leer los datos fiscales.' }}</p>
+            </div>
+
+            <form class="config-card__body" *ngIf="settings?.issuer as issuer" [formGroup]="issuerForm" (ngSubmit)="saveIssuer()" novalidate>
+                <div class="fiscal__facts">
+                    <span class="meta__chip">CUIT · <strong>{{ cuitLabel(issuer.cuit) }}</strong></span>
+                    <span class="fiscal__env" [class.fiscal__env--prod]="issuer.isProduction">
+                        {{ issuer.isProduction ? 'Producción' : 'Homologación' }}
+                    </span>
+                    <span class="meta__chip" *ngIf="issuer.certificateNotAfter" [class.fiscal__expiring]="certificateExpiresSoon">
+                        Certificado vence · <strong>{{ issuer.certificateNotAfter | date: 'dd/MM/yyyy' }}</strong>
+                    </span>
+                </div>
+                <p class="config-card__desc">Van impresos en cada factura. Los cambios rigen para las que emitas desde ahora; las ya emitidas no cambian.</p>
+
+                <div class="fiscal__fields">
+                    <div class="field fiscal__wide" [class.field--error]="isInvalid('legalName')">
+                        <label class="field__label" for="fiscal-legal-name">Razón social</label>
+                        <input id="fiscal-legal-name" class="field__input" type="text" formControlName="legalName" />
+                        <span class="field__error" *ngIf="isInvalid('legalName')">Requerida</span>
+                    </div>
+                    <div class="field">
+                        <label class="field__label">Condición frente al IVA</label>
+                        <app-searchable-select formControlName="ivaCondition" [options]="ivaOptions"
+                            placeholder="Condición frente al IVA" searchPlaceholder="Buscar..."></app-searchable-select>
+                    </div>
+                    <div class="field" [class.field--error]="isInvalid('activityStartDate')">
+                        <label class="field__label" for="fiscal-activity-start">Inicio de actividades</label>
+                        <input id="fiscal-activity-start" class="field__input" type="date" [max]="today" formControlName="activityStartDate" />
+                        <span class="field__error" *ngIf="isInvalid('activityStartDate')">Requerida</span>
+                    </div>
+                    <div class="field">
+                        <label class="field__label" for="fiscal-iibb">Ingresos Brutos</label>
+                        <input id="fiscal-iibb" class="field__input" type="text" formControlName="iibb" placeholder="Nro. de inscripción o Exento" />
+                    </div>
+                    <div class="field">
+                        <label class="field__label" for="fiscal-address">Domicilio comercial</label>
+                        <input id="fiscal-address" class="field__input" type="text" formControlName="commercialAddress" placeholder="Calle, número, localidad" />
+                    </div>
+                </div>
+
+                <div class="fiscal__actions">
+                    <button class="btn-save" type="submit" [disabled]="savingIssuer || issuerForm.pristine">
+                        <span class="btn-save__inner">
+                            <span class="btn-save__spinner" *ngIf="savingIssuer"></span>
+                            {{ savingIssuer ? 'Guardando...' : 'Guardar datos fiscales' }}
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Puntos de venta -->
+        <div class="config-card config-card--delay-2">
+            <div class="config-card__head">
+                <span class="config-card__num">07</span>
+                <div class="config-card__meta">
+                    <span class="config-card__eyebrow">ARCA</span>
+                    <h2 class="config-card__title">Puntos de venta</h2>
+                </div>
+            </div>
+            <div class="config-card__body">
+                <p class="config-card__desc">Cada sucursal factura en su punto de venta. Cargá el número que tu contador dio de alta en ARCA (tipo Web Services).</p>
+
+                <ul class="pos-list" *ngIf="settings?.pointsOfSale?.length; else noPointsOfSale">
+                    <li class="pos-row" *ngFor="let pos of settings?.pointsOfSale" [class.pos-row--busy]="busyPointOfSaleId === pos.id">
+                        <span class="pos-row__number">{{ pointOfSaleLabel(pos.number) }}</span>
+                        <app-searchable-select class="pos-row__branch" [compact]="true"
+                            [ngModel]="pos.branchId" (ngModelChange)="assign(pos, $event)"
+                            [options]="branchOptions(pos)" [disabled]="busyPointOfSaleId !== null"
+                            placeholder="Sin sucursal" searchPlaceholder="Buscar sucursal..."
+                            [ariaLabel]="'Sucursal del punto de venta ' + pointOfSaleLabel(pos.number)"></app-searchable-select>
+                        <button class="btn-inline" type="button" *ngIf="!pos.branchId" (click)="remove(pos)"
+                            [disabled]="busyPointOfSaleId !== null">Borrar</button>
+                    </li>
+                </ul>
+                <ng-template #noPointsOfSale>
+                    <p class="pos-empty">Todavía no cargaste ningún punto de venta. Sin uno, la sucursal no puede facturar.</p>
+                </ng-template>
+
+                <form class="pos-add" (ngSubmit)="addPointOfSale()">
+                    <input class="field__input pos-add__number" type="number" min="1" max="99999" step="1" inputmode="numeric"
+                        name="newNumber" [(ngModel)]="newNumber" placeholder="Nº" aria-label="Número de punto de venta" />
+                    <app-searchable-select class="pos-row__branch" [compact]="true" name="newBranchId"
+                        [(ngModel)]="newBranchId" [options]="branchOptions(null)"
+                        placeholder="Sucursal (opcional)" searchPlaceholder="Buscar sucursal..."
+                        ariaLabel="Sucursal del punto de venta nuevo"></app-searchable-select>
+                    <button class="btn-inline" type="submit" [disabled]="creating || !newNumber">{{ creating ? 'Cargando...' : 'Agregar' }}</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</section>
