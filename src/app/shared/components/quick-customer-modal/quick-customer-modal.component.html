@@ -18,9 +18,27 @@
       <input class="control" type="text" formControlName="phone">
     </label>
 
+    <button type="button" class="billing-toggle" *ngIf="!billingOpen" (click)="billingOpen = true">
+      + Datos de facturación
+    </button>
+
+    <div class="billing" *ngIf="billingOpen">
+      <div class="field">
+        <span class="field__label">Condición frente al IVA</span>
+        <app-searchable-select formControlName="ivaCondition" [options]="ivaConditionOptions"
+          placeholder="Condición frente al IVA" searchPlaceholder="Buscar condición..."></app-searchable-select>
+      </div>
+      <label class="field">
+        <span class="field__label">CUIT <span class="optional">(opcional)</span></span>
+        <input class="control" type="text" inputmode="numeric" autocomplete="off" placeholder="20-30111222-9"
+          formControlName="taxId" [class.is-invalid]="taxIdIssue">
+        <span class="field__error" role="alert" *ngIf="taxIdIssue as issue">{{ issue }}</span>
+      </label>
+    </div>
+
     <div class="modal__actions">
       <button type="button" class="btn btn--ghost" (click)="cancel.emit()">Cancelar</button>
-      <button type="button" class="btn" [disabled]="saving" (click)="submit()">
+      <button type="button" class="btn" [disabled]="saving || taxIdIssue" (click)="submit()">
         {{ saving ? 'Creando...' : 'Crear y seleccionar' }}
       </button>
     </div>

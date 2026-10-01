@@ -1097,10 +1097,16 @@
         <input class="control" type="tel" [(ngModel)]="quickCreateCustomerPhone" placeholder="Ej: +54 9 11 1234-5678" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
       </label>
 
+      <button type="button" class="quick-customer-billing__toggle" *ngIf="!quickCreateShowsBilling"
+              [disabled]="quickCreateCustomerSaving" (click)="quickCreateBillingOpen = true">
+        + Datos de facturación
+      </button>
+
       <div class="quick-customer-billing" *ngIf="quickCreateShowsBilling">
         <div class="quick-customer-billing__head">
           <span class="quick-customer-modal__eyebrow">Datos de facturación</span>
-          <span class="quick-customer-billing__letter">Factura {{ createInvoiceLetter === 1 ? 'A' : 'B' }}</span>
+          <span class="quick-customer-billing__letter" *ngIf="createWillInvoice">Factura {{ createInvoiceLetter === 1 ? 'A' : 'B' }}</span>
+          <span class="field__optional" *ngIf="!createWillInvoice">Para facturar esta venta después</span>
         </div>
         <div class="field">
           <span class="field__label">Condición frente al IVA</span>
@@ -1112,7 +1118,7 @@
             searchPlaceholder="Buscar condición..."></app-searchable-select>
         </div>
         <label class="field">
-          <span class="field__label">CUIT <span class="field__optional" *ngIf="createInvoiceLetter !== 1">(opcional)</span></span>
+          <span class="field__label">CUIT <span class="field__optional" *ngIf="!createWillInvoice || createInvoiceLetter !== 1">(opcional)</span></span>
           <input class="control" type="text" inputmode="numeric" [(ngModel)]="quickCreateCustomerTaxId" placeholder="20-30111222-9" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
         </label>
         <span class="field__error" role="alert" *ngIf="quickCreateBillingIssue as issue">{{ issue }}</span>
