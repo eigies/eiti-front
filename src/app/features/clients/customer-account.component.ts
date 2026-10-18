@@ -630,6 +630,10 @@ export class CustomerAccountComponent implements OnInit {
         customerFullName: sale.customerFullName,
         customerDocument: sale.customerDocument,
         customerTaxId: sale.customerTaxId,
+        customerAddress: sale.customerAddress,
+        customerPhone: sale.customerPhone,
+        deliveryAddress: sale.deliveryAddress,
+        contactPhone: sale.contactPhone,
         hasDelivery: sale.hasDelivery,
         totalAmount: sale.totalAmount,
         details: sale.details.map(d => ({

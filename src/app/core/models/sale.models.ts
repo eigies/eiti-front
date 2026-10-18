@@ -475,6 +475,10 @@ export interface SaleByIdResponse {
     customerFullName?: string | null;
     customerDocument?: string | null;
     customerTaxId?: string | null;
+    customerAddress?: string | null;
+    customerPhone?: string | null;
+    deliveryAddress?: string | null;
+    contactPhone?: string | null;
     cashDrawerId?: string | null;
     hasDelivery: boolean;
     idSaleStatus: number;
