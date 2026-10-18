@@ -26,6 +26,10 @@ export interface RemitoSale {
   customerFullName?: string | null;
   customerDocument?: string | null;
   customerTaxId?: string | null;
+  customerAddress?: string | null;
+  customerPhone?: string | null;
+  deliveryAddress?: string | null;
+  contactPhone?: string | null;
   hasDelivery: boolean;
   totalAmount: number;
   details: RemitoSaleDetail[];
@@ -114,18 +118,45 @@ export class RemitoPdfService {
         rowsRight.push(['Cobrado', formatCurrency(ctx.coveredAmount ?? 0)]);
       }
 
+      // Dirección y teléfono: los de la venta; si no hay, los del cliente. Solo se imprimen si existen.
+      const address = (sale.deliveryAddress || sale.customerAddress || '').trim();
+      const phone = (sale.contactPhone || sale.customerPhone || '').trim();
+      if (phone) {
+        rowsRight.push(['Telefono', phone]);
+      }
+
       const rowCount = Math.max(rowsLeft.length, rowsRight.length);
       const rowHeight = 6.5;
       const metaTop = y;
-      const metaHeight = rowCount * rowHeight + 6;
       const halfWidth = contentWidth / 2;
       const leftX = margin + 3;
       const rightX = margin + halfWidth + 3;
       const valueOffset = 19;
+      const columnsHeight = rowCount * rowHeight + 6;
+
+      // La dirección va en una fila a todo el ancho (puede ser larga y ocupar varias líneas).
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      const addressLines: string[] = address
+        ? doc.splitTextToSize(address, contentWidth - valueOffset - 6)
+        : [];
+      const addressLineHeight = 4.2;
+      const addressHeight = addressLines.length > 0 ? (addressLines.length - 1) * addressLineHeight + 9 : 0;
+      const metaHeight = columnsHeight + addressHeight;
 
       doc.setDrawColor(185, 185, 185);
       doc.rect(margin, metaTop, contentWidth, metaHeight);
-      doc.line(margin + halfWidth, metaTop, margin + halfWidth, metaTop + metaHeight);
+      doc.line(margin + halfWidth, metaTop, margin + halfWidth, metaTop + columnsHeight);
+      if (addressLines.length > 0) {
+        const addressY = metaTop + columnsHeight + 6;
+        doc.line(margin, metaTop + columnsHeight, margin + contentWidth, metaTop + columnsHeight);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(70, 70, 70);
+        doc.text('Direccion:', leftX, addressY);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(25, 25, 25);
+        doc.text(addressLines, leftX + valueOffset, addressY, { lineHeightFactor: addressLineHeight / (9 * 0.3528) });
+      }
 
       doc.setFontSize(9);
       for (let index = 0; index < rowCount; index += 1) {
