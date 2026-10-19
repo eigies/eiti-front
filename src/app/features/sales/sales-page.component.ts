@@ -912,6 +912,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
     // Centraliza el manejo de errores de caja al cobrar una venta (crear/editar/cobro rapido):
     // - sesion del dia anterior -> modal de sesion vieja
     // - sin cajon resuelto / sin sesion abierta -> modal "sin caja disponible"
+    // - venta facturada a la que se le cambia el importe -> toast en castellano (el backend responde en ingles)
     // - resto -> toast con el detalle del backend
     private handleSaleChargeError(err: unknown, fallbackMessage: string): void {
         const error = (err as { error?: { errorCode?: string; detail?: string; message?: string } })?.error;
@@ -922,6 +923,10 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         }
         if (code.endsWith('CashDrawerRequired') || code.endsWith('CashSessionRequired')) {
             this.showNoCashSessionModal = true;
+            return;
+        }
+        if (code.endsWith('InvoicedAmountChange')) {
+            this.toast.error('La venta ya está facturada: para cambiar el importe, primero anulá la factura con una nota de crédito.');
             return;
         }
         this.toast.error(error?.detail || error?.message || fallbackMessage);
