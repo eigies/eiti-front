@@ -317,6 +317,20 @@ describe('SalesPageComponent (price override)', () => {
         expect(badge.scrollWidth).toBeLessThanOrEqual(badge.clientWidth);
     });
 
+    it('explica en castellano que una venta facturada no puede cambiar de importe', () => {
+        const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+
+        (component as any).handleSaleChargeError({
+            error: {
+                errorCode: 'Sales.Update.InvoicedAmountChange',
+                detail: 'The sale is already invoiced: void the invoice with a credit note before changing its amount.'
+            }
+        }, 'No se pudo actualizar la venta');
+
+        expect(toast.error).toHaveBeenCalledWith(
+            'La venta ya está facturada: para cambiar el importe, primero anulá la factura con una nota de crédito.');
+    });
+
     describe('alta rápida de cliente: datos de facturación', () => {
         beforeEach(() => {
             authSpy.hasPermission.and.returnValue(false);
