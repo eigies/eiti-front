@@ -88,8 +88,56 @@
   color-scheme: light dark;
 }
 .input:focus { outline: none; border-color: var(--lg-amber-line); box-shadow: 0 0 0 3px var(--amber-dim); }
-.check { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; color: var(--lg-text-2); font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
-.check input, .chk { width: 16px; height: 16px; accent-color: var(--amber); cursor: pointer; }
+/* Interruptor de filtro: el toggle-check de la app (mismo que "Mostrar sin stock" del reporte de stock). */
+.ledger-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 44px;
+  min-width: 11.5rem; /* entra "Mostrar anulados": al cambiar el texto no se corre la barra */
+  padding: .62rem .88rem;
+  border: 1px solid var(--border-2);
+  border-radius: 16px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, transparent), color-mix(in srgb, var(--bg-panel) 96%, transparent));
+  color: var(--lg-text-2);
+  font-family: 'DM Mono', monospace;
+  font-size: .68rem;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+  transition: border-color .18s ease, background .18s ease, color .18s ease;
+}
+.ledger-toggle input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ledger-toggle:has(input:focus-visible) { outline: 2px solid var(--amber); outline-offset: 2px; }
+.ledger-toggle--active { border-color: color-mix(in srgb, var(--amber) 32%, var(--border-2)); background: color-mix(in srgb, var(--amber) 7%, transparent); color: var(--text); }
+.toggle-check__track {
+  position: relative;
+  display: inline-flex;
+  width: 2.25rem;
+  height: 1.3rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border-2) 75%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+  transition: background .2s ease;
+}
+.toggle-check__track::after {
+  content: '';
+  position: absolute;
+  top: .19rem;
+  left: .14rem;
+  width: .92rem;
+  height: .92rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+  transition: transform .2s ease, background .2s ease;
+}
+.toggle-check input:checked + .toggle-check__track { background: color-mix(in srgb, var(--amber) 40%, transparent); }
+.toggle-check input:checked + .toggle-check__track::after { transform: translateX(.95rem); background: var(--amber); }
+.toggle-check__text { position: relative; z-index: 1; letter-spacing: .03em; }
+.chk { width: 16px; height: 16px; accent-color: var(--amber); cursor: pointer; }
 
 .selbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .selbar__summary { font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--lg-text-2); }
@@ -286,7 +334,7 @@
   .tab { flex: 1; padding: 0 .5rem; }
   .tools { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
   .tools .input { width: 100%; }
-  .tools .check { grid-column: 1 / -1; min-height: 36px; }
+  .tools .ledger-toggle { grid-column: 1 / -1; justify-content: center; }
   .selbar { display: grid; grid-template-columns: 1fr; }
   .selbar .btn { min-height: 50px; }
 

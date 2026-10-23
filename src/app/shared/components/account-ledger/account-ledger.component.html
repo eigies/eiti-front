@@ -20,9 +20,10 @@
         <input class="input" type="date" [value]="query.dateTo ?? ''" [min]="query.dateFrom ?? ''"
                (change)="onDateChange('dateTo', $event)" />
       </label>
-      <label class="check">
+      <label class="ledger-toggle toggle-check" [class.ledger-toggle--active]="query.includeCancelled">
         <input type="checkbox" [checked]="query.includeCancelled" (change)="onIncludeCancelledChange($event)" />
-        Mostrar anulados
+        <span class="toggle-check__track"></span>
+        <span class="toggle-check__text">{{ query.includeCancelled ? 'Con anulados' : 'Mostrar anulados' }}</span>
       </label>
       <button type="button" class="btn btn--ghost" [disabled]="!ledger" (click)="exportExcel()">Excel</button>
       <button type="button" class="btn btn--ghost" [disabled]="!ledger || exporting" (click)="exportPdf()">
