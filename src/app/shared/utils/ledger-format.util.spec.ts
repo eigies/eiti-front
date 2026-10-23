@@ -52,4 +52,13 @@ describe('ledger-format', () => {
       .toBe('2 medios · efectivo · Pago septiembre');
     expect(rowDetail(row({ means: [means({}), means({})] }))).toBe('2 medios · efectivo');
   });
+
+  it('el canje de una venta CC se muestra como Canje, con su descripción', () => {
+    const canje = row({
+      source: 'trade_in', code: null, description: 'Canje en la venta MAT-1626',
+      means: [means({ method: 'trade_in', methodLabel: 'Canje', amount: 140000 })]
+    });
+    expect(rowTitle(canje, SUPPLIER_LEDGER_LABELS)).toBe('Canje');
+    expect(rowDetail(canje)).toBe('Canje en la venta MAT-1626');
+  });
 });

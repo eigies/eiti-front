@@ -7,11 +7,13 @@ export type LedgerRowKind = 'invoice' | 'payment' | 'credit_note';
 /**
  * De dónde sale el renglón y, con eso, cómo se anula: una orden de pago / un recibo se anulan enteros;
  * un pago sin grupo (anterior a las órdenes) por su endpoint de siempre; lo "legacy" (pagos cargados en
- * la compra/venta antes de la cuenta corriente) no se anula desde acá.
+ * la compra/venta antes de la cuenta corriente) no se anula desde acá, y el canje de una venta CC
+ * ("trade_in", haber de la venta) se va al anular la venta.
  */
-export type LedgerRowSource = 'purchase' | 'sale' | 'payment_order' | 'receipt' | 'payment' | 'legacy' | 'credit_note';
+export type LedgerRowSource =
+  'purchase' | 'sale' | 'payment_order' | 'receipt' | 'payment' | 'legacy' | 'credit_note' | 'trade_in';
 
-export type PaymentMeansMethod = 'cash' | 'transfer' | 'check' | 'card' | 'other';
+export type PaymentMeansMethod = 'cash' | 'transfer' | 'check' | 'card' | 'other' | 'trade_in';
 
 /** Un medio dentro de un pago/cobro. */
 export interface LedgerMeans {

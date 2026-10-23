@@ -60,6 +60,7 @@ export function meansSummary(means: LedgerMeans[]): string {
 /** Comprobante del renglón: su código, o una etiqueta si no tiene número (pagos anteriores a las OP/RC). */
 export function rowTitle(row: LedgerRow, labels: AccountLedgerLabels): string {
   if (row.code) return row.code;
+  if (row.source === 'trade_in') return 'Canje';
   if (row.kind === 'payment') return labels.payment;
   if (row.kind === 'invoice') return labels.invoice;
   return 'Nota de crédito';
@@ -86,7 +87,7 @@ const DEFAULT_PAYMENT_DESCRIPTIONS = new Set(['Orden de pago', 'Recibo', 'Pago',
 
 /** Texto de la columna Detalle: para un pago, el resumen de sus medios (y la nota, si hay). */
 export function rowDetail(row: LedgerRow): string {
-  if (row.kind !== 'payment' || row.source === 'legacy') return row.description;
+  if (row.kind !== 'payment' || row.source === 'legacy' || row.source === 'trade_in') return row.description;
   const summary = meansSummary(row.means);
   return DEFAULT_PAYMENT_DESCRIPTIONS.has(row.description) ? summary : `${summary} · ${row.description}`;
 }
