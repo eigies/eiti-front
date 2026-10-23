@@ -28,6 +28,8 @@ export interface CashSessionMovementResponse {
     saleCcPaymentId?: string | null;
     supplierPaymentId?: string | null;
     customerPaymentId?: string | null;
+    /** Banco que recibió la transferencia, en los cobros de cuenta corriente por transferencia. */
+    transferBankId?: number | null;
 }
 
 export interface CashSessionResponse {

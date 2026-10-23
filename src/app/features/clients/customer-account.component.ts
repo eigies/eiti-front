@@ -13,28 +13,29 @@ import { AuthService } from '../../core/services/auth.service';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
 import { SALE_PAYMENT_METHODS } from '../../core/models/sale-payment.models';
+import { CustomerAccount, CustomerAccountMovement } from '../../core/models/customer-account.models';
 import {
-  CustomerAccount,
-  CustomerAccountMovement,
-  AddCustomerPaymentRequest,
-  AddCustomerPaymentCheque,
-  CustomerPaymentImputacion
-} from '../../core/models/customer-account.models';
-import { BankResponse, BankInstallmentPlanResponse } from '../../core/models/bank.models';
+  AccountLedger,
+  CUSTOMER_LEDGER_LABELS,
+  GroupedPaymentSubmit,
+  LedgerQuery,
+  LedgerRow,
+  PendingDocument
+} from '../../core/models/account-ledger.models';
+import { BankResponse } from '../../core/models/bank.models';
 import { cancelInvoicingNotice, CancelInvoicingNotice, SaleByIdResponse } from '../../core/models/sale.models';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
-
-const PAYMENT_METHOD_TRANSFER = 2;
-const PAYMENT_METHOD_CARD = 3;
-const PAYMENT_METHOD_CHECK = 4;
+import { AccountLedgerComponent } from '../../shared/components/account-ledger/account-ledger.component';
+import { GroupedPaymentModalComponent } from '../../shared/components/grouped-payment-modal/grouped-payment-modal.component';
+import { meansDetail } from '../../shared/utils/ledger-format.util';
 
 @Component({
   selector: 'app-customer-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent, AccountLedgerComponent, GroupedPaymentModalComponent],
   templateUrl: './customer-account.component.html',
   styleUrls: ['./customer-account.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -51,42 +52,29 @@ export class CustomerAccountComponent implements OnInit {
   detalleLoading = false;
   cancelingSale = false;
 
-  // Form de cobro
-  showPaymentForm = false;
+  // Nota de crédito
   showCreditNoteForm = false;
   addingCreditNote = false;
-  cancellingCreditNoteId: string | null = null;
   ncAmount = 0;
   ncReason = '';
   ncDate = '';
   ncSaleId: string | null = null;
-  addingPayment = false;
-  cancellingPaymentId: string | null = null;
-  expandedPaymentId: string | null = null;
-  newMethod = 1;
-  newAmount = 0;
-  newDate = '';
-  newReference = '';
-  newNotes = '';
 
-  // Tarjeta
-  newCardBankId: number | null = null;
-  newTransferBankId: number | null = null;
-  newCardCuotas: number | null = null;
+  // Extracto
+  readonly ledgerLabels = CUSTOMER_LEDGER_LABELS;
+  ledger: AccountLedger | null = null;
+  ledgerLoading = false;
+  ledgerQuery: LedgerQuery = { dateFrom: null, dateTo: null, includeCancelled: false };
+  busyRowId: string | null = null;
 
-  // Cheque recibido del cliente (se crea, entra a cartera)
-  newCheque: AddCustomerPaymentCheque = this.emptyCheque();
+  // Cobro con varios medios (recibo)
+  paymentOpen = false;
+  paymentTarget: number | null = null;
+  submittingPayment = false;
 
   banks: BankResponse[] = [];
+  banksLoading = true;
   branches: { id: string; name: string }[] = [];
-
-  readonly paymentMethods = [
-    { value: 1, label: 'Efectivo' },
-    { value: 2, label: 'Transferencia' },
-    { value: 3, label: 'Tarjeta' },
-    { value: 4, label: 'Cheque' },
-    { value: 5, label: 'Otros' }
-  ];
 
   constructor(
     private readonly customerAccountService: CustomerAccountService,
@@ -103,11 +91,11 @@ export class CustomerAccountComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.newDate = this.todayIso();
     this.customerId = this.route.snapshot.paramMap.get('customerId') ?? '';
     this.bankService.listBanks(true, 'all').subscribe({
-      next: banks => { this.banks = banks; this.cdr.markForCheck(); },
-      error: () => {} // non-blocking — el cobro funciona sin datos de banco
+      next: banks => { this.banks = banks; this.banksLoading = false; this.cdr.markForCheck(); },
+      // No bloquea: el cobro funciona sin datos de banco (las opciones de banco quedan vacías).
+      error: () => { this.banksLoading = false; this.cdr.markForCheck(); }
     });
     this.branchService.listBranches().subscribe({
       next: branches => { this.branches = branches.map(b => ({ id: b.id, name: b.name })); this.cdr.markForCheck(); },
@@ -116,12 +104,26 @@ export class CustomerAccountComponent implements OnInit {
     this.load();
   }
 
+  /** Tarjetas de resumen + extracto. Se recarga todo después de cada cobro, anulación o nota. */
   load(): void {
-    this.loading = true;
     this.customerAccountService.getAccount(this.customerId).subscribe({
       next: account => { this.account = account; this.loading = false; this.cdr.markForCheck(); },
       error: () => { this.toast.error('No se pudo cargar la cuenta del cliente'); this.loading = false; this.cdr.markForCheck(); }
     });
+    this.loadLedger();
+  }
+
+  loadLedger(): void {
+    this.ledgerLoading = true;
+    this.customerAccountService.getLedger(this.customerId, this.ledgerQuery).subscribe({
+      next: ledger => { this.ledger = ledger; this.ledgerLoading = false; this.cdr.markForCheck(); },
+      error: () => { this.toast.error('No se pudo cargar el extracto'); this.ledgerLoading = false; this.cdr.markForCheck(); }
+    });
+  }
+
+  onLedgerQueryChange(query: LedgerQuery): void {
+    this.ledgerQuery = query;
+    this.loadLedger();
   }
 
   get ventas(): CustomerAccountMovement[] {
@@ -130,10 +132,6 @@ export class CustomerAccountComponent implements OnInit {
 
   get cobros(): CustomerAccountMovement[] {
     return (this.account?.movements ?? []).filter(m => m.type === 'cobro');
-  }
-
-  get notasCredito(): CustomerAccountMovement[] {
-    return (this.account?.movements ?? []).filter(m => m.type === 'nota_credito');
   }
 
   /** Ventas a las que se puede asociar la NC: las del cliente que no estén anuladas. */
@@ -185,10 +183,10 @@ export class CustomerAccountComponent implements OnInit {
     });
   }
 
-  async cancelCreditNote(m: CustomerAccountMovement): Promise<void> {
+  private async cancelCreditNote(row: LedgerRow): Promise<void> {
     // Si el crédito ya se imputó, anular la NC deja esas ventas impagas otra vez.
     // El usuario tiene que verlo antes de confirmar.
-    const ventas = (m.imputaciones ?? []).map(i => i.code).join(', ');
+    const ventas = row.imputations.map(i => i.code).join(', ');
     const detail = ventas
       ? `Vuelven a quedar pendientes: ${ventas}.`
       : 'El saldo a favor generado por esta nota vuelve atrás.';
@@ -196,22 +194,23 @@ export class CustomerAccountComponent implements OnInit {
     const confirmed = await this.confirmation.confirm({
       eyebrow: 'Cuenta de cliente',
       title: 'Anular nota de crédito',
-      message: `Se anulará la nota de crédito ${m.code} de $${this.formatCurrency(m.amount)}.`,
+      message: `Se anulará la nota de crédito ${row.code} de $${this.formatCurrency(row.credit)}.`,
       detail,
       confirmLabel: 'Anular nota',
       tone: 'danger'
     });
     if (!confirmed) return;
 
-    this.cancellingCreditNoteId = m.id;
-    this.customerAccountService.cancelCreditNote(this.customerId, m.id).subscribe({
+    this.busyRowId = row.id;
+    this.cdr.markForCheck();
+    this.customerAccountService.cancelCreditNote(this.customerId, row.id).subscribe({
       next: () => {
-        this.cancellingCreditNoteId = null;
+        this.busyRowId = null;
         this.toast.success('Nota de crédito anulada');
         this.load();
       },
       error: (err: { error?: { detail?: string } }) => {
-        this.cancellingCreditNoteId = null;
+        this.busyRowId = null;
         this.toast.error(err?.error?.detail || 'No se pudo anular la nota de crédito');
         this.cdr.markForCheck();
       }
@@ -225,234 +224,117 @@ export class CustomerAccountComponent implements OnInit {
     this.ncSaleId = null;
   }
 
-  get methodOptions(): SearchableSelectOption[] {
-    return this.paymentMethods.map(m => ({ value: m.value, label: m.label }));
-  }
-
-  get isCardMethod(): boolean {
-    return this.newMethod === PAYMENT_METHOD_CARD;
-  }
-
-  get isTransferMethod(): boolean {
-    return this.newMethod === PAYMENT_METHOD_TRANSFER;
-  }
-
-  get isChequeMethod(): boolean {
-    return this.newMethod === PAYMENT_METHOD_CHECK;
-  }
-
-  // ── Transferencia: banco receptor (para conciliar contra el extracto) ──
-  get transferBankOptions(): SearchableSelectOption[] {
-    return this.banks
-      .filter(b => b.active && b.useForTransfer)
-      .map(b => ({ value: b.id, label: b.name }));
-  }
-
-  onTransferBankChange(bankId: number | null): void {
-    this.newTransferBankId = bankId;
+  // ── Cobro con varios medios (recibo) ───────────────────────
+  openPayment(selected?: PendingDocument[]): void {
+    this.paymentTarget = selected?.length ? selected.reduce((sum, p) => sum + p.pending, 0) : null;
+    this.paymentOpen = true;
     this.cdr.markForCheck();
   }
 
-  // ── Tarjeta ────────────────────────────────────────────────
-  get activeBanksWithPlans(): BankResponse[] {
-    return this.banks.filter(b => b.active && b.useForCard && b.plans.some(p => p.active));
-  }
-
-  get bankOptions(): SearchableSelectOption[] {
-    return this.activeBanksWithPlans.map(b => ({ value: b.id, label: b.name }));
-  }
-
-  activePlansForBank(bankId: number | null): BankInstallmentPlanResponse[] {
-    if (!bankId) return [];
-    const bank = this.banks.find(b => b.id === bankId);
-    return (bank?.plans ?? []).filter(p => p.active);
-  }
-
-  get cuotasOptions(): SearchableSelectOption[] {
-    return this.activePlansForBank(this.newCardBankId).map(plan => ({
-      value: plan.cuotas,
-      label: `${plan.cuotas} cuota${plan.cuotas > 1 ? 's' : ''}`,
-      meta: plan.surchargePct > 0 ? `Recargo ${plan.surchargePct}%` : 'Sin recargo'
-    }));
-  }
-
-  get cardSurchargePct(): number | null {
-    if (!this.newCardBankId || !this.newCardCuotas) return null;
-    const bank = this.banks.find(b => b.id === this.newCardBankId);
-    const plan = bank?.plans.find(p => p.cuotas === this.newCardCuotas && p.active);
-    return plan?.surchargePct ?? null;
-  }
-
-  get cardSurchargeAmt(): number {
-    const pct = this.cardSurchargePct;
-    if (pct == null || pct === 0) return 0;
-    return Math.round(this.newAmount * pct / 100 * 100) / 100;
-  }
-
-  onCardBankChange(bankId: number | null): void {
-    this.newCardBankId = bankId;
-    this.newCardCuotas = null;
-    const plans = this.activePlansForBank(bankId);
-    if (plans.length === 1) this.newCardCuotas = plans[0].cuotas;
+  closePayment(): void {
+    this.paymentOpen = false;
     this.cdr.markForCheck();
   }
 
-  onCardCuotasChange(cuotas: number | null): void {
-    this.newCardCuotas = cuotas;
-    this.cdr.markForCheck();
-  }
-
-  // ── Cobros ─────────────────────────────────────────────────
-  togglePaymentForm(): void {
-    this.showPaymentForm = !this.showPaymentForm;
-    if (this.showPaymentForm) this.resetPaymentForm();
-  }
-
-  onMethodChange(method: number): void {
-    this.newMethod = method;
-    this.newCardBankId = null;
-    this.newTransferBankId = null;
-    this.newCardCuotas = null;
-    this.newCheque = this.emptyCheque();
-    this.cdr.markForCheck();
-  }
-
-  onAmountChange(value: number): void {
-    this.newAmount = value;
-    if (this.isChequeMethod) this.newCheque.monto = value;
-    this.cdr.markForCheck();
-  }
-
-  get chequeBankOptions(): SearchableSelectOption[] {
-    return this.banks
-      .filter(b => b.active && b.useForCheque)
-      .map(b => ({ value: b.id, label: b.name }));
-  }
-
-  get isChequeComplete(): boolean {
-    const c = this.newCheque;
-    return !!(c.numero?.trim() && c.bankId > 0 && c.titular?.trim() && c.cuitDni?.trim()
-      && c.monto > 0 && c.fechaEmision && c.fechaVencimiento);
-  }
-
-  get canSubmitPayment(): boolean {
-    if (this.addingPayment || this.newAmount <= 0 || !this.newDate) return false;
-    if (this.isCardMethod && (!this.newCardBankId || !this.newCardCuotas)) return false;
-    if (this.isChequeMethod && !this.isChequeComplete) return false;
-    // Obligatorio solo si la empresa tiene bancos de transferencia: si no, no se puede elegir y bloquearía el cobro.
-    if (this.isTransferMethod && this.transferBankOptions.length > 0 && !this.newTransferBankId) return false;
-    return true;
-  }
-
-  submitPayment(): void {
-    if (!this.canSubmitPayment) return;
-    this.addingPayment = true;
-    const req: AddCustomerPaymentRequest = {
-      method: this.newMethod,
-      amount: this.newAmount,
-      date: this.newDate,
-      reference: this.newReference.trim() || null,
-      notes: this.newNotes.trim() || null,
-      cardBankId: this.isCardMethod ? this.newCardBankId : null,
-      cardCuotas: this.isCardMethod ? this.newCardCuotas : null,
-      transferBankId: this.isTransferMethod ? this.newTransferBankId : null,
-      cheque: this.isChequeMethod ? {
-        ...this.newCheque,
-        monto: this.newAmount,
-        notas: this.newCheque.notas?.trim() || null
-      } : null
-    };
-    this.customerAccountService.addPayment(this.customerId, req).subscribe({
+  submitReceipt(payment: GroupedPaymentSubmit): void {
+    this.submittingPayment = true;
+    this.customerAccountService.createReceipt(this.customerId, {
+      date: payment.date,
+      notes: payment.notes,
+      lines: payment.lines.map(l => ({
+        method: l.method,
+        amount: l.amount,
+        reference: l.reference,
+        cardBankId: l.cardBankId,
+        cardCuotas: l.cardCuotas,
+        transferBankId: l.transferBankId,
+        cheque: l.cheque
+      }))
+    }).subscribe({
       next: res => {
-        this.addingPayment = false;
-        this.showPaymentForm = false;
-        const imputadas = (res?.imputaciones ?? [])
-          .map(i => `${i.code} $${this.formatCurrency(i.amount)}`)
-          .join(', ');
-        if (imputadas) {
-          this.toast.success(`Cobro registrado. Imputado a: ${imputadas}`);
-        } else if (res?.creditAdded && res.creditAdded > 0) {
-          const added = res.creditAdded.toLocaleString('es-AR', { minimumFractionDigits: 2 });
-          const balance = (res.customerCreditBalance ?? 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
-          this.toast.success(`Cobro registrado. Saldo a favor: +$${added} (total $${balance})`);
-        } else {
-          this.toast.success('Cobro registrado');
-        }
+        this.submittingPayment = false;
+        this.paymentOpen = false;
+        const imputadas = (res.imputaciones ?? []).map(i => `${i.code} $${this.formatCurrency(i.amount)}`).join(', ');
+        const favor = res.creditAdded > 0 ? ` Saldo a favor: +$${this.formatCurrency(res.creditAdded)}.` : '';
+        this.toast.success(`${res.code} registrado por $${this.formatCurrency(res.totalAmount)}.${imputadas ? ' Imputado a: ' + imputadas + '.' : ''}${favor}`);
         this.load();
       },
       error: (err: { error?: { detail?: string } }) => {
-        this.addingPayment = false;
+        this.submittingPayment = false;
         this.toast.error(err?.error?.detail || 'No se pudo registrar el cobro');
         this.cdr.markForCheck();
       }
     });
   }
 
-  async cancelPayment(m: CustomerAccountMovement): Promise<void> {
-    const ventas = (m.imputaciones ?? []).map(i => i.code).join(', ');
-    const detail = ventas
-      ? `Vuelven a pendiente: ${ventas}. Se revierte caja/cheque.`
-      : 'Las ventas imputadas vuelven a pendiente y se revierte caja/cheque.';
+  // ── Acciones del extracto ──────────────────────────────────
+  async cancelRow(row: LedgerRow): Promise<void> {
+    if (row.source === 'credit_note') {
+      await this.cancelCreditNote(row);
+      return;
+    }
+
+    const ventas = row.imputations.map(i => i.code).join(', ');
+    const cheques = row.means.filter(m => m.method === 'check').length;
+    const detail = [
+      ventas ? `Vuelven a pendiente: ${ventas}.` : 'No había ventas imputadas: se revierte el saldo a favor.',
+      cheques > 0 ? `${cheques === 1 ? 'El cheque recibido se anula' : `Los ${cheques} cheques recibidos se anulan`}.` : '',
+      row.means.some(m => m.method === 'cash') ? 'El efectivo sale de la caja.' : ''
+    ].filter(Boolean).join(' ');
+
     const confirmed = await this.confirmation.confirm({
       eyebrow: 'Cuenta de cliente',
-      title: 'Anular cobro',
-      message: `Se anulará el cobro de $${this.formatCurrency(m.amount)}.`,
+      title: row.code ? `Anular ${row.code}` : 'Anular cobro',
+      message: `Se anulará el cobro de $${this.formatCurrency(row.credit)}${row.means.length > 1 ? ` (${row.means.length} medios)` : ''}.`,
       detail,
       confirmLabel: 'Anular cobro',
       tone: 'danger'
     });
     if (!confirmed) return;
-    this.cancellingPaymentId = m.id;
-    this.customerAccountService.cancelPayment(this.customerId, m.id).subscribe({
-      next: () => { this.cancellingPaymentId = null; this.toast.success('Cobro anulado'); this.load(); },
+
+    const request = row.source === 'receipt'
+      ? this.customerAccountService.cancelReceipt(this.customerId, row.id)
+      : this.customerAccountService.cancelPayment(this.customerId, row.id);
+
+    this.busyRowId = row.id;
+    this.cdr.markForCheck();
+    request.subscribe({
+      next: () => { this.busyRowId = null; this.toast.success(`${row.code ?? 'Cobro'} anulado`); this.load(); },
       error: (err: { error?: { detail?: string } }) => {
-        this.cancellingPaymentId = null;
+        this.busyRowId = null;
         this.toast.error(err?.error?.detail || 'No se pudo anular el cobro');
         this.cdr.markForCheck();
       }
     });
   }
 
-  // ── Desglose cobro → ventas (A) ────────────────────────────
-  togglePaymentDetail(m: CustomerAccountMovement): void {
-    if (!this.hasImputaciones(m)) return;
-    this.expandedPaymentId = this.expandedPaymentId === m.id ? null : m.id;
-    this.cdr.markForCheck();
-  }
-
-  isExpanded(m: CustomerAccountMovement): boolean {
-    return this.expandedPaymentId === m.id;
-  }
-
-  hasImputaciones(m: CustomerAccountMovement): boolean {
-    return (m.imputaciones?.length ?? 0) > 0 || (m.sobrante ?? 0) > 0;
-  }
-
-  downloadReceipt(m: CustomerAccountMovement): void {
+  /** Recibo en PDF con sus medios y el detalle de las ventas que cubrió. */
+  printRow(row: LedgerRow): void {
+    const single = row.means.length === 1 ? row.means[0] : null;
     const data: PaymentReceiptData = {
       kind: 'cobro',
       partyLabel: 'Cliente',
       partyName: this.account?.customerName ?? '-',
-      amount: m.amount,
-      date: m.date,
-      methodLabel: m.method ?? '-',
-      reference: m.reference,
-      notes: m.notes,
-      chequeNumero: m.chequeNumero,
-      coverage: (m.imputaciones ?? []).map(item => ({ code: item.code, amount: item.amount })),
-      creditAdded: m.sobrante
+      amount: row.credit,
+      date: row.date,
+      methodLabel: single?.methodLabel ?? 'Varios',
+      reference: single?.reference,
+      chequeNumero: single?.chequeNumber,
+      documentCode: row.code,
+      means: row.means.map(m => ({ label: m.methodLabel, detail: meansDetail(m), amount: m.amount })),
+      coverage: row.imputations.map(i => ({ code: i.code, amount: i.amount })),
+      creditAdded: Math.max(0, row.credit - row.imputations.reduce((sum, i) => sum + i.amount, 0))
     };
 
-    const imputaciones = m.imputaciones ?? [];
-    if (imputaciones.length === 0) {
+    if (row.imputations.length === 0) {
       this.paymentReceiptPdf.generate(data).catch(() => this.toast.error('No se pudo generar el recibo'));
       return;
     }
 
-    forkJoin(imputaciones.map(item => this.saleService.getSaleById(item.saleId))).subscribe({
+    forkJoin(row.imputations.map(i => this.saleService.getSaleById(i.documentId))).subscribe({
       next: sales => {
         data.saleDetailSections = sales.map((sale, index) => ({
-          code: sale.code || imputaciones[index]?.code || 'S/N',
+          code: sale.code || row.imputations[index]?.code || 'S/N',
           details: sale.details.map(detail => ({
             productBrand: detail.productBrand,
             productName: detail.productName,
@@ -500,17 +382,12 @@ export class CustomerAccountComponent implements OnInit {
       .catch(() => this.toast.error('No se pudieron generar los recibos'));
   }
 
-  ventaLabel(i: CustomerPaymentImputacion): string {
-    return i.code;
-  }
-
   // ── Detalle de venta (modal read-only) ─────────────────────
-  openDetalle(m: CustomerAccountMovement): void {
-    if (m.type !== 'venta') return;
+  openDetalle(saleId: string): void {
     this.detalleModalOpen = true;
     this.detalleModalSale = null;
     this.detalleLoading = true;
-    this.saleService.getSaleById(m.id).subscribe({
+    this.saleService.getSaleById(saleId).subscribe({
       next: sale => { this.detalleModalSale = sale; this.detalleLoading = false; this.cdr.markForCheck(); },
       error: () => {
         this.toast.error('No se pudo cargar el detalle de la venta');
@@ -684,60 +561,8 @@ export class CustomerAccountComponent implements OnInit {
     return 'badge--pending';
   }
 
-  private resetPaymentForm(): void {
-    this.newMethod = 1;
-    this.newAmount = 0;
-    this.newDate = this.todayIso();
-    this.newReference = '';
-    this.newNotes = '';
-    this.newCardBankId = null;
-    this.newTransferBankId = null;
-    this.newCardCuotas = null;
-    this.newCheque = this.emptyCheque();
-  }
-
-  private emptyCheque(): AddCustomerPaymentCheque {
-    return {
-      bankId: 0,
-      numero: '',
-      titular: '',
-      cuitDni: '',
-      monto: 0,
-      fechaEmision: this.todayIso(),
-      fechaVencimiento: this.todayIso(),
-      notas: ''
-    };
-  }
-
-  // legacy/cancelled markers
-  isActiveMovement(m: CustomerAccountMovement): boolean {
-    return m.status === 1;
-  }
-
-  statusChipClass(m: CustomerAccountMovement): string {
-    if (m.status === 3) return 'chip--muted';      // cancelada
-    if (m.status === 2) return m.type === 'venta' ? 'chip--success' : 'chip--muted'; // pagada / anulado
-    return 'chip--warning';
-  }
-
-  statusLabel(m: CustomerAccountMovement): string {
-    if (m.type === 'venta') {
-      switch (m.status) {
-        case 1: return 'Pendiente';
-        case 2: return 'Pagada';
-        case 3: return 'Cancelada';
-        default: return '—';
-      }
-    }
-    return m.status === 1 ? 'Activo' : 'Anulado';
-  }
-
   formatCurrency(value: number): string {
     return formatMoney(value);
-  }
-
-  formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   private todayIso(): string {

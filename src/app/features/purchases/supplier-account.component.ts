@@ -8,19 +8,28 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { CreateCreditNoteRequest } from '../../core/models/credit-note.models';
 import { PurchaseService } from '../../core/services/purchase.service';
-import { SupplierAccount, SupplierAccountMovement, AddSupplierPaymentRequest, SupplierPaymentImputacion } from '../../core/models/supplier-account.models';
+import { SupplierAccount, SupplierAccountMovement } from '../../core/models/supplier-account.models';
+import {
+  AccountLedger,
+  GroupedPaymentSubmit,
+  LedgerQuery,
+  LedgerRow,
+  PendingDocument,
+  SUPPLIER_LEDGER_LABELS
+} from '../../core/models/account-ledger.models';
 import { CarteraChequeOption } from '../../core/models/cheque.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
-import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
-
-const PAYMENT_METHOD_CHECK = 3;
+import { AccountLedgerComponent } from '../../shared/components/account-ledger/account-ledger.component';
+import { GroupedPaymentModalComponent } from '../../shared/components/grouped-payment-modal/grouped-payment-modal.component';
+import { PaymentReceiptPdfService } from '../../shared/services/payment-receipt-pdf.service';
+import { meansDetail } from '../../shared/utils/ledger-format.util';
 
 @Component({
   selector: 'app-supplier-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent, AccountLedgerComponent, GroupedPaymentModalComponent],
   templateUrl: './supplier-account.component.html',
   styleUrls: ['./purchase-detail.component.css', './supplier-account.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -32,26 +41,19 @@ export class SupplierAccountComponent implements OnInit {
 
   readonly permissionCodes = PermissionCodes;
 
-  // Form de pago
-  showPaymentForm = false;
-  addingPayment = false;
-  cancellingPaymentId: string | null = null;
-  expandedPaymentId: string | null = null;
-  newMethod = 1;
-  newAmount = 0;
-  newDate = '';
-  newReference = '';
-  newNotes = '';
-  newChequeId = '';
+  // ── Extracto ──
+  readonly ledgerLabels = SUPPLIER_LEDGER_LABELS;
+  ledger: AccountLedger | null = null;
+  ledgerLoading = false;
+  ledgerQuery: LedgerQuery = { dateFrom: null, dateTo: null, includeCancelled: false };
+  busyRowId: string | null = null;
+
+  // ── Pago con varios medios ──
+  paymentOpen = false;
+  paymentTarget: number | null = null;
+  submittingPayment = false;
   carteraCheques: CarteraChequeOption[] = [];
   carteraLoading = false;
-
-  readonly paymentMethods = [
-    { value: 1, label: 'Efectivo' },
-    { value: 2, label: 'Transferencia' },
-    { value: 3, label: 'Cheque' },
-    { value: 4, label: 'Otro' }
-  ];
 
   constructor(
     private readonly supplierAccountService: SupplierAccountService,
@@ -66,17 +68,30 @@ export class SupplierAccountComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.newDate = this.todayIso();
     this.supplierId = this.route.snapshot.paramMap.get('supplierId') ?? '';
     this.load();
   }
 
+  /** Tarjetas de resumen + extracto. Se recarga todo después de cada pago, anulación o nota. */
   load(): void {
-    this.loading = true;
     this.supplierAccountService.getAccount(this.supplierId).subscribe({
       next: account => { this.account = account; this.loading = false; this.cdr.markForCheck(); },
       error: () => { this.toast.error('No se pudo cargar la cuenta del proveedor'); this.loading = false; this.cdr.markForCheck(); }
     });
+    this.loadLedger();
+  }
+
+  loadLedger(): void {
+    this.ledgerLoading = true;
+    this.supplierAccountService.getLedger(this.supplierId, this.ledgerQuery).subscribe({
+      next: ledger => { this.ledger = ledger; this.ledgerLoading = false; this.cdr.markForCheck(); },
+      error: () => { this.toast.error('No se pudo cargar el extracto'); this.ledgerLoading = false; this.cdr.markForCheck(); }
+    });
+  }
+
+  onLedgerQueryChange(query: LedgerQuery): void {
+    this.ledgerQuery = query;
+    this.loadLedger();
   }
 
   get compras(): SupplierAccountMovement[] {
@@ -87,18 +102,133 @@ export class SupplierAccountComponent implements OnInit {
     return (this.account?.movements ?? []).filter(m => m.type === 'pago');
   }
 
+  // ── Compras ────────────────────────────────────────────────
+  goToCompra(id: string): void {
+    this.router.navigate(['/purchases', id]);
+  }
+
+  addCompra(): void {
+    this.router.navigate(['/purchases/new'], { queryParams: { supplierId: this.supplierId } });
+  }
+
+  // ── Pago con varios medios (orden de pago) ─────────────────
+  openPayment(selected?: PendingDocument[]): void {
+    this.paymentTarget = selected?.length ? selected.reduce((sum, p) => sum + p.pending, 0) : null;
+    this.paymentOpen = true;
+    this.loadCarteraCheques();
+    this.cdr.markForCheck();
+  }
+
+  closePayment(): void {
+    this.paymentOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  private loadCarteraCheques(): void {
+    this.carteraLoading = true;
+    this.purchaseService.listCarteraCheques().subscribe({
+      next: cheques => { this.carteraCheques = cheques; this.carteraLoading = false; this.cdr.markForCheck(); },
+      error: () => {
+        this.carteraCheques = [];
+        this.carteraLoading = false;
+        this.toast.error('No se pudieron cargar los cheques de cartera');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  submitPaymentOrder(payment: GroupedPaymentSubmit): void {
+    this.submittingPayment = true;
+    this.supplierAccountService.createPaymentOrder(this.supplierId, {
+      date: payment.date,
+      notes: payment.notes,
+      lines: payment.lines.map(l => ({ method: l.method, amount: l.amount, chequeId: l.chequeId, reference: l.reference }))
+    }).subscribe({
+      next: res => {
+        this.submittingPayment = false;
+        this.paymentOpen = false;
+        const imputadas = (res.imputaciones ?? []).map(i => `${i.code} $${this.formatCurrency(i.amount)}`).join(', ');
+        const favor = res.creditAdded > 0 ? ` Saldo a favor: +$${this.formatCurrency(res.creditAdded)}.` : '';
+        this.toast.success(`${res.code} registrada por $${this.formatCurrency(res.totalAmount)}.${imputadas ? ' Imputada a: ' + imputadas + '.' : ''}${favor}`);
+        this.load();
+      },
+      error: (err: { error?: { detail?: string } }) => {
+        this.submittingPayment = false;
+        this.toast.error(err?.error?.detail || 'No se pudo registrar el pago');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // ── Acciones del extracto ──────────────────────────────────
+  async cancelRow(row: LedgerRow): Promise<void> {
+    if (row.source === 'credit_note') {
+      await this.cancelCreditNote(row);
+      return;
+    }
+
+    const facturas = row.imputations.map(i => i.code).join(', ');
+    const cheques = row.means.filter(m => m.method === 'check').length;
+    const detail = [
+      facturas ? `Vuelven a pendiente: ${facturas}.` : 'No había facturas imputadas: se revierte el saldo a favor.',
+      cheques > 0 ? `${cheques === 1 ? 'El cheque vuelve' : `Los ${cheques} cheques vuelven`} a cartera.` : '',
+      row.means.some(m => m.method === 'cash') ? 'El efectivo vuelve a la caja.' : ''
+    ].filter(Boolean).join(' ');
+
+    const confirmed = await this.confirmation.confirm({
+      eyebrow: 'Cuenta de proveedor',
+      title: row.code ? `Anular ${row.code}` : 'Anular pago',
+      message: `Se anulará el pago de $${this.formatCurrency(row.credit)}${row.means.length > 1 ? ` (${row.means.length} medios)` : ''}.`,
+      detail,
+      confirmLabel: 'Anular pago',
+      tone: 'danger'
+    });
+    if (!confirmed) return;
+
+    const request = row.source === 'payment_order'
+      ? this.supplierAccountService.cancelPaymentOrder(this.supplierId, row.id)
+      : this.supplierAccountService.cancelPayment(this.supplierId, row.id);
+
+    this.busyRowId = row.id;
+    this.cdr.markForCheck();
+    request.subscribe({
+      next: () => { this.busyRowId = null; this.toast.success(`${row.code ?? 'Pago'} anulado`); this.load(); },
+      error: (err: { error?: { detail?: string } }) => {
+        this.busyRowId = null;
+        this.toast.error(err?.error?.detail || 'No se pudo anular el pago');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  printRow(row: LedgerRow): void {
+    const single = row.means.length === 1 ? row.means[0] : null;
+    this.paymentReceiptPdf.generate({
+      kind: 'pago',
+      partyLabel: 'Proveedor',
+      partyName: this.account?.supplierName ?? '-',
+      amount: row.credit,
+      date: row.date,
+      methodLabel: single?.methodLabel ?? 'Varios',
+      reference: single?.reference,
+      chequeNumero: single?.chequeNumber,
+      documentCode: row.code,
+      means: row.means.map(m => ({ label: m.methodLabel, detail: meansDetail(m), amount: m.amount })),
+      coverage: row.imputations.map(i => ({
+        code: i.document ? `${i.code} (Fact. ${i.document})` : i.code,
+        amount: i.amount
+      })),
+      creditAdded: Math.max(0, row.credit - row.imputations.reduce((sum, i) => sum + i.amount, 0))
+    }).catch(() => this.toast.error('No se pudo generar el comprobante'));
+  }
+
   // ── Notas de crédito ──
   showCreditNoteForm = false;
   addingCreditNote = false;
-  cancellingCreditNoteId: string | null = null;
   ncAmount = 0;
   ncReason = '';
   ncDate = '';
   ncPurchaseId: string | null = null;
-
-  get notasCredito(): SupplierAccountMovement[] {
-    return (this.account?.movements ?? []).filter(m => m.type === 'nota_credito');
-  }
 
   /** Compras a las que se puede asociar la NC: las de este proveedor que no estén anuladas. */
   get creditNotePurchaseOptions(): SearchableSelectOption[] {
@@ -149,9 +279,9 @@ export class SupplierAccountComponent implements OnInit {
     });
   }
 
-  async cancelCreditNote(m: SupplierAccountMovement): Promise<void> {
+  private async cancelCreditNote(row: LedgerRow): Promise<void> {
     // Si el crédito ya se imputó, anular la NC deja esas compras impagas otra vez.
-    const compras = (m.imputaciones ?? []).map(i => i.code).join(', ');
+    const compras = row.imputations.map(i => i.code).join(', ');
     const detail = compras
       ? `Vuelven a quedar pendientes: ${compras}.`
       : 'El saldo a favor generado por esta nota vuelve atrás.';
@@ -159,22 +289,23 @@ export class SupplierAccountComponent implements OnInit {
     const confirmed = await this.confirmation.confirm({
       eyebrow: 'Cuenta de proveedor',
       title: 'Anular nota de crédito',
-      message: `Se anulará la nota de crédito ${m.code} de $${this.formatCurrency(m.amount)}.`,
+      message: `Se anulará la nota de crédito ${row.code} de $${this.formatCurrency(row.credit)}.`,
       detail,
       confirmLabel: 'Anular nota',
       tone: 'danger'
     });
     if (!confirmed) return;
 
-    this.cancellingCreditNoteId = m.id;
-    this.supplierAccountService.cancelCreditNote(this.supplierId, m.id).subscribe({
+    this.busyRowId = row.id;
+    this.cdr.markForCheck();
+    this.supplierAccountService.cancelCreditNote(this.supplierId, row.id).subscribe({
       next: () => {
-        this.cancellingCreditNoteId = null;
+        this.busyRowId = null;
         this.toast.success('Nota de crédito anulada');
         this.load();
       },
       error: (err: { error?: { detail?: string } }) => {
-        this.cancellingCreditNoteId = null;
+        this.busyRowId = null;
         this.toast.error(err?.error?.detail || 'No se pudo anular la nota de crédito');
         this.cdr.markForCheck();
       }
@@ -188,206 +319,8 @@ export class SupplierAccountComponent implements OnInit {
     this.ncPurchaseId = null;
   }
 
-  get methodOptions(): SearchableSelectOption[] {
-    return this.paymentMethods.map(m => ({ value: m.value, label: m.label }));
-  }
-
-  get isChequeMethod(): boolean {
-    return this.newMethod === PAYMENT_METHOD_CHECK;
-  }
-
-  get chequeOptions(): SearchableSelectOption[] {
-    return this.carteraCheques.map(c => ({
-      value: c.id,
-      label: `#${c.numero} · ${c.titular} · $${this.formatCurrency(c.monto)} · vence ${this.formatDate(c.fechaVencimiento)}`
-    }));
-  }
-
-  // ── Compras ────────────────────────────────────────────────
-  goToCompra(id: string): void {
-    this.router.navigate(['/purchases', id]);
-  }
-
-  addCompra(): void {
-    this.router.navigate(['/purchases/new'], { queryParams: { supplierId: this.supplierId } });
-  }
-
-  // ── Pagos ──────────────────────────────────────────────────
-  togglePaymentForm(): void {
-    this.showPaymentForm = !this.showPaymentForm;
-    if (this.showPaymentForm) this.resetPaymentForm();
-  }
-
-  onMethodChange(method: number): void {
-    this.newMethod = method;
-    this.newChequeId = '';
-    if (this.isChequeMethod) {
-      this.newAmount = 0;
-      this.loadCarteraCheques();
-    }
-    this.cdr.markForCheck();
-  }
-
-  onChequeSelected(chequeId: string): void {
-    this.newChequeId = chequeId;
-    const cheque = this.carteraCheques.find(c => c.id === chequeId);
-    this.newAmount = cheque ? cheque.monto : 0;
-    this.cdr.markForCheck();
-  }
-
-  private loadCarteraCheques(): void {
-    this.carteraLoading = true;
-    this.purchaseService.listCarteraCheques().subscribe({
-      next: cheques => { this.carteraCheques = cheques; this.carteraLoading = false; this.cdr.markForCheck(); },
-      error: () => { this.carteraCheques = []; this.carteraLoading = false; this.cdr.markForCheck(); }
-    });
-  }
-
-  get canSubmitPayment(): boolean {
-    if (this.addingPayment || this.newAmount <= 0 || !this.newDate) return false;
-    if (this.isChequeMethod && !this.newChequeId) return false;
-    return true;
-  }
-
-  submitPayment(): void {
-    if (!this.canSubmitPayment) return;
-    this.addingPayment = true;
-    const req: AddSupplierPaymentRequest = {
-      method: this.newMethod,
-      amount: this.newAmount,
-      date: this.newDate,
-      reference: this.newReference.trim() || null,
-      notes: this.newNotes.trim() || null,
-      chequeId: this.isChequeMethod ? this.newChequeId : null
-    };
-    this.supplierAccountService.addPayment(this.supplierId, req).subscribe({
-      next: res => {
-        this.addingPayment = false;
-        this.showPaymentForm = false;
-        const imputadas = (res?.imputaciones ?? [])
-          .map(i => `${i.code} $${this.formatCurrency(i.amount)}`)
-          .join(', ');
-        if (imputadas) {
-          this.toast.success(`Pago registrado. Imputado a: ${imputadas}`);
-        } else if (res?.creditAdded && res.creditAdded > 0) {
-          const added = res.creditAdded.toLocaleString('es-AR', { minimumFractionDigits: 2 });
-          const balance = (res.supplierCreditBalance ?? 0).toLocaleString('es-AR', { minimumFractionDigits: 2 });
-          this.toast.success(`Pago registrado. Saldo a favor: +$${added} (total $${balance})`);
-        } else {
-          this.toast.success('Pago registrado');
-        }
-        this.load();
-      },
-      error: (err: { error?: { detail?: string } }) => {
-        this.addingPayment = false;
-        this.toast.error(err?.error?.detail || 'No se pudo registrar el pago');
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  async cancelPayment(m: SupplierAccountMovement): Promise<void> {
-    const facturas = (m.imputaciones ?? []).map(i => i.code).join(', ');
-    const detail = facturas
-      ? `Vuelven a pendiente: ${facturas}. Se revierte caja/cheque.`
-      : 'Las compras imputadas vuelven a pendiente y se revierte caja/cheque.';
-    const confirmed = await this.confirmation.confirm({
-      eyebrow: 'Cuenta de proveedor',
-      title: 'Anular pago',
-      message: `Se anulará el pago de $${this.formatCurrency(m.amount)}.`,
-      detail,
-      confirmLabel: 'Anular pago',
-      tone: 'danger'
-    });
-    if (!confirmed) return;
-    this.cancellingPaymentId = m.id;
-    this.supplierAccountService.cancelPayment(this.supplierId, m.id).subscribe({
-      next: () => { this.cancellingPaymentId = null; this.toast.success('Pago anulado'); this.load(); },
-      error: (err: { error?: { detail?: string } }) => {
-        this.cancellingPaymentId = null;
-        this.toast.error(err?.error?.detail || 'No se pudo anular el pago');
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  // ── Desglose pago → facturas (A) ───────────────────────────
-  togglePaymentDetail(m: SupplierAccountMovement): void {
-    if (!this.hasImputaciones(m)) return;
-    this.expandedPaymentId = this.expandedPaymentId === m.id ? null : m.id;
-    this.cdr.markForCheck();
-  }
-
-  isExpanded(m: SupplierAccountMovement): boolean {
-    return this.expandedPaymentId === m.id;
-  }
-
-  hasImputaciones(m: SupplierAccountMovement): boolean {
-    return (m.imputaciones?.length ?? 0) > 0 || (m.sobrante ?? 0) > 0;
-  }
-
-  facturaLabel(i: SupplierPaymentImputacion): string {
-    return i.invoiceNumber ? `Factura ${i.invoiceNumber} (${i.code})` : i.code;
-  }
-
-  downloadReceipt(m: SupplierAccountMovement): void {
-    const data: PaymentReceiptData = {
-      kind: 'pago',
-      partyLabel: 'Proveedor',
-      partyName: this.account?.supplierName ?? '-',
-      amount: m.amount,
-      date: m.date,
-      methodLabel: m.method ?? '-',
-      reference: m.reference,
-      notes: m.notes,
-      chequeNumero: m.chequeNumero,
-      coverage: (m.imputaciones ?? []).map(item => ({
-        code: item.invoiceNumber ? `${item.code} (Fact. ${item.invoiceNumber})` : item.code,
-        amount: item.amount
-      })),
-      creditAdded: m.sobrante
-    };
-    this.paymentReceiptPdf.generate(data).catch(() => this.toast.error('No se pudo generar el recibo'));
-  }
-
-  private resetPaymentForm(): void {
-    this.newMethod = 1;
-    this.newAmount = 0;
-    this.newDate = this.todayIso();
-    this.newReference = '';
-    this.newNotes = '';
-    this.newChequeId = '';
-  }
-
-  // legacy/cancelled markers
-  isActiveMovement(m: SupplierAccountMovement): boolean {
-    return m.status === 1;
-  }
-
-  statusChipClass(m: SupplierAccountMovement): string {
-    if (m.status === 3) return 'chip--muted';      // cancelada
-    if (m.status === 2) return m.type === 'compra' ? 'chip--success' : 'chip--muted'; // pagada / anulado
-    return 'chip--warning';
-  }
-
-  statusLabel(m: SupplierAccountMovement): string {
-    if (m.type === 'compra') {
-      switch (m.status) {
-        case 1: return 'Pendiente';
-        case 2: return 'Pagada';
-        case 3: return 'Cancelada';
-        default: return '—';
-      }
-    }
-    return m.status === 1 ? 'Activo' : 'Anulado';
-  }
-
   formatCurrency(value: number): string {
     return formatMoney(value);
-  }
-
-  formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   private todayIso(): string {

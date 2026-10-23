@@ -2402,7 +2402,10 @@ export class CashComponent implements OnInit {
             // salesBySaleId nunca contiene ventas CC (listSales las excluye).
             if ((movement.referenceType === 'CuentaCorriente' || movement.referenceType === 'CustomerPayment')
                 && (movement.typeName === 'CuentaCorrienteIncome' || movement.typeName === 'TransferIncome' || movement.typeName === 'CardIncome')) {
-                rows.push({ occurredAt: movement.occurredAt, typeName: 'CuentaCorrienteIncome', directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement), description: movement.description, referenceType: movement.referenceType ?? null, referenceId: refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null, customerPaymentId: movement.customerPaymentId ?? null });
+                const bankSuffix = movement.transferBankId
+                    ? ` - ${this.bankNamesById.get(movement.transferBankId) ?? 'Banco #' + movement.transferBankId}`
+                    : '';
+                rows.push({ occurredAt: movement.occurredAt, typeName: 'CuentaCorrienteIncome', directionName: movement.directionName, amount: movement.amount, paymentMethodLabel: this.movementPaymentMethod(movement) + bankSuffix, description: movement.description, referenceType: movement.referenceType ?? null, referenceId: refId, saleCode, username, originalCashSessionId: movement.originalCashSessionId ?? null, customerPaymentId: movement.customerPaymentId ?? null });
                 continue;
             }
 
@@ -2614,8 +2617,16 @@ export class CashComponent implements OnInit {
                     }
                 }
             }
+            // Cobros de cuenta corriente por transferencia: el banco viene en el movimiento. El ingreso suma
+            // y la anulación resta, igual que el resumen que arma el servidor para la caja abierta.
+            if (movement.customerPaymentId && movement.transferBankId
+                && (movement.typeName === 'TransferIncome' || movement.typeName === 'CuentaCorrienteCancellation')) {
+                const signed = movement.typeName === 'CuentaCorrienteCancellation' ? -Number(movement.amount) : Number(movement.amount);
+                totals.set(movement.transferBankId, (totals.get(movement.transferBankId) ?? 0) + signed);
+            }
         }
         return Array.from(totals.entries())
+            .filter(([, amount]) => amount !== 0)
             .map(([bankId, amount]) => ({ bankName: this.bankNamesById.get(bankId) ?? 'Banco #' + bankId, amount }))
             .sort((a, b) => a.bankName.localeCompare(b.bankName));
     }

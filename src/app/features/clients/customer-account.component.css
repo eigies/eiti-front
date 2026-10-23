@@ -65,13 +65,6 @@
   text-transform: uppercase;
 }
 
-.header-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
 .page__title {
   margin: 0;
   color: var(--text);
@@ -79,20 +72,6 @@
   font-size: clamp(1.45rem, 2.8vw, 2.25rem);
   font-weight: 400;
   line-height: 1.05;
-}
-
-.invoice-number {
-  color: var(--text-dim);
-  font-size: .72em;
-}
-
-.header-actions {
-  display: flex;
-  align-items: flex-start;
-  gap: .65rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  flex-shrink: 0;
 }
 
 .meta-row {
@@ -164,134 +143,12 @@
   font-size: .82rem;
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
-  gap: .9rem;
-  align-items: start;
-  animation: card-in .45s cubic-bezier(.22,1,.36,1) .12s both;
-}
-
 .section-card {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.05rem 1.15rem;
   background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
   box-shadow: 0 16px 34px -30px rgba(0,0,0,.28), inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
-}
-
-.section-card--payment {
-  position: relative;
-  z-index: 1;
-  margin-bottom: .9rem;
-  border-color: color-mix(in srgb, var(--amber) 24%, var(--border));
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--amber) 7%, var(--bg-panel)), var(--bg-panel) 58%),
-    var(--bg-panel);
-  animation: card-in .45s cubic-bezier(.22,1,.36,1) .08s both;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: .85rem;
-  padding-bottom: .72rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-}
-
-.section-head--inline {
-  align-items: flex-start;
-  margin-bottom: .75rem;
-}
-
-.section-hint {
-  margin: .25rem 0 0;
-  color: var(--text-dim);
-  font-family: 'Crimson Pro', serif;
-  font-size: .9rem;
-}
-
-.add-payment-form {
-  display: grid;
-  grid-template-columns: minmax(170px, 1fr) minmax(130px, .75fr) minmax(140px, .75fr) minmax(170px, 1fr) minmax(190px, 1.15fr) auto;
-  gap: .72rem;
-  align-items: end;
-}
-
-.add-payment-form--cheque {
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  align-items: start;
-  row-gap: .9rem;
-}
-
-.add-payment-form--cheque .field--method {
-  grid-column: 1 / 4;
-  grid-row: 1;
-}
-
-.add-payment-form--cheque .field--cheque {
-  grid-column: 4 / 10;
-  grid-row: 1;
-}
-
-.add-payment-form--cheque .field--date {
-  grid-column: 10 / 13;
-  grid-row: 1;
-}
-
-.add-payment-form--cheque .field--amount {
-  grid-column: 1 / 3;
-  grid-row: 2;
-}
-
-.add-payment-form--cheque .field--reference {
-  grid-column: 3 / 7;
-  grid-row: 2;
-}
-
-.add-payment-form--cheque .field--notes {
-  grid-column: 7 / 11;
-  grid-row: 2;
-}
-
-.add-payment-form--cheque .btn-payment-submit {
-  grid-column: 11 / 13;
-  grid-row: 2;
-  align-self: end;
-}
-
-.tax-row {
-  display: grid;
-  grid-template-columns: 160px 160px 1fr;
-  gap: .72rem;
-  align-items: end;
-  padding-top: .65rem;
-  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-  grid-column: 1 / -1;
-}
-
-.field__select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right .75rem center;
-  padding-right: 2rem;
-  cursor: pointer;
-}
-
-.tax-calc {
-  display: block;
-  color: var(--amber);
-  font-family: 'DM Mono', monospace;
-  font-size: .72rem;
-  padding: .55rem 0;
-  line-height: 1.5;
-}
-
-.field--tax-hint .field__label {
-  opacity: .7;
 }
 
 .field {
@@ -329,12 +186,6 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
 }
 
-.field__input--locked {
-  background: color-mix(in srgb, var(--bg) 60%, transparent);
-  color: var(--text-dim);
-  cursor: not-allowed;
-}
-
 .field__hint {
   display: block;
   margin-top: .35rem;
@@ -344,135 +195,7 @@
   letter-spacing: .04em;
 }
 
-.table-shell {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.detail-table,
-.payments-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.detail-table th,
-.detail-table td,
-.payments-table th,
-.payments-table td {
-  padding: .66rem .72rem;
-  text-align: left;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
-}
-
-.detail-table th,
-.payments-table th {
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: .61rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  font-weight: 400;
-}
-
-.detail-table tbody tr:last-child td,
-.payments-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.detail-table tbody tr:hover,
-.payments-table tbody tr:hover {
-  background: color-mix(in srgb, var(--amber) 4%, transparent);
-}
-
-.cell-product {
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .8rem;
-}
-
-.cell-mono {
-  font-family: 'DM Mono', monospace;
-  font-size: .78rem;
-  color: var(--text-dim);
-}
-
-.col-num {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.cell-total {
-  color: var(--amber);
-  font-family: 'DM Mono', monospace;
-  font-size: .82rem;
-}
-
-.cell-amount {
-  color: var(--success);
-  font-family: 'DM Mono', monospace;
-  font-size: .82rem;
-}
-
-.cell-ref {
-  color: var(--text-dim);
-  font-family: 'Crimson Pro', serif;
-  font-size: .86rem;
-}
-
-.col-remove {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.row-actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: .34rem;
-  max-width: 100%;
-}
-
-.empty-payments {
-  padding: .75rem 0;
-  color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
-  font-size: .92rem;
-  font-style: italic;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: .25rem .78rem;
-  border-radius: 8px;
-  font-family: 'DM Mono', monospace;
-  font-size: .64rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.chip--warning {
-  background: color-mix(in srgb, var(--amber) 14%, transparent);
-  color: var(--amber);
-  border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent);
-}
-
-.chip--success {
-  background: color-mix(in srgb, var(--success) 12%, transparent);
-  color: var(--success);
-  border: 1px solid color-mix(in srgb, var(--success) 26%, transparent);
-}
-
-.chip--muted {
-  background: color-mix(in srgb, var(--text-mute) 10%, transparent);
-  color: var(--text-mute);
-  border: 1px solid color-mix(in srgb, var(--text-mute) 20%, transparent);
-}
-
-.btn-primary,
-.btn-danger,
-.btn-cancel-payment {
+.btn-primary {
   font-family: 'DM Mono', monospace;
   cursor: pointer;
 }
@@ -503,72 +226,6 @@
   cursor: not-allowed;
 }
 
-.btn-danger {
-  min-height: 34px;
-  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border-2));
-  border-radius: 8px;
-  padding: .48rem .85rem;
-  background: color-mix(in srgb, var(--danger) 8%, transparent);
-  color: var(--danger);
-  font-size: .64rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  transition: background .15s, transform .15s;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--danger) 14%, transparent);
-  transform: translateY(-1px);
-}
-
-.btn-danger:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.btn-cancel-payment {
-  min-height: 1.85rem;
-  padding: .28rem .48rem;
-  border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border-2));
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--danger) 5%, transparent);
-  color: color-mix(in srgb, var(--danger) 82%, var(--text-dim));
-  font-size: .58rem;
-  opacity: .8;
-  transition: opacity .15s, background .15s;
-  white-space: nowrap;
-}
-
-.btn-cancel-payment:hover:not(:disabled) {
-  opacity: 1;
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-}
-
-.btn-cancel-payment:disabled {
-  opacity: .4;
-  cursor: not-allowed;
-}
-
-.btn-receipt {
-  min-height: 1.85rem;
-  padding: .28rem .48rem;
-  border: 1px solid color-mix(in srgb, var(--amber) 36%, var(--border-2));
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--amber) 8%, transparent);
-  color: color-mix(in srgb, var(--amber) 80%, var(--text) 20%);
-  font-family: 'DM Mono', monospace;
-  font-size: .58rem;
-  letter-spacing: .04em;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s, transform .15s;
-}
-
-.btn-receipt:hover {
-  background: color-mix(in srgb, var(--amber) 16%, transparent);
-  transform: translateY(-1px);
-}
-
 .loading-state {
   display: flex;
   justify-content: center;
@@ -588,50 +245,13 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@media (max-width: 1180px) {
-  .add-payment-form {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .add-payment-form--cheque {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: end;
-  }
-
-  .add-payment-form--cheque > * {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  .add-payment-form--cheque .field--cheque,
-  .add-payment-form--cheque .field--notes,
-  .add-payment-form--cheque .btn-payment-submit {
-    grid-column: span 2;
-  }
-
-  .field--notes,
-  .btn-primary {
-    grid-column: span 3;
-  }
-
-  .add-payment-form--cheque .field--notes,
-  .add-payment-form--cheque .btn-payment-submit {
-    grid-column: span 2;
-  }
-
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 760px) {
   .page {
     padding: 1rem .85rem 1.5rem;
   }
 
   .page__header,
-  .summary-grid,
-  .add-payment-form {
+  .summary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -639,33 +259,12 @@
     display: grid;
   }
 
-  .header-actions {
-    justify-content: flex-start;
-  }
-
-  .field--notes,
   .btn-primary {
     grid-column: auto;
   }
 
-  .add-payment-form--cheque > *,
-  .add-payment-form--cheque .field--cheque,
-  .add-payment-form--cheque .field--notes,
-  .add-payment-form--cheque .btn-payment-submit {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
   .section-card {
     padding: .9rem;
-  }
-
-  .tax-row {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .field--tax-hint {
-    grid-column: span 2;
   }
 }
 .customer-account-page {
@@ -701,7 +300,6 @@
 }
 
 .btn-secondary,
-.head-action,
 .composer-close {
   font-family: 'DM Mono', monospace;
   cursor: pointer;
@@ -747,8 +345,7 @@
   border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
-.payment-composer__head p,
-.ledger-head p {
+.payment-composer__head p {
   margin: .28rem 0 0;
   color: var(--text-dim);
   font-family: 'Crimson Pro', serif;
@@ -780,362 +377,13 @@
   align-items: end;
 }
 
-.customer-payment-form .field--method {
-  grid-column: 1 / 4;
-}
-
-.customer-payment-form .field--amount {
-  grid-column: 4 / 6;
-}
-
-.customer-payment-form .field--date {
-  grid-column: 6 / 9;
-}
-
-.customer-payment-form .field--reference {
-  grid-column: 1 / 7;
-}
-
-.customer-payment-form .field--notes {
-  grid-column: 7 / 13;
-}
-
 .customer-payment-form .payment-submit {
   grid-column: 9 / 13;
   grid-row: 1;
 }
 
-.customer-payment-form--cheque {
-  align-items: start;
-}
-
-.customer-payment-form--cheque .field--method {
-  grid-column: 1 / 4;
-  grid-row: 1;
-}
-
-.customer-payment-form--cheque .field--cheque {
-  grid-column: 4 / 10;
-  grid-row: 1;
-}
-
-.customer-payment-form--cheque .field--date {
-  grid-column: 10 / 13;
-  grid-row: 1;
-}
-
-.customer-payment-form--cheque .field--amount {
-  grid-column: 1 / 4;
-  grid-row: 2;
-}
-
-.customer-payment-form--cheque .field--reference {
-  grid-column: 4 / 8;
-  grid-row: 2;
-}
-
-.customer-payment-form--cheque .field--notes {
-  grid-column: 8 / 11;
-  grid-row: 2;
-}
-
-.customer-payment-form--cheque .payment-submit {
-  grid-column: 11 / 13;
-  grid-row: 2;
-  align-self: end;
-}
-
 .payment-submit {
   width: 100%;
-}
-
-.account-ledger-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .9rem;
-  align-items: stretch;
-}
-
-.ledger-card {
-  min-width: 0;
-  min-height: 26rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.ledger-head {
-  min-height: 48px;
-  flex: 0 0 auto;
-}
-
-.ledger-head > div {
-  min-width: 0;
-}
-
-.head-action {
-  min-height: 34px;
-  flex: 0 0 auto;
-  padding: .4rem .68rem;
-  border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border-2));
-  border-radius: 8px;
-  color: var(--amber);
-  background: color-mix(in srgb, var(--amber) 7%, transparent);
-  font-size: .62rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  transition: transform .15s, background .15s;
-}
-
-.head-action:hover {
-  transform: translateY(-1px);
-  background: color-mix(in srgb, var(--amber) 13%, transparent);
-}
-
-.head-action--payment {
-  color: var(--bg);
-  border-color: transparent;
-  background: var(--amber);
-}
-
-.head-action--payment:hover {
-  background: color-mix(in srgb, var(--amber) 85%, white);
-}
-
-.ledger-card .table-shell {
-  flex: 1 1 auto;
-  overflow-x: hidden;
-}
-
-.ledger-table {
-  min-width: 0;
-  table-layout: fixed;
-}
-
-.ledger-table th:nth-child(1) { width: 20%; }
-.ledger-table th:nth-child(2) { width: 26%; }
-.ledger-table th:nth-child(3) { width: 18%; }
-.ledger-table th:nth-child(4) { width: 16%; }
-.ledger-table th:nth-child(5) { width: 20%; }
-
-.ledger-table--payments th:nth-child(1) { width: 20%; }
-.ledger-table--payments th:nth-child(2) { width: 25%; }
-.ledger-table--payments th:nth-child(3) { width: 19%; }
-.ledger-table--payments th:nth-child(4) { width: 15%; }
-.ledger-table--payments th:nth-child(5) { width: 21%; }
-
-.movement-code,
-.movement-date {
-  display: block;
-}
-
-.movement-code {
-  overflow: hidden;
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .74rem;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.movement-date {
-  margin-top: .18rem;
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: .62rem;
-}
-
-.movement-description {
-  overflow: hidden;
-  color: var(--text-dim);
-  font-family: 'Crimson Pro', serif;
-  font-size: .86rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.row-clickable {
-  cursor: pointer;
-}
-
-.row-clickable:hover {
-  background: color-mix(in srgb, var(--amber) 6%, transparent);
-}
-
-.cell-arrow {
-  color: var(--amber);
-  font-family: 'DM Mono', monospace;
-  font-size: .64rem;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.row--cancelled {
-  opacity: .52;
-}
-
-.row--cancelled .cell-amount {
-  text-decoration: line-through;
-}
-
-.ledger-empty {
-  display: grid;
-  place-items: center;
-  min-height: 15rem;
-  padding: 1rem;
-  border: 1px dashed color-mix(in srgb, var(--border-2) 80%, transparent);
-  border-radius: 8px;
-  text-align: center;
-}
-
-.chip--warning {
-  background: color-mix(in srgb, var(--amber) 16%, transparent);
-  color: var(--amber);
-}
-
-.chip--success {
-  background: color-mix(in srgb, #22c55e 16%, transparent);
-  color: #16a34a;
-}
-
-.chip--muted {
-  background: color-mix(in srgb, var(--text-dim) 16%, transparent);
-  color: var(--text-dim);
-}
-
-/* ── Desglose pago → facturas (imputaciones) ─────────────── */
-.imputaciones-toggle {
-  display: inline-block;
-  margin-left: .5rem;
-  padding: .08rem .42rem;
-  border: 1px solid color-mix(in srgb, var(--amber) 32%, var(--border-2));
-  border-radius: 6px;
-  color: var(--amber);
-  background: color-mix(in srgb, var(--amber) 7%, transparent);
-  font-family: 'DM Mono', monospace;
-  font-size: .58rem;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s, border-color .15s;
-}
-
-.imputaciones-toggle:hover {
-  border-color: color-mix(in srgb, var(--amber) 55%, var(--border-2));
-  background: color-mix(in srgb, var(--amber) 14%, transparent);
-}
-
-.imputaciones-row td {
-  padding: 0 .42rem .72rem;
-}
-
-.imputaciones-panel {
-  display: grid;
-  gap: .62rem;
-  padding: .82rem .92rem;
-  border: 1px solid color-mix(in srgb, var(--amber) 26%, var(--border));
-  border-radius: 10px;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--amber) 9%, transparent), transparent 44%),
-    color-mix(in srgb, var(--bg-panel) 86%, var(--bg));
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--amber) 62%, transparent);
-  animation: composer-in .18s cubic-bezier(.22, 1, .36, 1) both;
-}
-
-.imputaciones-panel__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 1rem;
-}
-
-.imputaciones-panel__title {
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: .58rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-
-.imputaciones-panel__header strong {
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-
-.imputaciones-list {
-  display: grid;
-  gap: .46rem;
-}
-
-.imputacion-card {
-  display: grid;
-  grid-template-columns: 4px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: .72rem;
-  min-height: 2.55rem;
-  padding: .58rem .72rem;
-  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--bg) 74%, transparent);
-}
-
-.imputacion-card__rail {
-  width: 4px;
-  align-self: stretch;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--amber) 68%, transparent);
-}
-
-.imputacion-card__copy {
-  display: grid;
-  gap: .12rem;
-  min-width: 0;
-}
-
-.imputacion-card__label {
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: .55rem;
-  letter-spacing: .11em;
-  text-transform: uppercase;
-}
-
-.imputacion-factura {
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .74rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.imputacion-amount {
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .76rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.imputacion-card--sobrante {
-  border-color: color-mix(in srgb, #3b82f6 24%, var(--border));
-  background: color-mix(in srgb, #3b82f6 7%, var(--bg));
-}
-
-.imputacion-card--sobrante .imputacion-card__rail {
-  background: color-mix(in srgb, #3b82f6 74%, transparent);
-}
-
-.imputacion-card--sobrante .imputacion-factura,
-.imputacion-card--sobrante .imputacion-amount {
-  color: color-mix(in srgb, #3b82f6 78%, var(--text));
 }
 
 @keyframes composer-in {
@@ -1148,33 +396,17 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .account-ledger-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .ledger-card {
-    min-height: auto;
-  }
-
-  .customer-payment-form,
-  .customer-payment-form--cheque {
+  .customer-payment-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: end;
   }
 
-  .customer-payment-form > *,
-  .customer-payment-form--cheque > * {
+  .customer-payment-form > * {
     grid-column: auto;
     grid-row: auto;
   }
 
-  .customer-payment-form .field--reference,
-  .customer-payment-form .field--notes,
-  .customer-payment-form .payment-submit,
-  .customer-payment-form--cheque .field--cheque,
-  .customer-payment-form--cheque .field--reference,
-  .customer-payment-form--cheque .field--notes,
-  .customer-payment-form--cheque .payment-submit {
+  .customer-payment-form .payment-submit {
     grid-column: span 2;
   }
 }
@@ -1189,132 +421,23 @@
     grid-template-columns: 1fr;
   }
 
-  .account-summary,
-  .customer-payment-form,
-  .customer-payment-form--cheque {
+  .account-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+  }
+
+  .customer-payment-form {
     grid-template-columns: 1fr;
   }
 
   .customer-payment-form > *,
-  .customer-payment-form--cheque > *,
-  .customer-payment-form .field--reference,
-  .customer-payment-form .field--notes,
-  .customer-payment-form .payment-submit,
-  .customer-payment-form--cheque .field--cheque,
-  .customer-payment-form--cheque .field--reference,
-  .customer-payment-form--cheque .field--notes,
-  .customer-payment-form--cheque .payment-submit {
+  .customer-payment-form .payment-submit {
     grid-column: auto;
     grid-row: auto;
   }
 
-  .payment-composer__head,
-  .ledger-head {
+  .payment-composer__head {
     align-items: flex-start;
-  }
-
-  .ledger-table {
-    min-width: 0;
-  }
-
-  .cell-arrow span {
-    display: none;
-  }
-}
-
-/* ── Tarjeta: banco + cuotas ─────────────────────────────── */
-.customer-payment-form .field--card-bank {
-  grid-column: 1 / 5;
-  grid-row: 2;
-}
-
-.customer-payment-form .field--card-cuotas {
-  grid-column: 5 / 8;
-  grid-row: 2;
-}
-
-/* ── Cheque recibido del cliente ─────────────────────────── */
-.customer-payment-form--cheque {
-  display: block;
-}
-
-.field--cheque-block {
-  margin-top: .9rem;
-  padding: .85rem;
-  border: 1px solid color-mix(in srgb, var(--amber) 20%, var(--border));
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--amber) 4%, var(--bg));
-}
-
-.cheque-block__title {
-  display: block;
-  margin-bottom: .65rem;
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: .62rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-
-.cheque-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .72rem;
-}
-
-.customer-payment-form--cheque .field--method,
-.customer-payment-form--cheque .field--amount,
-.customer-payment-form--cheque .field--date,
-.customer-payment-form--cheque .field--reference,
-.customer-payment-form--cheque .field--notes {
-  display: inline-grid;
-  width: calc(33.333% - .5rem);
-  margin: 0 .72rem .9rem 0;
-  vertical-align: top;
-}
-
-.customer-payment-form--cheque .payment-submit {
-  width: auto;
-  min-width: 200px;
-  margin-top: .4rem;
-}
-
-@media (max-width: 1180px) {
-  .customer-payment-form .field--card-bank,
-  .customer-payment-form .field--card-cuotas {
-    grid-column: span 1;
-    grid-row: auto;
-  }
-
-  .cheque-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .customer-payment-form--cheque .field--method,
-  .customer-payment-form--cheque .field--amount,
-  .customer-payment-form--cheque .field--date,
-  .customer-payment-form--cheque .field--reference,
-  .customer-payment-form--cheque .field--notes {
-    width: calc(50% - .5rem);
-  }
-}
-
-@media (max-width: 760px) {
-  .cheque-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .customer-payment-form--cheque .field--method,
-  .customer-payment-form--cheque .field--amount,
-  .customer-payment-form--cheque .field--date,
-  .customer-payment-form--cheque .field--reference,
-  .customer-payment-form--cheque .field--notes {
-    width: 100%;
-    margin-right: 0;
-  }
-
-  .customer-payment-form--cheque .payment-submit {
-    width: 100%;
   }
 }
 
@@ -2168,15 +1291,6 @@
   }
 }
 
-.movement-ref {
-  display: block;
-  margin-top: .2rem;
-  color: var(--text-dim);
-  font-family: 'Crimson Pro', serif;
-  font-size: .82rem;
-  font-style: italic;
-}
-
 /* ── NOTA DE CRÉDITO ──
    Reusa el composer del cobro; solo cambia el reparto de la grilla de 12 columnas,
    porque son cuatro campos y no ocho. El motivo ocupa la fila entera: es texto libre
@@ -2185,12 +1299,6 @@
 .credit-note-form .field:nth-child(2) { grid-column: 4 / 7; }
 .credit-note-form .field--wide { grid-column: 1 / 13; }
 .credit-note-form .payment-submit { grid-column: 10 / 13; }
-
-/* Las notas se leen como un tercer libro junto a Ventas y Cobros, con el acento
-   ámbar que en caja identifica al mismo movimiento. */
-.ledger-card--credit-notes .section-label {
-  color: var(--amber);
-}
 
 @media (max-width: 900px) {
   .credit-note-form .field:nth-child(1),
