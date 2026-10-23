@@ -10,6 +10,13 @@ export interface PaymentReceiptCoverage {
   amount: number;
 }
 
+// Un medio de un pago con varios medios (orden de pago / recibo): "Cheque · Nº 123 · Nación", $.
+export interface PaymentReceiptMeans {
+  label: string;
+  detail?: string | null;
+  amount: number;
+}
+
 export interface PaymentReceiptSaleDetail {
   productBrand: string;
   productName: string;
@@ -37,6 +44,10 @@ export interface PaymentReceiptData {
   saleDetails?: PaymentReceiptSaleDetail[];
   saleDetailSections?: PaymentReceiptSaleDetailSection[];
   creditAdded?: number | null;
+  /** Número del comprobante (OP-0004 / RC-0003) cuando el pago es una orden de pago o un recibo. */
+  documentCode?: string | null;
+  /** Medios del pago. Con más de uno se imprimen en una tabla en lugar de la línea "Metodo". */
+  means?: PaymentReceiptMeans[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -71,7 +82,9 @@ export class PaymentReceiptPdfService {
       `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const formatDate = (value: string): string => new Date(value).toLocaleDateString('es-AR');
 
-    const title = data.kind === 'cobro' ? 'Recibo de cobro' : 'Recibo de pago';
+    const baseTitle = data.kind === 'cobro' ? 'Recibo de cobro' : 'Recibo de pago';
+    const title = data.documentCode ? `${data.kind === 'cobro' ? 'Recibo' : 'Orden de pago'} ${data.documentCode}` : baseTitle;
+    const means = data.means ?? [];
 
     this.brandingService.drawWatermark(doc, branding, pageWidth, pageHeight);
     let y = this.brandingService.drawHeader(doc, branding, {
@@ -103,8 +116,30 @@ export class PaymentReceiptPdfService {
     doc.text(formatCurrency(data.amount), pageWidth - margin - 4, y + 9, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`Metodo: ${data.methodLabel}${data.chequeNumero ? ' - Cheque N° ' + data.chequeNumero : ''}`, margin + 4, y + 17);
+    const methodLine = means.length > 1
+      ? `${means.length} medios de pago (detalle abajo)`
+      : `Metodo: ${data.methodLabel}${data.chequeNumero ? ' - Cheque N° ' + data.chequeNumero : ''}`;
+    doc.text(methodLine, margin + 4, y + 17);
     y += 30;
+
+    if (means.length > 1) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(25, 25, 25);
+      doc.text('Medios:', margin, y);
+      y += 6;
+      doc.setDrawColor(205, 205, 205);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      for (const item of means) {
+        doc.rect(margin, y, contentWidth, 7);
+        const text = item.detail ? `${item.label} - ${item.detail}` : item.label;
+        doc.text(text, margin + 3, y + 4.8, { maxWidth: contentWidth - 40 });
+        doc.text(formatCurrency(item.amount), pageWidth - margin - 3, y + 4.8, { align: 'right' });
+        y += 7;
+      }
+      y += 6;
+    }
 
     if (data.coverage.length > 0) {
       doc.setFont('helvetica', 'bold');
@@ -240,6 +275,7 @@ export class PaymentReceiptPdfService {
 
   private fileName(data: PaymentReceiptData): string {
     const prefix = data.kind === 'cobro' ? 'recibo-cobro' : 'recibo-pago';
-    return `${prefix}-${data.date.slice(0, 10)}.pdf`;
+    const code = data.documentCode ? `-${data.documentCode.toLowerCase()}` : '';
+    return `${prefix}${code}-${data.date.slice(0, 10)}.pdf`;
   }
 }

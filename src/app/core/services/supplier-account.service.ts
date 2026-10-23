@@ -6,8 +6,12 @@ import {
   AddSupplierPaymentRequest,
   AddSupplierPaymentResult,
   SupplierAccount,
-  SupplierAccountListItem
+  SupplierAccountListItem,
+  SupplierPaymentOrderRequest,
+  SupplierPaymentOrderResult
 } from '../models/supplier-account.models';
+import { AccountLedger, LedgerQuery } from '../models/account-ledger.models';
+import { ledgerParams } from './ledger-params.util';
 import { CreateCreditNoteRequest, CreateCreditNoteResult } from '../models/credit-note.models';
 
 @Injectable({ providedIn: 'root' })
@@ -23,6 +27,18 @@ export class SupplierAccountService {
 
   getAccount(supplierId: string): Observable<SupplierAccount> {
     return this.http.get<SupplierAccount>(`${this.base}/${supplierId}/account`);
+  }
+
+  getLedger(supplierId: string, query: LedgerQuery): Observable<AccountLedger> {
+    return this.http.get<AccountLedger>(`${this.base}/${supplierId}/ledger`, { params: ledgerParams(query) });
+  }
+
+  createPaymentOrder(supplierId: string, req: SupplierPaymentOrderRequest): Observable<SupplierPaymentOrderResult> {
+    return this.http.post<SupplierPaymentOrderResult>(`${this.base}/${supplierId}/payment-orders`, req);
+  }
+
+  cancelPaymentOrder(supplierId: string, paymentOrderId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${supplierId}/payment-orders/${paymentOrderId}`);
   }
 
   addPayment(supplierId: string, req: AddSupplierPaymentRequest): Observable<AddSupplierPaymentResult> {

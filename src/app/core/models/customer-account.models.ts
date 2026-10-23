@@ -91,3 +91,33 @@ export interface CustomerPaymentLink {
   status: number;
   date: string;
 }
+
+// Recibo: varios medios (tarjeta, cheques, transferencia, efectivo) en un comprobante RC-####.
+export interface CustomerReceiptLineRequest {
+  method: number;
+  amount: number;
+  reference: string | null;
+  cardBankId: number | null;
+  cardCuotas: number | null;
+  /** Banco o billetera que recibió la transferencia (se usa para conciliar extractos). */
+  transferBankId: number | null;
+  cheque: AddCustomerPaymentCheque | null;
+}
+
+export interface CustomerReceiptRequest {
+  date: string;
+  notes: string | null;
+  lines: CustomerReceiptLineRequest[];
+}
+
+export interface CustomerReceiptResult {
+  receiptId: string;
+  code: string;
+  customerId: string;
+  totalAmount: number;
+  paymentIds: string[];
+  appliedToSales: number;
+  creditAdded: number;
+  customerCreditBalance: number;
+  imputaciones: CustomerPaymentImputacion[];
+}

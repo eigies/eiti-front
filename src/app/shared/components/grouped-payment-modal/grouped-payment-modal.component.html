@@ -1,0 +1,219 @@
+<div class="backdrop" (click)="close()" aria-hidden="true"></div>
+
+<section class="modal" role="dialog" aria-modal="true" aria-labelledby="gp-title" [formGroup]="form">
+  <header class="mhead">
+    <div class="mhead__main">
+      <div class="eyebrow">Registrar {{ verb }} · {{ groupLabel }}</div>
+      <h2 id="gp-title" class="mhead__title">{{ counterpartyName }}</h2>
+      <div class="mhead__sub" *ngIf="pendingTotal > 0">
+        Saldo pendiente <span class="mono amber">$ {{ money(pendingTotal) }}</span>
+        en {{ pending.length }} comprobante{{ pending.length === 1 ? '' : 's' }}
+      </div>
+      <div class="mhead__sub" *ngIf="pendingTotal === 0">Sin saldo pendiente: lo que ingreses queda como saldo a favor.</div>
+    </div>
+    <div class="mhead__meta">
+      <label class="field">
+        <span class="label">Nº</span>
+        <input class="input f-num" type="text" value="Automático" readonly tabindex="-1" />
+      </label>
+      <label class="field">
+        <span class="label">Fecha</span>
+        <input class="input f-date" type="date" formControlName="date" />
+      </label>
+      <button type="button" class="close" aria-label="Cerrar" [disabled]="submitting" (click)="close()">×</button>
+    </div>
+  </header>
+
+  <div class="mbody">
+    <div class="mlines">
+      <div class="line line--head" *ngIf="lines.length > 0" aria-hidden="true">
+        <span></span>
+        <span class="label">Medio</span>
+        <span class="label">Detalle</span>
+        <span class="label r">Importe</span>
+        <span></span>
+      </div>
+
+      <div class="empty" *ngIf="lines.length === 0">
+        Agregá los medios con los que se hace el {{ verb }}: cada cheque, la transferencia, el efectivo… Todo queda en un solo comprobante.
+      </div>
+
+      <ng-container formArrayName="lines">
+        <div class="line" *ngFor="let line of lines.controls; let i = index; trackBy: trackLine" [formGroupName]="i"
+             [class.line--fields]="isReceivedCheque(line)" [class.line--invalid]="!!lineError(line)">
+          <span class="l-idx">{{ i + 1 }}</span>
+
+          <div class="l-med">
+            <app-searchable-select
+              [formControl]="line.controls.method"
+              (valueChange)="onMethodChange(line, $event)"
+              [options]="methodOptions"
+              [compact]="true"
+              [panelInline]="true"
+              [ariaLabel]="'Medio de la línea ' + (i + 1)"
+              searchPlaceholder="Buscar medio...">
+            </app-searchable-select>
+          </div>
+
+          <div class="l-det" [ngSwitch]="codeOf(line)">
+            <!-- Cheque de cartera (proveedor): se entrega entero -->
+            <ng-container *ngSwitchCase="'check'">
+              <ng-container *ngIf="isCarteraCheque(line); else receivedCheque">
+                <app-searchable-select
+                  [formControl]="line.controls.chequeId"
+                  (valueChange)="onChequeChange(line, $event)"
+                  [options]="chequeOptionsFor(line)"
+                  [compact]="true"
+                  [panelInline]="true"
+                  [disabled]="optionsLoading"
+                  [placeholder]="optionsLoading ? 'Cargando cartera…' : 'Elegir cheque de cartera'"
+                  searchPlaceholder="Número, banco, titular..."
+                  emptyMessage="No hay cheques en cartera disponibles."
+                  [ariaLabel]="'Cheque de la línea ' + (i + 1)">
+                </app-searchable-select>
+                <div class="hint" *ngIf="selectedCheque(line) as c">Recibido de {{ c.titular }}</div>
+              </ng-container>
+
+              <!-- Cheque recibido (cliente): entra a cartera -->
+              <ng-template #receivedCheque>
+                <div class="mini" formGroupName="cheque">
+                  <label class="field mini--wide">
+                    <span class="label">Banco</span>
+                    <app-searchable-select formControlName="bankId" [options]="chequeBankOptions" [compact]="true"
+                      [panelInline]="true" placeholder="Banco emisor" searchPlaceholder="Buscar banco..."></app-searchable-select>
+                  </label>
+                  <label class="field"><span class="label">Número</span><input class="input" type="text" formControlName="numero" /></label>
+                  <label class="field"><span class="label">Vencimiento</span><input class="input" type="date" formControlName="fechaVencimiento" /></label>
+                  <label class="field"><span class="label">Titular</span><input class="input" type="text" formControlName="titular" /></label>
+                  <label class="field"><span class="label">CUIT / DNI</span><input class="input" type="text" formControlName="cuitDni" /></label>
+                  <label class="field"><span class="label">Emisión</span><input class="input" type="date" formControlName="fechaEmision" /></label>
+                </div>
+              </ng-template>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'card'">
+              <div class="pair">
+                <app-searchable-select
+                  [formControl]="line.controls.cardBankId"
+                  (valueChange)="onCardBankChange(line, $event)"
+                  [options]="cardBankOptions"
+                  [compact]="true"
+                  [panelInline]="true"
+                  placeholder="Banco / tarjeta"
+                  [ariaLabel]="'Banco de la tarjeta, línea ' + (i + 1)">
+                </app-searchable-select>
+                <app-searchable-select
+                  formControlName="cardCuotas"
+                  [options]="cuotasOptionsFor(line)"
+                  [compact]="true"
+                  [panelInline]="true"
+                  placeholder="Cuotas"
+                  [ariaLabel]="'Cuotas, línea ' + (i + 1)">
+                </app-searchable-select>
+              </div>
+              <div class="hint" *ngIf="cardSurcharge(line) > 0">
+                Recargo +$ {{ money(cardSurcharge(line)) }} · cobrás $ {{ money((line.controls.amount.value ?? 0) + cardSurcharge(line)) }}
+              </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'transfer'">
+              <div class="pair" [class.pair--single]="mode === 'supplier' || transferBankOptions.length === 0">
+                <app-searchable-select
+                  *ngIf="mode === 'customer' && transferBankOptions.length > 0"
+                  formControlName="transferBankId"
+                  [options]="transferBankOptions"
+                  [compact]="true"
+                  [panelInline]="true"
+                  placeholder="Banco que recibió"
+                  [ariaLabel]="'Banco receptor, línea ' + (i + 1)">
+                </app-searchable-select>
+                <input class="input" type="text" formControlName="reference" placeholder="Referencia / Nº de operación"
+                       [attr.aria-label]="'Referencia de la transferencia, línea ' + (i + 1)" />
+              </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'cash'">
+              <div class="cash">{{ mode === 'supplier' ? 'Sale de' : 'Entra a' }} <span class="mono">la caja abierta</span></div>
+            </ng-container>
+
+            <ng-container *ngSwitchDefault>
+              <input class="input" type="text" formControlName="reference" placeholder="Detalle"
+                     [attr.aria-label]="'Detalle, línea ' + (i + 1)" />
+            </ng-container>
+
+            <div class="err" *ngIf="lineError(line) as error" role="alert">{{ error }}</div>
+          </div>
+
+          <label class="l-amt">
+            <span class="cl">Importe</span>
+            <input class="input input--amount" type="number" min="0" step="0.01" formControlName="amount"
+                   [attr.aria-label]="'Importe de la línea ' + (i + 1)" />
+          </label>
+
+          <button type="button" class="rm l-rm" [attr.aria-label]="'Quitar línea ' + (i + 1)" (click)="removeLine(i)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+      </ng-container>
+
+      <div class="adds">
+        <span class="label">Agregar medio</span>
+        <button *ngFor="let m of quickAddMethods; let first = first" #firstAction type="button" class="btn btn--add"
+                (click)="addLine(m.value)">+ {{ m.label }}</button>
+      </div>
+
+      <label class="field notes">
+        <span class="label">Observaciones</span>
+        <input class="input" type="text" formControlName="notes" maxlength="500" placeholder="Opcional: queda en el comprobante" />
+      </label>
+    </div>
+
+    <aside class="aside">
+      <div class="totals">
+        <div class="sum" *ngFor="let s of subtotals">
+          <span>{{ s.label }} ({{ s.count }})</span>
+          <span class="num">{{ money(s.amount) }}</span>
+        </div>
+        <div class="sum sum--total">
+          <span class="label">Total del {{ verb }}</span>
+          <span class="num total">$ {{ money(total) }}</span>
+        </div>
+        <div class="sum">
+          <span>{{ targetAmount ? 'Seleccionado' : 'Saldo pendiente' }}</span>
+          <span class="num">{{ money(target) }}</span>
+        </div>
+        <div class="sum">
+          <span>Diferencia</span>
+          <span class="num" [class.ok]="difference === 0" [class.warn]="difference !== 0">{{ money(difference) }}</span>
+        </div>
+        <div class="note note--ok" *ngIf="total > 0 && creditLeft === 0 && total >= pendingTotal && pendingTotal > 0">
+          Cancela todo lo pendiente.
+        </div>
+        <div class="note note--info" *ngIf="creditLeft > 0">
+          El excedente de $ {{ money(creditLeft) }} queda como saldo a favor.
+        </div>
+        <div class="note" *ngIf="total > 0 && total < pendingTotal">
+          Queda pendiente $ {{ money(pendingTotal - total) }}.
+        </div>
+      </div>
+
+      <div class="fifo" *ngIf="fifoPreview.length > 0">
+        <div class="label">Se imputa a (más vieja primero)</div>
+        <div class="imp" *ngFor="let row of fifoPreview">
+          <span><span class="mono">{{ row.code }}</span> <span class="dim">{{ date(row.date).slice(0, 5) }}</span></span>
+          <span class="num">{{ money(row.amount) }}</span>
+          <span class="status" [class.status--ok]="row.settles" [class.status--part]="!row.settles">{{ row.settles ? 'Cancela' : 'Parcial' }}</span>
+        </div>
+      </div>
+
+      <div class="confirm">
+        <div class="blocked" *ngIf="blockedReason as reason">{{ reason }}</div>
+        <button type="button" class="btn btn--primary btn--confirm" [disabled]="!canSubmit" (click)="submit()">
+          {{ submitting ? 'Registrando…' : 'Confirmar ' + verb + ' · $ ' + money(total) }}
+        </button>
+        <button type="button" class="btn btn--ghost" [disabled]="submitting" (click)="close()">Cancelar</button>
+      </div>
+    </aside>
+  </div>
+</section>
