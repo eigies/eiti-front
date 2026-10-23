@@ -16,6 +16,7 @@
   --border-2:  #2A2A35;
   --amber:     #F59E0B;
   --amber-dim: rgba(245, 158, 11, 0.1);
+  --amber-text: #F59E0B;
   --text:      #E8E0D0;
   --text-dim:  #888;
   --text-soft: #706a5f;
@@ -38,6 +39,8 @@ body.theme-light {
   --border-2:  #C8BDA6;
   --amber:     #B56D00;
   --amber-dim: rgba(181, 109, 0, 0.08);
+  /* --amber no llega a 4.5:1 sobre el crema en texto chico; esta sí. Solo para texto. */
+  --amber-text: #A35F00;
   --text:      #2E271F;
   --text-dim:  #756554;
   --text-soft: #857563;
