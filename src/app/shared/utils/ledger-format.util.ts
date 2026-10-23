@@ -29,6 +29,8 @@ export function meansDetail(means: LedgerMeans): string {
       const surcharge = means.cardSurcharge ? ` (+$${formatMoney(means.cardSurcharge)})` : '';
       parts.push(`${means.cardInstallments} cuota${means.cardInstallments > 1 ? 's' : ''}${surcharge}`);
     }
+  } else if (means.method === 'transfer') {
+    if (means.bankName) parts.push(means.bankName);
   }
   if (means.reference) parts.push(means.reference);
   return parts.join(' · ') || '—';

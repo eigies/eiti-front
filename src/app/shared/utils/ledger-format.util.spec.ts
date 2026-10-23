@@ -41,6 +41,8 @@ describe('ledger-format', () => {
     expect(meansDetail(means({ method: 'card', bankName: 'Galicia', cardInstallments: 3, cardSurcharge: 20000 })))
       .toBe('Galicia · 3 cuotas (+$20.000,00)');
     expect(meansDetail(means({ method: 'transfer', reference: 'Ref. 88213' }))).toBe('Ref. 88213');
+    expect(meansDetail(means({ method: 'transfer', bankName: 'Mercadopago', reference: 'Ref. 88213' })))
+      .toBe('Mercadopago · Ref. 88213');
     expect(meansDetail(means({}))).toBe('—');
   });
 
