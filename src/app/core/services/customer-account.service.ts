@@ -8,8 +8,12 @@ import {
   AddCustomerPaymentResult,
   CustomerAccount,
   CustomerAccountListItem,
-  CustomerPaymentLink
+  CustomerPaymentLink,
+  CustomerReceiptRequest,
+  CustomerReceiptResult
 } from '../models/customer-account.models';
+import { AccountLedger, LedgerQuery } from '../models/account-ledger.models';
+import { ledgerParams } from './ledger-params.util';
 import { CreateCreditNoteRequest, CreateCreditNoteResult } from '../models/credit-note.models';
 
 interface CustomerAccountListResponse {
@@ -30,6 +34,18 @@ export class CustomerAccountService {
 
   getAccount(customerId: string): Observable<CustomerAccount> {
     return this.http.get<CustomerAccount>(`${this.base}/customers/${customerId}/account`);
+  }
+
+  getLedger(customerId: string, query: LedgerQuery): Observable<AccountLedger> {
+    return this.http.get<AccountLedger>(`${this.base}/customers/${customerId}/ledger`, { params: ledgerParams(query) });
+  }
+
+  createReceipt(customerId: string, req: CustomerReceiptRequest): Observable<CustomerReceiptResult> {
+    return this.http.post<CustomerReceiptResult>(`${this.base}/customers/${customerId}/receipts`, req);
+  }
+
+  cancelReceipt(customerId: string, receiptId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/customers/${customerId}/receipts/${receiptId}`);
   }
 
   addPayment(customerId: string, req: AddCustomerPaymentRequest): Observable<AddCustomerPaymentResult> {

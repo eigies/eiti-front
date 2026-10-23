@@ -64,3 +64,29 @@ export interface AddSupplierPaymentResult {
   supplierCreditBalance: number;
   imputaciones: SupplierPaymentImputacion[];
 }
+
+// Orden de pago: varios medios (cheques de cartera, transferencia, efectivo) en un comprobante OP-####.
+export interface SupplierPaymentOrderLineRequest {
+  method: number;
+  amount: number;
+  chequeId: string | null;
+  reference: string | null;
+}
+
+export interface SupplierPaymentOrderRequest {
+  date: string;
+  notes: string | null;
+  lines: SupplierPaymentOrderLineRequest[];
+}
+
+export interface SupplierPaymentOrderResult {
+  paymentOrderId: string;
+  code: string;
+  supplierId: string;
+  totalAmount: number;
+  paymentIds: string[];
+  appliedToPurchases: number;
+  creditAdded: number;
+  supplierCreditBalance: number;
+  imputaciones: SupplierPaymentImputacion[];
+}

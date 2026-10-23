@@ -1,0 +1,214 @@
+<section class="ledger" aria-label="Cuenta corriente">
+  <div class="ledger-bar">
+    <div class="tabs" role="tablist" aria-label="Vista de la cuenta">
+      <button type="button" role="tab" class="tab" [class.tab--on]="tab === 'ledger'"
+              [attr.aria-selected]="tab === 'ledger'" (click)="setTab('ledger')">Extracto</button>
+      <button type="button" role="tab" class="tab" [class.tab--on]="tab === 'pending'"
+              [attr.aria-selected]="tab === 'pending'" (click)="setTab('pending')">
+        Pendientes<span class="tab__count">{{ ledger?.pending?.length ?? 0 }}</span>
+      </button>
+    </div>
+
+    <div class="tools" *ngIf="tab === 'ledger'">
+      <label class="field">
+        <span class="label">Desde</span>
+        <input class="input" type="date" [value]="query.dateFrom ?? ''" [max]="query.dateTo ?? ''"
+               (change)="onDateChange('dateFrom', $event)" />
+      </label>
+      <label class="field">
+        <span class="label">Hasta</span>
+        <input class="input" type="date" [value]="query.dateTo ?? ''" [min]="query.dateFrom ?? ''"
+               (change)="onDateChange('dateTo', $event)" />
+      </label>
+      <label class="check">
+        <input type="checkbox" [checked]="query.includeCancelled" (change)="onIncludeCancelledChange($event)" />
+        Mostrar anulados
+      </label>
+      <button type="button" class="btn btn--ghost" [disabled]="!ledger" (click)="exportExcel()">Excel</button>
+      <button type="button" class="btn btn--ghost" [disabled]="!ledger || exporting" (click)="exportPdf()">
+        {{ exporting ? 'PDF…' : 'PDF' }}
+      </button>
+    </div>
+
+    <div class="selbar" *ngIf="tab === 'pending' && canPay">
+      <span class="selbar__summary">
+        {{ selectedDocs.length }} seleccionada{{ selectedDocs.length === 1 ? '' : 's' }} ·
+        <strong>$ {{ money(selectedTotal) }}</strong>
+      </span>
+      <button type="button" class="btn btn--primary" [disabled]="selectedDocs.length === 0" (click)="paySelectedDocs()">
+        {{ labels.payPending }}
+      </button>
+    </div>
+  </div>
+
+  <div class="state" *ngIf="loading && !ledger">Cargando cuenta…</div>
+
+  <!-- ── Extracto ─────────────────────────────────────────── -->
+  <ng-container *ngIf="ledger && tab === 'ledger'">
+    <div class="table" role="table" aria-label="Extracto de cuenta" [class.table--loading]="loading">
+      <div class="grid thead" role="row">
+        <span role="columnheader">Fecha</span>
+        <span role="columnheader">Comprobante</span>
+        <span role="columnheader" class="h-det">Detalle</span>
+        <span role="columnheader" class="r">Debe</span>
+        <span role="columnheader" class="r">Haber</span>
+        <span role="columnheader" class="r">Saldo</span>
+        <span role="columnheader"><span class="sr-only">Acciones</span></span>
+      </div>
+
+      <div class="entry" *ngIf="hasOpening">
+        <div class="grid row row--opening" role="row">
+          <span class="date c-date" role="cell">{{ shortDate(ledger.dateFrom) }}</span>
+          <div class="c-comp" role="cell">
+            <div class="comp"><span class="comp__code">Saldo anterior</span></div>
+            <div class="comp__sub">Arrastre al inicio del período</div>
+          </div>
+          <div class="det c-det" role="cell">Saldo al {{ date(ledger.dateFrom) }}</div>
+          <span class="num c-debe" role="cell"></span>
+          <span class="num c-haber" role="cell"></span>
+          <span class="num c-imp" role="cell"></span>
+          <span class="num saldo c-saldo" role="cell"><span class="cl">Saldo</span>{{ money(ledger.openingBalance) }}</span>
+          <span class="c-act" role="cell"></span>
+        </div>
+      </div>
+
+      <div class="state state--inline" *ngIf="ledger.rows.length === 0">Sin movimientos en el período.</div>
+
+      <div class="entry" *ngFor="let row of ledger.rows; trackBy: trackRow">
+        <div class="grid row" role="row"
+             [class.row--open]="isExpanded(row)"
+             [class.row--void]="row.isCancelled">
+          <span class="date c-date" role="cell">{{ shortDate(row.date) }}</span>
+          <div class="c-comp" role="cell">
+            <div class="comp">
+              <span class="comp__code">{{ title(row) }}</span>
+              <span class="tag" [ngClass]="'tag--' + row.kind">{{ tagLabel(row) }}</span>
+              <span class="tag tag--void" *ngIf="row.isCancelled">Anulado</span>
+            </div>
+            <div class="comp__sub">{{ subtitle(row) }}</div>
+          </div>
+          <div class="det c-det" role="cell">{{ detail(row) }}</div>
+          <span class="num debe c-debe" role="cell">{{ row.debit ? money(row.debit) : '' }}</span>
+          <span class="num haber c-haber" role="cell">{{ row.credit ? money(row.credit) : '' }}</span>
+          <span class="num c-imp" role="cell" [class.debe]="row.debit > 0" [class.haber]="row.debit === 0">
+            <span class="cl">{{ row.debit > 0 ? 'Debe' : 'Haber' }}</span>{{ signedAmount(row) }}
+          </span>
+          <span class="num saldo c-saldo" role="cell" [class.saldo--muted]="row.isCancelled">
+            <span class="cl">Saldo</span>{{ money(row.balance) }}
+          </span>
+          <span class="c-act" role="cell">
+            <button *ngIf="isExpandable(row)" type="button" class="iconbtn" [class.iconbtn--on]="isExpanded(row)"
+                    [attr.aria-expanded]="isExpanded(row)" aria-label="Ver medios e imputación" (click)="toggle(row)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="chev"><path d="M6 9l6 6 6-6"></path></svg>
+            </button>
+            <button *ngIf="!isExpandable(row)" type="button" class="iconbtn" aria-label="Ver comprobante" (click)="openDocument.emit(row)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6"></path><path d="M8 13h8M8 17h5"></path>
+              </svg>
+            </button>
+          </span>
+        </div>
+
+        <div class="detail" *ngIf="isExpanded(row)">
+          <div class="sub" *ngIf="row.means.length > 0">
+            <div class="label sub__title">Medios {{ row.kind === 'payment' ? 'del ' + labels.payment.toLowerCase() : '' }}</div>
+            <div class="subrow" *ngFor="let m of row.means">
+              <span class="m s-tipo" [ngClass]="'m--' + m.method">{{ m.methodLabel }}</span>
+              <span class="s-det">{{ meansDetail(m) }}</span>
+              <span class="num s-monto">{{ money(m.amount) }}</span>
+            </div>
+            <div class="subtotal">
+              <span>Total {{ title(row) }}</span>
+              <span class="haber">$ {{ money(meansTotal(row)) }}</span>
+            </div>
+          </div>
+
+          <div class="sub">
+            <div class="label sub__title">Imputado a</div>
+            <div class="subrow subrow--imp" *ngFor="let i of row.imputations">
+              <span class="i-comp">
+                <span class="mono">{{ i.code }}</span>
+                <span class="i-doc" *ngIf="i.document"> Fact. {{ i.document }}</span>
+              </span>
+              <span class="num i-monto">{{ money(i.amount) }}</span>
+              <span class="status i-stat" [class.status--ok]="isSettled(i.documentId)" [class.status--part]="!isSettled(i.documentId)">
+                {{ isSettled(i.documentId) ? 'Saldada' : 'Con saldo' }}
+              </span>
+            </div>
+            <div class="sub__empty" *ngIf="row.imputations.length === 0">
+              {{ row.isCancelled ? 'Anulado: no quedó imputado.' : 'No se imputó a ' + labels.documents + ': quedó como saldo a favor.' }}
+            </div>
+            <div class="subactions" *ngIf="canPrintRow(row) || canCancelRow(row)">
+              <button *ngIf="canPrintRow(row)" type="button" class="btn btn--ghost" (click)="printRow.emit(row)">
+                {{ row.code ? labels.printGroup : 'Imprimir recibo' }}
+              </button>
+              <button *ngIf="canCancelRow(row)" type="button" class="btn btn--danger"
+                      [disabled]="busyRowId === row.id" (click)="cancelRow.emit(row)">
+                {{ busyRowId === row.id ? 'Anulando…' : cancelLabel(row) }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid tfoot" role="row">
+        <span role="cell" class="c-blank"></span>
+        <span role="cell" class="label c-tl">Totales del período</span>
+        <span role="cell" class="c-blank c-bdet"></span>
+        <span role="cell" class="num debe c-debe"><span class="cl">Debe</span>{{ money(ledger.totalDebit) }}</span>
+        <span role="cell" class="num haber c-haber"><span class="cl">Haber</span>{{ money(ledger.totalCredit) }}</span>
+        <span role="cell" class="num saldo c-saldo total-saldo"><span class="cl">Saldo final</span>{{ money(ledger.closingBalance) }}</span>
+        <span role="cell" class="c-blank"></span>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── Pendientes ───────────────────────────────────────── -->
+  <ng-container *ngIf="ledger && tab === 'pending'">
+    <div class="state state--inline" *ngIf="ledger.pending.length === 0">No hay {{ labels.documents }} con saldo.</div>
+
+    <div class="table" role="table" [attr.aria-label]="'Pendientes'" *ngIf="ledger.pending.length > 0">
+      <div class="pend-grid thead" role="row">
+        <span role="columnheader">
+          <input *ngIf="canPay" type="checkbox" class="chk" [checked]="allSelected" (change)="toggleAll()" aria-label="Seleccionar todas" />
+        </span>
+        <span role="columnheader">Fecha</span>
+        <span role="columnheader">Comprobante</span>
+        <span role="columnheader" class="h-fac">Factura</span>
+        <span role="columnheader" class="r">Total</span>
+        <span role="columnheader" class="r">Imputado</span>
+        <span role="columnheader" class="r">Saldo</span>
+        <span role="columnheader" class="r">Antigüedad</span>
+      </div>
+
+      <div class="pend-grid row entry" role="row" *ngFor="let doc of ledger.pending; trackBy: trackPending">
+        <span class="p-chk" role="cell">
+          <input *ngIf="canPay" type="checkbox" class="chk" [checked]="isSelected(doc)" (change)="toggleSelected(doc)"
+                 [attr.aria-label]="'Seleccionar ' + doc.code" />
+        </span>
+        <span class="date p-date" role="cell">{{ shortDate(doc.date) }}</span>
+        <span class="comp__code p-comp" role="cell">{{ doc.code }}</span>
+        <span class="p-fac" role="cell">{{ doc.document ? 'Fact. ' + doc.document : '—' }}</span>
+        <span class="num p-tot" role="cell"><span class="cl">Total</span>{{ money(doc.total) }}</span>
+        <span class="num haber p-imp" role="cell"><span class="cl">Imputado</span>{{ money(doc.imputed) }}</span>
+        <span class="num saldo p-sal" role="cell"><span class="cl">Saldo</span>{{ money(doc.pending) }}</span>
+        <span class="p-age r" role="cell">
+          <span class="pill" [class.pill--old]="doc.ageDays >= 15">{{ doc.ageDays }} día{{ doc.ageDays === 1 ? '' : 's' }}</span>
+        </span>
+      </div>
+
+      <div class="pend-grid tfoot" role="row">
+        <span role="cell" class="c-blank"></span>
+        <span role="cell" class="c-blank"></span>
+        <span role="cell" class="label c-tl">Total pendiente</span>
+        <span role="cell" class="c-blank p-bfac"></span>
+        <span role="cell" class="num p-tot"><span class="cl">Total</span>{{ money(pendingTotals.total) }}</span>
+        <span role="cell" class="num haber p-imp"><span class="cl">Imputado</span>{{ money(pendingTotals.imputed) }}</span>
+        <span role="cell" class="num p-sal total-saldo"><span class="cl">Saldo</span>{{ money(pendingTotals.pending) }}</span>
+        <span role="cell" class="c-blank"></span>
+      </div>
+    </div>
+  </ng-container>
+</section>

@@ -83,7 +83,8 @@ body {
   background-size: 200px 200px;
 }
 
-body.confirmation-dialog-open {
+body.confirmation-dialog-open,
+body.modal-open {
   overflow: hidden;
 }
 
