@@ -804,6 +804,40 @@
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
                   Nota de crédito
                 </button>
+                <button class="invoicing-bar__link"
+                        type="button"
+                        *ngIf="fiscalReceivers(sale)?.debitNote"
+                        title="Descargar la nota de debito en PDF"
+                        (click)="downloadDebitNotePdf(sale)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" /></svg>
+                  Nota de débito
+                </button>
+                <button class="invoicing-bar__link invoicing-bar__link--primary"
+                        type="button"
+                        *ngIf="canRetryCreditNote(sale)"
+                        [disabled]="creditNoteBusySaleId === sale.id"
+                        (click)="retryCreditNote(sale)">
+                  {{ creditNoteBusySaleId === sale.id ? 'Emitiendo…' : 'Emitir nota de crédito' }}
+                </button>
+                <button class="invoicing-bar__link invoicing-bar__link--warning"
+                        type="button"
+                        *ngIf="canRegularizeCreditNote(sale)"
+                        [disabled]="creditNoteBusySaleId === sale.id"
+                        (click)="regularizeCreditNote(sale)">
+                  {{ creditNoteBusySaleId === sale.id ? 'Regularizando…' : 'Regularizar NC' }}
+                </button>
+              </div>
+
+              <!-- A quien se emitieron los comprobantes: lo que dice el servicio fiscal, no la ficha de hoy. -->
+              <div class="invoicing-bar__receivers" *ngIf="fiscalReceivers(sale) as receivers">
+                <span *ngIf="receivers.invoice as invoice">Facturada a {{ receiverLabel(invoice) }} · {{ invoice.name }}</span>
+                <span class="invoicing-bar__warning" *ngIf="receivers.regularizationStep === 'debitNote' && receivers.creditNote as creditNote">
+                  La {{ creditNote.document }} salió a {{ receiverLabel(creditNote) }}, otro CUIT que la factura
+                </span>
+                <span class="invoicing-bar__warning" *ngIf="receivers.regularizationStep === 'creditNote'">
+                  Falta la nota de crédito al CUIT de la factura
+                </span>
+                <span *ngIf="receivers.debitNote as debitNote">{{ debitNote.document }} a {{ receiverLabel(debitNote) }}</span>
               </div>
             </div>
 

@@ -122,7 +122,7 @@ export class InvoicePdfService {
 
     this.brandingService.drawFooter(doc, pageWidth, pageHeight, margin, 'Comprobante electrónico autorizado por ARCA');
 
-    const kind = print.kind === 'invoice' ? 'factura' : 'nota-de-credito';
+    const kind = print.kind === 'invoice' ? 'factura' : print.kind === 'debitNote' ? 'nota-de-debito' : 'nota-de-credito';
     doc.save(`${kind}-${print.letter}-${this.pad(print.pointOfSale, 5)}-${this.pad(print.number, 8)}.pdf`);
   }
 
@@ -216,7 +216,8 @@ export class InvoicePdfService {
     if (print.isVoided) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(160, 60, 40);
-      doc.text('Anulada mediante nota de crédito', rightX, lineY + 1);
+      // Una factura se anula con su NC; una NC mal emitida, con la ND que la neutraliza.
+      doc.text(print.kind === 'creditNote' ? 'Anulada mediante nota de débito' : 'Anulada mediante nota de crédito', rightX, lineY + 1);
     }
 
     return top + height + 5;

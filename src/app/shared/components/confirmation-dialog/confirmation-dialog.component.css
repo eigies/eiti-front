@@ -196,6 +196,95 @@
   color: #fff;
 }
 
+/* Comparacion de receptores: con dos columnas la tarjeta necesita mas ancho. */
+.confirmation-card--wide {
+  width: min(100%, 640px);
+}
+
+.confirmation-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: .6rem;
+  padding: 0 1.65rem 1.35rem;
+}
+
+.confirmation-party {
+  display: grid;
+  align-content: start;
+  gap: .3rem;
+  min-width: 0;
+  padding: .85rem .9rem;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-panel) 80%, transparent);
+}
+
+/* El que recibe el comprobante lleva el acento del tono; el otro queda en segundo plano. */
+.confirmation-party--primary {
+  border-color: color-mix(in srgb, var(--confirmation-accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--confirmation-accent-soft) 70%, transparent);
+}
+
+.confirmation-party__caption {
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.confirmation-party__name {
+  color: var(--text);
+  font-size: .98rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.confirmation-party__id {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .84rem;
+  letter-spacing: .02em;
+}
+
+.confirmation-party__vat {
+  color: var(--text-dim);
+  font-size: .78rem;
+}
+
+.confirmation-party__note {
+  margin-top: .2rem;
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .64rem;
+  letter-spacing: .03em;
+}
+
+.confirmation-party--primary .confirmation-party__note {
+  color: var(--confirmation-accent);
+}
+
+/* Los digitos que no coinciden: es lo que el usuario tiene que ver antes de confirmar. */
+.confirmation-diff {
+  background: transparent;
+  color: var(--confirmation-accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.confirmation-compare__sign {
+  align-self: center;
+  color: var(--confirmation-accent);
+  font-family: 'DM Mono', monospace;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 @keyframes confirmation-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -230,6 +319,15 @@
   .confirmation-card__actions {
     grid-template-columns: 1fr;
     padding: .9rem 1.35rem 1.25rem;
+  }
+
+  .confirmation-compare {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 1.35rem 1.2rem;
+  }
+
+  .confirmation-compare__sign {
+    justify-self: center;
   }
 
   .confirmation-button--primary {

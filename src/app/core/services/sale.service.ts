@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, CreateSaleResponse, InvoiceLetter, InvoiceSaleResponse, SaleByIdResponse, SaleInvoicePrintResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
+import { CcPaymentResponse, CcSaleListItem, CreateCcSaleRequest, CreateCcSaleResponse, CreateSaleRequest, CreateSaleResponse, InvoiceLetter, InvoiceSaleResponse, RegularizeSaleCreditNoteResponse, RetrySaleCreditNoteResponse, SaleByIdResponse, SaleFiscalReceiversResponse, SaleInvoicePrintResponse, SaleResponse, SendSaleWhatsAppResponse } from '../models/sale.models';
 import { CreateSaleTransportRequest, SaleTransportResponse } from '../models/transport.models';
 
 @Injectable({ providedIn: 'root' })
@@ -54,9 +54,30 @@ export class SaleService {
     }
 
     // refundMode (solo ventas CC con cobros): 1 = saldo a favor, 2 = anular pagos (cuentas a 0).
-    cancelSale(id: string, refundMode?: number): Observable<void> {
-        const query = refundMode ? `?refundMode=${refundMode}` : '';
-        return this.http.post<void>(`${this.base}/${id}/cancel${query}`, {});
+    // confirmInvoiceReceiver: el usuario vio que la factura salio a otro receptor que el de la ficha y confirmo
+    // que la NC vaya al de la factura (el back responde Sales.Cancel.InvoiceReceiverChanged hasta tenerlo).
+    cancelSale(id: string, refundMode?: number, confirmInvoiceReceiver = false): Observable<void> {
+        const params = new URLSearchParams();
+        if (refundMode) params.set('refundMode', String(refundMode));
+        if (confirmInvoiceReceiver) params.set('confirmInvoiceReceiver', 'true');
+        const query = params.toString();
+        return this.http.post<void>(`${this.base}/${id}/cancel${query ? `?${query}` : ''}`, {});
+    }
+
+    /** A quien se emitieron la factura, su NC y su ND (segun el servicio fiscal) contra la ficha del cliente. */
+    getFiscalReceivers(id: string): Observable<SaleFiscalReceiversResponse> {
+        return this.http.get<SaleFiscalReceiversResponse>(`${this.base}/${id}/fiscal-receivers`);
+    }
+
+    /** Vuelve a pedir la NC de una venta anulada cuya factura sigue vigente. */
+    retryCreditNote(id: string, confirmInvoiceReceiver = false): Observable<RetrySaleCreditNoteResponse> {
+        const query = confirmInvoiceReceiver ? '?confirmInvoiceReceiver=true' : '';
+        return this.http.post<RetrySaleCreditNoteResponse>(`${this.base}/${id}/credit-note${query}`, {});
+    }
+
+    /** Regulariza una NC emitida a otro receptor que el de su factura (ND + NC nueva). Ya confirmado por el usuario. */
+    regularizeCreditNote(id: string): Observable<RegularizeSaleCreditNoteResponse> {
+        return this.http.post<RegularizeSaleCreditNoteResponse>(`${this.base}/${id}/credit-note/regularize?confirm=true`, {});
     }
 
     deleteSale(id: string): Observable<void> {
@@ -79,6 +100,11 @@ export class SaleService {
     /** Idem para la nota de credito que anulo la factura. */
     getCreditNotePrint(id: string): Observable<SaleInvoicePrintResponse> {
         return this.http.get<SaleInvoicePrintResponse>(`${this.base}/${id}/credit-note/print`);
+    }
+
+    /** Idem para la nota de debito que neutralizo una NC mal emitida. */
+    getDebitNotePrint(id: string): Observable<SaleInvoicePrintResponse> {
+        return this.http.get<SaleInvoicePrintResponse>(`${this.base}/${id}/debit-note/print`);
     }
 
     getTransport(id: string): Observable<SaleTransportResponse> {

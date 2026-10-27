@@ -1,3 +1,4 @@
+import { SaleFiscalReceiversResponse } from '../../core/models/sale.models';
 import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -61,7 +62,7 @@ describe('CustomerAccountComponent · notas de crédito', () => {
     banks.listBanks.and.returnValue(of([]));
     const branches = jasmine.createSpyObj<BranchService>('BranchService', ['listBranches']);
     branches.listBranches.and.returnValue(of([]));
-    const sales = jasmine.createSpyObj<SaleService>('SaleService', ['getSaleById']);
+    const sales = jasmine.createSpyObj<SaleService>('SaleService', ['getSaleById', 'cancelSale', 'getFiscalReceivers']);
     sales.getSaleById.and.returnValue(of({ id: 'sale-1', details: [] }) as never);
     const remito = jasmine.createSpyObj<RemitoPdfService>('RemitoPdfService', ['generate']);
     const receipt = jasmine.createSpyObj<PaymentReceiptPdfService>('PaymentReceiptPdfService', ['generate']);
@@ -79,7 +80,7 @@ describe('CustomerAccountComponent · notas de crédito', () => {
     );
     component.ngOnInit();
 
-    return { component, accountService, toast, confirmation, auth, banks };
+    return { component, accountService, toast, confirmation, auth, banks, sales };
   }
 
   // El motivo es la única trazabilidad de un ajuste sin documento de origen:
@@ -231,5 +232,35 @@ describe('CustomerAccountComponent · notas de crédito', () => {
     const { component } = setup();
     component.openDetalle('sale-1');
     expect(component.detalleModalOpen).toBeTrue();
+  });
+
+  // Mismo control que en gestión de venta: la NC va al CUIT de la factura y el usuario lo ve antes de anular.
+  it('anular una venta facturada a otro CUIT muestra los dos y reenvia confirmando', async () => {
+    const { component, sales, confirmation } = setup();
+    sales.cancelSale.and.returnValues(
+      throwError(() => ({ error: { errorCode: 'Sales.Cancel.InvoiceReceiverChanged' } })),
+      of(void 0));
+    const receivers: SaleFiscalReceiversResponse = {
+      available: true,
+      unavailableReason: null,
+      invoice: { document: 'Factura A 00010-00000039', name: 'TRANSPORTE OLIVOS S.A -', vatCondition: 'IVA Responsable Inscripto', identification: 'CUIT: 30-68225650-4' },
+      customer: { document: null, name: 'TRANSPORTE OLIVOS S.A -', vatCondition: 'IVA Responsable Inscripto', identification: 'CUIT: 30-51743143-1' },
+      customerMatchesInvoice: false,
+      creditNote: null,
+      creditNoteMatchesInvoice: true,
+      regularizationStep: 'none',
+      debitNote: null
+    };
+    sales.getFiscalReceivers.and.returnValue(of(receivers));
+    component.detalleModalSale = { id: 'sale-1', ccPaidTotal: 0, details: [] } as never;
+
+    component.confirmCancelSale();
+    await new Promise(resolve => setTimeout(resolve));
+
+    expect(confirmation.confirm.calls.mostRecent().args[0].confirmLabel).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
+    expect(sales.cancelSale.calls.allArgs()).toEqual([
+      ['sale-1', undefined, false],
+      ['sale-1', undefined, true]
+    ]);
   });
 });

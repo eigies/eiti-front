@@ -7,7 +7,7 @@
     aria-modal="true"
     aria-labelledby="confirmation-title"
     aria-describedby="confirmation-message">
-    <div class="confirmation-card" [class]="'confirmation-card confirmation-card--' + dialog.tone">
+    <div class="confirmation-card" [class]="'confirmation-card confirmation-card--' + dialog.tone + (dialog.comparison ? ' confirmation-card--wide' : '')">
       <div class="confirmation-card__signal" aria-hidden="true">
         <svg *ngIf="dialog.tone === 'danger'" viewBox="0 0 24 24" fill="none">
           <path d="M12 8v5M12 17h.01M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/>
@@ -26,6 +26,26 @@
           <span>{{ dialog.detail }}</span>
         </div>
       </div>
+
+      <div class="confirmation-compare" *ngIf="dialog.comparison as compare" role="group" aria-label="Receptores">
+        <ng-container *ngTemplateOutlet="party; context: { $implicit: compare.primary, other: compare.secondary, primary: true }"></ng-container>
+        <span class="confirmation-compare__sign" aria-hidden="true">&ne;</span>
+        <ng-container *ngTemplateOutlet="party; context: { $implicit: compare.secondary, other: compare.primary, primary: false }"></ng-container>
+      </div>
+
+      <ng-template #party let-party let-other="other" let-primary="primary">
+        <div class="confirmation-party" [class.confirmation-party--primary]="primary">
+          <span class="confirmation-party__caption">{{ party.caption }}</span>
+          <strong class="confirmation-party__name">{{ party.name }}</strong>
+          <span class="confirmation-party__id" *ngIf="party.identification; else unidentified"><ng-container
+            *ngFor="let segment of segments(party.identification, other.identification)"><mark
+            *ngIf="segment.differs; else plain" class="confirmation-diff">{{ segment.text }}</mark><ng-template
+            #plain>{{ segment.text }}</ng-template></ng-container></span>
+          <ng-template #unidentified><span class="confirmation-party__id">Sin identificar</span></ng-template>
+          <span class="confirmation-party__vat">{{ party.vatCondition }}</span>
+          <span class="confirmation-party__note" *ngIf="party.note">{{ party.note }}</span>
+        </div>
+      </ng-template>
 
       <div class="confirmation-card__actions">
         <button #cancelButton class="confirmation-button confirmation-button--ghost" type="button" (click)="confirmation.cancel()">
