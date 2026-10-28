@@ -1,6 +1,7 @@
+/* Se pide tambien desde adentro de los modales de las pantallas (hasta 1200): queda arriba de todos y debajo de los toasts. */
 :host {
   position: relative;
-  z-index: 1000;
+  z-index: 1500;
 }
 
 .confirmation-backdrop {
@@ -209,6 +210,11 @@
   padding: 0 1.65rem 1.35rem;
 }
 
+/* Con comparacion, la aclaracion va despues de los dos receptores y con el ancho de la tarjeta. */
+.confirmation-card__detail--after {
+  margin: 0 1.65rem 1.35rem;
+}
+
 .confirmation-party {
   display: grid;
   align-content: start;
@@ -324,6 +330,10 @@
   .confirmation-compare {
     grid-template-columns: minmax(0, 1fr);
     padding: 0 1.35rem 1.2rem;
+  }
+
+  .confirmation-card__detail--after {
+    margin: 0 1.35rem 1.2rem;
   }
 
   .confirmation-compare__sign {

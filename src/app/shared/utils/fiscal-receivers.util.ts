@@ -39,8 +39,8 @@ export function creditNoteReceiverConfirmation(
     },
     detail: 'Si el CUIT correcto es el de la ficha, volvé y revisalo con el cliente antes de seguir.',
     confirmLabel: action === 'cancel'
-      ? `Anular y emitir la NC a ${receiverLabel(invoice)}`
-      : `Emitir la NC a ${receiverLabel(invoice)}`,
+      ? `Anular y emitir la NC a ${unbroken(receiverLabel(invoice))}`
+      : `Emitir la NC a ${unbroken(receiverLabel(invoice))}`,
     cancelLabel: 'Volver'
   };
 }
@@ -71,6 +71,11 @@ export function regularizationConfirmation(receivers: SaleFiscalReceiversRespons
     confirmLabel: pendingCreditNoteOnly ? 'Emitir la nota de crédito' : 'Emitir nota de débito y nota de crédito',
     cancelLabel: 'Volver'
   };
+}
+
+/** Une los guiones del CUIT (U+2060) para que el boton no lo parta en dos renglones. */
+function unbroken(text: string): string {
+  return text.replace(/-/g, '-⁠');
 }
 
 function party(receiver: SaleFiscalReceiver, caption: string, note: string): ConfirmationParty {

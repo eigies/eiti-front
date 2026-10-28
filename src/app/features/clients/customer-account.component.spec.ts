@@ -257,7 +257,7 @@ describe('CustomerAccountComponent · notas de crédito', () => {
     component.confirmCancelSale();
     await new Promise(resolve => setTimeout(resolve));
 
-    expect(confirmation.confirm.calls.mostRecent().args[0].confirmLabel).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
+    expect(confirmation.confirm.calls.mostRecent().args[0].confirmLabel?.replace(/⁠/g, '')).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
     expect(sales.cancelSale.calls.allArgs()).toEqual([
       ['sale-1', undefined, false],
       ['sale-1', undefined, true]

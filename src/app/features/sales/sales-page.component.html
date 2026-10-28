@@ -832,7 +832,7 @@
               <div class="invoicing-bar__receivers" *ngIf="fiscalReceivers(sale) as receivers">
                 <span *ngIf="receivers.invoice as invoice">Facturada a {{ receiverLabel(invoice) }} · {{ invoice.name }}</span>
                 <span class="invoicing-bar__warning" *ngIf="receivers.regularizationStep === 'debitNote' && receivers.creditNote as creditNote">
-                  La {{ creditNote.document }} salió a {{ receiverLabel(creditNote) }}, otro CUIT que la factura
+                  {{ creditNote.document }} salió a {{ receiverLabel(creditNote) }}, otro CUIT que la factura
                 </span>
                 <span class="invoicing-bar__warning" *ngIf="receivers.regularizationStep === 'creditNote'">
                   Falta la nota de crédito al CUIT de la factura

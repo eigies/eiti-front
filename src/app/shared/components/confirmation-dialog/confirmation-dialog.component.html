@@ -21,9 +21,8 @@
         <span class="confirmation-card__eyebrow">{{ dialog.eyebrow }}</span>
         <h2 id="confirmation-title">{{ dialog.title }}</h2>
         <p id="confirmation-message">{{ dialog.message }}</p>
-        <div class="confirmation-card__detail" *ngIf="dialog.detail">
-          <span class="confirmation-card__detail-mark" aria-hidden="true"></span>
-          <span>{{ dialog.detail }}</span>
+        <div class="confirmation-card__detail" *ngIf="dialog.detail && !dialog.comparison">
+          <ng-container *ngTemplateOutlet="detail; context: { $implicit: dialog.detail }"></ng-container>
         </div>
       </div>
 
@@ -32,6 +31,15 @@
         <span class="confirmation-compare__sign" aria-hidden="true">&ne;</span>
         <ng-container *ngTemplateOutlet="party; context: { $implicit: compare.secondary, other: compare.primary, primary: false }"></ng-container>
       </div>
+
+      <div class="confirmation-card__detail confirmation-card__detail--after" *ngIf="dialog.detail && dialog.comparison">
+        <ng-container *ngTemplateOutlet="detail; context: { $implicit: dialog.detail }"></ng-container>
+      </div>
+
+      <ng-template #detail let-detail>
+        <span class="confirmation-card__detail-mark" aria-hidden="true"></span>
+        <span>{{ detail }}</span>
+      </ng-template>
 
       <ng-template #party let-party let-other="other" let-primary="primary">
         <div class="confirmation-party" [class.confirmation-party--primary]="primary">

@@ -43,10 +43,15 @@ describe('fiscal-receivers', () => {
   it('al anular, la NC va al receptor de la factura y la ficha queda como referencia', () => {
     const options = creditNoteReceiverConfirmation(receivers(), 'cancel');
 
-    expect(options.confirmLabel).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
+    expect(options.confirmLabel?.replace(/⁠/g, '')).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
     expect(options.comparison?.primary.identification).toBe('CUIT: 30-68225650-4');
     expect(options.comparison?.primary.note).toBe('Recibe la nota de crédito');
     expect(options.comparison?.secondary.identification).toBe('CUIT: 30-51743143-1');
+  });
+
+  it('el boton no parte el CUIT en dos renglones', () => {
+    expect(creditNoteReceiverConfirmation(receivers(), 'retry').confirmLabel)
+      .toBe('Emitir la NC a CUIT 30-⁠68225650-⁠4');
   });
 
   it('regularizar compara la factura con la NC mal emitida y avisa que no se deshace', () => {

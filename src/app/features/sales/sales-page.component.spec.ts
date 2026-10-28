@@ -411,7 +411,7 @@ describe('SalesPageComponent (price override)', () => {
             const options = confirm.calls.mostRecent().args[0];
             expect(options.comparison?.primary.identification).toBe('CUIT: 30-68225650-4');
             expect(options.comparison?.secondary.identification).toBe('CUIT: 30-51743143-1');
-            expect(options.confirmLabel).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
+            expect(options.confirmLabel?.replace(/⁠/g, '')).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
             expect((saleSpy as any).cancelSale.calls.allArgs()).toEqual([
                 ['sale-1', undefined, false],
                 ['sale-1', undefined, true]
