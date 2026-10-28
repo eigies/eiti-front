@@ -27,6 +27,7 @@ import { cancelInvoicingNotice, CancelInvoicingNotice, SaleByIdResponse } from '
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { creditNoteReceiverConfirmation, isInvoiceReceiverChanged } from '../../shared/utils/fiscal-receivers.util';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { AccountLedgerComponent } from '../../shared/components/account-ledger/account-ledger.component';
 import { GroupedPaymentModalComponent } from '../../shared/components/grouped-payment-modal/grouped-payment-modal.component';
@@ -462,9 +463,17 @@ export class CustomerAccountComponent implements OnInit {
     if (!sale || this.cancelingSale) return;
     // Solo manda el modo si hay cobros que resolver.
     const refundMode = this.detalleHasCobros ? this.cancelRefundMode : undefined;
+    this.cancelSale(sale, refundMode, false);
+  }
+
+  /**
+   * Si la factura salio a otro receptor que el de la ficha, el back no anula hasta que el usuario vea los dos
+   * CUIT y confirme que la NC vaya al de la factura.
+   */
+  private cancelSale(sale: SaleByIdResponse, refundMode: number | undefined, confirmInvoiceReceiver: boolean): void {
     this.cancelingSale = true;
     this.cdr.markForCheck();
-    this.saleService.cancelSale(sale.id, refundMode).subscribe({
+    this.saleService.cancelSale(sale.id, refundMode, confirmInvoiceReceiver).subscribe({
       next: () => {
         this.cancelingSale = false;
         this.cancelModalOpen = false;
@@ -474,11 +483,33 @@ export class CustomerAccountComponent implements OnInit {
         this.cdr.markForCheck();
         this.load();
       },
-      error: (err: { error?: { detail?: string } }) => {
+      error: (err: { error?: { detail?: string; errorCode?: string } }) => {
         this.cancelingSale = false;
-        this.toast.error(err?.error?.detail || 'No se pudo anular la venta');
         this.cdr.markForCheck();
+        if (!confirmInvoiceReceiver && isInvoiceReceiverChanged(err)) {
+          this.askInvoiceReceiver(sale, refundMode);
+          return;
+        }
+        this.toast.error(err?.error?.detail || 'No se pudo anular la venta');
       }
+    });
+  }
+
+  /** Muestra a quien se emitio la factura contra la ficha actual y anula solo si el usuario confirma. */
+  private askInvoiceReceiver(sale: SaleByIdResponse, refundMode: number | undefined): void {
+    this.saleService.getFiscalReceivers(sale.id).subscribe({
+      next: async receivers => {
+        if (!receivers.available || !receivers.invoice) {
+          this.toast.error(receivers.unavailableReason ?? 'No se pudo consultar a quién se emitió la factura.');
+          return;
+        }
+
+        if (await this.confirmation.confirm(creditNoteReceiverConfirmation(receivers, 'cancel'))) {
+          this.cancelSale(sale, refundMode, true);
+        }
+      },
+      error: (err: { error?: { detail?: string } }) =>
+        this.toast.error(err?.error?.detail ?? 'No se pudo consultar a quién se emitió la factura.')
     });
   }
 

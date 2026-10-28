@@ -68,6 +68,8 @@ const ACTION_LABELS: Record<string, string> = {
   UpdateSaleCommand: 'Venta editada',
   DeleteSaleCommand: 'Venta eliminada',
   CancelSaleCommand: 'Venta cancelada',
+  RetrySaleCreditNoteCommand: 'Nota de crédito reintentada',
+  RegularizeSaleCreditNoteCommand: 'Nota de crédito regularizada',
   CreateCcSaleCommand: 'Venta cuenta corriente creada',
   AddCcPaymentCommand: 'Pago cuenta corriente',
   AddCcPaymentGroupCommand: 'Pago cuenta corriente (grupo)',

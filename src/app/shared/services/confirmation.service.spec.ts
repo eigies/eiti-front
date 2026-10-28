@@ -27,6 +27,21 @@ describe('ConfirmationService', () => {
     expect(state).toBeNull();
   });
 
+  it('passes the receivers comparison to the dialog', () => {
+    void service.confirm({
+      title: 'La factura salió a otro CUIT',
+      message: 'La nota de crédito va al receptor de la factura.',
+      comparison: {
+        primary: { caption: 'Factura A 00010-00000039 · se emitió a', name: 'TRANSPORTE OLIVOS S.A -', identification: 'CUIT: 30-68225650-4', vatCondition: 'IVA Responsable Inscripto' },
+        secondary: { caption: 'Ficha del cliente hoy', name: 'TRANSPORTE OLIVOS S.A -', identification: 'CUIT: 30-51743143-1', vatCondition: 'IVA Responsable Inscripto' }
+      }
+    });
+
+    expect(state?.comparison?.primary.identification).toBe('CUIT: 30-68225650-4');
+    expect(state?.detail).toBeNull();
+    service.cancel();
+  });
+
   it('resolves false when the dialog is cancelled', async () => {
     const result = service.confirm({
       title: 'Descartar cambios',

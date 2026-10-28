@@ -3229,6 +3229,27 @@
     cursor: not-allowed;
 }
 
+/* Regularizar es una accion fiscal que no se deshace: se distingue del resto sin pesar mas que la venta. */
+.invoicing-bar__link--warning {
+    color: color-mix(in srgb, var(--amber) 88%, var(--danger));
+}
+
+/* A quien se emitio cada comprobante: dato de referencia, en segundo plano salvo cuando hay algo que regularizar. */
+.invoicing-bar__receivers {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    flex-basis: 100%;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .02em;
+}
+
+.invoicing-bar__warning {
+    color: color-mix(in srgb, var(--amber) 82%, var(--text));
+}
+
 /* Aviso fiscal al cancelar: info si la NC se emite sola, advertencia si la factura sigue en tramite. */
 .confirm-fiscal {
     /* Arriba ya separa el margin-bottom de .confirm-meta; abajo, aire antes de los botones. */
