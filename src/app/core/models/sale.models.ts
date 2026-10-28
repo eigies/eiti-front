@@ -157,7 +157,7 @@ export function fiscalNumberLabel(pointOfSale: number | null | undefined, number
  * Los precios de los items vienen CON IVA incluido, como se vendieron.
  */
 export interface SaleInvoicePrintResponse {
-    kind: 'invoice' | 'creditNote';
+    kind: 'invoice' | 'creditNote' | 'debitNote';
     letter: 'A' | 'B';
     typeCode: number;
     title: string;
@@ -453,6 +453,64 @@ export interface CreateCcSaleResponse {
     tradeIns?: SaleTradeInDetail[];
 }
 
+/**
+ * Un receptor fiscal tal como se muestra: el de un comprobante emitido (segun el servicio fiscal) o el de la
+ * ficha actual del cliente.
+ */
+export interface SaleFiscalReceiver {
+    /** Comprobante, ej. "Factura A 00010-00000039". Null para la ficha del cliente. */
+    document: string | null;
+    name: string;
+    vatCondition: string;
+    /** Ej. "CUIT: 30-68225650-4". Null para un consumidor final sin identificar. */
+    identification: string | null;
+}
+
+/** Que hace falta para regularizar una NC emitida a otro receptor que el de su factura. */
+export type CreditNoteRegularizationStep = 'none' | 'debitNote' | 'creditNote';
+
+/**
+ * A quien se emitieron la factura, su NC y su ND (segun el servicio fiscal) contra la ficha actual del
+ * cliente. GET sales/{id}/fiscal-receivers.
+ */
+export interface SaleFiscalReceiversResponse {
+    /** False si el servicio fiscal no respondio: no se sabe a quien se emitio. */
+    available: boolean;
+    unavailableReason: string | null;
+    invoice: SaleFiscalReceiver | null;
+    customer: SaleFiscalReceiver;
+    customerMatchesInvoice: boolean;
+    creditNote: SaleFiscalReceiver | null;
+    creditNoteMatchesInvoice: boolean;
+    regularizationStep: CreditNoteRegularizationStep;
+    debitNote: SaleFiscalReceiver | null;
+}
+
+export interface RetrySaleCreditNoteResponse {
+    saleId: string;
+    creditNoteStatus: SaleInvoicingStatus;
+    creditNoteStatusName: string;
+    pointOfSale?: number | null;
+    number?: number | null;
+    message?: string | null;
+}
+
+export interface RegularizedDocumentResponse {
+    status: SaleInvoicingStatus;
+    statusName: string;
+    pointOfSale?: number | null;
+    number?: number | null;
+}
+
+export interface RegularizeSaleCreditNoteResponse {
+    saleId: string;
+    /** La NC al receptor de la factura quedo autorizada. */
+    completed: boolean;
+    debitNote: RegularizedDocumentResponse | null;
+    creditNote: RegularizedDocumentResponse | null;
+    message?: string | null;
+}
+
 export interface InvoiceSaleResponse {
     saleId: string;
     invoicingStatus: SaleInvoicingStatus;
@@ -512,6 +570,9 @@ export interface SaleByIdResponse {
     invoicedAt?: string | null;
     creditNoteStatus?: SaleInvoicingStatus | null;
     creditNoteNumber?: number | null;
+    /** Nota de debito que neutralizo una NC mal emitida (regularizacion). */
+    debitNoteStatus?: SaleInvoicingStatus | null;
+    debitNoteNumber?: number | null;
     details: SaleDetailResponse[];
     payments: { idPaymentMethod: number; paymentMethod: string; amount: number; reference?: string | null }[];
     ccPayments: CcPaymentResponse[];

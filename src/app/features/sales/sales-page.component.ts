@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerResponse, CustomerSearchItem, BILLING_IVA_CONDITION_OPTIONS } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit, SaleFiscalReceiversResponse } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -31,6 +31,14 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { InvoicePdfService } from '../../shared/services/invoice-pdf.service';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
+import {
+    CreditNoteAction,
+    creditNoteReceiverConfirmation,
+    isInvoiceReceiverChanged,
+    receiverLabel,
+    regularizationConfirmation
+} from '../../shared/utils/fiscal-receivers.util';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { InvoicingControlComponent } from './components/invoicing-control/invoicing-control.component';
@@ -142,6 +150,7 @@ export class SalesPageComponent implements OnInit {
     createCustomerSuggestions: CustomerSearchItem[] = [];
     showCreateCustomerResults = false;
     private readonly destroyRef = inject(DestroyRef);
+    private readonly confirmation = inject(ConfirmationService);
     // Búsquedas con debounce + switchMap (cancela la request anterior → sin race conditions).
     private readonly customerSearch$ = new Subject<string>();
     private readonly addressSearch$ = new Subject<string>();
@@ -168,6 +177,11 @@ export class SalesPageComponent implements OnInit {
     cancelSaleModal: SaleResponse | null = null;
     expandedSaleId: string | null = null;
     invoicingSaleId: string | null = null;
+    /** Venta con una NC (reintento o regularizacion) en curso. */
+    creditNoteBusySaleId: string | null = null;
+    /** A quien se emitieron la factura, su NC y su ND, por venta (se piden al desplegar una venta facturada). */
+    readonly fiscalReceiversBySaleId = new Map<string, SaleFiscalReceiversResponse>();
+    readonly receiverLabel = receiverLabel;
     companyAutomaticInvoicing = false;
     whatsAppEnabled = false;
     whatsAppPhoneNumber: string | null = null;
@@ -1225,19 +1239,49 @@ confirmCancelSale(): void {
         return;
     }
 
-    const sale = this.cancelSaleModal;
+    this.cancelSale(this.cancelSaleModal, false);
+}
+
+/**
+ * Si la factura salio a otro receptor que el de la ficha, el back no anula hasta que el usuario vea los dos
+ * CUIT y confirme que la NC vaya al de la factura.
+ */
+private cancelSale(sale: SaleResponse, confirmInvoiceReceiver: boolean): void {
     this.cancelingSaleId = sale.id;
-    this.saleService.cancelSale(sale.id).subscribe({
+    this.saleService.cancelSale(sale.id, undefined, confirmInvoiceReceiver).subscribe({
         next: () => {
             this.cancelingSaleId = null;
             this.cancelSaleModal = null;
+            this.fiscalReceiversBySaleId.delete(sale.id);
             this.toast.success('Venta cancelada');
             this.loadSales();
         },
         error: err => {
             this.cancelingSaleId = null;
+            if (!confirmInvoiceReceiver && isInvoiceReceiverChanged(err)) {
+                this.cancelSaleModal = null;
+                this.askInvoiceReceiver(sale, 'cancel', () => this.cancelSale(sale, true));
+                return;
+            }
             this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cancelar la venta');
         }
+    });
+}
+
+/** Muestra a quien se emitio la factura contra la ficha actual y sigue solo si el usuario confirma. */
+private askInvoiceReceiver(sale: SaleResponse, action: CreditNoteAction, proceed: () => void): void {
+    this.saleService.getFiscalReceivers(sale.id).subscribe({
+        next: async receivers => {
+            if (!receivers.available || !receivers.invoice) {
+                this.toast.error(receivers.unavailableReason ?? 'No se pudo consultar a quién se emitió la factura.');
+                return;
+            }
+
+            if (await this.confirmation.confirm(creditNoteReceiverConfirmation(receivers, action))) {
+                proceed();
+            }
+        },
+        error: err => this.toast.error(err?.error?.detail ?? 'No se pudo consultar a quién se emitió la factura.')
     });
 }
 
@@ -1409,6 +1453,10 @@ toggleSaleDetails(saleId: string): void {
     if(this.expandedSaleId === saleId && !this.detailPageBySaleId.has(saleId)) {
     this.detailPageBySaleId.set(saleId, 1);
 }
+
+    if (this.expandedSaleId === saleId) {
+        this.loadFiscalReceivers(saleId);
+    }
     }
 
 isSaleExpanded(saleId: string): boolean {
@@ -2178,6 +2226,97 @@ if (form === this.editLineForm) {
                 }
             }
         });
+    }
+
+    // ---------------- Receptores, reintento y regularizacion de la NC ----------------
+
+    /** Solo ventas que tuvieron factura: lo demas no tiene receptor fiscal que mostrar. */
+    private loadFiscalReceivers(saleId: string): void {
+        const sale = this.sales.find(item => item.id === saleId);
+        const status = sale?.invoicingStatus ?? 1;
+        if (!this.canInvoice || (status !== 3 && status !== 5)) {
+            return;
+        }
+
+        this.saleService.getFiscalReceivers(saleId).subscribe({
+            next: receivers => this.fiscalReceiversBySaleId.set(saleId, receivers),
+            // No bloquea nada: la barra sigue funcionando sin la linea del receptor.
+            error: () => this.fiscalReceiversBySaleId.delete(saleId)
+        });
+    }
+
+    fiscalReceivers(sale: SaleResponse): SaleFiscalReceiversResponse | null {
+        const receivers = this.fiscalReceiversBySaleId.get(sale.id);
+        return receivers?.available ? receivers : null;
+    }
+
+    /** Venta anulada con la factura todavia vigente: su NC quedo rechazada, en tramite o no salio. */
+    canRetryCreditNote(sale: SaleResponse): boolean {
+        return sale.idSaleStatus === 3 && (sale.invoicingStatus ?? 1) === 3;
+    }
+
+    canRegularizeCreditNote(sale: SaleResponse): boolean {
+        return this.auth.hasPermission(PermissionCodes.salesInvoiceRegularize)
+            && (this.fiscalReceivers(sale)?.regularizationStep ?? 'none') !== 'none';
+    }
+
+    retryCreditNote(sale: SaleResponse, confirmInvoiceReceiver = false): void {
+        this.creditNoteBusySaleId = sale.id;
+        this.saleService.retryCreditNote(sale.id, confirmInvoiceReceiver).subscribe({
+            next: result => {
+                this.creditNoteBusySaleId = null;
+                this.toast.success(result.creditNoteStatus === 3
+                    ? 'Nota de crédito emitida'
+                    : 'La nota de crédito quedó en trámite');
+                this.refreshFiscalDocuments(sale);
+            },
+            error: err => {
+                this.creditNoteBusySaleId = null;
+                if (!confirmInvoiceReceiver && isInvoiceReceiverChanged(err)) {
+                    this.askInvoiceReceiver(sale, 'retry', () => this.retryCreditNote(sale, true));
+                    return;
+                }
+                this.toast.error(err?.error?.detail ?? 'No se pudo emitir la nota de crédito.');
+                this.refreshFiscalDocuments(sale);
+            }
+        });
+    }
+
+    async regularizeCreditNote(sale: SaleResponse): Promise<void> {
+        const receivers = this.fiscalReceivers(sale);
+        if (!receivers?.invoice || !(await this.confirmation.confirm(regularizationConfirmation(receivers)))) {
+            return;
+        }
+
+        this.creditNoteBusySaleId = sale.id;
+        this.saleService.regularizeCreditNote(sale.id).subscribe({
+            next: result => {
+                this.creditNoteBusySaleId = null;
+                this.toast.success(result.completed
+                    ? 'Nota de crédito regularizada'
+                    : 'La regularización quedó en trámite: cuando se autorice, regularizá de nuevo para terminar.');
+                this.refreshFiscalDocuments(sale);
+            },
+            error: err => {
+                this.creditNoteBusySaleId = null;
+                this.toast.error(err?.error?.detail ?? 'No se pudo regularizar la nota de crédito.');
+                this.refreshFiscalDocuments(sale);
+            }
+        });
+    }
+
+    downloadDebitNotePdf(sale: SaleResponse): void {
+        this.saleService.getDebitNotePrint(sale.id).subscribe({
+            next: print => this.invoicePdf.generate(print)
+                .catch(() => this.toast.error('No se pudo generar el PDF de la nota de débito.')),
+            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la nota de débito.')
+        });
+    }
+
+    private refreshFiscalDocuments(sale: SaleResponse): void {
+        this.fiscalReceiversBySaleId.delete(sale.id);
+        this.loadSales();
+        this.loadFiscalReceivers(sale.id);
     }
 
     /** La venta anulada tiene su nota de credito autorizada: se puede descargar. */

@@ -17,7 +17,9 @@ import { VehicleService } from '../../core/services/vehicle.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { PermissionCodes } from '../../core/models/permission.models';
-import { of } from 'rxjs';
+import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
+import { of, throwError } from 'rxjs';
 
 describe('SalesPageComponent (price override)', () => {
     let component: SalesPageComponent;
@@ -33,7 +35,7 @@ describe('SalesPageComponent (price override)', () => {
         authSpy = jasmine.createSpyObj('AuthService', ['hasPermission', 'getToken', 'isAuthenticated'], { currentUser$: of(null), currentUser: null });
         const productSpy = createMockService<ProductService>(['listProducts']);
         (productSpy as any).listProducts.and.returnValue(of([]));
-        saleSpy = createMockService<SaleService>(['listSales', 'createSale']);
+        saleSpy = createMockService<SaleService>(['listSales', 'createSale', 'cancelSale', 'getFiscalReceivers']);
         (saleSpy as any).listSales.and.returnValue(of([]));
         (saleSpy as any).createSale.and.returnValue(of({}));
         const companySpy = createMockService<CompanyService>(['getCurrentCompany']);
@@ -376,6 +378,73 @@ describe('SalesPageComponent (price override)', () => {
             component.quickCreateCustomerIvaCondition = 1;
             component.submitQuickCreateCustomer();
             expect(customers.createCustomer.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ taxId: '20-39758385-7', ivaCondition: 1 }));
+        });
+    });
+
+    // MAT-3705: la factura salio a un CUIT, la ficha cambio y la NC salio al otro sin que nadie lo viera.
+    // Ahora el back frena la anulacion y el usuario ve los dos CUIT antes de emitir la NC.
+    describe('anular una venta facturada a otro CUIT que el de la ficha', () => {
+        const sale = { id: 'sale-1', code: 'MAT-3705', idSaleStatus: 2, invoicingStatus: 3 } as SaleResponse;
+        const receivers: SaleFiscalReceiversResponse = {
+            available: true,
+            unavailableReason: null,
+            invoice: { document: 'Factura A 00010-00000039', name: 'TRANSPORTE OLIVOS S.A -', vatCondition: 'IVA Responsable Inscripto', identification: 'CUIT: 30-68225650-4' },
+            customer: { document: null, name: 'TRANSPORTE OLIVOS S.A -', vatCondition: 'IVA Responsable Inscripto', identification: 'CUIT: 30-51743143-1' },
+            customerMatchesInvoice: false,
+            creditNote: null,
+            creditNoteMatchesInvoice: true,
+            regularizationStep: 'none',
+            debitNote: null
+        };
+
+        it('muestra los dos CUIT y reenvia confirmando que la NC vaya al de la factura', async () => {
+            const confirm = spyOn(TestBed.inject(ConfirmationService), 'confirm').and.resolveTo(true);
+            (saleSpy as any).cancelSale.and.returnValues(
+                throwError(() => ({ error: { errorCode: 'Sales.Cancel.InvoiceReceiverChanged', detail: 'La factura se emitió a otro receptor.' } })),
+                of(void 0));
+            (saleSpy as any).getFiscalReceivers.and.returnValue(of(receivers));
+            component.cancelSaleModal = sale;
+
+            component.confirmCancelSale();
+            await new Promise(resolve => setTimeout(resolve));
+
+            const options = confirm.calls.mostRecent().args[0];
+            expect(options.comparison?.primary.identification).toBe('CUIT: 30-68225650-4');
+            expect(options.comparison?.secondary.identification).toBe('CUIT: 30-51743143-1');
+            expect(options.confirmLabel?.replace(/⁠/g, '')).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
+            expect((saleSpy as any).cancelSale.calls.allArgs()).toEqual([
+                ['sale-1', undefined, false],
+                ['sale-1', undefined, true]
+            ]);
+        });
+
+        it('si el usuario vuelve, no se anula nada', async () => {
+            spyOn(TestBed.inject(ConfirmationService), 'confirm').and.resolveTo(false);
+            (saleSpy as any).cancelSale.and.returnValue(
+                throwError(() => ({ error: { errorCode: 'Sales.Cancel.InvoiceReceiverChanged' } })));
+            (saleSpy as any).getFiscalReceivers.and.returnValue(of(receivers));
+            component.cancelSaleModal = sale;
+
+            component.confirmCancelSale();
+            await new Promise(resolve => setTimeout(resolve));
+
+            expect((saleSpy as any).cancelSale).toHaveBeenCalledTimes(1);
+        });
+
+        it('sin el servicio fiscal no pregunta a ciegas: avisa', async () => {
+            const confirm = spyOn(TestBed.inject(ConfirmationService), 'confirm');
+            const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+            (saleSpy as any).cancelSale.and.returnValue(
+                throwError(() => ({ error: { errorCode: 'Sales.Cancel.InvoiceReceiverChanged' } })));
+            (saleSpy as any).getFiscalReceivers.and.returnValue(of({ ...receivers, available: false, invoice: null,
+                unavailableReason: 'No se pudo consultar al servicio de facturación a quién se emitió el comprobante.' }));
+            component.cancelSaleModal = sale;
+
+            component.confirmCancelSale();
+            await new Promise(resolve => setTimeout(resolve));
+
+            expect(confirm).not.toHaveBeenCalled();
+            expect(toast.error).toHaveBeenCalledWith('No se pudo consultar al servicio de facturación a quién se emitió el comprobante.');
         });
     });
 });
