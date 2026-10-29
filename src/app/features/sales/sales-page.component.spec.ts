@@ -18,6 +18,7 @@ import { ToastService } from '../../shared/services/toast.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
 import { SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
 import { of, throwError } from 'rxjs';
 
@@ -445,6 +446,24 @@ describe('SalesPageComponent (price override)', () => {
 
             expect(confirm).not.toHaveBeenCalled();
             expect(toast.error).toHaveBeenCalledWith('No se pudo consultar al servicio de facturación a quién se emitió el comprobante.');
+        });
+    });
+
+    describe('descarga de comprobantes fiscales', () => {
+        const sale = { id: 'sale-1', code: 'MAT-3705', idSaleStatus: 2, invoicingStatus: 5 } as SaleResponse;
+
+        it('cada comprobante se baja por el servicio compartido', () => {
+            const download = spyOn(TestBed.inject(SaleFiscalPdfService), 'download');
+
+            component.downloadInvoicePdf(sale);
+            component.downloadCreditNotePdf(sale);
+            component.downloadDebitNotePdf(sale);
+
+            expect(download.calls.allArgs()).toEqual([
+                ['sale-1', 'invoice'],
+                ['sale-1', 'creditNote'],
+                ['sale-1', 'debitNote']
+            ]);
         });
     });
 });

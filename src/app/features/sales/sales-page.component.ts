@@ -30,7 +30,8 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
-import { InvoicePdfService } from '../../shared/services/invoice-pdf.service';
+import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
+import { canDownloadSaleCreditNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import {
     CreditNoteAction,
@@ -242,7 +243,7 @@ export class SalesPageComponent implements OnInit {
         private onboardingService: OnboardingService,
         private bankService: BankService,
         private remitoPdf: RemitoPdfService,
-        private invoicePdf: InvoicePdfService,
+        private saleFiscalPdf: SaleFiscalPdfService,
         private router: Router,
         public auth: AuthService
     ) {
@@ -2034,10 +2035,8 @@ if (form === this.editLineForm) {
         return (sale.invoicingStatus ?? 1) === 2 ? 'Consultando...' : 'Emitiendo...';
     }
 
-    /** Una factura anulada sigue teniendo comprobante: se puede reimprimir. */
     canDownloadInvoice(sale: SaleResponse): boolean {
-        const status = sale.invoicingStatus ?? 1;
-        return status === 3 || status === 5;
+        return canDownloadSaleInvoice(sale.invoicingStatus);
     }
 
     // ---------- Facturar despues del alta: popup para elegir A o B ----------
@@ -2306,11 +2305,7 @@ if (form === this.editLineForm) {
     }
 
     downloadDebitNotePdf(sale: SaleResponse): void {
-        this.saleService.getDebitNotePrint(sale.id).subscribe({
-            next: print => this.invoicePdf.generate(print)
-                .catch(() => this.toast.error('No se pudo generar el PDF de la nota de débito.')),
-            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la nota de débito.')
-        });
+        this.saleFiscalPdf.download(sale.id, 'debitNote');
     }
 
     private refreshFiscalDocuments(sale: SaleResponse): void {
@@ -2319,25 +2314,16 @@ if (form === this.editLineForm) {
         this.loadFiscalReceivers(sale.id);
     }
 
-    /** La venta anulada tiene su nota de credito autorizada: se puede descargar. */
     canDownloadCreditNote(sale: SaleResponse): boolean {
-        return (sale.invoicingStatus ?? 1) === 5;
+        return canDownloadSaleCreditNote(sale.invoicingStatus);
     }
 
     downloadInvoicePdf(sale: SaleResponse): void {
-        this.saleService.getInvoicePrint(sale.id).subscribe({
-            next: print => this.invoicePdf.generate(print)
-                .catch(() => this.toast.error('No se pudo generar el PDF de la factura.')),
-            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la factura.')
-        });
+        this.saleFiscalPdf.download(sale.id, 'invoice');
     }
 
     downloadCreditNotePdf(sale: SaleResponse): void {
-        this.saleService.getCreditNotePrint(sale.id).subscribe({
-            next: print => this.invoicePdf.generate(print)
-                .catch(() => this.toast.error('No se pudo generar el PDF de la nota de crédito.')),
-            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la nota de crédito.')
-        });
+        this.saleFiscalPdf.download(sale.id, 'creditNote');
     }
 
     setDraftItemPrice(item: DraftItem, price: number): void {
