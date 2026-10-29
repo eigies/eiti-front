@@ -693,10 +693,20 @@
   gap: .42rem;
 }
 
-/* El detalle puede juntar remitos, recibos y comprobantes fiscales: bajan de línea antes que aplastar el título. */
+/* El detalle puede juntar remitos, recibos y comprobantes fiscales: las descargas bajan de línea
+   antes que aplastar el título, y "Anular venta" y la × quedan siempre arriba a la derecha. */
 .modal-card--detalle .modal-head__actions {
   flex: 0 1 auto;
+  align-items: flex-start;
+}
+
+.detalle-downloads {
+  display: flex;
+  flex: 0 1 auto;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .42rem;
+  min-width: 0;
 }
 
 .detalle-remito-btn {
@@ -760,6 +770,10 @@
   .modal-card--detalle .modal-head__actions {
     width: 100%;
     flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .modal-card--detalle .detalle-downloads {
     justify-content: flex-start;
   }
 
