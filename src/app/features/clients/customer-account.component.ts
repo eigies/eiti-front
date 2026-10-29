@@ -23,11 +23,13 @@ import {
   PendingDocument
 } from '../../core/models/account-ledger.models';
 import { BankResponse } from '../../core/models/bank.models';
-import { cancelInvoicingNotice, CancelInvoicingNotice, SaleByIdResponse } from '../../core/models/sale.models';
+import { cancelInvoicingNotice, CancelInvoicingNotice, SaleByIdResponse, SaleFiscalDocumentKind } from '../../core/models/sale.models';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
 import { creditNoteReceiverConfirmation, isInvoiceReceiverChanged } from '../../shared/utils/fiscal-receivers.util';
+import { canDownloadSaleCreditNote, canDownloadSaleDebitNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { AccountLedgerComponent } from '../../shared/components/account-ledger/account-ledger.component';
 import { GroupedPaymentModalComponent } from '../../shared/components/grouped-payment-modal/grouped-payment-modal.component';
@@ -88,7 +90,8 @@ export class CustomerAccountComponent implements OnInit {
     private readonly toast: ToastService,
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
-    private readonly confirmation: ConfirmationService
+    private readonly confirmation: ConfirmationService,
+    private readonly saleFiscalPdf: SaleFiscalPdfService
   ) {}
 
   ngOnInit(): void {
@@ -521,6 +524,28 @@ export class CustomerAccountComponent implements OnInit {
   // Comprobante con precios de la venta CC (mismo remito, con importes). Bajo permiso salesRemitoAmounts.
   async descargarComprobante(): Promise<void> {
     await this.generarRemitoCc(true);
+  }
+
+  // Factura, NC y ND de la venta: el mismo PDF fiscal y el mismo permiso que en Gestión de Ventas.
+  get canDownloadDetalleInvoice(): boolean {
+    return this.canInvoice && canDownloadSaleInvoice(this.detalleModalSale?.invoicingStatus);
+  }
+
+  get canDownloadDetalleCreditNote(): boolean {
+    return this.canInvoice && canDownloadSaleCreditNote(this.detalleModalSale?.invoicingStatus);
+  }
+
+  get canDownloadDetalleDebitNote(): boolean {
+    return this.canInvoice && canDownloadSaleDebitNote(this.detalleModalSale?.debitNoteStatus);
+  }
+
+  downloadDetalleFiscalPdf(kind: SaleFiscalDocumentKind): void {
+    if (!this.detalleModalSale) return;
+    this.saleFiscalPdf.download(this.detalleModalSale.id, kind);
+  }
+
+  private get canInvoice(): boolean {
+    return this.auth.hasPermission(PermissionCodes.salesInvoice);
   }
 
   private async generarRemitoCc(incluirImportes: boolean): Promise<void> {

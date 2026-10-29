@@ -138,6 +138,9 @@
       <div class="modal-head__actions">
         <button class="detalle-remito-btn" type="button" *ngIf="detalleModalSale && auth.hasPermission(permissionCodes.salesRemitoAmounts)" (click)="descargarComprobante()">↓ Comprobante con precios</button>
         <button class="detalle-remito-btn" type="button" *ngIf="detalleModalSale" (click)="descargarRemitoTraslado()">↓ Remito sin precios</button>
+        <button class="detalle-remito-btn" type="button" *ngIf="canDownloadDetalleInvoice" title="Descargar la factura en PDF" (click)="downloadDetalleFiscalPdf('invoice')">↓ Factura</button>
+        <button class="detalle-remito-btn" type="button" *ngIf="canDownloadDetalleCreditNote" title="Descargar la nota de crédito en PDF" (click)="downloadDetalleFiscalPdf('creditNote')">↓ Nota de crédito</button>
+        <button class="detalle-remito-btn" type="button" *ngIf="canDownloadDetalleDebitNote" title="Descargar la nota de débito en PDF" (click)="downloadDetalleFiscalPdf('debitNote')">↓ Nota de débito</button>
         <button class="detalle-remito-btn" type="button" *ngIf="detalleModalSale && (detalleModalSale.ccPayments?.length ?? 0) > 0" (click)="downloadAllSaleReceipts()">↓ Recibos de pago</button>
         <button class="detalle-anular-btn" type="button" *ngIf="canCancelDetalleSale" [disabled]="cancelingSale" (click)="openCancelModal()">Anular venta</button>
         <button class="modal-close" type="button" (click)="closeDetalle()">×</button>

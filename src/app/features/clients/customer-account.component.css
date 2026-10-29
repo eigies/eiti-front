@@ -693,6 +693,12 @@
   gap: .42rem;
 }
 
+/* El detalle puede juntar remitos, recibos y comprobantes fiscales: bajan de línea antes que aplastar el título. */
+.modal-card--detalle .modal-head__actions {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+}
+
 .detalle-remito-btn {
   min-height: 2rem;
   padding: .38rem .62rem;
