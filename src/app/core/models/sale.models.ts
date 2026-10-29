@@ -150,6 +150,9 @@ export function fiscalNumberLabel(pointOfSale: number | null | undefined, number
     return `${String(pointOfSale).padStart(5, '0')}-${String(number).padStart(8, '0')}`;
 }
 
+/** Comprobante fiscal de una venta que se puede imprimir. */
+export type SaleFiscalDocumentKind = 'invoice' | 'creditNote' | 'debitNote';
+
 /**
  * Datos para imprimir la factura o la nota de credito con el diseno de EITI.
  * Comprobante, emisor, receptor, importes y asociado son los que autorizo ARCA;
@@ -157,7 +160,7 @@ export function fiscalNumberLabel(pointOfSale: number | null | undefined, number
  * Los precios de los items vienen CON IVA incluido, como se vendieron.
  */
 export interface SaleInvoicePrintResponse {
-    kind: 'invoice' | 'creditNote' | 'debitNote';
+    kind: SaleFiscalDocumentKind;
     letter: 'A' | 'B';
     typeCode: number;
     title: string;
