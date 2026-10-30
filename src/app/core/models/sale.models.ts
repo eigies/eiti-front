@@ -252,6 +252,10 @@ export interface SaleInvoicePrintAdjustments {
     noDeliverySurcharge: number;
     generalDiscountPercent: number;
     agreedPrice?: number | null;
+    /** Recargo de la tarjeta en cuotas que incluye el comprobante autorizado (0 si no lo incluye). */
+    cardSurcharge?: number;
+    /** Texto del renglón, p. ej. "Recargo financiero tarjeta (Santander, 3 cuotas, 15%)". */
+    cardSurchargeLabel?: string | null;
 }
 
 export interface SaleInvoicePrintAmounts {
@@ -347,6 +351,11 @@ export interface SaleResponse {
     fiscalPointOfSale?: number | null;
     /** "invoiceA" / "invoiceB": de aca sale la letra que muestra el listado. */
     fiscalDocumentType?: string | null;
+    /**
+     * Recargo de tarjeta cobrado que la factura vigente no incluye (se facturo antes de cobrar en cuotas).
+     * 0 si no hay factura o si ya lo incluye.
+     */
+    uninvoicedCardSurcharge?: number;
     generalDiscountPercent?: number;
     generalDiscountReason?: string | null;
     originalTotal?: number;

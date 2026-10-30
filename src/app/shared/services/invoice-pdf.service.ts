@@ -288,7 +288,7 @@ export class InvoicePdfService {
     });
   }
 
-  /** Lo que lleva de la suma de las lineas al total facturado: recargo, bonificacion general o precio acordado. */
+  /** Lo que lleva de la suma de las lineas al total facturado: recargo, bonificacion general, precio acordado o recargo de tarjeta. */
   private drawAdjustments(
     doc: jsPDF,
     print: SaleInvoicePrintResponse,
@@ -310,6 +310,11 @@ export class InvoicePdfService {
     }
     if (adjustments.agreedPrice !== null && adjustments.agreedPrice !== undefined) {
       lines.push(['Precio acordado', this.money(toShown(adjustments.agreedPrice))]);
+    }
+    // El recargo de la tarjeta va sobre el total ya bonificado: es el ultimo ajuste antes del total.
+    const cardSurcharge = adjustments.cardSurcharge ?? 0;
+    if (cardSurcharge > 0) {
+      lines.push([adjustments.cardSurchargeLabel || 'Recargo financiero tarjeta', this.money(toShown(cardSurcharge))]);
     }
     if (lines.length === 0) {
       return y;

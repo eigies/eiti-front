@@ -748,5 +748,23 @@ describe('SalesPageComponent (price override)', () => {
                 expect(toast.error).toHaveBeenCalledWith('Una venta en espera puede ser parcial, pero no superar el total.');
             });
         });
+
+        // Se facturo en espera y despues se cobro en cuotas: la factura no incluye el recargo y hay que avisarlo.
+        describe('recargo no facturado', () => {
+            const invoicedSale = { ...partlyPaidByCard, invoicingStatus: 3, uninvoicedCardSurcharge: 450 } as SaleResponse;
+
+            it('con la factura vigente avisa cuánto recargo quedó afuera', () => {
+                expect(component.uninvoicedCardSurcharge(invoicedSale)).toBe(450);
+            });
+
+            it('sin factura vigente no hay aviso', () => {
+                expect(component.uninvoicedCardSurcharge({ ...invoicedSale, invoicingStatus: 5 } as SaleResponse)).toBe(0);
+                expect(component.uninvoicedCardSurcharge({ ...invoicedSale, invoicingStatus: 1 } as SaleResponse)).toBe(0);
+            });
+
+            it('una venta sin recargo afuera no avisa', () => {
+                expect(component.uninvoicedCardSurcharge({ ...invoicedSale, uninvoicedCardSurcharge: 0 } as SaleResponse)).toBe(0);
+            });
+        });
     });
 });

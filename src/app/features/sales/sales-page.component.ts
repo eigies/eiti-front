@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerResponse, CustomerSearchItem, BILLING_IVA_CONDITION_OPTIONS } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit, SaleFiscalReceiversResponse, applyGeneralDiscount, saleDiscountIssue } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit, SaleFiscalReceiversResponse, applyGeneralDiscount, saleDiscountIssue, SALE_INVOICING_STATUS } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -2055,6 +2055,14 @@ if (form === this.editLineForm) {
             case 5: return `${invoice} · anulada con nota de crédito`;
             default: return 'Sin facturar';
         }
+    }
+
+    /**
+     * Recargo de tarjeta cobrado que la factura vigente no incluye (se facturo en espera y se cobro despues en
+     * cuotas). 0 sin factura vigente: al anularla, la proxima ya lo incluye.
+     */
+    uninvoicedCardSurcharge(sale: SaleResponse): number {
+        return sale.invoicingStatus === SALE_INVOICING_STATUS.invoiced ? roundMoney(sale.uninvoicedCardSurcharge ?? 0) : 0;
     }
 
     /** Solo el color del texto: verde vigente, ambar en tramite, rojo rechazada, violeta anulada, gris sin facturar. */

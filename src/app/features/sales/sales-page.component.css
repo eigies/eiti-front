@@ -3173,6 +3173,21 @@
     letter-spacing: .02em;
 }
 
+/* El estado de la factura y, debajo o al lado, el aviso de recargo no facturado. */
+.invoicing-bar__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .75rem;
+}
+
+.invoicing-bar__warning {
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: .02em;
+    color: color-mix(in srgb, var(--amber) 78%, var(--text));
+}
+
 .invoicing-bar__actions {
     display: flex;
     flex-wrap: wrap;

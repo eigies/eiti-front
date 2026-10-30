@@ -815,7 +815,14 @@
 
             <!-- La tarjeta entera pliega/despliega con un click: las acciones de facturacion no deben cerrarla. -->
             <div class="invoicing-bar" *ngIf="canInvoice" (click)="$event.stopPropagation()">
-              <span class="invoicing-bar__summary sale-invoicing" [ngClass]="invoicingToneClass(sale)">{{ invoicingSummary(sale) }}</span>
+              <span class="invoicing-bar__status">
+                <span class="invoicing-bar__summary sale-invoicing" [ngClass]="invoicingToneClass(sale)">{{ invoicingSummary(sale) }}</span>
+                <span class="invoicing-bar__warning"
+                      *ngIf="uninvoicedCardSurcharge(sale) > 0"
+                      title="La venta se facturó antes de cobrarse en cuotas: la factura no incluye el recargo de la tarjeta.">
+                  Recargo no facturado {{ uninvoicedCardSurcharge(sale) | currency:'USD':'symbol':'1.2-2' }}
+                </span>
+              </span>
 
               <div class="invoicing-bar__actions">
                 <button class="invoicing-bar__link invoicing-bar__link--primary"
