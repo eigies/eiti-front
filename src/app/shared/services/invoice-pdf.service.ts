@@ -114,6 +114,7 @@ export class InvoicePdfService {
     y += 8;
 
     y = this.drawAdjustments(doc, print, toShown, margin, contentWidth, y, ensureSpace);
+    y = this.drawNotes(doc, print.notes, margin, contentWidth, y, ensureSpace);
     ensureSpace(isA ? 40 : 48, false);
     y = this.drawTotals(doc, print, margin, contentWidth, y);
 
@@ -326,6 +327,34 @@ export class InvoicePdfService {
       y += 5;
     }
     return y + 2;
+  }
+
+  /** Observaciones de la venta (presupuesto, patente): no son dato fiscal, van como aclaración. */
+  private drawNotes(
+    doc: jsPDF,
+    notes: string | null | undefined,
+    margin: number,
+    contentWidth: number,
+    y: number,
+    ensureSpace: (height: number, withTableHeader: boolean) => void
+  ): number {
+    const text = notes?.trim();
+    if (!text) {
+      return y;
+    }
+
+    doc.setFontSize(8.4);
+    const lines: string[] = doc.splitTextToSize(text, contentWidth);
+    ensureSpace(lines.length * 4 + 9, false);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(60, 60, 60);
+    doc.text('Observaciones', margin, y);
+    y += 4.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.4);
+    doc.text(lines, margin, y);
+    return y + lines.length * 4 + 3;
   }
 
   private drawTotals(doc: jsPDF, print: SaleInvoicePrintResponse, margin: number, contentWidth: number, y: number): number {

@@ -232,6 +232,16 @@
             </label>
           </div>
 
+          <div class="stacked-picker">
+            <label class="field">
+              <span class="field__label">Observaciones <span class="field__optional">(opcional, salen en la factura)</span></span>
+              <textarea class="control control--textarea" rows="2" maxlength="500"
+                [value]="lineForm.get('notes')?.value || ''"
+                (input)="lineForm.get('notes')?.setValue($any($event.target).value)"
+                placeholder="Presupuesto, patente u otra aclaración"></textarea>
+            </label>
+          </div>
+
           <div class="customer-picker stacked-picker" [class.empty]="createCustomerId" [class.empty--soft]="createCustomerId">
             <label class="field">
               <span class="field__label">Cliente <span class="field__optional">(opcional)</span></span>
@@ -775,6 +785,10 @@
               <span>{{ saleDetailPage(sale.id) }} / {{ totalSaleDetailPages(sale) }}</span>
               <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, 1)" [disabled]="saleDetailPage(sale.id) >= totalSaleDetailPages(sale)">→</button>
             </div>
+
+            <app-sale-notes class="sale-card__notes" (click)="$event.stopPropagation()"
+                            [saleId]="sale.id" [notes]="sale.notes" [canEdit]="canEditSaleNotes(sale)"
+                            (saved)="sale.notes = $event"></app-sale-notes>
 
             <!-- La tarjeta entera pliega/despliega con un click: las acciones de facturacion no deben cerrarla. -->
             <div class="invoicing-bar" *ngIf="canInvoice" (click)="$event.stopPropagation()">

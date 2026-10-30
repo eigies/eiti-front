@@ -98,6 +98,18 @@ describe('SalesPageComponent (price override)', () => {
         expect(item.total).toBe(99 * 3);
     });
 
+    it('buildRequest manda las observaciones recortadas, o null si están vacías', () => {
+        (component as any).draftItems = [{ product: { id: 'p1' }, quantity: 1, total: 100 }];
+        const build = () => (component as any).buildRequest(
+            (component as any).lineForm, (component as any).draftItems, (component as any).createPaymentState, null, 0);
+
+        component.lineForm.patchValue({ notes: '  Presup. 1234 - Patente AB123CD  ' });
+        expect(build().notes).toBe('Presup. 1234 - Patente AB123CD');
+
+        component.lineForm.patchValue({ notes: '   ' });
+        expect(build().notes).toBeNull();
+    });
+
     it('buildRequest with permission + override should include unitPrice', () => {
         authSpy.hasPermission.and.callFake((p: string) => p === PermissionCodes.salesPriceOverride);
 

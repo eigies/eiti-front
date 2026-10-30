@@ -267,6 +267,21 @@ describe('CustomerAccountComponent · notas de crédito', () => {
     ]);
   });
 
+  describe('observaciones del detalle', () => {
+    it('se editan con permiso de editar ventas, salvo en una venta anulada', () => {
+      const { component, auth } = setup();
+      component.detalleModalSale = { id: 'sale-1', details: [], idSaleStatus: 2 } as unknown as SaleByIdResponse;
+      expect(component.canEditDetalleNotes).toBeTrue();
+
+      component.detalleModalSale = { id: 'sale-1', details: [], idSaleStatus: 3 } as unknown as SaleByIdResponse;
+      expect(component.canEditDetalleNotes).toBeFalse();
+
+      component.detalleModalSale = { id: 'sale-1', details: [], idSaleStatus: 2 } as unknown as SaleByIdResponse;
+      auth.hasPermission.and.callFake((code: string) => code !== PermissionCodes.salesUpdate);
+      expect(component.canEditDetalleNotes).toBeFalse();
+    });
+  });
+
   describe('descarga de comprobantes fiscales del detalle', () => {
     function detalle(invoicingStatus: SaleInvoicingStatus, debitNoteStatus: SaleInvoicingStatus | null = null): SaleByIdResponse {
       return { id: 'sale-1', details: [], invoicingStatus, debitNoteStatus } as unknown as SaleByIdResponse;

@@ -530,6 +530,21 @@ h1 {
     text-align: right;
 }
 
+/* Observaciones de la venta (mismo patrón que el alta minorista). */
+.field--notes {
+    margin-top: .9rem;
+}
+
+.field__optional {
+    font-weight: 400;
+    opacity: .6;
+}
+
+.control--textarea {
+    min-height: 72px;
+    resize: vertical;
+}
+
 .discounts-row {
     display: flex;
     gap: 1.25rem;

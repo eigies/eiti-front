@@ -109,6 +109,7 @@ describe('SalesCcComponent quote conversion', () => {
     history.replaceState({
       quotePrefill: {
         quoteId: 'quote-1',
+        code: 'PRE-0012',
         branchId: 'branch-1',
         customerId: 'customer-1',
         customerFullName: 'ACME SA',
@@ -138,6 +139,7 @@ describe('SalesCcComponent quote conversion', () => {
     expect(component.draftItems[0].quantity).toBe(2);
     expect(component.draftItems[0].unitPriceOverride).toBe(99);
     expect(component.draftItems[0].discountPercent).toBe(5);
+    expect(component.notes).toBe('Presupuesto PRE-0012');
 
     await component.submit();
 
@@ -145,6 +147,7 @@ describe('SalesCcComponent quote conversion', () => {
       branchId: 'branch-1',
       customerId: 'customer-1',
       generalDiscountPercent: 12,
+      notes: 'Presupuesto PRE-0012',
       details: [jasmine.objectContaining({
         productId: 'product-1',
         quantity: 2,

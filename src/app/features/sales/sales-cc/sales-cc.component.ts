@@ -52,6 +52,7 @@ interface QuotePrefillDetail {
 
 interface QuotePrefill {
   quoteId: string;
+  code?: string | null;
   branchId: string;
   customerId?: string | null;
   customerFullName?: string | null;
@@ -84,6 +85,8 @@ export class SalesCcComponent implements OnInit {
   manualOverridePrice: number | null = null;
   convertingQuoteId: string | null = null;
   quoteConversionLabel = '';
+  /** Observaciones de la venta (salen en la factura). Con presupuesto, arrancan con su número. */
+  notes = '';
   quoteStockDisclaimer: string[] = [];
   // IVA de la conversión: arranca con lo que eligió el presupuesto y el usuario puede cambiarlo.
   // Los precios del presupuesto son netos; "con IVA" hace que la venta baje al final (neto + IVA).
@@ -142,6 +145,7 @@ export class SalesCcComponent implements OnInit {
             ?? this.pendingQuotePrefill.prospectName
             ?? 'presupuesto seleccionado';
           this.generalDiscountPercent = this.pendingQuotePrefill.generalDiscountPercent || 0;
+          this.notes = this.pendingQuotePrefill.code ? `Presupuesto ${this.pendingQuotePrefill.code}` : '';
           this.convertVatRate = this.pendingQuotePrefill.vatRate || 0;
           this.convertWithVat = this.pendingQuotePrefill.includesVat && this.convertVatRate > 0;
           this.applyQuotePrefill();
@@ -623,7 +627,8 @@ export class SalesCcComponent implements OnInit {
       generalDiscountPercent: this.generalDiscountPercent || undefined,
       manualOverridePrice: this.manualOverridePrice ?? undefined,
       requestInvoicing: this.invoicingRequested,
-      invoiceLetter: this.invoicingRequested ? this.invoiceLetter : null
+      invoiceLetter: this.invoicingRequested ? this.invoiceLetter : null,
+      notes: this.notes.trim() || null
     };
 
     const request$ = this.convertingQuoteId
@@ -654,6 +659,7 @@ export class SalesCcComponent implements OnInit {
         this.canjeAmount = null;
         this.generalDiscountPercent = 0;
         this.manualOverridePrice = null;
+        this.notes = '';
         this.convertingQuoteId = null;
         this.pendingQuotePrefill = null;
         this.quoteConversionLabel = '';

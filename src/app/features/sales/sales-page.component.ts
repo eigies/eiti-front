@@ -31,6 +31,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
+import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
 import { canDownloadSaleCreditNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import {
@@ -96,6 +97,7 @@ function localDateString(date = new Date()): string {
         QuickSaleWorkspaceComponent,
         QuickSaleSummaryComponent,
         SaleActionsMenuComponent,
+        SaleNotesComponent,
         SalesManagementComponent,
         SaleListItemComponent,
         ProductPickerModalComponent
@@ -255,6 +257,7 @@ export class SalesPageComponent implements OnInit {
             sourceChannel: [null, Validators.required],
             deliveryAddress: [''],
             contactPhone: [''],
+            notes: [''],
             requestInvoicing: [false],
             invoiceLetter: [InvoiceLetter.B],
             productId: ['', Validators.required],
@@ -900,7 +903,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
-        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '', requestInvoicing: false, invoiceLetter: InvoiceLetter.B });
+        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '', notes: '', requestInvoicing: false, invoiceLetter: InvoiceLetter.B });
         this.invoiceLetterTouched = false;
         this.createPaymentState = createEmptySalePaymentDraftState();
         this.createProductModalOpen = false;
@@ -1941,6 +1944,11 @@ if (form === this.editLineForm) {
 
     // ---------------- Facturacion electronica ----------------
 
+    /** Las observaciones se corrigen con la venta en cualquier estado salvo anulada (no son dato fiscal). */
+    canEditSaleNotes(sale: SaleResponse): boolean {
+        return this.auth.hasPermission(PermissionCodes.salesUpdate) && sale.idSaleStatus !== 3;
+    }
+
     get canInvoice(): boolean {
         return this.auth.hasPermission(PermissionCodes.salesInvoice);
     }
@@ -2354,6 +2362,7 @@ if (form === this.editLineForm) {
         sourceChannel: (rawChannel !== null && rawChannel !== '' && rawChannel !== undefined) ? Number(rawChannel) as SaleSourceChannel : null,
         deliveryAddress: raw.deliveryAddress || null,
         contactPhone: (raw.contactPhone || '').trim() || null,
+        notes: (raw.notes || '').trim() || null,
         // Con la sucursal en automatico el check no se ve: un valor que quedo tildado de otra
         // sucursal no tiene que viajar (el back lo tomaria como pedido explicito y bloquearia).
         requestInvoicing: this.showInvoicingCheck && Boolean(raw.requestInvoicing),

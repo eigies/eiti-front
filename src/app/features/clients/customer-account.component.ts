@@ -28,6 +28,7 @@ import { PermissionCodes } from '../../core/models/permission.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
+import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
 import { creditNoteReceiverConfirmation, isInvoiceReceiverChanged } from '../../shared/utils/fiscal-receivers.util';
 import { canDownloadSaleCreditNote, canDownloadSaleDebitNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
@@ -38,7 +39,7 @@ import { meansDetail } from '../../shared/utils/ledger-format.util';
 @Component({
   selector: 'app-customer-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent, AccountLedgerComponent, GroupedPaymentModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent, AccountLedgerComponent, GroupedPaymentModalComponent, SaleNotesComponent],
   templateUrl: './customer-account.component.html',
   styleUrls: ['./customer-account.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -413,6 +414,18 @@ export class CustomerAccountComponent implements OnInit {
   cancelRefundMode = 1; // 1 = saldo a favor, 2 = anular pagos
 
   // Solo ventas pendientes (1) o pagadas (2) y con permiso de anulación.
+  /** Las observaciones se corrigen con la venta en cualquier estado salvo anulada (no son dato fiscal). */
+  get canEditDetalleNotes(): boolean {
+    const sale = this.detalleModalSale;
+    return !!sale && sale.idSaleStatus !== 3 && this.auth.hasPermission(PermissionCodes.salesUpdate);
+  }
+
+  onDetalleNotesSaved(notes: string | null): void {
+    if (this.detalleModalSale) {
+      this.detalleModalSale = { ...this.detalleModalSale, notes };
+    }
+  }
+
   get canCancelDetalleSale(): boolean {
     const sale = this.detalleModalSale;
     return !!sale

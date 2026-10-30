@@ -164,6 +164,11 @@
       </div>
 
       <div class="detalle-section">
+        <app-sale-notes [saleId]="sale.id" [notes]="sale.notes" [canEdit]="canEditDetalleNotes"
+                        (saved)="onDetalleNotesSaved($event)"></app-sale-notes>
+      </div>
+
+      <div class="detalle-section">
         <div class="detalle-section__title">Productos</div>
         <table class="detalle-table">
           <thead>
