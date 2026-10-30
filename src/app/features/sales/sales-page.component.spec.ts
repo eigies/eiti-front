@@ -19,7 +19,8 @@ import { OnboardingService } from '../../core/services/onboarding.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
-import { SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
+import { ProductResponse } from '../../core/models/product.models';
 import { of, throwError } from 'rxjs';
 
 describe('SalesPageComponent (price override)', () => {
@@ -36,9 +37,10 @@ describe('SalesPageComponent (price override)', () => {
         authSpy = jasmine.createSpyObj('AuthService', ['hasPermission', 'getToken', 'isAuthenticated'], { currentUser$: of(null), currentUser: null });
         const productSpy = createMockService<ProductService>(['listProducts']);
         (productSpy as any).listProducts.and.returnValue(of([]));
-        saleSpy = createMockService<SaleService>(['listSales', 'createSale', 'cancelSale', 'getFiscalReceivers']);
+        saleSpy = createMockService<SaleService>(['listSales', 'createSale', 'updateSale', 'cancelSale', 'getFiscalReceivers']);
         (saleSpy as any).listSales.and.returnValue(of([]));
         (saleSpy as any).createSale.and.returnValue(of({}));
+        saleSpy.updateSale.and.returnValue(of({} as SaleResponse));
         const companySpy = createMockService<CompanyService>(['getCurrentCompany']);
         (companySpy as any).getCurrentCompany.and.returnValue(of({}));
         const customerSpy = createMockService<CustomerService>(['searchCustomers']);
@@ -476,6 +478,182 @@ describe('SalesPageComponent (price override)', () => {
                 ['sale-1', 'creditNote'],
                 ['sale-1', 'debitNote']
             ]);
+        });
+    });
+
+    describe('descuento minorista', () => {
+        const moura = { id: 'p1', code: 'M20', brand: 'Moura', name: 'M20GD', price: 1000, publicPrice: 1000 } as ProductResponse;
+
+        // Venta en espera con 15% de descuento: el dueño despues bajo el tope a 10%.
+        const discountedSale = {
+            id: 'sale-15',
+            code: 'MAT-4001',
+            branchId: 'branch-1',
+            customerId: null,
+            hasDelivery: false,
+            idSaleStatus: 1,
+            saleStatus: 'En espera',
+            totalAmount: 850,
+            pendingAmount: 850,
+            createdAt: '2026-10-30T12:00:00Z',
+            isModified: false,
+            isCuentaCorriente: false,
+            sourceChannel: 1,
+            generalDiscountPercent: 15,
+            generalDiscountReason: 'Cliente frecuente',
+            payments: [],
+            tradeIns: [],
+            details: [{ productId: 'p1', productName: 'M20GD', productBrand: 'Moura', quantity: 1, unitPrice: 1000, totalAmount: 1000, discountPercent: 0 }]
+        } as SaleResponse;
+
+        function buildCreateRequest(): CreateSaleRequest {
+            return component['buildRequest'](component.lineForm, component.draftItems, component.createPaymentState, null, 0);
+        }
+
+        function readyToCreate(status: number): void {
+            component.maxRetailDiscountPercent = 10;
+            component.lineForm.patchValue({ branchId: 'branch-1', sourceChannel: 1, idSaleStatus: status });
+            component.draftItems = [{ product: moura, quantity: 1, total: 1000 }];
+        }
+
+        it('el total ya trae el descuento: (renglones + recargo sin envío) × (1 − %)', () => {
+            component.defaultNoDeliverySurcharge = 100;
+            component.draftItems = [{ product: moura, quantity: 1, total: 1000 }];
+            component.createDiscount = { open: true, percent: 10, reason: '' };
+
+            expect(component.draftTotal).toBe(990);
+
+            component.defaultNoDeliverySurcharge = 0;
+            component.draftItems = [{ product: moura, quantity: 1, total: 333.33 }];
+            component.createDiscount = { open: true, percent: 12.5, reason: '' };
+
+            expect(component.draftTotal).toBe(291.66);
+        });
+
+        it('el request lleva el % y el motivo recortado; sin descuento, 0 y sin motivo', () => {
+            component.draftItems = [{ product: moura, quantity: 1, total: 1000 }];
+            component.createDiscount = { open: true, percent: 10, reason: '  Cliente frecuente  ' };
+
+            expect(buildCreateRequest()).toEqual(jasmine.objectContaining({ generalDiscountPercent: 10, generalDiscountReason: 'Cliente frecuente' }));
+
+            component.createDiscount = { open: true, percent: 0, reason: 'quedó escrito' };
+
+            expect(buildCreateRequest()).toEqual(jasmine.objectContaining({ generalDiscountPercent: 0, generalDiscountReason: null }));
+        });
+
+        it('una venta pagada con descuento se cobra por el total descontado', async () => {
+            readyToCreate(2);
+            component.createDiscount = { open: true, percent: 10, reason: '' };
+            component.createPaymentState.payments[0].amount = 900;
+
+            await component.createSale();
+
+            expect(saleSpy.createSale).toHaveBeenCalled();
+        });
+
+        it('un descuento por encima del tope no se manda', async () => {
+            const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+            readyToCreate(1);
+            component.createDiscount = { open: true, percent: 15, reason: '' };
+
+            await component.createSale();
+
+            expect(saleSpy.createSale).not.toHaveBeenCalled();
+            expect(toast.error).toHaveBeenCalledWith('El descuento supera el máximo de 10% que fijó el dueño.');
+        });
+
+        it('si el back rechaza el descuento muestra su mensaje', async () => {
+            const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+            saleSpy.createSale.and.returnValue(throwError(() => ({ error: {
+                errorCode: 'Sales.Discount.ExceedsLimit', detail: 'El descuento supera el máximo de 10% que fijó el dueño.' } })));
+            readyToCreate(1);
+            component.createDiscount = { open: true, percent: 10, reason: '' };
+
+            await component.createSale();
+
+            expect(toast.error).toHaveBeenCalledWith('El descuento supera el máximo de 10% que fijó el dueño.');
+        });
+
+        it('al editar trae el descuento de la venta y el total lo aplica', () => {
+            component.products = [moura];
+
+            component.beginEdit(discountedSale);
+
+            expect(component.editDiscount).toEqual({ open: true, percent: 15, reason: 'Cliente frecuente' });
+            expect(component.editTotal).toBe(850);
+            const request = component['buildRequest'](component.editMetaForm, component.editItems, component.editPaymentState, null, 0);
+            expect(request).toEqual(jasmine.objectContaining({ generalDiscountPercent: 15, generalDiscountReason: 'Cliente frecuente' }));
+        });
+
+        it('editar sin tocar un descuento que quedó arriba del tope nuevo se guarda igual', async () => {
+            component.products = [moura];
+            component.maxRetailDiscountPercent = 10;
+            component.beginEdit(discountedSale);
+
+            await component.saveEdit();
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-15', jasmine.objectContaining({ generalDiscountPercent: 15 }));
+        });
+
+        it('cambiar el descuento al editar sí respeta el tope', async () => {
+            component.products = [moura];
+            component.maxRetailDiscountPercent = 10;
+            component.beginEdit(discountedSale);
+            component.editDiscount = { ...component.editDiscount, percent: 12 };
+
+            await component.saveEdit();
+
+            expect(saleSpy.updateSale).not.toHaveBeenCalled();
+        });
+
+        it('el "Cobrar" rápido conserva el descuento y el motivo de la venta', () => {
+            (TestBed.inject(CashService) as jasmine.SpyObj<CashService>).listCashDrawers.and.returnValue(of([
+                { id: 'drawer-1', branchId: 'branch-1', name: 'Caja 1', isActive: true, hasOpenSession: true, createdAt: '2026-10-30T00:00:00Z' }
+            ]));
+
+            component.markAsPaid(discountedSale);
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-15', jasmine.objectContaining({
+                generalDiscountPercent: 15,
+                generalDiscountReason: 'Cliente frecuente',
+                payments: [jasmine.objectContaining({ idPaymentMethod: 1, amount: 850 })]
+            }));
+        });
+
+        it('cambiar el canal de una venta no le borra el descuento', () => {
+            component.openChannelPopup(discountedSale);
+            component.selectChannelInPopup(2);
+
+            component.saveChannelPopup();
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-15', jasmine.objectContaining({
+                generalDiscountPercent: 15,
+                generalDiscountReason: 'Cliente frecuente'
+            }));
+        });
+
+        it('con tope 0 el control no aparece; con tope muestra "hasta X%"', () => {
+            component.activeCreateStage = 'payment';
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('app-sale-discount-control')).toBeNull();
+
+            component.maxRetailDiscountPercent = 10;
+            fixture.detectChanges();
+
+            const control = fixture.nativeElement.querySelector('app-sale-discount-control') as HTMLElement | null;
+            expect(control).not.toBeNull();
+            expect(control?.textContent).toContain('hasta 10%');
+        });
+
+        it('toma el tope de la empresa', () => {
+            (TestBed.inject(CompanyService) as jasmine.SpyObj<CompanyService>).getCurrentCompany.and.returnValue(of({
+                id: 'co-1', name: 'Soler', primaryDomain: 'soler.com', maxRetailDiscountPercent: 8, createdAt: '2026-01-01T00:00:00Z'
+            }));
+
+            fixture.detectChanges();
+
+            expect(component.maxRetailDiscountPercent).toBe(8);
         });
     });
 });

@@ -3301,3 +3301,31 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ---------------- Descuento minorista ---------------- */
+
+.edit-discount {
+    display: block;
+    margin-bottom: 1.25rem;
+}
+
+.sale-card__discount-tag {
+    color: color-mix(in srgb, var(--amber) 78%, var(--text));
+    letter-spacing: .06em;
+}
+
+.sale-card__discount {
+    margin: .75rem 0 0;
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    overflow-wrap: anywhere;
+}
+
+.sale-card__discount-label {
+    color: color-mix(in srgb, var(--amber) 78%, var(--text));
+    letter-spacing: .04em;
+}
+
+.sale-card__discount-reason {
+    color: var(--text-dim);
+}

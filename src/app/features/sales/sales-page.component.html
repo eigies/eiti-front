@@ -282,6 +282,15 @@
             </ng-container>
           </div>
 
+          <!-- Solo si el dueño fijo un tope: en 0 el descuento esta deshabilitado. -->
+          <app-sale-discount-control
+            *ngIf="maxRetailDiscountPercent > 0"
+            class="stacked-picker"
+            [(draft)]="createDiscount"
+            [maxPercent]="maxRetailDiscountPercent"
+            [subtotal]="draftSubtotal">
+          </app-sale-discount-control>
+
           <app-sale-payment-inline
             [total]="draftTotal"
             [statusId]="lineForm.get('idSaleStatus')?.value ?? 1"
@@ -426,6 +435,15 @@
         </div>
       </form>
     </div>
+
+    <app-sale-discount-control
+      *ngIf="showEditDiscount"
+      class="edit-discount"
+      [(draft)]="editDiscount"
+      [maxPercent]="maxRetailDiscountPercent"
+      [subtotal]="editSubtotal"
+      [originalPercent]="editOriginalDiscountPercent">
+    </app-sale-discount-control>
 
     <app-sale-payment-inline
       [total]="editTotal"
@@ -705,7 +723,7 @@
             </div>
 
             <div class="sale-card__amount-block">
-              <span class="sale-card__amount-label">Total</span>
+              <span class="sale-card__amount-label">Total<span class="sale-card__discount-tag" *ngIf="(sale.generalDiscountPercent ?? 0) > 0"> · desc. {{ sale.generalDiscountPercent }}%</span></span>
               <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>
               <span class="sale-card__payment"
                     [class.sale-card__payment--cc]="sale.isCuentaCorriente"
@@ -785,6 +803,11 @@
               <span>{{ saleDetailPage(sale.id) }} / {{ totalSaleDetailPages(sale) }}</span>
               <button class="btn btn--ghost btn--sm" type="button" (click)="changeSaleDetailPage(sale.id, 1)" [disabled]="saleDetailPage(sale.id) >= totalSaleDetailPages(sale)">→</button>
             </div>
+
+            <p class="sale-card__discount" *ngIf="(sale.generalDiscountPercent ?? 0) > 0">
+              <span class="sale-card__discount-label">Descuento {{ sale.generalDiscountPercent }}%</span>
+              <span class="sale-card__discount-reason" *ngIf="sale.generalDiscountReason"> · {{ sale.generalDiscountReason }}</span>
+            </p>
 
             <app-sale-notes class="sale-card__notes" (click)="$event.stopPropagation()"
                             [saleId]="sale.id" [notes]="sale.notes" [canEdit]="canEditSaleNotes(sale)"

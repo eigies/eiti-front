@@ -1,0 +1,165 @@
+:host {
+    display: block;
+}
+
+/* Mismo lenguaje que el resto del alta: link ambar en mono, campos y errores como los de la pantalla de ventas. */
+.sale-discount {
+    display: grid;
+    gap: .65rem;
+}
+
+.sale-discount--active {
+    padding: .7rem .85rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 28%, var(--border-2));
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--amber) 5%, var(--bg));
+}
+
+.sale-discount__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .35rem .75rem;
+}
+
+.sale-discount__toggle {
+    padding: .35rem 0;
+    border: 0;
+    background: none;
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .03em;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sale-discount__toggle:hover {
+    text-decoration: underline;
+}
+
+.sale-discount__toggle:focus-visible,
+.sale-discount__clear:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--amber) 60%, transparent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.sale-discount__limit {
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .62rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.sale-discount__amount {
+    margin-left: auto;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.sale-discount__body {
+    display: grid;
+    grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr);
+    gap: .75rem;
+    align-items: end;
+}
+
+.sale-discount__field {
+    display: grid;
+    gap: .45rem;
+    min-width: 0;
+}
+
+.sale-discount__label {
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: .69rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.sale-discount__optional {
+    font-weight: 400;
+    opacity: .6;
+}
+
+.sale-discount__input {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 42px;
+    padding: .55rem .65rem;
+    border: 1px solid var(--border-2);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.sale-discount__input:hover {
+    border-color: color-mix(in srgb, var(--amber) 28%, var(--border-2));
+}
+
+.sale-discount__input:focus {
+    border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+.sale-discount__input[aria-invalid='true'] {
+    border-color: color-mix(in srgb, var(--danger) 72%, var(--border-2));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.sale-discount__error,
+.sale-discount__foot {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+.sale-discount__error {
+    color: color-mix(in srgb, var(--danger) 76%, var(--text));
+    font-family: 'DM Mono', monospace;
+    font-size: .65rem;
+    line-height: 1.4;
+}
+
+.sale-discount__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+.sale-discount__summary {
+    margin: 0;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .65rem;
+}
+
+.sale-discount__clear {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .65rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.sale-discount__clear:hover {
+    color: var(--text);
+}
+
+@media (max-width: 520px) {
+    .sale-discount__body {
+        grid-template-columns: 1fr;
+    }
+}

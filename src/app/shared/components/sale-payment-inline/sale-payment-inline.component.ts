@@ -200,6 +200,10 @@ export class SalePaymentInlineComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (!changes['total']) return;
         const prevTotal: number = changes['total'].previousValue ?? 0;
+        // En la primera vuelta el recargo viene de la venta guardada (edicion): no se toca.
+        if (!changes['total'].firstChange) {
+            this.syncCardPaymentsWithTotal(prevTotal);
+        }
         for (const payment of this.state?.payments ?? []) {
             if (payment.idPaymentMethod === this.CARD_METHOD_ID) continue;
             if (payment.amount === 0 && this.remaining > 0) {
@@ -395,6 +399,28 @@ export class SalePaymentInlineComponent implements OnChanges {
             i === index ? { ...p, cardCuotas: value ?? null, amount } : item
         );
         this.recalculateSurcharge(index);
+    }
+
+    /**
+     * El recargo de tarjeta es un % del total de la venta: si el total cambia despues de elegir la tarjeta
+     * (un descuento, otro producto) se recalcula. Si el importe venia autocompletado (era el total, con o sin
+     * recargo), tambien sigue al total; uno cargado a mano no se pisa.
+     */
+    private syncCardPaymentsWithTotal(prevTotal: number): void {
+        (this.state?.payments ?? []).forEach((payment, index) => {
+            if (payment.idPaymentMethod !== this.CARD_METHOD_ID) return;
+            const pct = this.getSurchargePct(payment.cardBankId, payment.cardCuotas);
+            if (pct == null) return;
+
+            const prevEffectiveTotal = roundMoney(prevTotal + roundMoney(prevTotal * pct / 100));
+            const followsTotal = prevTotal > 0 && (payment.amount === prevTotal || payment.amount === prevEffectiveTotal);
+            this.recalculateSurcharge(index);
+            if (followsTotal) {
+                const amount = this.state.payments[index].amount;
+                const nextAmount = Math.max(0, roundMoney(this.remaining + amount));
+                this.state.payments = this.state.payments.map((item, i) => i === index ? { ...item, amount: nextAmount } : item);
+            }
+        });
     }
 
     private recalculateSurcharge(index: number): void {

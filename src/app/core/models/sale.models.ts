@@ -1,4 +1,36 @@
-import { SalePaymentRequest, SalePaymentResponse, SaleTradeInRequest, SaleTradeInResponse } from './sale-payment.models';
+import { roundMoney, SalePaymentRequest, SalePaymentResponse, SaleTradeInRequest, SaleTradeInResponse } from './sale-payment.models';
+
+/** Mismo limite que el back para el motivo del descuento general. */
+export const GENERAL_DISCOUNT_REASON_MAX_LENGTH = 200;
+
+/**
+ * Total con el descuento general aplicado. Misma cuenta que Sale.RecalculateTotal en el back:
+ * el % va sobre (renglones + recargo sin envio); el recargo de tarjeta se calcula despues, sobre este total.
+ */
+export function applyGeneralDiscount(subtotal: number, percent: number | null | undefined): number {
+    const pct = Number(percent ?? 0);
+    if (!Number.isFinite(pct) || pct <= 0) {
+        return roundMoney(subtotal);
+    }
+    return roundMoney(subtotal * (100 - pct) / 100);
+}
+
+/**
+ * Por que no se puede usar el % de descuento general en una venta minorista, o null si se puede.
+ * Igual que el back: el tope solo se valida si el % cambio respecto del que la venta ya tenia
+ * (bajar el tope no bloquea editar una venta en espera que ya lo tenia).
+ */
+export function saleDiscountIssue(percent: number, maxPercent: number, originalPercent: number | null = null): string | null {
+    if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
+        return 'El descuento tiene que estar entre 0 y 100%.';
+    }
+    if (percent === 0 || percent === originalPercent || percent <= maxPercent) {
+        return null;
+    }
+    return maxPercent > 0
+        ? `El descuento supera el máximo de ${maxPercent}% que fijó el dueño.`
+        : 'El descuento está deshabilitado: el dueño no fijó un máximo.';
+}
 
 export type SaleSourceChannel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
@@ -244,6 +276,13 @@ export interface CreateSaleRequest {
     contactPhone?: string | null;
     /** Observaciones libres de la venta (presupuesto, patente). Salen en la factura. */
     notes?: string | null;
+    /**
+     * % de descuento sobre toda la venta. El PUT lo toma como el valor nuevo: quien reenvia una venta
+     * existente (cobro rapido, cambio de canal) tiene que mandar el que ya tenia o lo borra.
+     */
+    generalDiscountPercent?: number;
+    /** Motivo opcional del descuento (hasta 200). */
+    generalDiscountReason?: string | null;
     /** Opt-in por venta. Se ignora si la empresa/sucursal factura automaticamente. */
     requestInvoicing?: boolean;
     /** Letra elegida por el vendedor; el back frena la venta si no coincide con el cliente. */
@@ -309,6 +348,7 @@ export interface SaleResponse {
     /** "invoiceA" / "invoiceB": de aca sale la letra que muestra el listado. */
     fiscalDocumentType?: string | null;
     generalDiscountPercent?: number;
+    generalDiscountReason?: string | null;
     originalTotal?: number;
     manualOverridePrice?: number | null;
     overriddenByUserId?: string | null;
@@ -560,6 +600,7 @@ export interface SaleByIdResponse {
     ccPaidTotal: number;
     ccPendingAmount: number;
     generalDiscountPercent?: number;
+    generalDiscountReason?: string | null;
     originalTotal?: number;
     manualOverridePrice?: number | null;
     overriddenByUserId?: string | null;
