@@ -18,24 +18,37 @@
 .sale-discount__head {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     gap: .35rem .75rem;
 }
 
+/* Pildora como los action-chip del cobro, con fondo ambar suave: como link de texto se perdia en el alta. */
 .sale-discount__toggle {
-    padding: .35rem 0;
-    border: 0;
-    background: none;
+    padding: .45rem .85rem;
+    border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--border-2));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
     color: var(--amber);
     font-family: 'DM Mono', monospace;
-    font-size: .72rem;
-    letter-spacing: .03em;
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
     text-align: left;
     cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease;
 }
 
-.sale-discount__toggle:hover {
-    text-decoration: underline;
+.sale-discount__toggle:hover,
+.sale-discount__toggle[aria-expanded='true'] {
+    border-color: color-mix(in srgb, var(--amber) 70%, var(--border-2));
+    background: color-mix(in srgb, var(--amber) 16%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sale-discount__toggle {
+        transition: none;
+    }
 }
 
 .sale-discount__toggle:focus-visible,
