@@ -49,6 +49,11 @@ export class SaleService {
         return this.http.put<SaleResponse>(`${this.base}/${id}`, request);
     }
 
+    /** Corrige las observaciones sin tocar el resto de la venta (vale con la venta cobrada o facturada). */
+    updateSaleNotes(id: string, notes: string | null): Observable<void> {
+        return this.http.put<void>(`${this.base}/${id}/notes`, { notes });
+    }
+
     sendSaleWhatsApp(id: string): Observable<SendSaleWhatsAppResponse> {
         return this.http.post<SendSaleWhatsAppResponse>(`${this.base}/${id}/send-whatsapp`, {});
     }

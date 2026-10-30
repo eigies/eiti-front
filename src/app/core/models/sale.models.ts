@@ -180,6 +180,8 @@ export interface SaleInvoicePrintResponse {
     items: SaleInvoicePrintItem[];
     adjustments: SaleInvoicePrintAdjustments;
     amounts: SaleInvoicePrintAmounts;
+    /** Observaciones de la venta (no fiscales). */
+    notes?: string | null;
 }
 
 export interface SaleInvoicePrintIssuer {
@@ -240,6 +242,8 @@ export interface CreateSaleRequest {
     sourceChannel?: SaleSourceChannel | null;
     deliveryAddress?: string | null;
     contactPhone?: string | null;
+    /** Observaciones libres de la venta (presupuesto, patente). Salen en la factura. */
+    notes?: string | null;
     /** Opt-in por venta. Se ignora si la empresa/sucursal factura automaticamente. */
     requestInvoicing?: boolean;
     /** Letra elegida por el vendedor; el back frena la venta si no coincide con el cliente. */
@@ -275,6 +279,7 @@ export interface SaleResponse {
     customerPhone?: string | null;
     deliveryAddress?: string | null;
     contactPhone?: string | null;
+    notes?: string | null;
     cashDrawerId?: string | null;
     cashSessionId?: string | null;
     hasDelivery: boolean;
@@ -369,6 +374,7 @@ export interface CreateCcSaleRequest {
     /** Igual que en mostrador: pedido explicito de factura y la letra elegida. */
     requestInvoicing?: boolean;
     invoiceLetter?: InvoiceLetter | null;
+    notes?: string | null;
 }
 
 export interface SaleTradeInDetail {
@@ -540,6 +546,7 @@ export interface SaleByIdResponse {
     customerPhone?: string | null;
     deliveryAddress?: string | null;
     contactPhone?: string | null;
+    notes?: string | null;
     cashDrawerId?: string | null;
     hasDelivery: boolean;
     idSaleStatus: number;
