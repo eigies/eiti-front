@@ -22,6 +22,43 @@
     padding-left: 1.8rem;
 }
 
+/* ─── Percent input (descuento minorista) ───────────────── */
+
+.input-percent {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-percent__symbol {
+    position: absolute;
+    right: .95rem;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: .84rem;
+    pointer-events: none;
+    user-select: none;
+}
+
+.input-percent__input {
+    padding-right: 2rem;
+}
+
+.discount-limit-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-inline--accent {
+    border-color: color-mix(in srgb, var(--amber) 38%, var(--border-2));
+    color: color-mix(in srgb, var(--amber) 72%, var(--text));
+}
+
+.btn-inline:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
 .pdf-brand-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

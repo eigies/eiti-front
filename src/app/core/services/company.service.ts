@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CompanyResponse, UpdateCompanyRequest } from '../models/company.models';
+import { CompanyResponse, SetRetailDiscountLimitRequest, UpdateCompanyRequest } from '../models/company.models';
 
 @Injectable({ providedIn: 'root' })
 export class CompanyService {
@@ -16,5 +16,10 @@ export class CompanyService {
 
     updateCurrentCompany(request: UpdateCompanyRequest): Observable<CompanyResponse> {
         return this.http.put<CompanyResponse>(`${this.base}/current`, request);
+    }
+
+    setRetailDiscountLimit(maxPercent: number): Observable<void> {
+        const request: SetRetailDiscountLimitRequest = { maxPercent };
+        return this.http.put<void>(`${this.base}/current/retail-discount-limit`, request);
     }
 }
