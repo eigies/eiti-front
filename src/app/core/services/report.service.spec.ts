@@ -28,6 +28,7 @@ describe('ReportService · descuentos', () => {
         service.getDiscountsReport({ dateFrom: '2026-10-01', dateTo: '2026-10-30', branchId: null, userId: null }).subscribe();
 
         const request = http.expectOne(`${environment.apiUrl}/reports/sales/discounts?dateFrom=2026-10-01&dateTo=2026-10-30`);
+        expect(request.request.url).not.toMatch(/branchId|userId/);
         request.flush({ rows: [], totals: { salesCount: 0, discountAmount: 0 } });
     });
 });

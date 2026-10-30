@@ -214,6 +214,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/reports/trade-ins-by-branch/trade-ins-by-branch.component').then(m => m.TradeInsByBranchComponent)
     },
     {
+        path: 'reportes/ventas/descuentos',
+        canActivate: [authGuard, permissionGuard],
+        data: { permission: PermissionCodes.reportsSalesDiscounts },
+        loadComponent: () => import('./features/reports/discounts/discounts-report.component').then(m => m.DiscountsReportComponent)
+    },
+    {
         path: 'reportes/ventas/modelo',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesModel, tipo: 'product' },
