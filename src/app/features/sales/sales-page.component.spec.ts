@@ -656,4 +656,97 @@ describe('SalesPageComponent (price override)', () => {
             expect(component.maxRetailDiscountPercent).toBe(8);
         });
     });
+
+    // La linea de tarjeta del request lleva la BASE (la parte de la venta que paga la tarjeta) y el back
+    // calcula el recargo. Lo guardado en la venta es lo que paso por el posnet (base + recargo): al reenviarlo
+    // hay que restarle el recargo o se cobraria dos veces.
+    describe('recargo de tarjeta sobre su base', () => {
+        const moura = { id: 'p1', code: 'M20', brand: 'Moura', name: 'M20GD', price: 100000, publicPrice: 100000 } as ProductResponse;
+        const cardPayment = { idPaymentMethod: 3, paymentMethodName: 'Tarjeta', amount: 66636, reference: null, cardBankId: 2, cardCuotas: 3, cardSurchargeAmt: 6636, transferBankId: null };
+        const cardRequestLine = { idPaymentMethod: 3, amount: 60000, reference: null, cardBankId: 2, cardCuotas: 3, transferBankId: null, cheque: null };
+
+        // Venta de $100.000 en espera: $60.000 ya pasaron por la tarjeta (MOURA 3 cuotas 11,06 %), faltan $40.000.
+        const partlyPaidByCard = {
+            id: 'sale-card',
+            code: 'MAT-5001',
+            branchId: 'branch-1',
+            customerId: null,
+            hasDelivery: false,
+            idSaleStatus: 1,
+            saleStatus: 'En espera',
+            totalAmount: 100000,
+            pendingAmount: 40000,
+            createdAt: '2026-10-30T12:00:00Z',
+            isModified: false,
+            isCuentaCorriente: false,
+            sourceChannel: 1,
+            generalDiscountPercent: 0,
+            payments: [cardPayment],
+            tradeIns: [],
+            details: [{ productId: 'p1', productName: 'M20GD', productBrand: 'Moura', quantity: 1, unitPrice: 100000, totalAmount: 100000, discountPercent: 0 }]
+        } as SaleResponse;
+
+        it('editar una venta cobrada en parte con tarjeta manda la base, no lo que paso por el posnet', async () => {
+            component.products = [moura];
+            component.beginEdit(partlyPaidByCard);
+
+            await component.saveEdit();
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-card', jasmine.objectContaining({ payments: [cardRequestLine] }));
+        });
+
+        it('el "Cobrar" rápido reenvía la base de la tarjeta y cobra en efectivo lo que falta', () => {
+            (TestBed.inject(CashService) as jasmine.SpyObj<CashService>).listCashDrawers.and.returnValue(of([
+                { id: 'drawer-1', branchId: 'branch-1', name: 'Caja 1', isActive: true, hasOpenSession: true, createdAt: '2026-10-30T00:00:00Z' }
+            ]));
+
+            component.markAsPaid(partlyPaidByCard);
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-card', jasmine.objectContaining({
+                payments: [cardRequestLine, jasmine.objectContaining({ idPaymentMethod: 1, amount: 40000 })]
+            }));
+        });
+
+        it('cambiar el canal reenvía la base de la tarjeta', () => {
+            component.openChannelPopup(partlyPaidByCard);
+            component.selectChannelInPopup(2);
+
+            component.saveChannelPopup();
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-card', jasmine.objectContaining({ payments: [cardRequestLine] }));
+        });
+
+        describe('al crear', () => {
+            beforeEach(() => {
+                component.lineForm.patchValue({ branchId: 'branch-1', sourceChannel: 1 });
+                component.draftItems = [{ product: moura, quantity: 1, total: 100000 }];
+            });
+
+            it('una venta pagada con la tarjeta por toda la venta se cobra sin saldo y viaja con la base', async () => {
+                component.lineForm.patchValue({ idSaleStatus: 2 });
+                component.createPaymentState.payments = [
+                    { idPaymentMethod: 3, amount: 100000, notes: '', cardBankId: 2, cardCuotas: 3, cardSurchargePct: 11.06, cardSurchargeAmt: 11060 }
+                ];
+
+                await component.createSale();
+
+                expect(saleSpy.createSale).toHaveBeenCalledWith(jasmine.objectContaining({
+                    payments: [{ ...cardRequestLine, amount: 100000 }]
+                }));
+            });
+
+            it('en espera, una base de tarjeta mayor que la venta no se manda aunque entre en el total con recargo', async () => {
+                const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+                component.lineForm.patchValue({ idSaleStatus: 1 });
+                component.createPaymentState.payments = [
+                    { idPaymentMethod: 3, amount: 105000, notes: '', cardBankId: 2, cardCuotas: 3, cardSurchargePct: 11.06, cardSurchargeAmt: 11613 }
+                ];
+
+                await component.createSale();
+
+                expect(saleSpy.createSale).not.toHaveBeenCalled();
+                expect(toast.error).toHaveBeenCalledWith('Una venta en espera puede ser parcial, pero no superar el total.');
+            });
+        });
+    });
 });

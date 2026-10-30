@@ -114,8 +114,8 @@ export class SalesFullComponent implements OnInit {
   get confirmationStepNumber(): number { return this.requiresDelivery ? 6 : 5; }
   get isPaid(): boolean { return Number(this.saleForm.get('idSaleStatus')?.value ?? 1) === 2; }
   get paymentCoverage(): number { return salePaymentCoverage(this.paymentState); }
-  get totalCardSurcharge(): number { return roundMoney(this.paymentState.payments.reduce((sum, p) => sum + (p.cardSurchargeAmt ?? 0), 0)); }
-  get paymentRemaining(): number { return roundMoney(this.total + this.totalCardSurcharge - this.paymentCoverage); }
+  // La tarjeta cubre su base; el recargo se cobra aparte y no cambia cuanto falta de la venta.
+  get paymentRemaining(): number { return roundMoney(this.total - this.paymentCoverage); }
   get requiresCashDrawer(): boolean { return this.cashDrawers.length > 0; }
   get activeDrivers(): DriverResponse[] { return this.drivers.filter(driver => driver.isActive && !driver.isLicenseExpired); }
   get activeVehicles(): VehicleResponse[] { return this.vehicles.filter(vehicle => vehicle.isActive); }
@@ -397,7 +397,8 @@ export class SalesFullComponent implements OnInit {
       payments.reduce((sum, item) => sum + item.amount, 0)
       + tradeIns.reduce((sum, item) => sum + item.amount, 0)
     );
-    const effectiveTotal = roundMoney(this.total + this.totalCardSurcharge);
+    // La tarjeta viaja con su base: lo cobrado se compara con el total de la venta y el recargo va aparte.
+    const total = roundMoney(this.total);
 
     // Un canje a medio cargar no viaja con la venta: se avisa antes de seguir.
     const pending = pendingTradeInLines(this.paymentState)
@@ -407,12 +408,12 @@ export class SalesFullComponent implements OnInit {
     }
     dropPendingTradeInLines(this.paymentState);
 
-    if (this.isPaid && coverage !== effectiveTotal) {
+    if (this.isPaid && coverage !== total) {
       this.toast.error('Una venta pagada debe quedar cancelada exactamente con payments + tradeIns.');
       return false;
     }
 
-    if (!this.isPaid && coverage > effectiveTotal) {
+    if (!this.isPaid && coverage > total) {
       this.toast.error('Una venta en espera puede tener cobro parcial, pero nunca superar el total.');
       return false;
     }

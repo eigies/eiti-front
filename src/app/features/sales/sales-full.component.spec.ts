@@ -142,4 +142,39 @@ describe('SalesFullComponent (price override)', () => {
         expect(component.paymentState.tradeIns).toEqual([]);
         expect(component.paymentState.hasTradeIn).toBeFalse();
     });
+
+    // La linea de tarjeta lleva la BASE (la parte de la venta que paga la tarjeta); el recargo se cobra aparte,
+    // asi que lo cobrado se compara contra el total de la venta, no contra el total con recargo.
+    describe('recargo de tarjeta sobre su base', () => {
+        beforeEach(() => {
+            component.draftItems = [{ product: { id: 'p1' } as any, quantity: 1, total: 100000 }];
+        });
+
+        it('lo que falta cobrar no cuenta el recargo: $40.000 en efectivo + $50.000 de base dejan $10.000', () => {
+            component.paymentState.payments = [
+                { idPaymentMethod: 1, amount: 40000, notes: '' },
+                { idPaymentMethod: 3, amount: 50000, notes: '', cardBankId: 2, cardCuotas: 3, cardSurchargePct: 11.06, cardSurchargeAmt: 5530 }
+            ];
+
+            expect(component.paymentRemaining).toBe(10000);
+        });
+
+        it('una venta pagada con la tarjeta por toda la venta pasa la validación', async () => {
+            component.saleForm.patchValue({ idSaleStatus: 2 });
+            component.paymentState.payments = [
+                { idPaymentMethod: 3, amount: 100000, notes: '', cardBankId: 2, cardCuotas: 3, cardSurchargePct: 11.06, cardSurchargeAmt: 11060 }
+            ];
+
+            await expectAsync((component as any).validatePaymentState()).toBeResolvedTo(true);
+        });
+
+        it('en espera, una base de tarjeta mayor que la venta no pasa aunque entre en el total con recargo', async () => {
+            component.saleForm.patchValue({ idSaleStatus: 1 });
+            component.paymentState.payments = [
+                { idPaymentMethod: 3, amount: 105000, notes: '', cardBankId: 2, cardCuotas: 3, cardSurchargePct: 11.06, cardSurchargeAmt: 11613 }
+            ];
+
+            await expectAsync((component as any).validatePaymentState()).toBeResolvedTo(false);
+        });
+    });
 });

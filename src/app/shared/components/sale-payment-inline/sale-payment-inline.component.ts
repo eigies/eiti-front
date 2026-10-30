@@ -8,7 +8,9 @@ import {
     SalePaymentDraftLine,
     SalePaymentDraftState,
     SALE_PAYMENT_METHODS,
+    SALE_PAYMENT_METHOD_CARD,
     SALE_STATUS_PAID,
+    cardSurchargeFor,
     createEmptyPaymentLine,
     createEmptyTradeInLine,
     hasCashPayment,
@@ -43,14 +45,18 @@ export class SalePaymentInlineComponent implements OnChanges {
     readonly paymentMethods = SALE_PAYMENT_METHODS;
     readonly paidStatusId = SALE_STATUS_PAID;
     readonly TRANSFER_METHOD_ID = 2;
-    readonly CARD_METHOD_ID = 3;
+    readonly CARD_METHOD_ID = SALE_PAYMENT_METHOD_CARD;
     readonly CHECK_METHOD_ID = 4;
 
-    get paymentMethodOptions(): SearchableSelectOption[] {
-        return this.paymentMethods.map(method => ({
-            value: method.id,
-            label: method.label
-        }));
+    /** Una sola tarjeta por venta (el back rechaza dos): las demas lineas no ofrecen Tarjeta si ya hay una. */
+    paymentMethodOptionsFor(index: number): SearchableSelectOption[] {
+        const cardElsewhere = this.hasCardOutside(index);
+        return this.paymentMethods
+            .filter(method => !(cardElsewhere && method.id === this.CARD_METHOD_ID))
+            .map(method => ({
+                value: method.id,
+                label: method.label
+            }));
     }
 
     get activeBanksOptions(): SearchableSelectOption[] {
@@ -101,24 +107,21 @@ export class SalePaymentInlineComponent implements OnChanges {
         return roundMoney(payments + tradeIns);
     }
 
+    /** Recargo de la venta: el de su linea de tarjeta, calculado sobre la base de esa linea. */
     get totalCardSurcharge(): number {
-        // Surcharge is fixed on the SALE TOTAL, not on the card payment amount.
-        // Find the first card payment with a bank+cuotas selection and apply its rate to this.total.
-        for (const p of this.state.payments) {
-            if (p.idPaymentMethod === this.CARD_METHOD_ID && p.cardBankId != null && p.cardCuotas != null) {
-                const pct = this.getSurchargePct(p.cardBankId, p.cardCuotas);
-                if (pct != null && pct > 0) return roundMoney(this.total * pct / 100);
-            }
-        }
-        return 0;
+        return roundMoney(this.state.payments.reduce((sum, p) => sum + this.lineCardSurcharge(p), 0));
     }
 
     get effectiveTotal(): number {
         return roundMoney(this.total + this.totalCardSurcharge);
     }
 
+    /**
+     * Total a cobrar menos lo cobrado (bases, recargo y canjes). El recargo esta de los dos lados: con la
+     * base de la tarjeta = lo que falta de la venta, el saldo queda en cero.
+     */
     get remaining(): number {
-        return roundMoney(this.effectiveTotal - this.coverage);
+        return roundMoney(this.effectiveTotal - (this.coverage + this.totalCardSurcharge));
     }
 
     get requiresCashDrawer(): boolean {
@@ -138,7 +141,8 @@ export class SalePaymentInlineComponent implements OnChanges {
             .filter(p => p.idPaymentMethod > 0 && p.amount > 0)
             .map(p => ({
                 label: this.paymentMethodLabel(p.idPaymentMethod),
-                amount: p.amount,
+                // La tarjeta figura con lo que pasa por el posnet, asi las lineas suman el total a cobrar.
+                amount: roundMoney(p.amount + this.lineCardSurcharge(p)),
                 type: 'payment' as const
             }));
         const tradeIns = normalizeSaleTradeIns(this.state).map(t => ({
@@ -204,12 +208,15 @@ export class SalePaymentInlineComponent implements OnChanges {
         if (!changes['total'].firstChange) {
             this.syncCardPaymentsWithTotal(prevTotal);
         }
-        for (const payment of this.state?.payments ?? []) {
-            if (payment.idPaymentMethod === this.CARD_METHOD_ID) continue;
+        const payments = this.state?.payments ?? [];
+        for (let index = 0; index < payments.length; index++) {
+            const payment = payments[index];
             if (payment.amount === 0 && this.remaining > 0) {
-                payment.amount = this.remaining;
+                this.setPaymentAmount(index, this.remaining);
                 break;
             }
+            // La tarjeta sigue al total en syncCardPaymentsWithTotal.
+            if (payment.idPaymentMethod === this.CARD_METHOD_ID) continue;
             // If amount was auto-set to the previous total, keep it in sync as items are added/removed
             if (payment.amount === prevTotal && prevTotal > 0) {
                 payment.amount = Math.max(0, roundMoney(this.remaining + payment.amount));
@@ -220,12 +227,17 @@ export class SalePaymentInlineComponent implements OnChanges {
 
     updatePaymentMethod(index: number, value: string | number | null): void {
         const next = Number(value) || 1;
+        // Una sola tarjeta por venta: el selector no la ofrece, y esto cubre cualquier otro camino.
+        if (next === this.CARD_METHOD_ID && this.hasCardOutside(index)) {
+            return;
+        }
         this.state.payments[index].idPaymentMethod = next;
 
-        // Auto-fill amount for non-card methods (card waits for bank+cuotas selection)
-        if (next !== this.CARD_METHOD_ID && this.state.payments[index].amount === 0 && this.remaining > 0) {
+        // La base de la tarjeta no depende del plan: todos los medios se autocompletan con lo que falta.
+        if (this.state.payments[index].amount === 0 && this.remaining > 0) {
             this.state.payments[index].amount = this.remaining;
         }
+        this.recalculateSurcharge(index);
     }
 
     updatePaymentAmount(index: number, value: string | number): void {
@@ -343,17 +355,12 @@ export class SalePaymentInlineComponent implements OnChanges {
         return plan?.surchargePct ?? null;
     }
 
-    getSurchargeAmt(amount: number, surchargePct: number | null): number {
-        if (surchargePct == null || surchargePct === 0) return 0;
-        // amount already includes surcharge; back-compute the surcharge portion
-        return roundMoney(amount * surchargePct / (100 + surchargePct));
-    }
-
+    /** Recargo de la linea y lo que pasa por el posnet (base + recargo). */
     getCardSurcharge(payment: SalePaymentDraftLine): { pct: number; amt: number; total: number } | null {
         const pct = this.getSurchargePct(payment.cardBankId, payment.cardCuotas);
         if (pct == null) return null;
-        const amt = roundMoney(this.total * pct / 100);
-        return { pct, amt, total: roundMoney(this.total + amt) };
+        const amt = cardSurchargeFor(payment.amount, pct);
+        return { pct, amt, total: roundMoney(payment.amount + amt) };
     }
 
     updateTransferBank(index: number, value: number | null): void {
@@ -378,22 +385,8 @@ export class SalePaymentInlineComponent implements OnChanges {
 
     updateCardCuotas(index: number, value: number | null): void {
         const p = this.state.payments[index];
-        let amount = p.amount;
-
-        if (amount === 0 && value != null) {
-            const pct = this.getSurchargePct(p.cardBankId, value);
-            if (pct != null) {
-                // New effectiveTotal = total + fixed surcharge on total
-                const newSurcharge = roundMoney(this.total * pct / 100);
-                const newEffectiveTotal = roundMoney(this.total + newSurcharge);
-                // Coverage from OTHER payments (exclude this one which has amount=0)
-                const otherCoverage = roundMoney(this.coverage - p.amount);
-                const rem = roundMoney(newEffectiveTotal - otherCoverage);
-                if (rem > 0) {
-                    amount = rem;
-                }
-            }
-        }
+        // La base es lo que falta de la venta; el recargo va aparte y no cambia cuanto falta.
+        const amount = p.amount === 0 && value != null && this.remaining > 0 ? this.remaining : p.amount;
 
         this.state.payments = this.state.payments.map((item, i) =>
             i === index ? { ...p, cardCuotas: value ?? null, amount } : item
@@ -402,37 +395,45 @@ export class SalePaymentInlineComponent implements OnChanges {
     }
 
     /**
-     * El recargo de tarjeta es un % del total de la venta: si el total cambia despues de elegir la tarjeta
-     * (un descuento, otro producto) se recalcula. Si el importe venia autocompletado (era el total, con o sin
-     * recargo), tambien sigue al total; uno cargado a mano no se pisa.
+     * El recargo es un % de la base de la tarjeta. Si la tarjeta cerraba la venta (no faltaba nada) y el
+     * total cambia (un descuento, otro producto), la base sigue al total para seguir cerrandola y el recargo
+     * se recalcula con ella. Una base que dejaba saldo (cargada a mano) no se pisa.
      */
     private syncCardPaymentsWithTotal(prevTotal: number): void {
+        const closedTheSale = prevTotal > 0 && roundMoney(prevTotal - this.coverage) === 0;
         (this.state?.payments ?? []).forEach((payment, index) => {
             if (payment.idPaymentMethod !== this.CARD_METHOD_ID) return;
-            const pct = this.getSurchargePct(payment.cardBankId, payment.cardCuotas);
-            if (pct == null) return;
-
-            const prevEffectiveTotal = roundMoney(prevTotal + roundMoney(prevTotal * pct / 100));
-            const followsTotal = prevTotal > 0 && (payment.amount === prevTotal || payment.amount === prevEffectiveTotal);
-            this.recalculateSurcharge(index);
-            if (followsTotal) {
-                const amount = this.state.payments[index].amount;
-                const nextAmount = Math.max(0, roundMoney(this.remaining + amount));
-                this.state.payments = this.state.payments.map((item, i) => i === index ? { ...item, amount: nextAmount } : item);
+            if (closedTheSale && payment.amount > 0) {
+                this.setPaymentAmount(index, Math.max(0, roundMoney(payment.amount + this.total - prevTotal)));
+            } else {
+                this.recalculateSurcharge(index);
             }
         });
     }
 
+    private setPaymentAmount(index: number, amount: number): void {
+        this.state.payments = this.state.payments.map((item, i) => i === index ? { ...item, amount } : item);
+        this.recalculateSurcharge(index);
+    }
+
     private recalculateSurcharge(index: number): void {
         const payment = this.state.payments[index];
-        const surchargePct = this.getSurchargePct(payment.cardBankId, payment.cardCuotas);
-        // Surcharge is fixed on the sale total, not on the individual payment amount
-        const cardSurchargeAmt = surchargePct != null && surchargePct > 0
-            ? roundMoney(this.total * surchargePct / 100)
+        const surchargePct = payment.idPaymentMethod === this.CARD_METHOD_ID
+            ? this.getSurchargePct(payment.cardBankId, payment.cardCuotas)
             : null;
+        const surcharge = cardSurchargeFor(payment.amount, surchargePct);
         this.state.payments = this.state.payments.map((item, i) =>
-            i === index ? { ...item, cardSurchargePct: surchargePct, cardSurchargeAmt } : item
+            i === index ? { ...item, cardSurchargePct: surchargePct, cardSurchargeAmt: surcharge > 0 ? surcharge : null } : item
         );
+    }
+
+    private lineCardSurcharge(payment: SalePaymentDraftLine): number {
+        if (payment.idPaymentMethod !== this.CARD_METHOD_ID) return 0;
+        return cardSurchargeFor(payment.amount, this.getSurchargePct(payment.cardBankId, payment.cardCuotas));
+    }
+
+    private hasCardOutside(index: number): boolean {
+        return this.state.payments.some((p, i) => i !== index && p.idPaymentMethod === this.CARD_METHOD_ID);
     }
 
     toggleChequeForm(index: number): void {

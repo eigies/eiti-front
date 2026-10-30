@@ -67,6 +67,7 @@ import {
     dropPendingTradeInLines,
     describeTradeInLine,
     paymentMethodSummary,
+    salePaymentRequestFrom,
     SALE_PAYMENT_METHOD_CASH,
     SALE_PAYMENT_METHODS,
     roundMoney
@@ -1171,16 +1172,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
 
         {
 
-                const existingPayments = (sale.payments ?? []).map(payment => ({
-                    idPaymentMethod: payment.idPaymentMethod,
-                    amount: roundMoney(payment.amount),
-                    reference: payment.reference ?? null,
-                    cardBankId: payment.cardBankId ?? null,
-                    cardCuotas: payment.cardCuotas ?? null,
-                    cardSurchargeAmt: payment.cardSurchargeAmt ?? null,
-                    transferBankId: payment.transferBankId ?? null,
-                    cheque: payment.cheque ?? null
-                }));
+                const existingPayments = (sale.payments ?? []).map(salePaymentRequestFrom);
                 const existingTradeIns = (sale.tradeIns ?? []).map(tradeIn => ({
                     productId: tradeIn.productId,
                     quantity: tradeIn.quantity,
@@ -2469,16 +2461,7 @@ saveChannelPopup(): void {
         idSaleStatus: sale.idSaleStatus,
         hasDelivery: sale.hasDelivery,
         cashDrawerId: sale.cashDrawerId ?? null,
-        payments: (sale.payments ?? []).map(p => ({
-            idPaymentMethod: p.idPaymentMethod,
-            amount: p.amount,
-            reference: p.reference,
-            cardBankId: p.cardBankId ?? null,
-            cardCuotas: p.cardCuotas ?? null,
-            cardSurchargeAmt: p.cardSurchargeAmt ?? null,
-            transferBankId: p.transferBankId ?? null,
-            cheque: p.cheque ?? null
-        })),
+        payments: (sale.payments ?? []).map(salePaymentRequestFrom),
         tradeIns: (sale.tradeIns ?? []).map(t => ({ productId: t.productId, quantity: t.quantity, amount: t.amount })),
         details: sale.details.map(d => ({ productId: d.productId, quantity: d.quantity, unitPrice: d.unitPrice })),
         noDeliverySurchargeTotal: sale.noDeliverySurchargeTotal ?? null,
@@ -2516,8 +2499,7 @@ saveChannelPopup(): void {
         payments.reduce((sum, item) => sum + item.amount, 0)
         + tradeIns.reduce((sum, item) => sum + item.amount, 0)
     );
-    const cardSurcharge = roundMoney(paymentState.payments.reduce((sum, p) => sum + (p.cardSurchargeAmt ?? 0), 0));
-    const effectiveTotal = roundMoney(total + cardSurcharge);
+    // La tarjeta viaja con su base: lo cobrado se compara con el total de la venta y el recargo va aparte.
     const isPaid = Number(form.get('idSaleStatus')?.value ?? 1) === 2;
 
     // Un canje a medio cargar no viaja con la venta: se avisa antes de guardar.
@@ -2544,12 +2526,12 @@ saveChannelPopup(): void {
         return false;
     }
 
-    if (isPaid && coverage < effectiveTotal) {
+    if (isPaid && coverage < total) {
         this.toast.error('El cobro no cubre el total de la venta.');
         return false;
     }
 
-    if (!isPaid && coverage > effectiveTotal) {
+    if (!isPaid && coverage > total) {
         this.toast.error('Una venta en espera puede ser parcial, pero no superar el total.');
         return false;
     }
