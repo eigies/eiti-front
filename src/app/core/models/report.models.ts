@@ -129,6 +129,43 @@ export interface TradeInsByBranchFilters {
     customerId?: string | null;
 }
 
+/** Una venta con descuento general (excluye anuladas). */
+export interface DiscountsReportRow {
+    saleId: string;
+    saleCode: string;
+    date: string;
+    branchName: string;
+    /** "Consumidor final" si la venta no tiene cliente. */
+    customerName: string;
+    isCuentaCorriente: boolean;
+    appliedByUserId: string | null;
+    appliedByUserName: string | null;
+    discountPercent: number;
+    /** Total de la venta antes del descuento (OriginalTotal). */
+    subtotalBeforeDiscount: number;
+    discountAmount: number;
+    total: number;
+    reason: string | null;
+}
+
+export interface DiscountsReportTotals {
+    salesCount: number;
+    discountAmount: number;
+}
+
+export interface DiscountsReportResponse {
+    rows: DiscountsReportRow[];
+    totals: DiscountsReportTotals;
+}
+
+export interface DiscountsReportFilters {
+    dateFrom: string;
+    dateTo: string;
+    branchId?: string | null;
+    /** Usuario que aplico el descuento. */
+    userId?: string | null;
+}
+
 export interface CustomerDebtorRow {
     customerId: string;
     customerName: string;

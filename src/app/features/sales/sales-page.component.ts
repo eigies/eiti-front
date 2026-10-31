@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerResponse, CustomerSearchItem, BILLING_IVA_CONDITION_OPTIONS } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit, SaleFiscalReceiversResponse } from '../../core/models/sale.models';
+import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit, SaleFiscalReceiversResponse, applyGeneralDiscount, saleDiscountIssue, SALE_INVOICING_STATUS } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -30,7 +30,9 @@ import { OnboardingBannerComponent } from '../../shared/components/onboarding-ba
 import { AuthService } from '../../core/services/auth.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
-import { InvoicePdfService } from '../../shared/services/invoice-pdf.service';
+import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
+import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
+import { canDownloadSaleCreditNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import {
     CreditNoteAction,
@@ -51,6 +53,7 @@ import {
 import { SaleActionsMenuComponent } from './components/sale-actions-menu/sale-actions-menu.component';
 import { SalesManagementComponent } from './components/sales-management/sales-management.component';
 import { SaleListItemComponent } from './components/sale-list-item/sale-list-item.component';
+import { SaleDiscountControlComponent } from './components/sale-discount-control/sale-discount-control.component';
 import { BankService } from '../../core/services/bank.service';
 import { BankResponse } from '../../core/models/bank.models';
 import {
@@ -64,11 +67,12 @@ import {
     dropPendingTradeInLines,
     describeTradeInLine,
     paymentMethodSummary,
+    salePaymentRequestFrom,
     SALE_PAYMENT_METHOD_CASH,
     SALE_PAYMENT_METHODS,
     roundMoney
 } from '../../core/models/sale-payment.models';
-import { QuickSaleStage, SalesPageMode, SaleUiAction } from './sales-page-ui.models';
+import { emptySaleDiscountDraft, QuickSaleStage, SaleDiscountDraft, SalesPageMode, SaleUiAction } from './sales-page-ui.models';
 import { ProductPickerModalComponent } from '../../shared/components/product-picker-modal/product-picker-modal.component';
 import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../shared/components/product-picker-modal/product-picker-modal.models';
 
@@ -95,8 +99,10 @@ function localDateString(date = new Date()): string {
         QuickSaleWorkspaceComponent,
         QuickSaleSummaryComponent,
         SaleActionsMenuComponent,
+        SaleNotesComponent,
         SalesManagementComponent,
         SaleListItemComponent,
+        SaleDiscountControlComponent,
         ProductPickerModalComponent
     ],
     templateUrl: './sales-page.component.html',
@@ -170,6 +176,12 @@ export class SalesPageComponent implements OnInit {
     createPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     editPaymentState: SalePaymentDraftState = createEmptySalePaymentDraftState();
     defaultNoDeliverySurcharge = 0;
+    /** Tope del descuento minorista que fijo el dueño. 0 = deshabilitado: el control no se muestra. */
+    maxRetailDiscountPercent = 0;
+    createDiscount: SaleDiscountDraft = emptySaleDiscountDraft();
+    editDiscount: SaleDiscountDraft = emptySaleDiscountDraft();
+    /** % que la venta en edicion ya tenia: si no cambia no se vuelve a validar contra el tope (igual que el back). */
+    editOriginalDiscountPercent = 0;
     activeMode: SalesPageMode = 'sell';
     activeCreateStage: QuickSaleStage = 'config';
     showOnboardingCompleteNotice = false;
@@ -242,7 +254,7 @@ export class SalesPageComponent implements OnInit {
         private onboardingService: OnboardingService,
         private bankService: BankService,
         private remitoPdf: RemitoPdfService,
-        private invoicePdf: InvoicePdfService,
+        private saleFiscalPdf: SaleFiscalPdfService,
         private router: Router,
         public auth: AuthService
     ) {
@@ -254,6 +266,7 @@ export class SalesPageComponent implements OnInit {
             sourceChannel: [null, Validators.required],
             deliveryAddress: [''],
             contactPhone: [''],
+            notes: [''],
             requestInvoicing: [false],
             invoiceLetter: [InvoiceLetter.B],
             productId: ['', Validators.required],
@@ -313,8 +326,14 @@ export class SalesPageComponent implements OnInit {
         return this.findProduct(this.lineForm.get('productId')?.value);
     }
 
-    get draftTotal(): number {
+    /** Renglones + recargo sin envio, antes del descuento general. */
+    get draftSubtotal(): number {
         return roundMoney(this.sum(this.draftItems) + this.createAutoSurcharge);
+    }
+
+    /** Lo que se cobra (sin el recargo de tarjeta, que va despues y sobre este total). */
+    get draftTotal(): number {
+        return applyGeneralDiscount(this.draftSubtotal, this.createDiscount.percent);
     }
 
     get draftEffectiveTotal(): number {
@@ -331,8 +350,22 @@ export class SalesPageComponent implements OnInit {
         }));
     }
 
-    get editTotal(): number {
+    get editSubtotal(): number {
         return roundMoney(this.sum(this.editItems) + this.editAutoSurcharge);
+    }
+
+    get editTotal(): number {
+        return applyGeneralDiscount(this.editSubtotal, this.editDiscount.percent);
+    }
+
+    /**
+     * El descuento minorista se edita si el dueño fijo un tope, o si la venta ya traia uno (para poder
+     * verlo o quitarlo). Las ventas CC no lo muestran: su descuento sale del alta CC y se reenvia tal cual.
+     */
+    get showEditDiscount(): boolean {
+        return !!this.editingSale
+            && !this.editingSale.isCuentaCorriente
+            && (this.maxRetailDiscountPercent > 0 || this.editOriginalDiscountPercent > 0);
     }
 
     get createAutoSurcharge(): number {
@@ -876,6 +909,14 @@ async createSale(): Promise<void> {
     return;
 }
 
+// El back tambien lo frena (400 Sales.Discount.ExceedsLimit); aca se avisa antes de mandar.
+const discountIssue = saleDiscountIssue(this.createDiscount.percent, this.maxRetailDiscountPercent);
+if (discountIssue) {
+    this.activeCreateStage = 'payment';
+    this.toast.error(discountIssue);
+    return;
+}
+
 if (!await this.validatePaymentState(this.lineForm, this.draftTotal, this.createPaymentState, 'crear')) {
     return;
 }
@@ -899,9 +940,10 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         }
         const branchId = this.lineForm.get('branchId')?.value ?? '';
         this.draftItems = [];
-        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '', requestInvoicing: false, invoiceLetter: InvoiceLetter.B });
+        this.lineForm.patchValue({ productId: '', quantity: 1, idSaleStatus: 1, hasDelivery: false, cashDrawerId: '', sourceChannel: null, deliveryAddress: '', contactPhone: '', notes: '', requestInvoicing: false, invoiceLetter: InvoiceLetter.B });
         this.invoiceLetterTouched = false;
         this.createPaymentState = createEmptySalePaymentDraftState();
+        this.createDiscount = emptySaleDiscountDraft();
         this.createProductModalOpen = false;
         this.createPickerRows = [];
         this.createCustomerId = null;
@@ -1031,6 +1073,9 @@ this.editOriginalQuantitiesByProductId = new Map(
     sale.details.map(detail => [detail.productId, detail.quantity])
 );
 this.editPaymentState = mapSalePaymentDraftState(sale.payments, sale.tradeIns);
+const discountPercent = sale.generalDiscountPercent ?? 0;
+this.editOriginalDiscountPercent = discountPercent;
+this.editDiscount = { open: discountPercent > 0, percent: discountPercent, reason: sale.generalDiscountReason ?? '' };
 
 this.loadDrawers(sale.branchId, false);
 this.loadStockForBranch(sale.branchId, false);
@@ -1051,12 +1096,23 @@ this.editDrawers = [];
 this.editStockByProductId.clear();
 this.editOriginalQuantitiesByProductId.clear();
 this.editPaymentState = createEmptySalePaymentDraftState();
+this.editDiscount = emptySaleDiscountDraft();
+this.editOriginalDiscountPercent = 0;
 this.editProductQuery = '';
 this.showEditProductResults = false;
     }
 
 async saveEdit(): Promise<void> {
     if(!this.editingSale || this.editItems.length === 0) {
+    return;
+}
+
+// El tope rige solo para minoristas y solo si el % cambio (el back hace la misma cuenta).
+const editDiscountIssue = this.editingSale.isCuentaCorriente
+    ? null
+    : saleDiscountIssue(this.editDiscount.percent, this.maxRetailDiscountPercent, this.editOriginalDiscountPercent);
+if (editDiscountIssue) {
+    this.toast.error(editDiscountIssue);
     return;
 }
 
@@ -1116,16 +1172,7 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
 
         {
 
-                const existingPayments = (sale.payments ?? []).map(payment => ({
-                    idPaymentMethod: payment.idPaymentMethod,
-                    amount: roundMoney(payment.amount),
-                    reference: payment.reference ?? null,
-                    cardBankId: payment.cardBankId ?? null,
-                    cardCuotas: payment.cardCuotas ?? null,
-                    cardSurchargeAmt: payment.cardSurchargeAmt ?? null,
-                    transferBankId: payment.transferBankId ?? null,
-                    cheque: payment.cheque ?? null
-                }));
+                const existingPayments = (sale.payments ?? []).map(salePaymentRequestFrom);
                 const existingTradeIns = (sale.tradeIns ?? []).map(tradeIn => ({
                     productId: tradeIn.productId,
                     quantity: tradeIn.quantity,
@@ -1143,6 +1190,9 @@ this.cashService.listCashDrawers(sale.branchId).subscribe({
                     sourceChannel: sale.sourceChannel ?? null,
                     deliveryAddress: sale.deliveryAddress ?? null,
                     contactPhone: sale.contactPhone ?? null,
+                    // El PUT toma el % como valor nuevo: sin esto, cobrar le borraba el descuento a la venta.
+                    generalDiscountPercent: sale.generalDiscountPercent ?? 0,
+                    generalDiscountReason: sale.generalDiscountReason ?? null,
                     payments: pendingAmount > 0
                         ? [
                             ...existingPayments,
@@ -1789,6 +1839,7 @@ handleDocumentClick(event: MouseEvent): void {
             this.whatsAppEnabled = Boolean(company.isWhatsAppEnabled ?? company.whatsAppEnabled);
             this.whatsAppPhoneNumber = company.whatsAppSenderPhone ?? company.whatsAppPhoneNumber ?? null;
             this.defaultNoDeliverySurcharge = company.defaultNoDeliverySurcharge ?? 0;
+            this.maxRetailDiscountPercent = company.maxRetailDiscountPercent ?? 0;
             this.companyAutomaticInvoicing = Boolean(company.automaticInvoicing);
         }
     });
@@ -1940,6 +1991,11 @@ if (form === this.editLineForm) {
 
     // ---------------- Facturacion electronica ----------------
 
+    /** Las observaciones se corrigen con la venta en cualquier estado salvo anulada (no son dato fiscal). */
+    canEditSaleNotes(sale: SaleResponse): boolean {
+        return this.auth.hasPermission(PermissionCodes.salesUpdate) && sale.idSaleStatus !== 3;
+    }
+
     get canInvoice(): boolean {
         return this.auth.hasPermission(PermissionCodes.salesInvoice);
     }
@@ -2001,6 +2057,14 @@ if (form === this.editLineForm) {
         }
     }
 
+    /**
+     * Recargo de tarjeta cobrado que la factura vigente no incluye (se facturo en espera y se cobro despues en
+     * cuotas). 0 sin factura vigente: al anularla, la proxima ya lo incluye.
+     */
+    uninvoicedCardSurcharge(sale: SaleResponse): number {
+        return sale.invoicingStatus === SALE_INVOICING_STATUS.invoiced ? roundMoney(sale.uninvoicedCardSurcharge ?? 0) : 0;
+    }
+
     /** Solo el color del texto: verde vigente, ambar en tramite, rojo rechazada, violeta anulada, gris sin facturar. */
     invoicingToneClass(sale: SaleResponse): string {
         switch (sale.invoicingStatus ?? 1) {
@@ -2034,10 +2098,8 @@ if (form === this.editLineForm) {
         return (sale.invoicingStatus ?? 1) === 2 ? 'Consultando...' : 'Emitiendo...';
     }
 
-    /** Una factura anulada sigue teniendo comprobante: se puede reimprimir. */
     canDownloadInvoice(sale: SaleResponse): boolean {
-        const status = sale.invoicingStatus ?? 1;
-        return status === 3 || status === 5;
+        return canDownloadSaleInvoice(sale.invoicingStatus);
     }
 
     // ---------- Facturar despues del alta: popup para elegir A o B ----------
@@ -2306,11 +2368,7 @@ if (form === this.editLineForm) {
     }
 
     downloadDebitNotePdf(sale: SaleResponse): void {
-        this.saleService.getDebitNotePrint(sale.id).subscribe({
-            next: print => this.invoicePdf.generate(print)
-                .catch(() => this.toast.error('No se pudo generar el PDF de la nota de débito.')),
-            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la nota de débito.')
-        });
+        this.saleFiscalPdf.download(sale.id, 'debitNote');
     }
 
     private refreshFiscalDocuments(sale: SaleResponse): void {
@@ -2319,25 +2377,16 @@ if (form === this.editLineForm) {
         this.loadFiscalReceivers(sale.id);
     }
 
-    /** La venta anulada tiene su nota de credito autorizada: se puede descargar. */
     canDownloadCreditNote(sale: SaleResponse): boolean {
-        return (sale.invoicingStatus ?? 1) === 5;
+        return canDownloadSaleCreditNote(sale.invoicingStatus);
     }
 
     downloadInvoicePdf(sale: SaleResponse): void {
-        this.saleService.getInvoicePrint(sale.id).subscribe({
-            next: print => this.invoicePdf.generate(print)
-                .catch(() => this.toast.error('No se pudo generar el PDF de la factura.')),
-            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la factura.')
-        });
+        this.saleFiscalPdf.download(sale.id, 'invoice');
     }
 
     downloadCreditNotePdf(sale: SaleResponse): void {
-        this.saleService.getCreditNotePrint(sale.id).subscribe({
-            next: print => this.invoicePdf.generate(print)
-                .catch(() => this.toast.error('No se pudo generar el PDF de la nota de crédito.')),
-            error: error => this.toast.error(error?.error?.detail ?? 'No se pudo obtener la nota de crédito.')
-        });
+        this.saleFiscalPdf.download(sale.id, 'creditNote');
     }
 
     setDraftItemPrice(item: DraftItem, price: number): void {
@@ -2356,6 +2405,8 @@ if (form === this.editLineForm) {
     const raw = form.getRawValue();
     const canOverride = this.canOverridePrice;
     const rawChannel = raw.sourceChannel;
+    const discount = form === this.lineForm ? this.createDiscount : this.editDiscount;
+    const discountPercent = discount.percent > 0 ? discount.percent : 0;
     return {
         branchId: raw.branchId,
         customerId,
@@ -2368,6 +2419,9 @@ if (form === this.editLineForm) {
         sourceChannel: (rawChannel !== null && rawChannel !== '' && rawChannel !== undefined) ? Number(rawChannel) as SaleSourceChannel : null,
         deliveryAddress: raw.deliveryAddress || null,
         contactPhone: (raw.contactPhone || '').trim() || null,
+        notes: (raw.notes || '').trim() || null,
+        generalDiscountPercent: discountPercent,
+        generalDiscountReason: discountPercent > 0 ? (discount.reason.trim() || null) : null,
         // Con la sucursal en automatico el check no se ve: un valor que quedo tildado de otra
         // sucursal no tiene que viajar (el back lo tomaria como pedido explicito y bloquearia).
         requestInvoicing: this.showInvoicingCheck && Boolean(raw.requestInvoicing),
@@ -2415,20 +2469,13 @@ saveChannelPopup(): void {
         idSaleStatus: sale.idSaleStatus,
         hasDelivery: sale.hasDelivery,
         cashDrawerId: sale.cashDrawerId ?? null,
-        payments: (sale.payments ?? []).map(p => ({
-            idPaymentMethod: p.idPaymentMethod,
-            amount: p.amount,
-            reference: p.reference,
-            cardBankId: p.cardBankId ?? null,
-            cardCuotas: p.cardCuotas ?? null,
-            cardSurchargeAmt: p.cardSurchargeAmt ?? null,
-            transferBankId: p.transferBankId ?? null,
-            cheque: p.cheque ?? null
-        })),
+        payments: (sale.payments ?? []).map(salePaymentRequestFrom),
         tradeIns: (sale.tradeIns ?? []).map(t => ({ productId: t.productId, quantity: t.quantity, amount: t.amount })),
         details: sale.details.map(d => ({ productId: d.productId, quantity: d.quantity, unitPrice: d.unitPrice })),
         noDeliverySurchargeTotal: sale.noDeliverySurchargeTotal ?? null,
         deliveryAddress: sale.deliveryAddress ?? null,
+        generalDiscountPercent: sale.generalDiscountPercent ?? 0,
+        generalDiscountReason: sale.generalDiscountReason ?? null,
         sourceChannel: newChannel
     };
     this.saleService.updateSale(sale.id, request).subscribe({
@@ -2460,8 +2507,7 @@ saveChannelPopup(): void {
         payments.reduce((sum, item) => sum + item.amount, 0)
         + tradeIns.reduce((sum, item) => sum + item.amount, 0)
     );
-    const cardSurcharge = roundMoney(paymentState.payments.reduce((sum, p) => sum + (p.cardSurchargeAmt ?? 0), 0));
-    const effectiveTotal = roundMoney(total + cardSurcharge);
+    // La tarjeta viaja con su base: lo cobrado se compara con el total de la venta y el recargo va aparte.
     const isPaid = Number(form.get('idSaleStatus')?.value ?? 1) === 2;
 
     // Un canje a medio cargar no viaja con la venta: se avisa antes de guardar.
@@ -2488,12 +2534,12 @@ saveChannelPopup(): void {
         return false;
     }
 
-    if (isPaid && coverage < effectiveTotal) {
+    if (isPaid && coverage < total) {
         this.toast.error('El cobro no cubre el total de la venta.');
         return false;
     }
 
-    if (!isPaid && coverage > effectiveTotal) {
+    if (!isPaid && coverage > total) {
         this.toast.error('Una venta en espera puede ser parcial, pero no superar el total.');
         return false;
     }

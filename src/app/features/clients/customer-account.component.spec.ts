@@ -1,4 +1,5 @@
-import { SaleFiscalReceiversResponse } from '../../core/models/sale.models';
+import { SaleByIdResponse, SaleFiscalReceiversResponse, SaleInvoicingStatus } from '../../core/models/sale.models';
+import { PermissionCodes } from '../../core/models/permission.models';
 import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -10,6 +11,7 @@ import { SaleService } from '../../core/services/sale.service';
 import { PaymentReceiptPdfService } from '../../shared/services/payment-receipt-pdf.service';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { CustomerAccountComponent } from './customer-account.component';
 import { AccountLedger, LedgerRow } from '../../core/models/account-ledger.models';
@@ -73,14 +75,15 @@ describe('CustomerAccountComponent · notas de crédito', () => {
     confirmation.confirm.and.resolveTo(true);
     const cdr = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
     const route = { snapshot: { paramMap: { get: () => 'cust-1' } } } as unknown as ActivatedRoute;
+    const fiscalPdf = jasmine.createSpyObj<SaleFiscalPdfService>('SaleFiscalPdfService', ['download']);
 
     const component = new CustomerAccountComponent(
       accountService, banks, branches, sales, remito, receipt,
-      auth, toast, route, cdr, confirmation
+      auth, toast, route, cdr, confirmation, fiscalPdf
     );
     component.ngOnInit();
 
-    return { component, accountService, toast, confirmation, auth, banks, sales };
+    return { component, accountService, toast, confirmation, auth, banks, sales, fiscalPdf };
   }
 
   // El motivo es la única trazabilidad de un ajuste sin documento de origen:
@@ -262,5 +265,65 @@ describe('CustomerAccountComponent · notas de crédito', () => {
       ['sale-1', undefined, false],
       ['sale-1', undefined, true]
     ]);
+  });
+
+  describe('observaciones del detalle', () => {
+    it('se editan con permiso de editar ventas, salvo en una venta anulada', () => {
+      const { component, auth } = setup();
+      component.detalleModalSale = { id: 'sale-1', details: [], idSaleStatus: 2 } as unknown as SaleByIdResponse;
+      expect(component.canEditDetalleNotes).toBeTrue();
+
+      component.detalleModalSale = { id: 'sale-1', details: [], idSaleStatus: 3 } as unknown as SaleByIdResponse;
+      expect(component.canEditDetalleNotes).toBeFalse();
+
+      component.detalleModalSale = { id: 'sale-1', details: [], idSaleStatus: 2 } as unknown as SaleByIdResponse;
+      auth.hasPermission.and.callFake((code: string) => code !== PermissionCodes.salesUpdate);
+      expect(component.canEditDetalleNotes).toBeFalse();
+    });
+  });
+
+  describe('descarga de comprobantes fiscales del detalle', () => {
+    function detalle(invoicingStatus: SaleInvoicingStatus, debitNoteStatus: SaleInvoicingStatus | null = null): SaleByIdResponse {
+      return { id: 'sale-1', details: [], invoicingStatus, debitNoteStatus } as unknown as SaleByIdResponse;
+    }
+
+    function offered(component: CustomerAccountComponent): boolean[] {
+      return [component.canDownloadDetalleInvoice, component.canDownloadDetalleCreditNote, component.canDownloadDetalleDebitNote];
+    }
+
+    // La NC todavía no autorizada deja la venta en "facturada": solo existe la factura.
+    it('venta facturada: solo la factura', () => {
+      const { component } = setup();
+      component.detalleModalSale = detalle(3);
+      expect(offered(component)).toEqual([true, false, false]);
+    });
+
+    it('venta anulada con nota de débito autorizada: los tres comprobantes', () => {
+      const { component } = setup();
+      component.detalleModalSale = detalle(5, 3);
+      expect(offered(component)).toEqual([true, true, true]);
+    });
+
+    it('sin permiso para facturar no se ofrece ninguno, igual que en Gestión de Ventas', () => {
+      const { component, auth } = setup();
+      auth.hasPermission.and.callFake((code: string) => code !== PermissionCodes.salesInvoice);
+      component.detalleModalSale = detalle(5, 3);
+      expect(offered(component)).toEqual([false, false, false]);
+    });
+
+    it('sin venta cargada no se ofrece ni se descarga nada', () => {
+      const { component, fiscalPdf } = setup();
+      component.detalleModalSale = null;
+      component.downloadDetalleFiscalPdf('invoice');
+      expect(offered(component)).toEqual([false, false, false]);
+      expect(fiscalPdf.download).not.toHaveBeenCalled();
+    });
+
+    it('descarga el comprobante pedido de la venta abierta', () => {
+      const { component, fiscalPdf } = setup();
+      component.detalleModalSale = detalle(5);
+      component.downloadDetalleFiscalPdf('creditNote');
+      expect(fiscalPdf.download).toHaveBeenCalledWith('sale-1', 'creditNote');
+    });
   });
 });

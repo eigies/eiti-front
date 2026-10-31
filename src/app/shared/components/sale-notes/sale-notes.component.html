@@ -1,0 +1,23 @@
+<section class="sale-notes">
+  <div class="sale-notes__head">
+    <span class="sale-notes__label">Observaciones</span>
+    <button *ngIf="canEdit && !editing" class="sale-notes__action" type="button" (click)="startEdit()">
+      {{ notes ? 'Editar' : 'Agregar' }}
+    </button>
+  </div>
+
+  <p *ngIf="!editing" class="sale-notes__text" [class.sale-notes__text--empty]="!notes">{{ notes || 'Sin observaciones' }}</p>
+
+  <div *ngIf="editing" class="sale-notes__editor">
+    <textarea class="sale-notes__input" rows="3" [maxlength]="maxLength" [(ngModel)]="draft"
+              placeholder="Presupuesto, patente u otra aclaración que tiene que salir en la factura"
+              aria-label="Observaciones de la venta"></textarea>
+    <div class="sale-notes__footer">
+      <span class="sale-notes__count">{{ draft.length }}/{{ maxLength }}</span>
+      <button class="sale-notes__action" type="button" [disabled]="saving" (click)="cancel()">Cancelar</button>
+      <button class="sale-notes__action sale-notes__action--primary" type="button" [disabled]="saving" (click)="save()">
+        {{ saving ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </div>
+  </div>
+</section>

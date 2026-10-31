@@ -9,13 +9,13 @@ export interface ChequeFormData {
     notas?: string | null;
 }
 
+/** En la linea de tarjeta, `amount` es la base (la parte de la venta que paga): el recargo lo calcula el back. */
 export interface SalePaymentRequest {
     idPaymentMethod: number;
     amount: number;
     reference?: string | null;
     cardBankId?: number | null;
     cardCuotas?: number | null;
-    cardSurchargeAmt?: number | null;
     transferBankId?: number | null;
     cheque?: ChequeFormData | null;
 }
@@ -26,8 +26,10 @@ export interface SaleTradeInRequest {
     amount: number;
 }
 
+/** En la linea de tarjeta, `amount` es lo que paso por el posnet (base + `cardSurchargeAmt`). */
 export interface SalePaymentResponse extends SalePaymentRequest {
     paymentMethodName?: string | null;
+    cardSurchargeAmt?: number | null;
 }
 
 export interface SaleTradeInResponse extends SaleTradeInRequest {
@@ -68,6 +70,19 @@ export interface SalePaymentMethodOption {
 export const SALE_STATUS_ON_HOLD = 1;
 export const SALE_STATUS_PAID = 2;
 export const SALE_PAYMENT_METHOD_CASH = 1;
+export const SALE_PAYMENT_METHOD_CARD = 3;
+
+/**
+ * Recargo de la linea de tarjeta: base x % del plan (banco + cuotas), redondeado a centavos como
+ * `CardSurchargeCalculator.Compute` del back. La base es la parte de la venta que paga esa tarjeta;
+ * lo que pasa por el posnet es base + recargo. El back lo recalcula siempre: esto es para mostrarlo.
+ */
+export function cardSurchargeFor(base: number, surchargePct: number | null | undefined): number {
+    if (!surchargePct || surchargePct <= 0 || base <= 0) {
+        return 0;
+    }
+    return roundMoney(base * surchargePct / 100);
+}
 
 export const SALE_PAYMENT_METHODS: SalePaymentMethodOption[] = [
     { id: 1, label: 'Efectivo', shortLabel: 'Cash' },
@@ -106,7 +121,7 @@ export function mapSalePaymentDraftState(
         .filter(item => Number(item.amount) > 0)
         .map(item => ({
             idPaymentMethod: Number(item.idPaymentMethod || SALE_PAYMENT_METHOD_CASH),
-            amount: roundMoney(item.amount),
+            amount: salePaymentBase(item),
             notes: item.reference ?? '',
             cardBankId: item.cardBankId ?? null,
             cardCuotas: item.cardCuotas ?? null,
@@ -138,11 +153,32 @@ export function normalizeSalePayments(state: SalePaymentDraftState): SalePayment
             reference: normalizeNotes(item.notes),
             cardBankId: item.cardBankId ?? null,
             cardCuotas: item.cardCuotas ?? null,
-            cardSurchargeAmt: item.cardSurchargeAmt ?? null,
             transferBankId: item.transferBankId ?? null,
             cheque: item.chequeData ?? null
         }))
         .filter(item => item.idPaymentMethod > 0 && item.amount > 0);
+}
+
+/**
+ * Lo que la linea cubre de la venta. En la tarjeta, lo guardado es lo que paso por el posnet: se le resta el
+ * recargo para volver a la base. Reenviar lo guardado tal cual cobraria el recargo dos veces.
+ */
+export function salePaymentBase(payment: SalePaymentResponse): number {
+    const surcharge = payment.idPaymentMethod === SALE_PAYMENT_METHOD_CARD ? Number(payment.cardSurchargeAmt ?? 0) : 0;
+    return roundMoney(Number(payment.amount) - surcharge);
+}
+
+/** Un pago ya guardado, listo para reenviarlo en un `updateSale` (la tarjeta, con su base). */
+export function salePaymentRequestFrom(payment: SalePaymentResponse): SalePaymentRequest {
+    return {
+        idPaymentMethod: payment.idPaymentMethod,
+        amount: salePaymentBase(payment),
+        reference: payment.reference ?? null,
+        cardBankId: payment.cardBankId ?? null,
+        cardCuotas: payment.cardCuotas ?? null,
+        transferBankId: payment.transferBankId ?? null,
+        cheque: payment.cheque ?? null
+    };
 }
 
 export function normalizeSaleTradeIns(state: SalePaymentDraftState): SaleTradeInRequest[] {

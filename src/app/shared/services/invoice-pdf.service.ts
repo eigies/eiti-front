@@ -114,6 +114,7 @@ export class InvoicePdfService {
     y += 8;
 
     y = this.drawAdjustments(doc, print, toShown, margin, contentWidth, y, ensureSpace);
+    y = this.drawNotes(doc, print.notes, margin, contentWidth, y, ensureSpace);
     ensureSpace(isA ? 40 : 48, false);
     y = this.drawTotals(doc, print, margin, contentWidth, y);
 
@@ -287,7 +288,7 @@ export class InvoicePdfService {
     });
   }
 
-  /** Lo que lleva de la suma de las lineas al total facturado: recargo, bonificacion general o precio acordado. */
+  /** Lo que lleva de la suma de las lineas al total facturado: recargo, bonificacion general, precio acordado o recargo de tarjeta. */
   private drawAdjustments(
     doc: jsPDF,
     print: SaleInvoicePrintResponse,
@@ -310,6 +311,11 @@ export class InvoicePdfService {
     if (adjustments.agreedPrice !== null && adjustments.agreedPrice !== undefined) {
       lines.push(['Precio acordado', this.money(toShown(adjustments.agreedPrice))]);
     }
+    // El recargo de la tarjeta va sobre el total ya bonificado: es el ultimo ajuste antes del total.
+    const cardSurcharge = adjustments.cardSurcharge ?? 0;
+    if (cardSurcharge > 0) {
+      lines.push([adjustments.cardSurchargeLabel || 'Recargo financiero tarjeta', this.money(toShown(cardSurcharge))]);
+    }
     if (lines.length === 0) {
       return y;
     }
@@ -326,6 +332,34 @@ export class InvoicePdfService {
       y += 5;
     }
     return y + 2;
+  }
+
+  /** Observaciones de la venta (presupuesto, patente): no son dato fiscal, van como aclaración. */
+  private drawNotes(
+    doc: jsPDF,
+    notes: string | null | undefined,
+    margin: number,
+    contentWidth: number,
+    y: number,
+    ensureSpace: (height: number, withTableHeader: boolean) => void
+  ): number {
+    const text = notes?.trim();
+    if (!text) {
+      return y;
+    }
+
+    doc.setFontSize(8.4);
+    const lines: string[] = doc.splitTextToSize(text, contentWidth);
+    ensureSpace(lines.length * 4 + 9, false);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(60, 60, 60);
+    doc.text('Observaciones', margin, y);
+    y += 4.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.4);
+    doc.text(lines, margin, y);
+    return y + lines.length * 4 + 3;
   }
 
   private drawTotals(doc: jsPDF, print: SaleInvoicePrintResponse, margin: number, contentWidth: number, y: number): number {

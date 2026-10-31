@@ -1,0 +1,140 @@
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Reportería / Ventas</div>
+    <h1>Descuentos en ventas</h1>
+    <p>Cada venta con descuento general: quién lo aplicó, cuánto se descontó y por qué. Sirve para auditar los descuentos minoristas contra el máximo que fijó el dueño.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div>
+        <span>Filtros</span>
+        <p>El rango de fechas es obligatorio. Los demás filtros son opcionales.</p>
+      </div>
+    </div>
+
+    <form [formGroup]="filterForm" (ngSubmit)="search()" class="filter-form filter-form--collapsible">
+      <div class="filter-form__primary">
+        <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
+        <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+
+        <button
+          class="btn btn--filters"
+          type="button"
+          [class.is-open]="advancedFiltersOpen"
+          [attr.aria-expanded]="advancedFiltersOpen"
+          aria-controls="discounts-advanced-filters"
+          (click)="toggleAdvancedFilters()">
+          <svg class="btn--filters__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h16M7 12h10M10 18h4"></path>
+          </svg>
+          <span>{{ advancedFiltersOpen ? 'Ocultar filtros' : 'Más filtros' }}</span>
+          <span class="filter-count" *ngIf="activeOptionalFiltersCount > 0">{{ activeOptionalFiltersCount }}</span>
+          <span class="filter-chevron" aria-hidden="true"></span>
+        </button>
+
+        <div class="filter-form__actions">
+          <button class="btn btn--primary" type="submit" [disabled]="filterForm.invalid">Aplicar</button>
+          <button class="btn btn--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="filter-form__advanced" id="discounts-advanced-filters" *ngIf="advancedFiltersOpen">
+        <div class="advanced-filters__head">
+          <div>
+            <span>Filtros adicionales</span>
+            <p>Podés acotar a una sucursal o a quien aplicó el descuento.</p>
+          </div>
+          <span class="advanced-filters__status" *ngIf="activeOptionalFiltersCount > 0">
+            {{ activeOptionalFiltersCount }} activo{{ activeOptionalFiltersCount === 1 ? '' : 's' }}
+          </span>
+        </div>
+
+        <div class="advanced-filters__grid">
+          <label class="field"><span>Sucursal</span>
+            <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Aplicado por</span>
+            <app-searchable-select formControlName="userId" [options]="userOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los usuarios" searchPlaceholder="Buscar usuario..."></app-searchable-select>
+          </label>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div>
+        <span>Resultados</span>
+        <p *ngIf="data">{{ data.totals.salesCount }} venta(s) con descuento · $ {{ money(data.totals.discountAmount) }} descontados</p>
+      </div>
+      <div class="panel__actions">
+        <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.rows.length === 0">Exportar XLSX</button>
+        <button class="btn btn--ghost btn--pdf" type="button" (click)="exportPdf()" [disabled]="!data || data.rows.length === 0">Exportar PDF</button>
+      </div>
+    </div>
+
+    <div class="loading-shell" *ngIf="loading">
+      <div class="loading-shell__grid"><div class="loading-card" *ngFor="let _ of [1,2,3,4]"></div></div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && hasSearched && data && data.rows.length === 0">
+      <span class="empty-state__eyebrow">Sin resultados</span>
+      <h2>No hubo ventas con descuento con esos filtros.</h2>
+      <p>Probá ampliar el rango de fechas o quitar el filtro de sucursal o de usuario.</p>
+    </div>
+
+    <div class="table-wrap" *ngIf="!loading && data && data.rows.length > 0">
+      <table class="data-table data-table--discounts data-table--sticky-first">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Venta</th>
+            <th>Sucursal</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Aplicado por</th>
+            <th class="t-right">%</th>
+            <th class="t-right">Subtotal</th>
+            <th class="t-right">Descontado</th>
+            <th class="t-right">Total</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="data-row" *ngFor="let r of data.rows; trackBy: trackByRow">
+            <td class="dim">{{ r.date | date:'dd/MM/yy HH:mm' }}</td>
+            <td class="strong">{{ r.saleCode }}</td>
+            <td>{{ r.branchName }}</td>
+            <td>{{ r.customerName }}</td>
+            <td class="dim">{{ saleTypeLabel(r) }}</td>
+            <td>{{ appliedBy(r) }}</td>
+            <td class="t-right discount-percent">{{ percent(r.discountPercent) }}</td>
+            <td class="t-right dim">$ {{ money(r.subtotalBeforeDiscount) }}</td>
+            <td class="t-right strong">$ {{ money(r.discountAmount) }}</td>
+            <td class="t-right">$ {{ money(r.total) }}</td>
+            <td class="discount-reason" [class.discount-reason--empty]="!r.reason">{{ r.reason || 'Sin motivo' }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td>TOTAL</td>
+            <td>{{ data.totals.salesCount }} ventas</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="t-right">$ {{ money(data.totals.discountAmount) }}</td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <p class="note" *ngIf="data && data.rows.length > 0">Solo ventas con descuento general sobre el total; las anuladas no se cuentan. La fecha es la de la venta.</p>
+    <p class="note" *ngIf="data && data.rows.length > 0">APLICADO POR = quien fijó o cambió el porcentaje por última vez. SUBTOTAL = total de la venta antes del descuento.</p>
+  </section>
+</div>

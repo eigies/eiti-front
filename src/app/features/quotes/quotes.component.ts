@@ -71,6 +71,7 @@ export class QuotesComponent {
             state: {
                 quotePrefill: {
                     quoteId: quote.id,
+                    code: quote.code,
                     branchId: quote.branchId,
                     customerId: quote.customerId,
                     customerFullName: quote.customerFullName,

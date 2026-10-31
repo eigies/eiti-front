@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompanyService } from '../../core/services/company.service';
+import { AuthService } from '../../core/services/auth.service';
 import { CompanyResponse } from '../../core/models/company.models';
+import { PermissionCodes } from '../../core/models/permission.models';
 import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
@@ -18,11 +20,18 @@ export class CompanyComponent implements OnInit {
   loading = false;
   saving = false;
   readonly maxPdfImageBytes = 700_000;
+  /**
+   * Fuera de `form` a proposito: tiene su propio Guardar y su propio endpoint/permiso.
+   * El PUT de la empresa lo puede llamar cualquiera; el tope solo lo fija quien tiene sales.discount.configure.
+   */
+  readonly discountLimitControl = new FormControl<number | null>(0, [Validators.required, Validators.min(0), Validators.max(100)]);
+  savingDiscountLimit = false;
 
   constructor(
     private fb: FormBuilder,
     private companyService: CompanyService,
-    private toast: ToastService
+    private toast: ToastService,
+    private auth: AuthService
   ) {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -37,6 +46,41 @@ export class CompanyComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCompany();
+  }
+
+  get canConfigureDiscount(): boolean {
+    return this.auth.hasPermission(PermissionCodes.salesDiscountConfigure);
+  }
+
+  saveDiscountLimit(): void {
+    if (this.savingDiscountLimit) {
+      return;
+    }
+    const value = this.discountLimitControl.value;
+    if (this.discountLimitControl.invalid || value === null) {
+      this.discountLimitControl.markAsTouched();
+      this.toast.error('El descuento máximo tiene que estar entre 0 y 100.');
+      return;
+    }
+
+    const maxPercent = Number(value);
+    this.savingDiscountLimit = true;
+    this.companyService.setRetailDiscountLimit(maxPercent).subscribe({
+      next: () => {
+        this.savingDiscountLimit = false;
+        if (this.company) {
+          this.company = { ...this.company, maxRetailDiscountPercent: maxPercent };
+        }
+        this.discountLimitControl.markAsPristine();
+        this.toast.success(maxPercent > 0
+          ? `Descuento máximo guardado: hasta ${maxPercent}%.`
+          : 'Descuento deshabilitado: los vendedores no pueden aplicar descuentos.');
+      },
+      error: (err: { error?: { detail?: string; message?: string } }) => {
+        this.savingDiscountLimit = false;
+        this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo guardar el descuento máximo.');
+      }
+    });
   }
 
   isInvalid(field: string): boolean {
@@ -88,6 +132,7 @@ export class CompanyComponent implements OnInit {
       next: (company) => {
         this.company = company;
         this.form.patchValue(this.mapCompanyToForm(company));
+        this.discountLimitControl.reset(company.maxRetailDiscountPercent ?? 0);
         this.loading = false;
       },
       error: (err) => {

@@ -133,6 +133,38 @@
                 </div>
             </div>
 
+            <!-- Fuera del "Guardar cambios" de abajo: se guarda solo, con su endpoint y su permiso. -->
+            <div class="config-card config-card--delay-5" *ngIf="canConfigureDiscount">
+                <div class="config-card__head">
+                    <span class="config-card__num">05</span>
+                    <div class="config-card__meta">
+                        <span class="config-card__eyebrow">Ventas</span>
+                        <h2 class="config-card__title">Descuento minorista</h2>
+                    </div>
+                </div>
+                <div class="config-card__body">
+                    <p class="config-card__desc">Hasta cuánto puede descontar un vendedor sobre el total de una venta minorista. En 0 el descuento no aparece al vender. Las ventas en cuenta corriente no tienen tope.</p>
+                    <div class="field" [class.field--error]="discountLimitControl.invalid && discountLimitControl.touched">
+                        <label class="field__label" for="retail-discount-limit">Descuento máximo en ventas minoristas (%)</label>
+                        <div class="input-percent">
+                            <input id="retail-discount-limit" data-testid="retail-discount-limit"
+                                   class="field__input input-percent__input" type="number" min="0" max="100" step="0.5"
+                                   [formControl]="discountLimitControl" placeholder="0"
+                                   (keydown.enter)="$event.preventDefault(); saveDiscountLimit()" />
+                            <span class="input-percent__symbol">%</span>
+                        </div>
+                        <span class="field__error" *ngIf="discountLimitControl.invalid && discountLimitControl.touched">Entre 0 y 100</span>
+                    </div>
+                    <div class="discount-limit-actions">
+                        <button class="btn-inline btn-inline--accent" type="button"
+                                [disabled]="savingDiscountLimit || discountLimitControl.pristine"
+                                (click)="saveDiscountLimit()">
+                            {{ savingDiscountLimit ? 'Guardando...' : 'Guardar descuento' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <footer class="config-footer">
