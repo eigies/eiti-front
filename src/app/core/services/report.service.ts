@@ -6,6 +6,8 @@ import {
     CashMovementsReportResponse,
     CustomerDebtorsResponse,
     DailySalesControlResponse,
+    DiscountsReportFilters,
+    DiscountsReportResponse,
     PaymentMethodsReportResponse,
     SalesReportFilters,
     SalesReportResponse,
@@ -56,6 +58,15 @@ export class ReportService {
         if (filters.branchId) params.set('branchId', filters.branchId);
         if (filters.customerId) params.set('customerId', filters.customerId);
         return this.http.get<TradeInsByBranchResponse>(`${this.base}/sales/trade-ins-by-branch?${params.toString()}`);
+    }
+
+    getDiscountsReport(filters: DiscountsReportFilters): Observable<DiscountsReportResponse> {
+        const params = new URLSearchParams();
+        params.set('dateFrom', filters.dateFrom);
+        params.set('dateTo', filters.dateTo);
+        if (filters.branchId) params.set('branchId', filters.branchId);
+        if (filters.userId) params.set('userId', filters.userId);
+        return this.http.get<DiscountsReportResponse>(`${this.base}/sales/discounts?${params.toString()}`);
     }
 
     customerDebtors(): Observable<CustomerDebtorsResponse> {

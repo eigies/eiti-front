@@ -1,0 +1,31 @@
+<div class="sale-discount" [class.sale-discount--active]="hasDiscount">
+  <div class="sale-discount__head">
+    <button class="sale-discount__toggle" type="button" [attr.aria-expanded]="draft.open" (click)="toggle()">
+      {{ hasDiscount ? 'Descuento ' + draft.percent + '%' : '+ Descuento' }}
+    </button>
+    <span class="sale-discount__limit">{{ limitLabel }}</span>
+    <span class="sale-discount__amount" *ngIf="hasDiscount && !issue">−{{ discountAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+  </div>
+
+  <div class="sale-discount__body" *ngIf="draft.open">
+    <label class="sale-discount__field sale-discount__field--percent">
+      <span class="sale-discount__label">Descuento %</span>
+      <input class="sale-discount__input" type="number" min="0" step="0.5" inputmode="decimal"
+             [max]="maxPercent" [formControl]="percentControl" placeholder="0"
+             [attr.aria-invalid]="issue ? true : null" />
+    </label>
+    <label class="sale-discount__field">
+      <span class="sale-discount__label">Motivo <span class="sale-discount__optional">(opcional)</span></span>
+      <input class="sale-discount__input" type="text" [maxlength]="reasonMaxLength" [formControl]="reasonControl"
+             placeholder="Ej: cliente frecuente, pago de contado" autocomplete="off" />
+    </label>
+
+    <p class="sale-discount__error" role="alert" *ngIf="issue">{{ issue }}</p>
+    <div class="sale-discount__foot" *ngIf="hasDiscount">
+      <p class="sale-discount__summary" *ngIf="!issue">
+        Se descuentan {{ discountAmount | currency:'USD':'symbol':'1.2-2' }} de {{ subtotal | currency:'USD':'symbol':'1.2-2' }}.
+      </p>
+      <button class="sale-discount__clear" type="button" (click)="clear()">Quitar descuento</button>
+    </div>
+  </div>
+</div>

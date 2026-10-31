@@ -153,6 +153,12 @@
                  placeholder="Dejar vacio para usar descuentos" />
         </label>
       </div>
+      <label class="field field--notes" *ngIf="draftItems.length > 0">
+        <span class="field__label">Observaciones <span class="field__optional">(opcional, salen en la factura)</span></span>
+        <textarea class="control control--textarea" rows="2" maxlength="500"
+                  [(ngModel)]="notes" [ngModelOptions]="{ standalone: true }"
+                  placeholder="Presupuesto, patente u otra aclaración"></textarea>
+      </label>
       <div class="warning-banner" *ngIf="isManualOverride">
         <strong>Precio modificado manualmente.</strong> Los descuentos anteriores han sido reemplazados.
         <button class="btn btn--ghost btn--sm" type="button" (click)="clearManualOverride()">Restaurar</button>

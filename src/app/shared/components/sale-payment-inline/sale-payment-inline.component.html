@@ -40,7 +40,7 @@
                 [ngModel]="payment.idPaymentMethod"
                 (ngModelChange)="updatePaymentMethod(index, $event)"
                 [ngModelOptions]="{ standalone: true }"
-                [options]="paymentMethodOptions"
+                [options]="paymentMethodOptionsFor(index)"
                 placeholder="Seleccionar metodo"
                 searchPlaceholder="Buscar metodo...">
               </app-searchable-select>
@@ -91,7 +91,7 @@
                     <span class="card-surcharge__label">Recargo {{ surcharge.pct }}%</span>
                     <span class="card-surcharge__value">+ ${{ surcharge.amt | number:'1.2-2' }}</span>
                   </span>
-                  <span class="card-surcharge__total">Total a cobrar: ${{ surcharge.total | number:'1.2-2' }}</span>
+                  <span class="card-surcharge__total">A pasar por el posnet: ${{ surcharge.total | number:'1.2-2' }}<ng-container *ngIf="surcharge.amt > 0"> (incluye recargo de ${{ surcharge.amt | number:'1.2-2' }})</ng-container></span>
                 </div>
               </ng-container>
             </div>

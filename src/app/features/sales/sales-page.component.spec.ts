@@ -18,7 +18,9 @@ import { ToastService } from '../../shared/services/toast.service';
 import { OnboardingService } from '../../core/services/onboarding.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
+import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
+import { CreateSaleRequest, SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
+import { ProductResponse } from '../../core/models/product.models';
 import { of, throwError } from 'rxjs';
 
 describe('SalesPageComponent (price override)', () => {
@@ -35,9 +37,10 @@ describe('SalesPageComponent (price override)', () => {
         authSpy = jasmine.createSpyObj('AuthService', ['hasPermission', 'getToken', 'isAuthenticated'], { currentUser$: of(null), currentUser: null });
         const productSpy = createMockService<ProductService>(['listProducts']);
         (productSpy as any).listProducts.and.returnValue(of([]));
-        saleSpy = createMockService<SaleService>(['listSales', 'createSale', 'cancelSale', 'getFiscalReceivers']);
+        saleSpy = createMockService<SaleService>(['listSales', 'createSale', 'updateSale', 'cancelSale', 'getFiscalReceivers']);
         (saleSpy as any).listSales.and.returnValue(of([]));
         (saleSpy as any).createSale.and.returnValue(of({}));
+        saleSpy.updateSale.and.returnValue(of({} as SaleResponse));
         const companySpy = createMockService<CompanyService>(['getCurrentCompany']);
         (companySpy as any).getCurrentCompany.and.returnValue(of({}));
         const customerSpy = createMockService<CustomerService>(['searchCustomers']);
@@ -95,6 +98,18 @@ describe('SalesPageComponent (price override)', () => {
         component.setDraftItemPrice(item, 99);
         expect(item.unitPriceOverride).toBe(99);
         expect(item.total).toBe(99 * 3);
+    });
+
+    it('buildRequest manda las observaciones recortadas, o null si están vacías', () => {
+        (component as any).draftItems = [{ product: { id: 'p1' }, quantity: 1, total: 100 }];
+        const build = () => (component as any).buildRequest(
+            (component as any).lineForm, (component as any).draftItems, (component as any).createPaymentState, null, 0);
+
+        component.lineForm.patchValue({ notes: '  Presup. 1234 - Patente AB123CD  ' });
+        expect(build().notes).toBe('Presup. 1234 - Patente AB123CD');
+
+        component.lineForm.patchValue({ notes: '   ' });
+        expect(build().notes).toBeNull();
     });
 
     it('buildRequest with permission + override should include unitPrice', () => {
@@ -445,6 +460,311 @@ describe('SalesPageComponent (price override)', () => {
 
             expect(confirm).not.toHaveBeenCalled();
             expect(toast.error).toHaveBeenCalledWith('No se pudo consultar al servicio de facturación a quién se emitió el comprobante.');
+        });
+    });
+
+    describe('descarga de comprobantes fiscales', () => {
+        const sale = { id: 'sale-1', code: 'MAT-3705', idSaleStatus: 2, invoicingStatus: 5 } as SaleResponse;
+
+        it('cada comprobante se baja por el servicio compartido', () => {
+            const download = spyOn(TestBed.inject(SaleFiscalPdfService), 'download');
+
+            component.downloadInvoicePdf(sale);
+            component.downloadCreditNotePdf(sale);
+            component.downloadDebitNotePdf(sale);
+
+            expect(download.calls.allArgs()).toEqual([
+                ['sale-1', 'invoice'],
+                ['sale-1', 'creditNote'],
+                ['sale-1', 'debitNote']
+            ]);
+        });
+    });
+
+    describe('descuento minorista', () => {
+        const moura = { id: 'p1', code: 'M20', brand: 'Moura', name: 'M20GD', price: 1000, publicPrice: 1000 } as ProductResponse;
+
+        // Venta en espera con 15% de descuento: el dueño despues bajo el tope a 10%.
+        const discountedSale = {
+            id: 'sale-15',
+            code: 'MAT-4001',
+            branchId: 'branch-1',
+            customerId: null,
+            hasDelivery: false,
+            idSaleStatus: 1,
+            saleStatus: 'En espera',
+            totalAmount: 850,
+            pendingAmount: 850,
+            createdAt: '2026-10-30T12:00:00Z',
+            isModified: false,
+            isCuentaCorriente: false,
+            sourceChannel: 1,
+            generalDiscountPercent: 15,
+            generalDiscountReason: 'Cliente frecuente',
+            payments: [],
+            tradeIns: [],
+            details: [{ productId: 'p1', productName: 'M20GD', productBrand: 'Moura', quantity: 1, unitPrice: 1000, totalAmount: 1000, discountPercent: 0 }]
+        } as SaleResponse;
+
+        function buildCreateRequest(): CreateSaleRequest {
+            return component['buildRequest'](component.lineForm, component.draftItems, component.createPaymentState, null, 0);
+        }
+
+        function readyToCreate(status: number): void {
+            component.maxRetailDiscountPercent = 10;
+            component.lineForm.patchValue({ branchId: 'branch-1', sourceChannel: 1, idSaleStatus: status });
+            component.draftItems = [{ product: moura, quantity: 1, total: 1000 }];
+        }
+
+        it('el total ya trae el descuento: (renglones + recargo sin envío) × (1 − %)', () => {
+            component.defaultNoDeliverySurcharge = 100;
+            component.draftItems = [{ product: moura, quantity: 1, total: 1000 }];
+            component.createDiscount = { open: true, percent: 10, reason: '' };
+
+            expect(component.draftTotal).toBe(990);
+
+            component.defaultNoDeliverySurcharge = 0;
+            component.draftItems = [{ product: moura, quantity: 1, total: 333.33 }];
+            component.createDiscount = { open: true, percent: 12.5, reason: '' };
+
+            expect(component.draftTotal).toBe(291.66);
+        });
+
+        it('el request lleva el % y el motivo recortado; sin descuento, 0 y sin motivo', () => {
+            component.draftItems = [{ product: moura, quantity: 1, total: 1000 }];
+            component.createDiscount = { open: true, percent: 10, reason: '  Cliente frecuente  ' };
+
+            expect(buildCreateRequest()).toEqual(jasmine.objectContaining({ generalDiscountPercent: 10, generalDiscountReason: 'Cliente frecuente' }));
+
+            component.createDiscount = { open: true, percent: 0, reason: 'quedó escrito' };
+
+            expect(buildCreateRequest()).toEqual(jasmine.objectContaining({ generalDiscountPercent: 0, generalDiscountReason: null }));
+        });
+
+        it('una venta pagada con descuento se cobra por el total descontado', async () => {
+            readyToCreate(2);
+            component.createDiscount = { open: true, percent: 10, reason: '' };
+            component.createPaymentState.payments[0].amount = 900;
+
+            await component.createSale();
+
+            expect(saleSpy.createSale).toHaveBeenCalled();
+        });
+
+        it('un descuento por encima del tope no se manda', async () => {
+            const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+            readyToCreate(1);
+            component.createDiscount = { open: true, percent: 15, reason: '' };
+
+            await component.createSale();
+
+            expect(saleSpy.createSale).not.toHaveBeenCalled();
+            expect(toast.error).toHaveBeenCalledWith('El descuento supera el máximo de 10% que fijó el dueño.');
+        });
+
+        it('si el back rechaza el descuento muestra su mensaje', async () => {
+            const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+            saleSpy.createSale.and.returnValue(throwError(() => ({ error: {
+                errorCode: 'Sales.Discount.ExceedsLimit', detail: 'El descuento supera el máximo de 10% que fijó el dueño.' } })));
+            readyToCreate(1);
+            component.createDiscount = { open: true, percent: 10, reason: '' };
+
+            await component.createSale();
+
+            expect(toast.error).toHaveBeenCalledWith('El descuento supera el máximo de 10% que fijó el dueño.');
+        });
+
+        it('al editar trae el descuento de la venta y el total lo aplica', () => {
+            component.products = [moura];
+
+            component.beginEdit(discountedSale);
+
+            expect(component.editDiscount).toEqual({ open: true, percent: 15, reason: 'Cliente frecuente' });
+            expect(component.editTotal).toBe(850);
+            const request = component['buildRequest'](component.editMetaForm, component.editItems, component.editPaymentState, null, 0);
+            expect(request).toEqual(jasmine.objectContaining({ generalDiscountPercent: 15, generalDiscountReason: 'Cliente frecuente' }));
+        });
+
+        it('editar sin tocar un descuento que quedó arriba del tope nuevo se guarda igual', async () => {
+            component.products = [moura];
+            component.maxRetailDiscountPercent = 10;
+            component.beginEdit(discountedSale);
+
+            await component.saveEdit();
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-15', jasmine.objectContaining({ generalDiscountPercent: 15 }));
+        });
+
+        it('cambiar el descuento al editar sí respeta el tope', async () => {
+            component.products = [moura];
+            component.maxRetailDiscountPercent = 10;
+            component.beginEdit(discountedSale);
+            component.editDiscount = { ...component.editDiscount, percent: 12 };
+
+            await component.saveEdit();
+
+            expect(saleSpy.updateSale).not.toHaveBeenCalled();
+        });
+
+        it('el "Cobrar" rápido conserva el descuento y el motivo de la venta', () => {
+            (TestBed.inject(CashService) as jasmine.SpyObj<CashService>).listCashDrawers.and.returnValue(of([
+                { id: 'drawer-1', branchId: 'branch-1', name: 'Caja 1', isActive: true, hasOpenSession: true, createdAt: '2026-10-30T00:00:00Z' }
+            ]));
+
+            component.markAsPaid(discountedSale);
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-15', jasmine.objectContaining({
+                generalDiscountPercent: 15,
+                generalDiscountReason: 'Cliente frecuente',
+                payments: [jasmine.objectContaining({ idPaymentMethod: 1, amount: 850 })]
+            }));
+        });
+
+        it('cambiar el canal de una venta no le borra el descuento', () => {
+            component.openChannelPopup(discountedSale);
+            component.selectChannelInPopup(2);
+
+            component.saveChannelPopup();
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-15', jasmine.objectContaining({
+                generalDiscountPercent: 15,
+                generalDiscountReason: 'Cliente frecuente'
+            }));
+        });
+
+        it('con tope 0 el control no aparece; con tope muestra "hasta X%"', () => {
+            component.activeCreateStage = 'payment';
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('app-sale-discount-control')).toBeNull();
+
+            component.maxRetailDiscountPercent = 10;
+            fixture.detectChanges();
+
+            const control = fixture.nativeElement.querySelector('app-sale-discount-control') as HTMLElement | null;
+            expect(control).not.toBeNull();
+            expect(control?.textContent).toContain('hasta 10%');
+        });
+
+        it('toma el tope de la empresa', () => {
+            (TestBed.inject(CompanyService) as jasmine.SpyObj<CompanyService>).getCurrentCompany.and.returnValue(of({
+                id: 'co-1', name: 'Soler', primaryDomain: 'soler.com', maxRetailDiscountPercent: 8, createdAt: '2026-01-01T00:00:00Z'
+            }));
+
+            fixture.detectChanges();
+
+            expect(component.maxRetailDiscountPercent).toBe(8);
+        });
+    });
+
+    // La linea de tarjeta del request lleva la BASE (la parte de la venta que paga la tarjeta) y el back
+    // calcula el recargo. Lo guardado en la venta es lo que paso por el posnet (base + recargo): al reenviarlo
+    // hay que restarle el recargo o se cobraria dos veces.
+    describe('recargo de tarjeta sobre su base', () => {
+        const moura = { id: 'p1', code: 'M20', brand: 'Moura', name: 'M20GD', price: 100000, publicPrice: 100000 } as ProductResponse;
+        const cardPayment = { idPaymentMethod: 3, paymentMethodName: 'Tarjeta', amount: 66636, reference: null, cardBankId: 2, cardCuotas: 3, cardSurchargeAmt: 6636, transferBankId: null };
+        const cardRequestLine = { idPaymentMethod: 3, amount: 60000, reference: null, cardBankId: 2, cardCuotas: 3, transferBankId: null, cheque: null };
+
+        // Venta de $100.000 en espera: $60.000 ya pasaron por la tarjeta (MOURA 3 cuotas 11,06 %), faltan $40.000.
+        const partlyPaidByCard = {
+            id: 'sale-card',
+            code: 'MAT-5001',
+            branchId: 'branch-1',
+            customerId: null,
+            hasDelivery: false,
+            idSaleStatus: 1,
+            saleStatus: 'En espera',
+            totalAmount: 100000,
+            pendingAmount: 40000,
+            createdAt: '2026-10-30T12:00:00Z',
+            isModified: false,
+            isCuentaCorriente: false,
+            sourceChannel: 1,
+            generalDiscountPercent: 0,
+            payments: [cardPayment],
+            tradeIns: [],
+            details: [{ productId: 'p1', productName: 'M20GD', productBrand: 'Moura', quantity: 1, unitPrice: 100000, totalAmount: 100000, discountPercent: 0 }]
+        } as SaleResponse;
+
+        it('editar una venta cobrada en parte con tarjeta manda la base, no lo que paso por el posnet', async () => {
+            component.products = [moura];
+            component.beginEdit(partlyPaidByCard);
+
+            await component.saveEdit();
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-card', jasmine.objectContaining({ payments: [cardRequestLine] }));
+        });
+
+        it('el "Cobrar" rápido reenvía la base de la tarjeta y cobra en efectivo lo que falta', () => {
+            (TestBed.inject(CashService) as jasmine.SpyObj<CashService>).listCashDrawers.and.returnValue(of([
+                { id: 'drawer-1', branchId: 'branch-1', name: 'Caja 1', isActive: true, hasOpenSession: true, createdAt: '2026-10-30T00:00:00Z' }
+            ]));
+
+            component.markAsPaid(partlyPaidByCard);
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-card', jasmine.objectContaining({
+                payments: [cardRequestLine, jasmine.objectContaining({ idPaymentMethod: 1, amount: 40000 })]
+            }));
+        });
+
+        it('cambiar el canal reenvía la base de la tarjeta', () => {
+            component.openChannelPopup(partlyPaidByCard);
+            component.selectChannelInPopup(2);
+
+            component.saveChannelPopup();
+
+            expect(saleSpy.updateSale).toHaveBeenCalledWith('sale-card', jasmine.objectContaining({ payments: [cardRequestLine] }));
+        });
+
+        describe('al crear', () => {
+            beforeEach(() => {
+                component.lineForm.patchValue({ branchId: 'branch-1', sourceChannel: 1 });
+                component.draftItems = [{ product: moura, quantity: 1, total: 100000 }];
+            });
+
+            it('una venta pagada con la tarjeta por toda la venta se cobra sin saldo y viaja con la base', async () => {
+                component.lineForm.patchValue({ idSaleStatus: 2 });
+                component.createPaymentState.payments = [
+                    { idPaymentMethod: 3, amount: 100000, notes: '', cardBankId: 2, cardCuotas: 3, cardSurchargePct: 11.06, cardSurchargeAmt: 11060 }
+                ];
+
+                await component.createSale();
+
+                expect(saleSpy.createSale).toHaveBeenCalledWith(jasmine.objectContaining({
+                    payments: [{ ...cardRequestLine, amount: 100000 }]
+                }));
+            });
+
+            it('en espera, una base de tarjeta mayor que la venta no se manda aunque entre en el total con recargo', async () => {
+                const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+                component.lineForm.patchValue({ idSaleStatus: 1 });
+                component.createPaymentState.payments = [
+                    { idPaymentMethod: 3, amount: 105000, notes: '', cardBankId: 2, cardCuotas: 3, cardSurchargePct: 11.06, cardSurchargeAmt: 11613 }
+                ];
+
+                await component.createSale();
+
+                expect(saleSpy.createSale).not.toHaveBeenCalled();
+                expect(toast.error).toHaveBeenCalledWith('Una venta en espera puede ser parcial, pero no superar el total.');
+            });
+        });
+
+        // Se facturo en espera y despues se cobro en cuotas: la factura no incluye el recargo y hay que avisarlo.
+        describe('recargo no facturado', () => {
+            const invoicedSale = { ...partlyPaidByCard, invoicingStatus: 3, uninvoicedCardSurcharge: 450 } as SaleResponse;
+
+            it('con la factura vigente avisa cuánto recargo quedó afuera', () => {
+                expect(component.uninvoicedCardSurcharge(invoicedSale)).toBe(450);
+            });
+
+            it('sin factura vigente no hay aviso', () => {
+                expect(component.uninvoicedCardSurcharge({ ...invoicedSale, invoicingStatus: 5 } as SaleResponse)).toBe(0);
+                expect(component.uninvoicedCardSurcharge({ ...invoicedSale, invoicingStatus: 1 } as SaleResponse)).toBe(0);
+            });
+
+            it('una venta sin recargo afuera no avisa', () => {
+                expect(component.uninvoicedCardSurcharge({ ...invoicedSale, uninvoicedCardSurcharge: 0 } as SaleResponse)).toBe(0);
+            });
         });
     });
 });

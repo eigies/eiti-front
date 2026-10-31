@@ -86,6 +86,7 @@ export interface ConvertQuoteRequest {
     generalDiscountPercent?: number;
     manualOverridePrice?: number | null;
     withVat: boolean;
+    notes?: string | null;
 }
 
 export type ConvertQuoteResponse = CreateCcSaleResponse;

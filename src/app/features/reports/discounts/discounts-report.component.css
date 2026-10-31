@@ -1,0 +1,22 @@
+/* Solo lo propio del reporte de descuentos; lo comun esta en ../reports.shared.css. */
+
+.data-table--discounts {
+  min-width: 72rem;
+}
+
+.discount-percent {
+  color: color-mix(in srgb, var(--amber) 80%, var(--text));
+  font-weight: 700;
+}
+
+.discount-reason {
+  min-width: 12rem;
+  max-width: 22rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.discount-reason--empty {
+  color: var(--text-mute, var(--text-soft));
+  font-style: italic;
+}
