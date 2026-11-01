@@ -320,16 +320,24 @@ export class InvoicePdfService {
       return y;
     }
 
-    ensureSpace(lines.length * 5 + 4, false);
     const labelX = margin + contentWidth - 75;
     const valueX = margin + contentWidth - 3;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.6);
     doc.setTextColor(60, 60, 60);
-    for (const [label, value] of lines) {
-      doc.text(label, labelX, y);
-      doc.text(value, valueX, y, { align: 'right' });
-      y += 5;
+    // Un texto que no entra antes del monto (el del recargo de tarjeta, con banco y cuotas) baja de renglon.
+    const rows = lines.map(([label, value]) => ({
+      value,
+      label: doc.splitTextToSize(label, valueX - doc.getTextWidth(value) - 4 - labelX) as string[]
+    }));
+    const wrappedLineHeight = 3.8;
+    const rowHeight = (row: { label: string[] }) => 5 + (row.label.length - 1) * wrappedLineHeight;
+
+    ensureSpace(rows.reduce((sum, row) => sum + rowHeight(row), 0) + 4, false);
+    for (const row of rows) {
+      row.label.forEach((text, index) => doc.text(text, labelX, y + index * wrappedLineHeight));
+      doc.text(row.value, valueX, y, { align: 'right' });
+      y += rowHeight(row);
     }
     return y + 2;
   }

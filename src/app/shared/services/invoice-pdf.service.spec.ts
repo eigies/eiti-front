@@ -63,10 +63,39 @@ describe('InvoicePdfService · recargo de tarjeta', () => {
 
     const y = drawAdjustments(doc, print, value => value, 14, 182, 100, () => undefined);
 
-    const written = text.calls.allArgs().map(args => args[0]);
-    expect(written).toContain('Recargo financiero tarjeta (Santander, 3 cuotas, 15%)');
+    const written = text.calls.allArgs().map(args => String(args[0]));
+    expect(written.join(' ')).toContain('Recargo financiero tarjeta (Santander, 3 cuotas, 15%)');
     expect(written).toContain('$ 450,00');
     expect(y).toBeGreaterThan(100);
+  });
+
+  // El texto del recargo es mas largo que la columna de ajustes: tiene que bajar de renglon, no pisarse con el monto.
+  it('un texto largo baja de renglón y no se pisa con el monto', () => {
+    const { doc, text, drawAdjustments } = setup();
+    const label = 'Recargo financiero tarjeta (Santander, 3 cuotas, 15%)';
+    const print = printWith({
+      itemsSubtotal: 4000, noDeliverySurcharge: 95000, generalDiscountPercent: 0, agreedPrice: null,
+      cardSurcharge: 14700, cardSurchargeLabel: label
+    });
+
+    drawAdjustments(doc, print, value => value, 14, 182, 100, () => undefined);
+
+    const calls = text.calls.allArgs().map(([content, x, y, options]) => ({
+      content: String(content),
+      x: Number(x),
+      y: Number(y),
+      isAmount: (options as { align?: string } | undefined)?.align === 'right'
+    }));
+    const amounts = calls.filter(call => call.isAmount);
+    const labels = calls.filter(call => !call.isAmount);
+    for (const line of labels) {
+      const amount = amounts.find(candidate => candidate.y === line.y);
+      if (amount) {
+        expect(line.x + doc.getTextWidth(line.content)).toBeLessThan(amount.x - doc.getTextWidth(amount.content));
+      }
+    }
+    expect(labels.map(line => line.content).join(' ')).toContain(label);
+    expect(new Set(labels.map(line => line.y)).size).toBe(labels.length);
   });
 
   it('sin recargo no agrega renglón', () => {
