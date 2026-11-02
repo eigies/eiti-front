@@ -1,8 +1,8 @@
 <div class="page">
   <header class="hero">
     <div class="eyebrow">Reportería / Ventas</div>
-    <h1>Ventas mayoristas por cliente</h1>
-    <p>Ventas mayoristas (Cuenta Corriente) agrupadas por cliente: operaciones, facturación, ticket promedio, saldo de cuenta corriente pendiente y rentabilidad en el período.</p>
+    <h1>Ventas por cliente</h1>
+    <p>Ventas agrupadas por cliente: operaciones, última compra, facturación, ticket promedio y rentabilidad en el período. En Minorista se ven los clientes que vuelven a comprar; las ventas sin cliente cargado van juntas en Consumidor final, al final.</p>
   </header>
 
   <section class="panel">
@@ -17,6 +17,9 @@
       <div class="filter-form__primary">
         <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
         <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+        <label class="field"><span>Tipo de venta</span>
+          <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Mayorista (CC)"></app-searchable-select>
+        </label>
 
         <button
           class="btn btn--filters"
@@ -43,7 +46,7 @@
         <div class="advanced-filters__head">
           <div>
             <span>Filtros adicionales</span>
-            <p>El tipo de venta arranca en Mayorista (CC); podés cambiarlo o filtrar por cliente y sucursal.</p>
+            <p>Filtrá por cliente o por sucursal.</p>
           </div>
           <span class="advanced-filters__status" *ngIf="activeOptionalFiltersCount > 0">
             {{ activeOptionalFiltersCount }} activo{{ activeOptionalFiltersCount === 1 ? '' : 's' }}
@@ -51,9 +54,6 @@
         </div>
 
         <div class="advanced-filters__grid">
-          <label class="field"><span>Tipo de venta</span>
-            <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Mayorista (CC)"></app-searchable-select>
-          </label>
           <label class="field"><span>Cliente</span>
             <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
           </label>
@@ -92,24 +92,26 @@
         <thead>
           <tr>
             <th>Cliente</th>
+            <th>Última compra</th>
             <th class="t-right">Operaciones</th>
             <th class="t-right">Unidades</th>
             <th class="t-right">Facturación</th>
             <th class="t-right">Ticket prom.</th>
-            <th class="t-right">Saldo CC</th>
+            <th class="t-right" *ngIf="showCcPending">Saldo CC</th>
             <th class="t-right">Costo</th>
             <th class="t-right">Ganancia</th>
             <th class="t-right">Margen %</th>
           </tr>
         </thead>
         <tbody>
-          <tr class="data-row" *ngFor="let r of data.rows; trackBy: trackByRow">
-            <td class="strong">{{ r.customerName }}</td>
+          <tr class="data-row" *ngFor="let r of data.rows; trackBy: trackByRow" [class.dim]="isWalkIn(r)">
+            <td [class.strong]="!isWalkIn(r)">{{ r.customerName }}</td>
+            <td>{{ lastSaleLabel(r) }}</td>
             <td class="t-right">{{ r.operations }}</td>
             <td class="t-right">{{ r.units }}</td>
             <td class="t-right">$ {{ money(r.revenue) }}</td>
             <td class="t-right">$ {{ money(r.avgTicket) }}</td>
-            <td class="t-right" [class.neg]="r.ccPending > 0">$ {{ money(r.ccPending) }}</td>
+            <td class="t-right" *ngIf="showCcPending" [class.neg]="r.ccPending > 0">$ {{ money(r.ccPending) }}</td>
             <td class="t-right dim">$ {{ money(r.cost) }}</td>
             <td class="t-right" [class.pos]="r.profit >= 0" [class.neg]="r.profit < 0">$ {{ money(r.profit) }}</td>
             <td class="t-right">{{ r.marginPct }}%</td>
@@ -118,11 +120,12 @@
         <tfoot>
           <tr class="totals-row">
             <td>TOTAL</td>
+            <td></td>
             <td class="t-right">{{ data.totals.operations }}</td>
             <td class="t-right">{{ data.totals.units }}</td>
             <td class="t-right">$ {{ money(data.totals.revenue) }}</td>
             <td class="t-right">$ {{ money(data.totals.avgTicket) }}</td>
-            <td class="t-right">$ {{ money(data.totals.ccPending) }}</td>
+            <td class="t-right" *ngIf="showCcPending">$ {{ money(data.totals.ccPending) }}</td>
             <td class="t-right">$ {{ money(data.totals.cost) }}</td>
             <td class="t-right">$ {{ money(data.totals.profit) }}</td>
             <td class="t-right">{{ data.totals.marginPct }}%</td>
@@ -132,6 +135,7 @@
     </div>
 
     <p class="note" *ngIf="data && data.rows.length > 0">La rentabilidad usa el costo guardado en la venta; las ventas previas a esa función usan el costo actual del producto.</p>
-    <p class="note" *ngIf="data && data.rows.length > 0">SALDO CC = saldo de cuenta corriente pendiente actual del cliente (todas sus ventas CC, no sólo las del período).</p>
+    <p class="note" *ngIf="data && data.rows.length > 0">ÚLTIMA COMPRA = la venta más reciente del cliente dentro del período y los filtros.</p>
+    <p class="note" *ngIf="data && data.rows.length > 0 && showCcPending">SALDO CC = saldo de cuenta corriente pendiente actual del cliente (todas sus ventas CC, no sólo las del período).</p>
   </section>
 </div>

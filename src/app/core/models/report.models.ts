@@ -70,6 +70,8 @@ export interface WholesaleByCustomerRow {
     cost: number;
     profit: number;
     marginPct: number;
+    /** Venta mas reciente del cliente dentro del periodo y los filtros (instante UTC). */
+    lastSaleAt: string;
 }
 
 export interface WholesaleByCustomerTotals {
