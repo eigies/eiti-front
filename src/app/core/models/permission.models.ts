@@ -122,7 +122,7 @@ export const PermissionCatalog: ReadonlyArray<{ code: PermissionCode; label: str
     { code: PermissionCodes.reportsSalesBrand, label: 'Reportería: ventas por marca', description: 'Reporte de ventas por marca.' },
     { code: PermissionCodes.reportsSalesRanking, label: 'Reportería: ranking de artículos', description: 'Ranking de artículos más vendidos.' },
     { code: PermissionCodes.reportsSalesDailyControl, label: 'Reportería: control diario de ventas', description: 'Detalle operativo de ventas, referencias, canjes y baterías vendidas.' },
-    { code: PermissionCodes.reportsWholesaleByCustomer, label: 'Reportería: ventas mayoristas por cliente', description: 'Ventas mayoristas (Cuenta Corriente) agrupadas por cliente, con facturación, ticket promedio y saldo pendiente.' },
+    { code: PermissionCodes.reportsWholesaleByCustomer, label: 'Reportería: ventas por cliente', description: 'Ventas mayoristas o minoristas agrupadas por cliente, con última compra, facturación, ticket promedio y saldo pendiente de cuenta corriente.' },
     { code: PermissionCodes.reportsSalesTradeIns, label: 'Reportería: canjes por sucursal', description: 'Productos recibidos en canje agrupados por sucursal y producto, con unidades y valor reconocido.' },
     { code: PermissionCodes.reportsSalesDiscounts, label: 'Reportería: descuentos', description: 'Ventas con descuento general: quién lo aplicó, cuánto se descontó y el motivo.' },
     { code: PermissionCodes.reportsDebtors, label: 'Reportería: clientes deudores', description: 'Reporte de clientes con saldo pendiente en cuenta corriente.' },

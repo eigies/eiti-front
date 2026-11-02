@@ -413,6 +413,8 @@
 
 /* Separador entre grupos en tablas agrupadas (ej. canjes por sucursal). */
 .data-row.branch-break td { border-top: 1px solid color-mix(in srgb, var(--amber) 26%, var(--border)); }
+/* Fila de agregado que no es un cliente (ej. consumidor final en ventas por cliente): atenuada entera. */
+.data-row.dim td { color: var(--text-soft); }
 .data-table :is(th, td).t-right {
   text-align: right;
   white-space: nowrap;
