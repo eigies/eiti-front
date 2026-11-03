@@ -50,25 +50,25 @@
   </div>
 
   <ng-container *ngIf="!loading && data">
-    <section class="daily-metrics">
+    <section class="daily-metrics" *ngIf="visibleTotals as totals">
       <article class="daily-metric">
         <span>Ventas</span>
-        <strong>{{ data.totals.salesCount }}</strong>
+        <strong>{{ totals.salesCount }}</strong>
         <small>en el filtro aplicado</small>
       </article>
       <article class="daily-metric">
         <span>Baterías</span>
-        <strong>{{ data.totals.unitsSold }}</strong>
+        <strong>{{ totals.unitsSold }}</strong>
         <small>unidades vendidas</small>
       </article>
       <article class="daily-metric">
         <span>Con canje</span>
-        <strong>{{ data.totals.salesWithTradeIn }}</strong>
+        <strong>{{ totals.salesWithTradeIn }}</strong>
         <small>con producto recibido</small>
       </article>
       <article class="daily-metric daily-metric--money">
         <span>Total</span>
-        <strong>$ {{ money(data.totals.totalAmount) }}</strong>
+        <strong>$ {{ money(totals.totalAmount) }}</strong>
         <small>importe del período</small>
       </article>
     </section>

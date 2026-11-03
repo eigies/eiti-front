@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import {
   DailySalesControlResponse,
   DailySalesControlRow,
+  DailySalesControlTotals,
   DailySalesPaymentItem,
   DailySalesProductItem,
   DailySalesTradeInItem
@@ -68,6 +69,17 @@ export class DailySalesControlComponent implements OnInit {
       ...row.payments.flatMap(payment => [payment.method, payment.reference]),
       ...row.tradeIns.flatMap(tradeIn => [tradeIn.code, tradeIn.brand, tradeIn.name])
     ].some(value => String(value ?? '').toLowerCase().includes(query)));
+  }
+
+  /** La búsqueda filtra solo en pantalla: las tarjetas salen de las filas visibles, no de los totales del back. */
+  get visibleTotals(): DailySalesControlTotals {
+    const rows = this.filteredRows;
+    return {
+      salesCount: rows.length,
+      unitsSold: rows.reduce((sum, row) => sum + row.products.reduce((units, product) => units + product.quantity, 0), 0),
+      salesWithTradeIn: rows.filter(row => row.tradeIns.length > 0).length,
+      totalAmount: rows.reduce((sum, row) => sum + row.totalAmount, 0)
+    };
   }
 
   search(): void {
