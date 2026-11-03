@@ -1,0 +1,33 @@
+<ng-container *ngIf="cheques.length > 0">
+  <div class="due-backdrop" (click)="close()" aria-hidden="true"></div>
+
+  <section class="due-shell" role="dialog" aria-modal="true" aria-labelledby="due-title">
+    <div class="due-card">
+      <span class="due-card__eyebrow">Cheques propios</span>
+      <h2 id="due-title">{{ cheques.length === 1 ? 'Hoy vence 1 cheque' : 'Hoy vencen ' + cheques.length + ' cheques' }}</h2>
+      <p>Se debitan del banco: revisá que haya saldo.</p>
+
+      <ul class="due-list">
+        <li class="due-row" *ngFor="let cheque of cheques">
+          <div class="due-row__main">
+            <span class="due-row__number">Nº {{ cheque.numero }} · {{ cheque.bankName }}</span>
+            <span class="due-row__meta">
+              {{ cheque.supplierName || 'Sin proveedor' }}<ng-container *ngIf="dueLabel(cheque) as label"> · {{ label }}</ng-container>
+            </span>
+          </div>
+          <span class="due-row__amount">$ {{ money(cheque.monto) }}</span>
+        </li>
+      </ul>
+
+      <div class="due-total" *ngIf="cheques.length > 1">
+        <span>Total</span>
+        <span class="due-total__amount">$ {{ money(total) }}</span>
+      </div>
+
+      <div class="due-actions">
+        <button class="due-actions__go" type="button" (click)="goToCheques()">Ver cheques</button>
+        <button class="due-actions__close" type="button" (click)="close()">Entendido</button>
+      </div>
+    </div>
+  </section>
+</ng-container>

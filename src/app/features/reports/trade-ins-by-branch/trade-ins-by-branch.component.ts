@@ -9,7 +9,7 @@ import { ReportService } from '../../../core/services/report.service';
 import { CustomerService } from '../../../core/services/customer.service';
 import { BranchService } from '../../../core/services/branch.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { TradeInsByBranchResponse } from '../../../core/models/report.models';
+import { REPORT_SALE_TYPES, TradeInsByBranchFilters, TradeInsByBranchResponse } from '../../../core/models/report.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
@@ -32,6 +32,10 @@ export class TradeInsByBranchComponent implements OnInit {
   customers: { id: string; label: string }[] = [];
   branches: { id: string; label: string }[] = [];
 
+  readonly saleTypeOptions: SearchableSelectOption[] = REPORT_SALE_TYPES;
+  /** Los filtros de lo que está en pantalla: el formulario puede haber cambiado sin Aplicar. */
+  private appliedFilters: TradeInsByBranchFilters | null = null;
+
   constructor(
     private readonly fb: FormBuilder,
     private readonly reportService: ReportService,
@@ -47,7 +51,8 @@ export class TradeInsByBranchComponent implements OnInit {
       dateFrom: [firstOfMonth, Validators.required],
       dateTo: [today, Validators.required],
       branchId: [null],
-      customerId: [null]
+      customerId: [null],
+      saleType: ['all']
     });
   }
 
@@ -61,7 +66,7 @@ export class TradeInsByBranchComponent implements OnInit {
 
   get activeOptionalFiltersCount(): number {
     const v = this.filterForm.value;
-    return [v.customerId, v.branchId].filter(Boolean).length;
+    return [v.customerId, v.branchId, v.saleType !== 'all'].filter(Boolean).length;
   }
 
   isInvalid(field: string): boolean {
@@ -97,13 +102,15 @@ export class TradeInsByBranchComponent implements OnInit {
 
     this.loading = true;
     this.hasSearched = true;
-    this.reportService.tradeInsByBranch({
+    const filters: TradeInsByBranchFilters = {
       dateFrom: v.dateFrom,
       dateTo: v.dateTo,
       branchId: v.branchId || null,
-      customerId: v.customerId || null
-    }).subscribe({
-      next: res => { this.data = res; this.loading = false; },
+      customerId: v.customerId || null,
+      saleType: v.saleType
+    };
+    this.reportService.tradeInsByBranch(filters).subscribe({
+      next: res => { this.data = res; this.appliedFilters = filters; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => {
         this.loading = false;
         this.toast.error(err?.error?.detail || 'No se pudo generar el reporte.');
@@ -114,7 +121,7 @@ export class TradeInsByBranchComponent implements OnInit {
   clearFilters(): void {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    this.filterForm.reset({ dateFrom: firstOfMonth, dateTo: today, branchId: null, customerId: null });
+    this.filterForm.reset({ dateFrom: firstOfMonth, dateTo: today, branchId: null, customerId: null, saleType: 'all' });
     this.advancedFiltersOpen = false;
     this.search();
   }
@@ -153,6 +160,17 @@ export class TradeInsByBranchComponent implements OnInit {
     XLSX.writeFile(wb, this.fileName('xlsx'), { compression: true });
   }
 
+  pdfSubtitle(): string {
+    const f = this.appliedFilters;
+    return [
+      'Reporteria / Ventas',
+      f && `Desde ${f.dateFrom} hasta ${f.dateTo}`,
+      this.branches.find(b => b.id === f?.branchId)?.label,
+      this.customers.find(c => c.id === f?.customerId)?.label,
+      REPORT_SALE_TYPES.find(t => t.value === f?.saleType && t.value !== 'all')?.label
+    ].filter(Boolean).join(' · ');
+  }
+
   async exportPdf(): Promise<void> {
     if (!this.data || this.data.rows.length === 0) { this.toast.error('No hay datos para exportar.'); return; }
     const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
@@ -160,8 +178,7 @@ export class TradeInsByBranchComponent implements OnInit {
     const margin = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const f = this.filterForm.value;
-    const subtitle = `Reporteria / Ventas · Desde ${f.dateFrom} hasta ${f.dateTo}`;
+    const subtitle = this.pdfSubtitle();
     let y = 12;
 
     const drawDocumentHeader = (continuation = false): void => {

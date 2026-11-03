@@ -1,3 +1,5 @@
+import { GroupedPaymentOwnCheque } from './account-ledger.models';
+
 // Cuenta corriente / "bolsa" de un proveedor: compras (débitos) y pagos (créditos).
 
 export interface SupplierAccountListItem {
@@ -65,12 +67,13 @@ export interface AddSupplierPaymentResult {
   imputaciones: SupplierPaymentImputacion[];
 }
 
-// Orden de pago: varios medios (cheques de cartera, transferencia, efectivo) en un comprobante OP-####.
+// Orden de pago: varios medios (cheques de cartera o propios, transferencia, efectivo) en un comprobante OP-####.
 export interface SupplierPaymentOrderLineRequest {
   method: number;
   amount: number;
   chequeId: string | null;
   reference: string | null;
+  ownCheque?: GroupedPaymentOwnCheque | null;
 }
 
 export interface SupplierPaymentOrderRequest {

@@ -36,19 +36,27 @@ import { SearchableSelectComponent, SearchableSelectOption } from '../searchable
 
 export type GroupedPaymentMode = 'supplier' | 'customer';
 
+/** Código de línea: los medios del backend, más el cheque propio, que se carga distinto al de cartera. */
+type LineCode = PaymentMeansMethod | 'ownCheck';
+
 interface MethodDef {
   value: number;
-  code: PaymentMeansMethod;
+  code: LineCode;
   label: string;
   quickAdd: boolean;
 }
+
+const SUPPLIER_CHECK_METHOD = 3;
+/** Solo existe en el modal: para el backend un cheque propio es el medio Cheque, con sus datos. */
+export const OWN_CHEQUE_METHOD = 31;
 
 // Códigos de medio de cada lado (PurchasePaymentMethod / SalePaymentMethod del backend).
 const METHODS: Record<GroupedPaymentMode, MethodDef[]> = {
   supplier: [
     { value: 1, code: 'cash', label: 'Efectivo', quickAdd: true },
     { value: 2, code: 'transfer', label: 'Transferencia', quickAdd: true },
-    { value: 3, code: 'check', label: 'Cheque de cartera', quickAdd: true },
+    { value: SUPPLIER_CHECK_METHOD, code: 'check', label: 'Cheque de cartera', quickAdd: true },
+    { value: OWN_CHEQUE_METHOD, code: 'ownCheck', label: 'Cheque propio', quickAdd: true },
     { value: 4, code: 'other', label: 'Otro', quickAdd: false }
   ],
   customer: [
@@ -171,7 +179,7 @@ export class GroupedPaymentModalComponent implements AfterViewInit, OnDestroy {
     return this.mode === 'supplier' ? 'pago' : 'cobro';
   }
 
-  codeOf(line: FormGroup<LineForm>): PaymentMeansMethod {
+  codeOf(line: FormGroup<LineForm>): LineCode {
     return this.methods.find(m => m.value === line.controls.method.value)?.code ?? 'other';
   }
 
@@ -230,6 +238,10 @@ export class GroupedPaymentModalComponent implements AfterViewInit, OnDestroy {
 
   isReceivedCheque(line: FormGroup<LineForm>): boolean {
     return this.mode === 'customer' && this.codeOf(line) === 'check';
+  }
+
+  isOwnCheque(line: FormGroup<LineForm>): boolean {
+    return this.codeOf(line) === 'ownCheck';
   }
 
   // ── Cheques de cartera (proveedor) ─────────────────────────
@@ -320,6 +332,15 @@ export class GroupedPaymentModalComponent implements AfterViewInit, OnDestroy {
       errors['amount'] = 'El importe tiene que ser mayor a cero.';
     }
 
+    if (this.isOwnCheque(line)) {
+      const c = v.cheque;
+      if (!c.bankId || !c.numero.trim() || !c.fechaEmision || !c.fechaVencimiento) {
+        errors['ownCheque'] = 'Completá banco, número y fechas del cheque.';
+      } else if (c.fechaVencimiento < c.fechaEmision) {
+        errors['ownCheque'] = 'La fecha de pago no puede ser anterior a la emisión.';
+      }
+    }
+
     if (this.mode === 'customer') {
       if (code === 'card' && this.cardBankOptions.length > 0 && (!v.cardBankId || !v.cardCuotas)) {
         errors['card'] = 'Elegí banco y cuotas.';
@@ -376,7 +397,7 @@ export class GroupedPaymentModalComponent implements AfterViewInit, OnDestroy {
     const groups = new Map<string, { label: string; count: number; amount: number }>();
     for (const line of this.lines.controls) {
       const def = this.methods.find(m => m.value === line.controls.method.value);
-      const label = def?.code === 'check' ? 'Cheques' : def?.label ?? 'Otro';
+      const label = def?.code === 'check' || def?.code === 'ownCheck' ? 'Cheques' : def?.label ?? 'Otro';
       const group = groups.get(label) ?? { label, count: 0, amount: 0 };
       group.count += 1;
       group.amount = this.round(group.amount + this.lineAmount(line));
@@ -433,8 +454,16 @@ export class GroupedPaymentModalComponent implements AfterViewInit, OnDestroy {
     const v = line.getRawValue();
     const code = this.codeOf(line);
     const amount = v.amount ?? 0;
+    const ownCheque = this.isOwnCheque(line) && v.cheque.bankId
+      ? {
+          bankId: v.cheque.bankId,
+          numero: v.cheque.numero.trim(),
+          fechaEmision: v.cheque.fechaEmision,
+          fechaVencimiento: v.cheque.fechaVencimiento
+        }
+      : null;
     return {
-      method: v.method,
+      method: code === 'ownCheck' ? SUPPLIER_CHECK_METHOD : v.method,
       amount,
       reference: v.reference.trim() || null,
       chequeId: this.isCarteraCheque(line) ? v.chequeId : null,
@@ -452,7 +481,8 @@ export class GroupedPaymentModalComponent implements AfterViewInit, OnDestroy {
             fechaVencimiento: v.cheque.fechaVencimiento,
             notas: null
           }
-        : null
+        : null,
+      ownCheque
     };
   }
 

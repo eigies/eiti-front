@@ -129,6 +129,7 @@ export interface TradeInsByBranchFilters {
     dateTo: string;
     branchId?: string | null;
     customerId?: string | null;
+    saleType?: string | null;
 }
 
 /** Una venta con descuento general (excluye anuladas). */
@@ -166,6 +167,8 @@ export interface DiscountsReportFilters {
     branchId?: string | null;
     /** Usuario que aplico el descuento. */
     userId?: string | null;
+    customerId?: string | null;
+    saleType?: string | null;
 }
 
 export interface CustomerDebtorRow {
@@ -176,6 +179,11 @@ export interface CustomerDebtorRow {
     owed: number;
     creditBalance: number;
     net: number;
+}
+
+export interface CustomerDebtorsFilters {
+    branchId?: string | null;
+    customerId?: string | null;
 }
 
 export interface CustomerDebtorsResponse {
@@ -226,6 +234,14 @@ export interface PaymentMethodsReportRow {
 export interface PaymentMethodsReportTotals {
     count: number;
     total: number;
+}
+
+export interface PaymentMethodsReportFilters {
+    dateFrom: string;
+    dateTo: string;
+    branchId?: string | null;
+    saleType?: string | null;
+    customerId?: string | null;
 }
 
 export interface PaymentMethodsReportResponse {
@@ -321,6 +337,22 @@ export interface DailySalesControlResponse {
     rows: DailySalesControlRow[];
     totals: DailySalesControlTotals;
 }
+
+export interface DailySalesControlFilters {
+    dateFrom: string;
+    dateTo: string;
+    status: number;
+    branchId?: string | null;
+    customerId?: string | null;
+    saleType?: string | null;
+}
+
+/** Tipo de venta de los reportes: Mayorista es cuenta corriente, Minorista es venta normal. */
+export const REPORT_SALE_TYPES: { value: string; label: string }[] = [
+    { value: 'all', label: 'Todas' },
+    { value: 'wholesale', label: 'Mayorista (CC)' },
+    { value: 'retail', label: 'Minorista' }
+];
 
 export const SALE_CHANNELS: { value: number; label: string }[] = [
     { value: 1, label: 'Referido' },

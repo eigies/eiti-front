@@ -94,6 +94,19 @@ export class AuthService {
         return this._currentUser$.value;
     }
 
+    /** Avisos que salen una vez por día y por usuario, aunque la sesión siga abierta de un día para el otro. */
+    isDailyNoticePending(notice: string): boolean {
+        return localStorage.getItem(this.dailyNoticeKey(notice)) !== new Date().toLocaleDateString('en-CA');
+    }
+
+    markDailyNoticeSeen(notice: string): void {
+        localStorage.setItem(this.dailyNoticeKey(notice), new Date().toLocaleDateString('en-CA'));
+    }
+
+    private dailyNoticeKey(notice: string): string {
+        return `eiti_notice_${notice}_${this.currentUser?.userId ?? ''}`;
+    }
+
     private persist(res: AuthResponse): void {
         this.onboarding.reset();
         this.sessionExpiredHandled = false;

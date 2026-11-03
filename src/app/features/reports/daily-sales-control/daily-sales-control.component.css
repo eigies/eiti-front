@@ -8,6 +8,10 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.daily-filters__search {
+  grid-column: span 2;
+}
+
 .daily-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -172,5 +176,9 @@
   .daily-filters,
   .daily-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .daily-filters__search {
+    grid-column: auto;
   }
 }

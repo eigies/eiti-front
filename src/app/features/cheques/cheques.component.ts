@@ -11,11 +11,13 @@ import {
   CHEQUE_STATUS_BADGE,
   CHEQUE_STATUS_LABELS,
   CHEQUE_TRANSITIONS,
+  ChequeOrigen,
   ChequeStatus
 } from '../../core/models/cheque.models';
 import { BankResponse } from '../../core/models/bank.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { formatLedgerDate } from '../../shared/utils/ledger-format.util';
 
 @Component({
   selector: 'app-cheques',
@@ -40,6 +42,11 @@ export class ChequesComponent implements OnInit {
   readonly statusLabels = CHEQUE_STATUS_LABELS;
   readonly statusBadge = CHEQUE_STATUS_BADGE;
   readonly transitions = CHEQUE_TRANSITIONS;
+  readonly chequeOrigen = ChequeOrigen;
+  readonly origenOptions: SearchableSelectOption[] = [
+    { value: ChequeOrigen.Tercero, label: 'Terceros' },
+    { value: ChequeOrigen.Propio, label: 'Propios' }
+  ];
   readonly allStatuses = [
     ChequeStatus.EnCartera,
     ChequeStatus.Depositado,
@@ -92,6 +99,7 @@ export class ChequesComponent implements OnInit {
     private readonly confirmation: ConfirmationService
   ) {
     this.filterForm = this.fb.group({
+      origen: [null],
       estado: [null],
       bankId: [null],
       numero: [''],
@@ -120,7 +128,8 @@ export class ChequesComponent implements OnInit {
       bankId: f.bankId ? Number(f.bankId) : null,
       numero: f.numero?.trim() || null,
       fechaVencFrom: f.fechaVencFrom || null,
-      fechaVencTo: f.fechaVencTo || null
+      fechaVencTo: f.fechaVencTo || null,
+      origen: f.origen ? Number(f.origen) : null
     };
     this.chequeService.listCheques(filters).subscribe({
       next: cheques => { this.cheques = cheques; this.loading = false; },
@@ -192,28 +201,44 @@ export class ChequesComponent implements OnInit {
 
   statusLabel(estado: number): string { return this.statusLabels[estado] ?? estado.toString(); }
   statusClass(estado: number): string { return this.statusBadge[estado] ?? 'badge'; }
-  isUrgent(cheque: Pick<ChequeListItem, 'estado' | 'fechaVencimiento'>): boolean {
+  isUrgent(cheque: Pick<ChequeListItem, 'estado' | 'fechaVencimiento' | 'origen'>): boolean {
+    // Un cheque propio sale Entregado y sigue vigente hasta que el banco lo debita. Sin estado "debitado",
+    // pasada la fecha ya no cuenta: si no, Urgentes crecería para siempre.
+    if (cheque.origen === ChequeOrigen.Propio && cheque.estado === ChequeStatus.Entregado) {
+      const days = this.daysUntil(cheque.fechaVencimiento);
+      return days >= 0 && days <= this.soonWindowDays;
+    }
+
     if (cheque.estado === ChequeStatus.Acreditado || cheque.estado === ChequeStatus.Rechazado || cheque.estado === ChequeStatus.Anulado || cheque.estado === ChequeStatus.Entregado) {
       return false;
     }
 
-    const dueDate = new Date(`${cheque.fechaVencimiento}T00:00:00`);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
-    return diffDays <= this.soonWindowDays;
+    return this.daysUntil(cheque.fechaVencimiento) <= this.soonWindowDays;
   }
 
   urgencyLabel(cheque: Pick<ChequeListItem, 'fechaVencimiento'>): string {
-    const dueDate = new Date(`${cheque.fechaVencimiento}T00:00:00`);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
+    const diffDays = this.daysUntil(cheque.fechaVencimiento);
 
     if (diffDays < 0) return 'Vencido';
     if (diffDays === 0) return 'Vence hoy';
     if (diffDays === 1) return 'Vence manana';
     return `Vence en ${diffDays} dias`;
+  }
+
+  terminalStateLabel(cheque: Pick<ChequeDetail, 'origen' | 'estado'>): string {
+    return cheque.origen === ChequeOrigen.Propio && cheque.estado === ChequeStatus.Entregado
+      ? 'Cheque propio entregado al proveedor. Si hay que anularlo, se anula desde su pago.'
+      : 'Estado terminal - no hay transiciones disponibles.';
+  }
+
+  /** Fecha de negocio: llega como medianoche UTC y no se pasa por Date, que en Argentina la corre al día anterior. */
+  dateLabel(value: string): string { return formatLedgerDate(value); }
+
+  private daysUntil(value: string): number {
+    const dueDate = new Date(`${value.slice(0, 10)}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
   }
 
   trackById(_: number, item: ChequeListItem): string { return item.id; }

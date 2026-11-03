@@ -2,6 +2,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { BankService } from '../../core/services/bank.service';
 import { PurchaseService } from '../../core/services/purchase.service';
 import { SupplierAccountService } from '../../core/services/supplier-account.service';
 import { PaymentReceiptPdfService } from '../../shared/services/payment-receipt-pdf.service';
@@ -51,6 +52,8 @@ describe('SupplierAccountComponent · notas de crédito', () => {
     auth.hasPermission.and.returnValue(true);
     const purchases = jasmine.createSpyObj<PurchaseService>('PurchaseService', ['listCarteraCheques']);
     purchases.listCarteraCheques.and.returnValue(of([]) as never);
+    const banks = jasmine.createSpyObj<BankService>('BankService', ['listBanks']);
+    banks.listBanks.and.returnValue(of([]));
     const receipt = jasmine.createSpyObj<PaymentReceiptPdfService>('PaymentReceiptPdfService', ['generate']);
     const toast = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'show']);
     const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
@@ -60,7 +63,7 @@ describe('SupplierAccountComponent · notas de crédito', () => {
     const route = { snapshot: { paramMap: { get: () => 'sup-1' } } } as unknown as ActivatedRoute;
 
     const component = new SupplierAccountComponent(
-      accountService, auth, purchases, receipt, toast, route, router, cdr, confirmation
+      accountService, auth, purchases, receipt, toast, route, router, cdr, confirmation, banks
     );
     component.ngOnInit();
 
@@ -167,6 +170,8 @@ describe('SupplierAccountComponent · extracto y orden de pago', () => {
     auth.hasPermission.and.returnValue(true);
     const purchases = jasmine.createSpyObj<PurchaseService>('PurchaseService', ['listCarteraCheques']);
     purchases.listCarteraCheques.and.returnValue(of([]) as never);
+    const banks = jasmine.createSpyObj<BankService>('BankService', ['listBanks']);
+    banks.listBanks.and.returnValue(of([]));
     const receipt = jasmine.createSpyObj<PaymentReceiptPdfService>('PaymentReceiptPdfService', ['generate']);
     receipt.generate.and.resolveTo();
     const toast = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'show']);
@@ -177,10 +182,10 @@ describe('SupplierAccountComponent · extracto y orden de pago', () => {
     const route = { snapshot: { paramMap: { get: () => 'sup-1' } } } as unknown as ActivatedRoute;
 
     const component = new SupplierAccountComponent(
-      accountService, auth, purchases, receipt, toast, route, router, cdr, confirmation
+      accountService, auth, purchases, receipt, toast, route, router, cdr, confirmation, banks
     );
     component.ngOnInit();
-    return { component, accountService, toast, confirmation, purchases, receipt };
+    return { component, accountService, toast, confirmation, purchases, receipt, banks };
   }
 
   it('carga el extracto con el filtro actual y lo recarga al cambiarlo', () => {
@@ -203,6 +208,72 @@ describe('SupplierAccountComponent · extracto y orden de pago', () => {
     expect(component.paymentOpen).toBeTrue();
     expect(component.paymentTarget).toBe(1305000);
     expect(purchases.listCarteraCheques).toHaveBeenCalled();
+  });
+
+  it('abrir el pago carga los bancos para los cheques propios', () => {
+    const { component, banks } = setup();
+    banks.listBanks.and.returnValue(of([{ id: 8, name: 'BANCO GALICIA', active: true, useForCard: false, useForTransfer: false, useForCheque: true, plans: [] }]));
+
+    component.openPayment();
+
+    expect(banks.listBanks).toHaveBeenCalledWith(true, 'cheque');
+    expect(component.chequeBanks.map(b => b.name)).toEqual(['BANCO GALICIA']);
+    expect(component.carteraLoading).toBeFalse();
+  });
+
+  it('si fallan los bancos igual ofrece los cheques de cartera', () => {
+    const { component, purchases, banks, toast } = setup();
+    purchases.listCarteraCheques.and.returnValue(of([{ id: 'ch-1' }]) as never);
+    banks.listBanks.and.returnValue(throwError(() => new Error('500')));
+
+    component.openPayment();
+
+    expect(component.carteraCheques.length).toBe(1);
+    expect(component.chequeBanks).toEqual([]);
+    expect(component.carteraLoading).toBeFalse();
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it('el cheque propio viaja en su línea', () => {
+    const { component, accountService } = setup();
+    component.openPayment();
+    const ownCheque = { bankId: 8, numero: '00012345', fechaEmision: '2026-11-03', fechaVencimiento: '2026-12-03' };
+
+    component.submitPaymentOrder({
+      date: '2026-11-03',
+      notes: null,
+      lines: [{ method: 3, amount: 300000, reference: null, chequeId: null, cardBankId: null, cardCuotas: null, transferBankId: null, cheque: null, ownCheque }]
+    });
+
+    expect(accountService.createPaymentOrder.calls.mostRecent().args[1].lines).toEqual([
+      { method: 3, amount: 300000, chequeId: null, reference: null, ownCheque }
+    ]);
+  });
+
+  it('anular avisa que el cheque propio queda anulado y el de cartera vuelve', async () => {
+    const { component, confirmation } = setup();
+    const means = { method: 'check' as const, methodLabel: 'Cheque', amount: 1, reference: null, bankName: null, dueDate: null, cardInstallments: null, cardSurcharge: null };
+
+    await component.cancelRow(row({
+      means: [
+        { ...means, paymentId: 'p1', chequeNumber: '1', ownCheque: true },
+        { ...means, paymentId: 'p2', chequeNumber: '2', ownCheque: false }
+      ]
+    }));
+
+    const detail = confirmation.confirm.calls.mostRecent().args[0].detail;
+    expect(detail).toContain('El cheque vuelve a cartera');
+    expect(detail).toContain('El cheque propio queda anulado');
+  });
+
+  it('anular un pago solo con cheques propios no habla de cartera', async () => {
+    const { component, confirmation } = setup();
+
+    await component.cancelRow(row({
+      means: [{ paymentId: 'p1', method: 'check', methodLabel: 'Cheque', amount: 1, reference: null, chequeNumber: '1', bankName: null, dueDate: null, cardInstallments: null, cardSurcharge: null, ownCheque: true }]
+    }));
+
+    expect(confirmation.confirm.calls.mostRecent().args[0].detail).not.toContain('cartera');
   });
 
   it('registra la orden con todos sus medios y avisa a qué se imputó', () => {

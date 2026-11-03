@@ -7,7 +7,29 @@
 
   <section class="panel">
     <div class="panel__header">
-      <div><span>Deudores</span><p *ngIf="data">{{ data.rows.length }} cliente(s) con saldo pendiente</p></div>
+      <div><span>Filtros</span></div>
+    </div>
+    <form [formGroup]="filterForm" (ngSubmit)="load()" class="filter-form">
+      <label class="field" *ngIf="branches.length > 1"><span>Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label class="field"><span>Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <div class="filter-form__actions">
+        <button class="btn btn--primary" type="submit">Aplicar</button>
+        <button class="btn btn--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="panel__header">
+      <div>
+        <span>Deudores</span>
+        <p *ngIf="data">{{ data.rows.length }} cliente(s) con saldo pendiente</p>
+        <p *ngIf="data && branchFiltered">Por sucursal se ve solo lo adeudado: el saldo a favor es del cliente, no de una sucursal.</p>
+      </div>
       <div class="panel__actions">
         <button class="btn btn--ghost btn--sm" type="button" (click)="load()">Actualizar</button>
         <button class="btn btn--ghost btn--export" type="button" (click)="exportExcel()" [disabled]="!data || data.rows.length === 0">Exportar XLSX</button>
@@ -28,8 +50,8 @@
           <col />
           <col />
           <col />
-          <col />
-          <col />
+          <col *ngIf="!branchFiltered" />
+          <col *ngIf="!branchFiltered" />
         </colgroup>
         <thead>
           <tr>
@@ -37,8 +59,8 @@
             <th class="t-right">Ventas abiertas</th>
             <th>Más antigua</th>
             <th class="t-right">Adeudado</th>
-            <th class="t-right">A favor</th>
-            <th class="t-right">Neto</th>
+            <th class="t-right" *ngIf="!branchFiltered">A favor</th>
+            <th class="t-right" *ngIf="!branchFiltered">Neto</th>
           </tr>
         </thead>
         <tbody>
@@ -47,8 +69,8 @@
             <td class="t-right">{{ r.openSalesCount }}</td>
             <td class="dim">{{ formatDate(r.oldestDate) }}</td>
             <td class="t-right neg">$ {{ money(r.owed) }}</td>
-            <td class="t-right dim">$ {{ money(r.creditBalance) }}</td>
-            <td class="t-right" [class.neg]="r.net > 0" [class.pos]="r.net <= 0">$ {{ money(r.net) }}</td>
+            <td class="t-right dim" *ngIf="!branchFiltered">$ {{ money(r.creditBalance) }}</td>
+            <td class="t-right" *ngIf="!branchFiltered" [class.neg]="r.net > 0" [class.pos]="r.net <= 0">$ {{ money(r.net) }}</td>
           </tr>
         </tbody>
         <tfoot>
@@ -57,8 +79,8 @@
             <td></td>
             <td></td>
             <td class="t-right">$ {{ money(data.totalOwed) }}</td>
-            <td class="t-right">$ {{ money(data.totalCredit) }}</td>
-            <td class="t-right">$ {{ money(data.totalNet) }}</td>
+            <td class="t-right" *ngIf="!branchFiltered">$ {{ money(data.totalCredit) }}</td>
+            <td class="t-right" *ngIf="!branchFiltered">$ {{ money(data.totalNet) }}</td>
           </tr>
         </tfoot>
       </table>

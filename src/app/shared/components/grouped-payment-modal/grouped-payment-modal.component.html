@@ -40,7 +40,7 @@
 
       <ng-container formArrayName="lines">
         <div class="line" *ngFor="let line of lines.controls; let i = index; trackBy: trackLine" [formGroupName]="i"
-             [class.line--fields]="isReceivedCheque(line)" [class.line--invalid]="!!lineError(line)">
+             [class.line--fields]="isReceivedCheque(line) || isOwnCheque(line)" [class.line--invalid]="!!lineError(line)">
           <span class="l-idx">{{ i + 1 }}</span>
 
           <div class="l-med">
@@ -89,6 +89,21 @@
                   <label class="field"><span class="label">Emisión</span><input class="input" type="date" formControlName="fechaEmision" /></label>
                 </div>
               </ng-template>
+            </ng-container>
+
+            <!-- Cheque propio (proveedor): lo emite la empresa, nunca pasa por cartera -->
+            <ng-container *ngSwitchCase="'ownCheck'">
+              <div class="mini" formGroupName="cheque">
+                <label class="field mini--wide">
+                  <span class="label">Banco</span>
+                  <app-searchable-select formControlName="bankId" [options]="chequeBankOptions" [compact]="true"
+                    [panelInline]="true" placeholder="Banco del cheque" searchPlaceholder="Buscar banco..."
+                    emptyMessage="No hay bancos marcados para cheques."></app-searchable-select>
+                </label>
+                <label class="field"><span class="label">Número</span><input class="input" type="text" maxlength="50" formControlName="numero" /></label>
+                <label class="field"><span class="label">Emisión</span><input class="input" type="date" formControlName="fechaEmision" /></label>
+                <label class="field"><span class="label">Fecha de pago</span><input class="input" type="date" formControlName="fechaVencimiento" /></label>
+              </div>
             </ng-container>
 
             <ng-container *ngSwitchCase="'card'">
