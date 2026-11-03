@@ -26,13 +26,23 @@
         <span>Hasta *</span>
         <input class="control" type="date" formControlName="dateTo" />
       </label>
-      <label class="field">
-        <span>Estado</span>
-        <select class="control" formControlName="status">
-          <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>
-        </select>
+      <label class="field" *ngIf="branches.length > 1">
+        <span>Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
       </label>
       <label class="field">
+        <span>Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <label class="field">
+        <span>Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+      <label class="field">
+        <span>Estado</span>
+        <app-searchable-select formControlName="status" [options]="statusOptions" placeholder="Activas"></app-searchable-select>
+      </label>
+      <label class="field daily-filters__search">
         <span>Buscar en resultados</span>
         <input class="control" type="search" formControlName="search" placeholder="Comprobante, cliente, batería..." />
       </label>
@@ -50,25 +60,25 @@
   </div>
 
   <ng-container *ngIf="!loading && data">
-    <section class="daily-metrics">
+    <section class="daily-metrics" *ngIf="visibleTotals as totals">
       <article class="daily-metric">
         <span>Ventas</span>
-        <strong>{{ data.totals.salesCount }}</strong>
+        <strong>{{ totals.salesCount }}</strong>
         <small>en el filtro aplicado</small>
       </article>
       <article class="daily-metric">
         <span>Baterías</span>
-        <strong>{{ data.totals.unitsSold }}</strong>
+        <strong>{{ totals.unitsSold }}</strong>
         <small>unidades vendidas</small>
       </article>
       <article class="daily-metric">
         <span>Con canje</span>
-        <strong>{{ data.totals.salesWithTradeIn }}</strong>
+        <strong>{{ totals.salesWithTradeIn }}</strong>
         <small>con producto recibido</small>
       </article>
       <article class="daily-metric daily-metric--money">
         <span>Total</span>
-        <strong>$ {{ money(data.totals.totalAmount) }}</strong>
+        <strong>$ {{ money(totals.totalAmount) }}</strong>
         <small>importe del período</small>
       </article>
     </section>

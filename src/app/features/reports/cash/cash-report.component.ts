@@ -3,13 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import * as XLSX from 'xlsx';
 import { ReportService } from '../../../core/services/report.service';
+import { BranchService } from '../../../core/services/branch.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { BranchResponse } from '../../../core/models/branch.models';
 import { CashMovementsReportResponse } from '../../../core/models/report.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-cash-report',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
   templateUrl: './cash-report.component.html',
   styleUrls: ['../reports.shared.css', './cash-report.component.css']
 })
@@ -19,21 +22,32 @@ export class CashReportComponent implements OnInit {
   hasSearched = false;
   data: CashMovementsReportResponse | null = null;
   expanded: Record<number, boolean> = {};
+  branches: BranchResponse[] = [];
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly reportService: ReportService,
+    private readonly branchService: BranchService,
     private readonly toast: ToastService
   ) {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     this.filterForm = this.fb.group({
       dateFrom: [firstOfMonth, Validators.required],
-      dateTo: [today, Validators.required]
+      dateTo: [today, Validators.required],
+      branchId: [null]
     });
   }
 
-  ngOnInit(): void { this.search(); }
+  get branchOptions(): SearchableSelectOption[] { return this.branches.map(b => ({ value: b.id, label: b.name })); }
+
+  ngOnInit(): void {
+    this.branchService.listBranches().subscribe({
+      next: branches => this.branches = branches,
+      error: () => this.branches = []
+    });
+    this.search();
+  }
 
   isInvalid(field: string): boolean {
     const c = this.filterForm.get(field);
@@ -47,7 +61,7 @@ export class CashReportComponent implements OnInit {
 
     this.loading = true;
     this.hasSearched = true;
-    this.reportService.cashMovements(v.dateFrom, v.dateTo).subscribe({
+    this.reportService.cashMovements(v.dateFrom, v.dateTo, v.branchId || undefined).subscribe({
       next: res => { this.data = res; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => { this.loading = false; this.toast.error(err?.error?.detail || 'No se pudo cargar el reporte.'); }
     });

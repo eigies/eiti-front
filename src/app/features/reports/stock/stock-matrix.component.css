@@ -145,6 +145,11 @@
   flex: 0 0 auto;
 }
 
+.sm-branch {
+  flex: 0 1 15rem;
+  min-width: 12rem;
+}
+
 .sm-search {
   flex: 1 1 18rem;
   display: inline-flex;

@@ -1,16 +1,24 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import {
+  DailySalesControlFilters,
   DailySalesControlResponse,
   DailySalesControlRow,
+  DailySalesControlTotals,
   DailySalesPaymentItem,
   DailySalesProductItem,
-  DailySalesTradeInItem
+  DailySalesTradeInItem,
+  REPORT_SALE_TYPES
 } from '../../../core/models/report.models';
+import { BranchService } from '../../../core/services/branch.service';
+import { CustomerService } from '../../../core/services/customer.service';
 import { ReportService } from '../../../core/services/report.service';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
@@ -18,7 +26,7 @@ import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-l
 @Component({
   selector: 'app-daily-sales-control',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
   templateUrl: './daily-sales-control.component.html',
   styleUrls: ['../reports.shared.css', './daily-sales-control.component.css']
 })
@@ -28,7 +36,13 @@ export class DailySalesControlComponent implements OnInit {
   hasSearched = false;
   data: DailySalesControlResponse | null = null;
 
-  readonly statusOptions = [
+  branches: { id: string; label: string }[] = [];
+  customers: { id: string; label: string }[] = [];
+  /** Los filtros de lo que está en pantalla: el formulario puede haber cambiado sin Aplicar. */
+  private appliedFilters: DailySalesControlFilters | null = null;
+
+  readonly saleTypeOptions: SearchableSelectOption[] = REPORT_SALE_TYPES;
+  readonly statusOptions: SearchableSelectOption[] = [
     { value: 0, label: 'Activas' },
     { value: 2, label: 'Pagadas' },
     { value: 1, label: 'Pendientes' },
@@ -40,20 +54,29 @@ export class DailySalesControlComponent implements OnInit {
     private readonly reportService: ReportService,
     private readonly toast: ToastService,
     private readonly pdfBranding: PdfBrandingService,
-    private readonly pdfLayout: PdfLayoutService
+    private readonly pdfLayout: PdfLayoutService,
+    private readonly branchService: BranchService,
+    private readonly customerService: CustomerService
   ) {
     const today = this.toIso(new Date());
     this.filterForm = this.fb.group({
       dateFrom: [today, Validators.required],
       dateTo: [today, Validators.required],
+      branchId: [null],
+      customerId: [null],
+      saleType: ['all'],
       status: [0],
       search: ['']
     });
   }
 
   ngOnInit(): void {
+    this.loadLookups();
     this.search();
   }
+
+  get branchOptions(): SearchableSelectOption[] { return this.branches.map(b => ({ value: b.id, label: b.label })); }
+  get customerOptions(): SearchableSelectOption[] { return this.customers.map(c => ({ value: c.id, label: c.label })); }
 
   get filteredRows(): DailySalesControlRow[] {
     const rows = this.data?.rows ?? [];
@@ -68,6 +91,17 @@ export class DailySalesControlComponent implements OnInit {
       ...row.payments.flatMap(payment => [payment.method, payment.reference]),
       ...row.tradeIns.flatMap(tradeIn => [tradeIn.code, tradeIn.brand, tradeIn.name])
     ].some(value => String(value ?? '').toLowerCase().includes(query)));
+  }
+
+  /** La búsqueda filtra solo en pantalla: las tarjetas salen de las filas visibles, no de los totales del back. */
+  get visibleTotals(): DailySalesControlTotals {
+    const rows = this.filteredRows;
+    return {
+      salesCount: rows.length,
+      unitsSold: rows.reduce((sum, row) => sum + row.products.reduce((units, product) => units + product.quantity, 0), 0),
+      salesWithTradeIn: rows.filter(row => row.tradeIns.length > 0).length,
+      totalAmount: rows.reduce((sum, row) => sum + row.totalAmount, 0)
+    };
   }
 
   search(): void {
@@ -85,9 +119,18 @@ export class DailySalesControlComponent implements OnInit {
 
     this.loading = true;
     this.hasSearched = true;
-    this.reportService.dailySalesControl(value.dateFrom, value.dateTo, Number(value.status ?? 0)).subscribe({
+    const filters: DailySalesControlFilters = {
+      dateFrom: value.dateFrom,
+      dateTo: value.dateTo,
+      status: Number(value.status ?? 0),
+      branchId: value.branchId || null,
+      customerId: value.customerId || null,
+      saleType: value.saleType
+    };
+    this.reportService.dailySalesControl(filters).subscribe({
       next: response => {
         this.data = response;
+        this.appliedFilters = filters;
         this.loading = false;
       },
       error: (err: { error?: { detail?: string } }) => {
@@ -99,7 +142,7 @@ export class DailySalesControlComponent implements OnInit {
 
   clearFilters(): void {
     const today = this.toIso(new Date());
-    this.filterForm.reset({ dateFrom: today, dateTo: today, status: 0, search: '' });
+    this.filterForm.reset({ dateFrom: today, dateTo: today, branchId: null, customerId: null, saleType: 'all', status: 0, search: '' });
     this.search();
   }
 
@@ -199,6 +242,17 @@ export class DailySalesControlComponent implements OnInit {
     );
   }
 
+  pdfSubtitle(rowCount: number): string {
+    const f = this.appliedFilters;
+    return [
+      f && `${f.dateFrom} a ${f.dateTo}`,
+      `${rowCount} venta(s)`,
+      this.branches.find(branch => branch.id === f?.branchId)?.label,
+      this.customers.find(customer => customer.id === f?.customerId)?.label,
+      REPORT_SALE_TYPES.find(type => type.value === f?.saleType && type.value !== 'all')?.label
+    ].filter(Boolean).join(' - ');
+  }
+
   async exportPdf(): Promise<void> {
     const rows = this.filteredRows;
     if (rows.length === 0) {
@@ -226,11 +280,10 @@ export class DailySalesControlComponent implements OnInit {
     let y = 12;
 
     const drawHeader = (continuation = false): void => {
-      const value = this.filterForm.value;
       this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
       y = this.pdfBranding.drawHeader(doc, branding, {
         title: 'Control diario de ventas',
-        subtitle: `${value.dateFrom} a ${value.dateTo} - ${rows.length} venta(s)`,
+        subtitle: this.pdfSubtitle(rows.length),
         continuation,
         margin,
         y: 12,
@@ -273,6 +326,16 @@ export class DailySalesControlComponent implements OnInit {
     const value = this.filterForm.value;
     this.pdfBranding.drawFooter(doc, pageWidth, pageHeight, margin, 'Control diario de ventas');
     doc.save(`control_ventas_${value.dateFrom}_${value.dateTo}.pdf`);
+  }
+
+  private loadLookups(): void {
+    forkJoin({
+      customers: this.customerService.listCustomers().pipe(catchError(() => of([]))),
+      branches: this.branchService.listBranches().pipe(catchError(() => of([])))
+    }).subscribe(({ customers, branches }) => {
+      this.customers = customers.map(c => ({ id: c.id, label: c.fullName }));
+      this.branches = branches.map(b => ({ id: b.id, label: b.name }));
+    });
   }
 
   private toIso(date: Date): string {

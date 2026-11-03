@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { DiscountsReportComponent } from './discounts-report.component';
 import { ReportService } from '../../../core/services/report.service';
 import { BranchService } from '../../../core/services/branch.service';
+import { CustomerService } from '../../../core/services/customer.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -67,6 +68,7 @@ describe('DiscountsReportComponent', () => {
             providers: [
                 { provide: ReportService, useValue: reports },
                 { provide: BranchService, useValue: branches },
+                { provide: CustomerService, useValue: { listCustomers: () => of([]) } },
                 { provide: UserService, useValue: users },
                 { provide: AuthService, useValue: auth },
                 { provide: ToastService, useValue: toast },
@@ -86,7 +88,7 @@ describe('DiscountsReportComponent', () => {
         setup();
 
         expect(reports.getDiscountsReport).toHaveBeenCalledWith({
-            dateFrom: firstOfMonth(), dateTo: today(), branchId: null, userId: null
+            dateFrom: firstOfMonth(), dateTo: today(), branchId: null, userId: null, customerId: null, saleType: 'all'
         });
     });
 
@@ -97,8 +99,59 @@ describe('DiscountsReportComponent', () => {
         component.search();
 
         expect(reports.getDiscountsReport).toHaveBeenCalledWith({
-            dateFrom: '2026-10-01', dateTo: '2026-10-15', branchId: 'b-mat', userId: 'u-ana'
+            dateFrom: '2026-10-01', dateTo: '2026-10-15', branchId: 'b-mat', userId: 'u-ana', customerId: null, saleType: 'all'
         });
+    });
+
+    it('manda el cliente y el tipo de venta elegidos', () => {
+        setup();
+        component.filterForm.patchValue({ customerId: 'c-ana', saleType: 'retail' });
+
+        component.search();
+
+        expect(reports.getDiscountsReport.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({
+            customerId: 'c-ana', saleType: 'retail'
+        }));
+    });
+
+    it('el cliente y el tipo de venta están dentro de Más filtros', () => {
+        setup();
+        const el = fixture.nativeElement as HTMLElement;
+        expect(el.querySelector('.filter-form__primary app-searchable-select')).toBeNull();
+
+        component.toggleAdvancedFilters();
+        fixture.detectChanges();
+
+        const advanced = el.querySelector('.filter-form__advanced')?.textContent;
+        expect(advanced).toContain('Cliente');
+        expect(advanced).toContain('Tipo de venta');
+    });
+
+    it('el tipo de venta cuenta como filtro activo, salvo Todas', () => {
+        setup();
+        expect(component.activeOptionalFiltersCount).toBe(0);
+
+        component.filterForm.patchValue({ saleType: 'retail' });
+
+        expect(component.activeOptionalFiltersCount).toBe(1);
+    });
+
+    it('el PDF dice los filtros aplicados, no los que quedaron sin aplicar', () => {
+        setup();
+        component.branchOptions = [{ value: 'b-1', label: 'Mataderos' }, { value: 'b-2', label: 'San Cristobal' }];
+        component.filterForm.patchValue({ branchId: 'b-1' });
+        component.search();
+        component.filterForm.patchValue({ branchId: 'b-2' });
+
+        expect(component.pdfSubtitle()).toContain('Mataderos');
+        expect(component.pdfSubtitle()).not.toContain('San Cristobal');
+    });
+
+    it('el cliente cuenta como filtro activo', () => {
+        setup();
+        component.filterForm.patchValue({ customerId: 'c-ana' });
+
+        expect(component.activeOptionalFiltersCount).toBe(1);
     });
 
     it('con la fecha desde después de la hasta no busca y avisa', () => {

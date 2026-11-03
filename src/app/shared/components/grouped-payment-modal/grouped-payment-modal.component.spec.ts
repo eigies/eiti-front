@@ -2,7 +2,7 @@ import { FormBuilder } from '@angular/forms';
 import { BankResponse } from '../../../core/models/bank.models';
 import { CarteraChequeOption } from '../../../core/models/cheque.models';
 import { GroupedPaymentSubmit, PendingDocument } from '../../../core/models/account-ledger.models';
-import { GroupedPaymentModalComponent, GroupedPaymentMode } from './grouped-payment-modal.component';
+import { GroupedPaymentModalComponent, GroupedPaymentMode, OWN_CHEQUE_METHOD } from './grouped-payment-modal.component';
 
 const CASH = 1;
 const TRANSFER = 2;
@@ -146,8 +146,8 @@ describe('GroupedPaymentModalComponent · proveedor', () => {
     expect(emitted[0].date).toBe('2026-10-23');
     expect(emitted[0].notes).toBe('Pago septiembre');
     expect(emitted[0].lines).toEqual([
-      { method: SUPPLIER_CHECK, amount: 400000, reference: null, chequeId: 'ch-1', cardBankId: null, cardCuotas: null, transferBankId: null, cheque: null },
-      { method: TRANSFER, amount: 905000, reference: 'Ref. 99120', chequeId: null, cardBankId: null, cardCuotas: null, transferBankId: null, cheque: null }
+      { method: SUPPLIER_CHECK, amount: 400000, reference: null, chequeId: 'ch-1', cardBankId: null, cardCuotas: null, transferBankId: null, cheque: null, ownCheque: null },
+      { method: TRANSFER, amount: 905000, reference: 'Ref. 99120', chequeId: null, cardBankId: null, cardCuotas: null, transferBankId: null, cheque: null, ownCheque: null }
     ]);
   });
 
@@ -161,6 +161,103 @@ describe('GroupedPaymentModalComponent · proveedor', () => {
 
     expect(line.controls.chequeId.value).toBeNull();
     expect(line.controls.amount.enabled).toBeTrue();
+  });
+});
+
+// El cheque que emite la empresa: un medio aparte en el modal, que para el back es el medio Cheque con sus datos.
+describe('GroupedPaymentModalComponent · cheque propio', () => {
+  const banks = [bank(8, 'BANCO GALICIA', { useForCheque: true }), bank(9, 'Mercadopago')];
+
+  function ownLine() {
+    const { component, emitted } = setup('supplier', { banks });
+    component.addLine(OWN_CHEQUE_METHOD);
+    return { component, emitted, line: component.lines.at(0) };
+  }
+
+  function complete(line: ReturnType<typeof ownLine>['line']) {
+    line.controls.cheque.patchValue({ bankId: 8, numero: ' 00012345 ', fechaEmision: '2026-11-03', fechaVencimiento: '2026-12-03' });
+  }
+
+  it('se ofrece al lado del cheque de cartera', () => {
+    const { component } = setup('supplier');
+
+    expect(component.quickAddMethods.map(m => m.label)).toContain('Cheque propio');
+    expect(component.quickAddMethods.map(m => m.label)).toContain('Cheque de cartera');
+  });
+
+  it('no se ofrece en el cobro a clientes', () => {
+    const { component } = setup('customer');
+
+    expect(component.methods.map(m => m.label)).not.toContain('Cheque propio');
+  });
+
+  it('arranca con lo que falta y su importe se puede editar', () => {
+    const { line } = ownLine();
+
+    expect(line.controls.amount.enabled).toBeTrue();
+    expect(line.controls.amount.value).toBe(1305000);
+  });
+
+  it('pide banco, número y fecha de pago', () => {
+    const { component, line } = ownLine();
+
+    expect(line.invalid).toBeTrue();
+    expect(component.blockedReason).toContain('Completá banco, número y fechas');
+
+    complete(line);
+
+    expect(line.valid).toBeTrue();
+    expect(component.blockedReason).toBeNull();
+  });
+
+  it('la fecha de pago no puede ser anterior a la emisión', () => {
+    const { component, line } = ownLine();
+    complete(line);
+
+    line.controls.cheque.patchValue({ fechaVencimiento: '2026-11-02' });
+
+    expect(line.invalid).toBeTrue();
+    expect(component.blockedReason).toContain('anterior a la emisión');
+  });
+
+  it('solo ofrece los bancos marcados para cheques', () => {
+    const { component } = ownLine();
+
+    expect(component.chequeBankOptions.map(o => o.label)).toEqual(['BANCO GALICIA']);
+  });
+
+  it('viaja como medio Cheque con sus datos, sin cheque de cartera', () => {
+    const { component, emitted, line } = ownLine();
+    complete(line);
+    line.controls.amount.setValue(300000);
+
+    component.submit();
+
+    expect(emitted[0].lines[0]).toEqual(jasmine.objectContaining({
+      method: SUPPLIER_CHECK,
+      amount: 300000,
+      chequeId: null,
+      cheque: null,
+      ownCheque: { bankId: 8, numero: '00012345', fechaEmision: '2026-11-03', fechaVencimiento: '2026-12-03' }
+    }));
+  });
+
+  it('un cheque de cartera no lleva datos de cheque propio', () => {
+    const { component, emitted } = setup('supplier');
+    component.addLine(SUPPLIER_CHECK);
+    component.onChequeChange(component.lines.at(0), 'ch-1');
+
+    component.submit();
+
+    expect(emitted[0].lines[0].ownCheque).toBeNull();
+  });
+
+  it('en el resumen suma junto con los cheques', () => {
+    const { component, line } = ownLine();
+    complete(line);
+    line.controls.amount.setValue(300000);
+
+    expect(component.subtotals).toEqual([{ label: 'Cheques', count: 1, amount: 300000 }]);
   });
 });
 

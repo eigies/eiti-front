@@ -3,8 +3,12 @@ import { formatMoney } from '../../shared/utils/money.util';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { SupplierAccountService } from '../../core/services/supplier-account.service';
 import { AuthService } from '../../core/services/auth.service';
+import { BankService } from '../../core/services/bank.service';
+import { BankResponse } from '../../core/models/bank.models';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { CreateCreditNoteRequest } from '../../core/models/credit-note.models';
 import { PurchaseService } from '../../core/services/purchase.service';
@@ -53,6 +57,8 @@ export class SupplierAccountComponent implements OnInit {
   paymentTarget: number | null = null;
   submittingPayment = false;
   carteraCheques: CarteraChequeOption[] = [];
+  /** Bancos para cargar un cheque propio. */
+  chequeBanks: BankResponse[] = [];
   carteraLoading = false;
 
   constructor(
@@ -64,7 +70,8 @@ export class SupplierAccountComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
-    private readonly confirmation: ConfirmationService
+    private readonly confirmation: ConfirmationService,
+    private readonly bankService: BankService
   ) {}
 
   ngOnInit(): void {
@@ -115,7 +122,7 @@ export class SupplierAccountComponent implements OnInit {
   openPayment(selected?: PendingDocument[]): void {
     this.paymentTarget = selected?.length ? selected.reduce((sum, p) => sum + p.pending, 0) : null;
     this.paymentOpen = true;
-    this.loadCarteraCheques();
+    this.loadChequeOptions();
     this.cdr.markForCheck();
   }
 
@@ -124,17 +131,27 @@ export class SupplierAccountComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  private loadCarteraCheques(): void {
+  private loadChequeOptions(): void {
     this.carteraLoading = true;
-    this.purchaseService.listCarteraCheques().subscribe({
-      next: cheques => { this.carteraCheques = cheques; this.carteraLoading = false; this.cdr.markForCheck(); },
-      error: () => {
-        this.carteraCheques = [];
-        this.carteraLoading = false;
-        this.toast.error('No se pudieron cargar los cheques de cartera');
-        this.cdr.markForCheck();
-      }
+    // Cada lista falla por su cuenta: sin bancos igual se puede pagar con cheques de cartera.
+    forkJoin({
+      cheques: this.purchaseService.listCarteraCheques().pipe(
+        catchError(() => this.chequeOptionsFailed('No se pudieron cargar los cheques en cartera'))
+      ),
+      banks: this.bankService.listBanks(true, 'cheque').pipe(
+        catchError(() => this.chequeOptionsFailed('No se pudieron cargar los bancos para cheques propios'))
+      )
+    }).subscribe(({ cheques, banks }) => {
+      this.carteraCheques = cheques;
+      this.chequeBanks = banks;
+      this.carteraLoading = false;
+      this.cdr.markForCheck();
     });
+  }
+
+  private chequeOptionsFailed(message: string): Observable<never[]> {
+    this.toast.error(message);
+    return of([]);
   }
 
   submitPaymentOrder(payment: GroupedPaymentSubmit): void {
@@ -142,7 +159,13 @@ export class SupplierAccountComponent implements OnInit {
     this.supplierAccountService.createPaymentOrder(this.supplierId, {
       date: payment.date,
       notes: payment.notes,
-      lines: payment.lines.map(l => ({ method: l.method, amount: l.amount, chequeId: l.chequeId, reference: l.reference }))
+      lines: payment.lines.map(l => ({
+        method: l.method,
+        amount: l.amount,
+        chequeId: l.chequeId,
+        reference: l.reference,
+        ...(l.ownCheque ? { ownCheque: l.ownCheque } : {})
+      }))
     }).subscribe({
       next: res => {
         this.submittingPayment = false;
@@ -168,10 +191,12 @@ export class SupplierAccountComponent implements OnInit {
     }
 
     const facturas = row.imputations.map(i => i.code).join(', ');
-    const cheques = row.means.filter(m => m.method === 'check').length;
+    const cheques = row.means.filter(m => m.method === 'check' && !m.ownCheque).length;
+    const ownCheques = row.means.filter(m => m.method === 'check' && m.ownCheque).length;
     const detail = [
       facturas ? `Vuelven a pendiente: ${facturas}.` : 'No había facturas imputadas: se revierte el saldo a favor.',
       cheques > 0 ? `${cheques === 1 ? 'El cheque vuelve' : `Los ${cheques} cheques vuelven`} a cartera.` : '',
+      ownCheques > 0 ? `${ownCheques === 1 ? 'El cheque propio queda anulado' : `Los ${ownCheques} cheques propios quedan anulados`}.` : '',
       row.means.some(m => m.method === 'cash') ? 'El efectivo vuelve a la caja.' : ''
     ].filter(Boolean).join(' ');
 

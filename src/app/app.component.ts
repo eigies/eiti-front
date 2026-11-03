@@ -7,11 +7,12 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { AuthService } from './core/services/auth.service';
 import { ConfirmationDialogComponent } from './shared/components/confirmation-dialog/confirmation-dialog.component';
 import { AssistantBubbleComponent } from './shared/components/assistant-bubble/assistant-bubble.component';
+import { OwnChequesDueNoticeComponent } from './shared/components/own-cheques-due-notice/own-cheques-due-notice.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ToastComponent, NavbarComponent, ConfirmationDialogComponent, AssistantBubbleComponent, NgIf],
+  imports: [RouterOutlet, ToastComponent, NavbarComponent, ConfirmationDialogComponent, AssistantBubbleComponent, OwnChequesDueNoticeComponent, NgIf],
   template: `
     <app-navbar *ngIf="isAuthenticated"></app-navbar>
     <div class="app-content">
@@ -20,6 +21,7 @@ import { AssistantBubbleComponent } from './shared/components/assistant-bubble/a
     <app-toast></app-toast>
     <app-confirmation-dialog></app-confirmation-dialog>
     <app-assistant-bubble *ngIf="isAuthenticated"></app-assistant-bubble>
+    <app-own-cheques-due-notice *ngIf="isAuthenticated"></app-own-cheques-due-notice>
   `,
   styles: []
 })
