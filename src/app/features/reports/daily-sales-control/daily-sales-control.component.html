@@ -26,13 +26,23 @@
         <span>Hasta *</span>
         <input class="control" type="date" formControlName="dateTo" />
       </label>
-      <label class="field">
-        <span>Estado</span>
-        <select class="control" formControlName="status">
-          <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>
-        </select>
+      <label class="field" *ngIf="branches.length > 1">
+        <span>Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
       </label>
       <label class="field">
+        <span>Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <label class="field">
+        <span>Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+      <label class="field">
+        <span>Estado</span>
+        <app-searchable-select formControlName="status" [options]="statusOptions" placeholder="Activas"></app-searchable-select>
+      </label>
+      <label class="field daily-filters__search">
         <span>Buscar en resultados</span>
         <input class="control" type="search" formControlName="search" placeholder="Comprobante, cliente, batería..." />
       </label>

@@ -17,6 +17,9 @@
       <div class="filter-form__primary">
         <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
         <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
+        <label class="field"><span>Tipo de venta</span>
+          <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Todas"></app-searchable-select>
+        </label>
 
         <button
           class="btn btn--filters"
@@ -43,7 +46,7 @@
         <div class="advanced-filters__head">
           <div>
             <span>Filtros adicionales</span>
-            <p>Podés acotar a una sucursal o a quien aplicó el descuento.</p>
+            <p>Podés acotar a una sucursal, a un cliente o a quien aplicó el descuento.</p>
           </div>
           <span class="advanced-filters__status" *ngIf="activeOptionalFiltersCount > 0">
             {{ activeOptionalFiltersCount }} activo{{ activeOptionalFiltersCount === 1 ? '' : 's' }}
@@ -53,6 +56,9 @@
         <div class="advanced-filters__grid">
           <label class="field"><span>Sucursal</span>
             <app-searchable-select formControlName="branchId" [options]="branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Cliente</span>
+            <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
           </label>
           <label class="field"><span>Aplicado por</span>
             <app-searchable-select formControlName="userId" [options]="userOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los usuarios" searchPlaceholder="Buscar usuario..."></app-searchable-select>

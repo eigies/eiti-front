@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { DiscountsReportComponent } from './discounts-report.component';
 import { ReportService } from '../../../core/services/report.service';
 import { BranchService } from '../../../core/services/branch.service';
+import { CustomerService } from '../../../core/services/customer.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -67,6 +68,7 @@ describe('DiscountsReportComponent', () => {
             providers: [
                 { provide: ReportService, useValue: reports },
                 { provide: BranchService, useValue: branches },
+                { provide: CustomerService, useValue: { listCustomers: () => of([]) } },
                 { provide: UserService, useValue: users },
                 { provide: AuthService, useValue: auth },
                 { provide: ToastService, useValue: toast },
@@ -86,7 +88,7 @@ describe('DiscountsReportComponent', () => {
         setup();
 
         expect(reports.getDiscountsReport).toHaveBeenCalledWith({
-            dateFrom: firstOfMonth(), dateTo: today(), branchId: null, userId: null
+            dateFrom: firstOfMonth(), dateTo: today(), branchId: null, userId: null, customerId: null, saleType: 'all'
         });
     });
 
@@ -97,8 +99,26 @@ describe('DiscountsReportComponent', () => {
         component.search();
 
         expect(reports.getDiscountsReport).toHaveBeenCalledWith({
-            dateFrom: '2026-10-01', dateTo: '2026-10-15', branchId: 'b-mat', userId: 'u-ana'
+            dateFrom: '2026-10-01', dateTo: '2026-10-15', branchId: 'b-mat', userId: 'u-ana', customerId: null, saleType: 'all'
         });
+    });
+
+    it('manda el cliente y el tipo de venta elegidos', () => {
+        setup();
+        component.filterForm.patchValue({ customerId: 'c-ana', saleType: 'retail' });
+
+        component.search();
+
+        expect(reports.getDiscountsReport.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({
+            customerId: 'c-ana', saleType: 'retail'
+        }));
+    });
+
+    it('el cliente cuenta como filtro activo', () => {
+        setup();
+        component.filterForm.patchValue({ customerId: 'c-ana' });
+
+        expect(component.activeOptionalFiltersCount).toBe(1);
     });
 
     it('con la fecha desde después de la hasta no busca y avisa', () => {

@@ -4,15 +4,18 @@ import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import { ReportService } from '../../../core/services/report.service';
+import { BranchService } from '../../../core/services/branch.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { BranchResponse } from '../../../core/models/branch.models';
 import { StockMatrixResponse, StockMatrixRow } from '../../../core/models/report.models';
+import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
 
 @Component({
   selector: 'app-stock-matrix-report',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SearchableSelectComponent],
   templateUrl: './stock-matrix.component.html',
   styleUrls: ['../reports.shared.css', './stock-matrix.component.css']
 })
@@ -21,19 +24,35 @@ export class StockMatrixComponent implements OnInit {
   data: StockMatrixResponse | null = null;
   search = '';
   hideEmpty = false;
+  branchId: string | null = null;
+  branches: BranchResponse[] = [];
 
   constructor(
     private readonly reportService: ReportService,
+    private readonly branchService: BranchService,
     private readonly toast: ToastService,
     private readonly pdfBranding: PdfBrandingService,
     private readonly pdfLayout: PdfLayoutService
   ) {}
 
-  ngOnInit(): void { this.load(); }
+  get branchOptions(): SearchableSelectOption[] { return this.branches.map(b => ({ value: b.id, label: b.name })); }
+
+  ngOnInit(): void {
+    this.branchService.listBranches().subscribe({
+      next: branches => this.branches = branches,
+      error: () => this.branches = []
+    });
+    this.load();
+  }
+
+  selectBranch(branchId: string | number | null): void {
+    this.branchId = branchId === null ? null : String(branchId);
+    this.load();
+  }
 
   load(): void {
     this.loading = true;
-    this.reportService.stockMatrix().subscribe({
+    this.reportService.stockMatrix(this.branchId ?? undefined).subscribe({
       next: res => { this.data = res; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => { this.loading = false; this.toast.error(err?.error?.detail || 'No se pudo cargar el reporte.'); }
     });
@@ -88,7 +107,7 @@ export class StockMatrixComponent implements OnInit {
   }
 
   get hasActiveFilters(): boolean {
-    return this.search.trim().length > 0 || this.hideEmpty;
+    return this.search.trim().length > 0 || this.hideEmpty || this.branchId !== null;
   }
 
   stockCellClass(quantity: number | null | undefined): string {

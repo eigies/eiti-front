@@ -43,6 +43,19 @@
       </div>
       <div class="panel__actions sm-actions">
         <div class="sm-actions__filters">
+          <div class="sm-branch" *ngIf="branches.length > 1">
+            <app-searchable-select
+              [ngModel]="branchId"
+              (ngModelChange)="selectBranch($event)"
+              [options]="branchOptions"
+              [allowClear]="true"
+              clearLabel="Todas"
+              [clearValue]="null"
+              ariaLabel="Sucursal"
+              placeholder="Todas las sucursales"
+              searchPlaceholder="Buscar sucursal...">
+            </app-searchable-select>
+          </div>
           <label class="sm-search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="11" cy="11" r="7"></circle>

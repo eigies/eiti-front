@@ -4,7 +4,9 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
     CashMovementsReportResponse,
+    CustomerDebtorsFilters,
     CustomerDebtorsResponse,
+    DailySalesControlFilters,
     DailySalesControlResponse,
     DiscountsReportFilters,
     DiscountsReportResponse,
@@ -57,6 +59,7 @@ export class ReportService {
         params.set('dateTo', filters.dateTo);
         if (filters.branchId) params.set('branchId', filters.branchId);
         if (filters.customerId) params.set('customerId', filters.customerId);
+        if (filters.saleType && filters.saleType !== 'all') params.set('saleType', filters.saleType);
         return this.http.get<TradeInsByBranchResponse>(`${this.base}/sales/trade-ins-by-branch?${params.toString()}`);
     }
 
@@ -66,27 +69,36 @@ export class ReportService {
         params.set('dateTo', filters.dateTo);
         if (filters.branchId) params.set('branchId', filters.branchId);
         if (filters.userId) params.set('userId', filters.userId);
+        if (filters.customerId) params.set('customerId', filters.customerId);
+        if (filters.saleType && filters.saleType !== 'all') params.set('saleType', filters.saleType);
         return this.http.get<DiscountsReportResponse>(`${this.base}/sales/discounts?${params.toString()}`);
     }
 
-    customerDebtors(): Observable<CustomerDebtorsResponse> {
-        return this.http.get<CustomerDebtorsResponse>(`${this.base}/customers/debtors`);
+    customerDebtors(filters: CustomerDebtorsFilters = {}): Observable<CustomerDebtorsResponse> {
+        const params = new URLSearchParams();
+        if (filters.branchId) params.set('branchId', filters.branchId);
+        if (filters.customerId) params.set('customerId', filters.customerId);
+        const query = params.toString();
+        return this.http.get<CustomerDebtorsResponse>(`${this.base}/customers/debtors${query ? `?${query}` : ''}`);
     }
 
-    cashMovements(dateFrom: string, dateTo: string): Observable<CashMovementsReportResponse> {
+    cashMovements(dateFrom: string, dateTo: string, branchId?: string): Observable<CashMovementsReportResponse> {
         const params = new URLSearchParams({ dateFrom, dateTo });
+        if (branchId) params.set('branchId', branchId);
         return this.http.get<CashMovementsReportResponse>(`${this.base}/cash/movements?${params.toString()}`);
     }
 
-    paymentMethods(dateFrom: string, dateTo: string, branchId?: string, saleType?: string): Observable<PaymentMethodsReportResponse> {
+    paymentMethods(dateFrom: string, dateTo: string, branchId?: string, saleType?: string, customerId?: string): Observable<PaymentMethodsReportResponse> {
         const params = new URLSearchParams({ dateFrom, dateTo });
         if (branchId) params.set('branchId', branchId);
         if (saleType && saleType !== 'all') params.set('saleType', saleType);
+        if (customerId) params.set('customerId', customerId);
         return this.http.get<PaymentMethodsReportResponse>(`${this.base}/payments?${params.toString()}`);
     }
 
-    stockMatrix(): Observable<StockMatrixResponse> {
-        return this.http.get<StockMatrixResponse>(`${this.base}/stock-matrix`);
+    stockMatrix(branchId?: string): Observable<StockMatrixResponse> {
+        const query = branchId ? `?${new URLSearchParams({ branchId }).toString()}` : '';
+        return this.http.get<StockMatrixResponse>(`${this.base}/stock-matrix${query}`);
     }
 
     stockMovements(dateFrom: string, dateTo: string, productId?: string, branchId?: string, type?: number, page = 1, pageSize = 50): Observable<StockMovementsReportResponse> {
@@ -99,8 +111,15 @@ export class ReportService {
         return this.http.get<StockMovementsReportResponse>(`${this.base}/stock-movements?${params.toString()}`);
     }
 
-    dailySalesControl(dateFrom: string, dateTo: string, status = 0): Observable<DailySalesControlResponse> {
-        const params = new URLSearchParams({ dateFrom, dateTo, status: String(status) });
+    dailySalesControl(filters: DailySalesControlFilters): Observable<DailySalesControlResponse> {
+        const params = new URLSearchParams({
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+            status: String(filters.status)
+        });
+        if (filters.branchId) params.set('branchId', filters.branchId);
+        if (filters.customerId) params.set('customerId', filters.customerId);
+        if (filters.saleType && filters.saleType !== 'all') params.set('saleType', filters.saleType);
         return this.http.get<DailySalesControlResponse>(`${this.base}/sales/daily-control?${params.toString()}`);
     }
 }

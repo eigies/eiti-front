@@ -5,7 +5,9 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import { ReportService } from '../../../core/services/report.service';
 import { BranchService } from '../../../core/services/branch.service';
+import { CustomerService } from '../../../core/services/customer.service';
 import { BranchResponse } from '../../../core/models/branch.models';
+import { CustomerResponse } from '../../../core/models/customer.models';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PaymentMethodsReportResponse } from '../../../core/models/report.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
@@ -26,6 +28,7 @@ export class PaymentMethodsReportComponent implements OnInit {
   hasSearched = false;
   data: PaymentMethodsReportResponse | null = null;
   branches: BranchResponse[] = [];
+  customers: CustomerResponse[] = [];
 
   constructor(
     private readonly fb: FormBuilder,
@@ -34,7 +37,8 @@ export class PaymentMethodsReportComponent implements OnInit {
     private readonly toast: ToastService,
     private readonly pdfBranding: PdfBrandingService,
     private readonly pdfLayout: PdfLayoutService,
-    private readonly assistantContext: AssistantContextService
+    private readonly assistantContext: AssistantContextService,
+    private readonly customerService: CustomerService
   ) {
     const today = this.toIso(new Date());
     const firstOfMonth = this.toIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -42,7 +46,8 @@ export class PaymentMethodsReportComponent implements OnInit {
       dateFrom: [firstOfMonth, Validators.required],
       dateTo: [today, Validators.required],
       branchId: [null],
-      saleType: ['all']
+      saleType: ['all'],
+      customerId: [null]
     });
   }
 
@@ -54,11 +59,16 @@ export class PaymentMethodsReportComponent implements OnInit {
 
   get branchOptions(): SearchableSelectOption[] { return this.branches.map(b => ({ value: b.id, label: b.name })); }
   get saleTypeOptions(): SearchableSelectOption[] { return this.saleTypes.map(t => ({ value: t.value, label: t.label })); }
+  get customerOptions(): SearchableSelectOption[] { return this.customers.map(c => ({ value: c.id, label: c.fullName })); }
 
   ngOnInit(): void {
     this.branchService.listBranches().subscribe({
       next: branches => this.branches = branches,
       error: () => this.branches = []
+    });
+    this.customerService.listCustomers().subscribe({
+      next: customers => this.customers = customers,
+      error: () => this.customers = []
     });
     this.search();
   }
@@ -75,7 +85,7 @@ export class PaymentMethodsReportComponent implements OnInit {
 
     this.loading = true;
     this.hasSearched = true;
-    this.reportService.paymentMethods(v.dateFrom, v.dateTo, v.branchId || undefined, v.saleType).subscribe({
+    this.reportService.paymentMethods(v.dateFrom, v.dateTo, v.branchId || undefined, v.saleType, v.customerId || undefined).subscribe({
       next: res => {
         this.data = res;
         this.loading = false;
@@ -89,8 +99,11 @@ export class PaymentMethodsReportComponent implements OnInit {
     const branchName = filters['branchId']
       ? (this.branches.find(b => b.id === filters['branchId'])?.name ?? null)
       : 'Todas las sucursales';
+    const customerName = filters['customerId']
+      ? (this.customers.find(c => c.id === filters['customerId'])?.fullName ?? null)
+      : 'Todos los clientes';
     this.assistantContext.set({
-      filters: { ...filters, branchName },
+      filters: { ...filters, branchName, customerName },
       description: 'Cobros agrupados por medio de pago para el período y filtros seleccionados.',
       data: { rows: res.rows, totals: res.totals }
     });
@@ -125,7 +138,13 @@ export class PaymentMethodsReportComponent implements OnInit {
     const f = this.filterForm.value;
     const branchName = f.branchId ? (this.branches.find(b => b.id === f.branchId)?.name ?? '') : 'Todas las sucursales';
     const saleTypeName = this.saleTypes.find(t => t.value === (f.saleType || 'all'))?.label ?? 'Todas';
-    const subtitle = `Medios de pago · Desde ${f.dateFrom} hasta ${f.dateTo} · ${branchName} · ${saleTypeName}`;
+    const customerName = this.customers.find(c => c.id === f.customerId)?.fullName;
+    const subtitle = [
+      `Medios de pago · Desde ${f.dateFrom} hasta ${f.dateTo}`,
+      branchName,
+      saleTypeName,
+      customerName
+    ].filter(Boolean).join(' · ');
     let y = 12;
 
     const drawDocumentHeader = (continuation = false): void => {

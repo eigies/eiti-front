@@ -6,6 +6,10 @@ import {
   DailySalesControlRow,
   DailySalesPaymentItem
 } from '../../../core/models/report.models';
+import { BranchResponse } from '../../../core/models/branch.models';
+import { CustomerResponse } from '../../../core/models/customer.models';
+import { BranchService } from '../../../core/services/branch.service';
+import { CustomerService } from '../../../core/services/customer.service';
 import { ReportService } from '../../../core/services/report.service';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 import { PdfLayoutService } from '../../../shared/services/pdf-layout.service';
@@ -21,7 +25,9 @@ describe('DailySalesControlComponent payment breakdown', () => {
       {} as ReportService,
       {} as ToastService,
       {} as PdfBrandingService,
-      {} as PdfLayoutService
+      {} as PdfLayoutService,
+      {} as BranchService,
+      {} as CustomerService
     );
   });
 
@@ -77,6 +83,8 @@ describe('DailySalesControlComponent · tarjetas', () => {
       imports: [DailySalesControlComponent],
       providers: [
         { provide: ReportService, useValue: reports },
+        { provide: BranchService, useValue: { listBranches: () => of([]) } },
+        { provide: CustomerService, useValue: { listCustomers: () => of([]) } },
         { provide: ToastService, useValue: jasmine.createSpyObj('ToastService', ['success', 'error']) },
         { provide: PdfBrandingService, useValue: {} },
         { provide: PdfLayoutService, useValue: {} }
@@ -149,4 +157,63 @@ describe('DailySalesControlComponent · tarjetas', () => {
       }))
     };
   }
+});
+
+describe('DailySalesControlComponent · filtros', () => {
+  let fixture: ComponentFixture<DailySalesControlComponent>;
+  let reports: jasmine.SpyObj<ReportService>;
+
+  beforeEach(() => {
+    reports = jasmine.createSpyObj<ReportService>('ReportService', ['dailySalesControl']);
+    reports.dailySalesControl.and.returnValue(of({
+      rows: [],
+      totals: { salesCount: 0, unitsSold: 0, salesWithTradeIn: 0, totalAmount: 0 }
+    }));
+
+    TestBed.configureTestingModule({
+      imports: [DailySalesControlComponent],
+      providers: [
+        { provide: ReportService, useValue: reports },
+        {
+          provide: BranchService,
+          useValue: { listBranches: () => of([{ id: 'b-1', name: 'Mataderos' }, { id: 'b-2', name: 'San Cristobal' }] as BranchResponse[]) }
+        },
+        { provide: CustomerService, useValue: { listCustomers: () => of([{ id: 'c-1', fullName: 'Ana Perez' }] as CustomerResponse[]) } },
+        { provide: ToastService, useValue: jasmine.createSpyObj('ToastService', ['success', 'error']) },
+        { provide: PdfBrandingService, useValue: {} },
+        { provide: PdfLayoutService, useValue: {} }
+      ]
+    });
+    fixture = TestBed.createComponent(DailySalesControlComponent);
+    fixture.detectChanges();
+  });
+
+  it('manda la sucursal, el cliente y el tipo de venta elegidos', () => {
+    fixture.componentInstance.filterForm.patchValue({
+      dateFrom: '2026-10-01', dateTo: '2026-10-30', status: 2, branchId: 'b-1', customerId: 'c-1', saleType: 'retail'
+    });
+
+    fixture.componentInstance.search();
+
+    expect(reports.dailySalesControl).toHaveBeenCalledWith({
+      dateFrom: '2026-10-01', dateTo: '2026-10-30', status: 2, branchId: 'b-1', customerId: 'c-1', saleType: 'retail'
+    });
+  });
+
+  it('Hoy limpia también los filtros nuevos', () => {
+    fixture.componentInstance.filterForm.patchValue({ branchId: 'b-1', customerId: 'c-1', saleType: 'retail' });
+
+    fixture.componentInstance.clearFilters();
+
+    expect(reports.dailySalesControl.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({
+      status: 0, branchId: null, customerId: null, saleType: 'all'
+    }));
+  });
+
+  it('todos los desplegables usan el select de la app', () => {
+    const form = (fixture.nativeElement as HTMLElement).querySelector('form');
+
+    expect(form?.querySelector('select')).toBeNull();
+    expect(form?.querySelectorAll('app-searchable-select').length).toBe(4);
+  });
 });

@@ -8,10 +8,11 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import { ReportService } from '../../../core/services/report.service';
 import { BranchService } from '../../../core/services/branch.service';
+import { CustomerService } from '../../../core/services/customer.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { DiscountsReportResponse, DiscountsReportRow } from '../../../core/models/report.models';
+import { DiscountsReportResponse, DiscountsReportRow, REPORT_SALE_TYPES } from '../../../core/models/report.models';
 import { PermissionCodes } from '../../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
@@ -28,6 +29,7 @@ export class DiscountsReportComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly reportService = inject(ReportService);
   private readonly branchService = inject(BranchService);
+  private readonly customerService = inject(CustomerService);
   private readonly userService = inject(UserService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
@@ -43,6 +45,8 @@ export class DiscountsReportComponent implements OnInit {
   data: DiscountsReportResponse | null = null;
 
   branchOptions: SearchableSelectOption[] = [];
+  customerOptions: SearchableSelectOption[] = [];
+  readonly saleTypeOptions: SearchableSelectOption[] = REPORT_SALE_TYPES;
   /**
    * Quien aplico descuentos. La lista de usuarios pide users.manage: sin ese permiso las opciones salen
    * de los usuarios que aparecen en los resultados (y se acumulan entre busquedas).
@@ -55,7 +59,9 @@ export class DiscountsReportComponent implements OnInit {
       dateFrom: [this.firstOfMonth(), Validators.required],
       dateTo: [this.today(), Validators.required],
       branchId: [null],
-      userId: [null]
+      userId: [null],
+      customerId: [null],
+      saleType: ['all']
     });
   }
 
@@ -66,7 +72,7 @@ export class DiscountsReportComponent implements OnInit {
 
   get activeOptionalFiltersCount(): number {
     const v = this.filterForm.value;
-    return [v.branchId, v.userId].filter(Boolean).length;
+    return [v.branchId, v.userId, v.customerId].filter(Boolean).length;
   }
 
   isInvalid(field: string): boolean {
@@ -96,7 +102,9 @@ export class DiscountsReportComponent implements OnInit {
       dateFrom: v.dateFrom,
       dateTo: v.dateTo,
       branchId: v.branchId || null,
-      userId: v.userId || null
+      userId: v.userId || null,
+      customerId: v.customerId || null,
+      saleType: v.saleType
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: res => {
         this.data = res;
@@ -116,7 +124,9 @@ export class DiscountsReportComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.filterForm.reset({ dateFrom: this.firstOfMonth(), dateTo: this.today(), branchId: null, userId: null });
+    this.filterForm.reset({
+      dateFrom: this.firstOfMonth(), dateTo: this.today(), branchId: null, userId: null, customerId: null, saleType: 'all'
+    });
     this.advancedFiltersOpen = false;
     this.search();
   }
@@ -167,7 +177,13 @@ export class DiscountsReportComponent implements OnInit {
     const pageHeight = doc.internal.pageSize.getHeight();
     const f = this.filterForm.value;
     const title = 'Descuentos en ventas';
-    const subtitle = `Reporteria / Ventas · Desde ${f.dateFrom} hasta ${f.dateTo}`;
+    const subtitle = [
+      'Reporteria / Ventas',
+      `Desde ${f.dateFrom} hasta ${f.dateTo}`,
+      this.branchOptions.find(o => o.value === f.branchId)?.label,
+      this.customerOptions.find(o => o.value === f.customerId)?.label,
+      REPORT_SALE_TYPES.find(t => t.value === f.saleType && t.value !== 'all')?.label
+    ].filter(Boolean).join(' · ');
     let y = 12;
 
     const drawDocumentHeader = (continuation = false): void => {
@@ -240,6 +256,13 @@ export class DiscountsReportComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(branches => {
       this.branchOptions = branches.map(b => ({ value: b.id, label: b.name }));
+    });
+
+    this.customerService.listCustomers().pipe(
+      catchError(() => of([])),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(customers => {
+      this.customerOptions = customers.map(c => ({ value: c.id, label: c.fullName }));
     });
 
     if (!this.auth.hasPermission(PermissionCodes.usersManage)) {
