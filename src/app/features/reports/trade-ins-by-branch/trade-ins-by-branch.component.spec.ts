@@ -45,6 +45,24 @@ describe('TradeInsByBranchComponent · tipo de venta', () => {
     expect(reports.tradeInsByBranch.calls.mostRecent().args[0].saleType).toBe('wholesale');
   });
 
+  it('el tipo de venta está dentro de Más filtros, con los otros opcionales', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.filter-form__primary app-searchable-select')).toBeNull();
+
+    fixture.componentInstance.toggleAdvancedFilters();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.filter-form__advanced')?.textContent).toContain('Tipo de venta');
+  });
+
+  it('el tipo de venta cuenta como filtro activo, salvo Todas', () => {
+    expect(fixture.componentInstance.activeOptionalFiltersCount).toBe(0);
+
+    fixture.componentInstance.filterForm.patchValue({ saleType: 'retail' });
+
+    expect(fixture.componentInstance.activeOptionalFiltersCount).toBe(1);
+  });
+
   it('Limpiar vuelve a todas las ventas', () => {
     fixture.componentInstance.filterForm.patchValue({ saleType: 'wholesale' });
 

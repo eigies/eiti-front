@@ -72,7 +72,7 @@ export class DiscountsReportComponent implements OnInit {
 
   get activeOptionalFiltersCount(): number {
     const v = this.filterForm.value;
-    return [v.branchId, v.userId, v.customerId].filter(Boolean).length;
+    return [v.branchId, v.userId, v.customerId, v.saleType !== 'all'].filter(Boolean).length;
   }
 
   isInvalid(field: string): boolean {

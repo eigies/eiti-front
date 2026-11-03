@@ -17,9 +17,6 @@
       <div class="filter-form__primary">
         <label class="field"><span>Desde *</span><input class="control" type="date" formControlName="dateFrom" [class.control--error]="isInvalid('dateFrom')" /></label>
         <label class="field"><span>Hasta *</span><input class="control" type="date" formControlName="dateTo" [class.control--error]="isInvalid('dateTo')" /></label>
-        <label class="field"><span>Tipo de venta</span>
-          <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Todas"></app-searchable-select>
-        </label>
 
         <button
           class="btn btn--filters"
@@ -46,7 +43,7 @@
         <div class="advanced-filters__head">
           <div>
             <span>Filtros adicionales</span>
-            <p>Podés acotar a una sucursal puntual o al cliente que entregó el canje.</p>
+            <p>Podés acotar a una sucursal puntual, al cliente que entregó el canje o al tipo de venta.</p>
           </div>
           <span class="advanced-filters__status" *ngIf="activeOptionalFiltersCount > 0">
             {{ activeOptionalFiltersCount }} activo{{ activeOptionalFiltersCount === 1 ? '' : 's' }}
@@ -59,6 +56,9 @@
           </label>
           <label class="field"><span>Cliente</span>
             <app-searchable-select formControlName="customerId" [options]="customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+          </label>
+          <label class="field"><span>Tipo de venta</span>
+            <app-searchable-select formControlName="saleType" [options]="saleTypeOptions" placeholder="Todas"></app-searchable-select>
           </label>
         </div>
       </div>

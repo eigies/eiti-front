@@ -64,7 +64,7 @@ export class TradeInsByBranchComponent implements OnInit {
 
   get activeOptionalFiltersCount(): number {
     const v = this.filterForm.value;
-    return [v.customerId, v.branchId].filter(Boolean).length;
+    return [v.customerId, v.branchId, v.saleType !== 'all'].filter(Boolean).length;
   }
 
   isInvalid(field: string): boolean {

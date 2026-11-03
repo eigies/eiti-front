@@ -114,6 +114,28 @@ describe('DiscountsReportComponent', () => {
         }));
     });
 
+    it('el cliente y el tipo de venta están dentro de Más filtros', () => {
+        setup();
+        const el = fixture.nativeElement as HTMLElement;
+        expect(el.querySelector('.filter-form__primary app-searchable-select')).toBeNull();
+
+        component.toggleAdvancedFilters();
+        fixture.detectChanges();
+
+        const advanced = el.querySelector('.filter-form__advanced')?.textContent;
+        expect(advanced).toContain('Cliente');
+        expect(advanced).toContain('Tipo de venta');
+    });
+
+    it('el tipo de venta cuenta como filtro activo, salvo Todas', () => {
+        setup();
+        expect(component.activeOptionalFiltersCount).toBe(0);
+
+        component.filterForm.patchValue({ saleType: 'retail' });
+
+        expect(component.activeOptionalFiltersCount).toBe(1);
+    });
+
     it('el cliente cuenta como filtro activo', () => {
         setup();
         component.filterForm.patchValue({ customerId: 'c-ana' });
