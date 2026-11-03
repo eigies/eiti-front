@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ChequeDetail, ChequeFilters, ChequeListItem } from '../models/cheque.models';
+import { ChequeDetail, ChequeFilters, ChequeListItem, OwnChequeDue } from '../models/cheque.models';
 
 @Injectable({ providedIn: 'root' })
 export class ChequeService {
@@ -17,7 +17,13 @@ export class ChequeService {
     if (filters.fechaVencFrom) params = params.set('fechaVencFrom', filters.fechaVencFrom);
     if (filters.fechaVencTo) params = params.set('fechaVencTo', filters.fechaVencTo);
     if (filters.numero) params = params.set('numero', filters.numero);
+    if (filters.origen != null) params = params.set('origen', String(filters.origen));
     return this.http.get<ChequeListItem[]>(this.base, { params });
+  }
+
+  /** Cheques propios que vencen hoy: el aviso al entrar a EITI. */
+  listOwnDue(): Observable<OwnChequeDue[]> {
+    return this.http.get<OwnChequeDue[]>(`${this.base}/own/due`);
   }
 
   getChequeById(id: string): Observable<ChequeDetail> {

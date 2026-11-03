@@ -11,6 +11,7 @@ import {
   CHEQUE_STATUS_BADGE,
   CHEQUE_STATUS_LABELS,
   CHEQUE_TRANSITIONS,
+  ChequeOrigen,
   ChequeStatus
 } from '../../core/models/cheque.models';
 import { BankResponse } from '../../core/models/bank.models';
@@ -40,6 +41,11 @@ export class ChequesComponent implements OnInit {
   readonly statusLabels = CHEQUE_STATUS_LABELS;
   readonly statusBadge = CHEQUE_STATUS_BADGE;
   readonly transitions = CHEQUE_TRANSITIONS;
+  readonly chequeOrigen = ChequeOrigen;
+  readonly origenOptions: SearchableSelectOption[] = [
+    { value: ChequeOrigen.Tercero, label: 'Terceros' },
+    { value: ChequeOrigen.Propio, label: 'Propios' }
+  ];
   readonly allStatuses = [
     ChequeStatus.EnCartera,
     ChequeStatus.Depositado,
@@ -92,6 +98,7 @@ export class ChequesComponent implements OnInit {
     private readonly confirmation: ConfirmationService
   ) {
     this.filterForm = this.fb.group({
+      origen: [null],
       estado: [null],
       bankId: [null],
       numero: [''],
@@ -120,7 +127,8 @@ export class ChequesComponent implements OnInit {
       bankId: f.bankId ? Number(f.bankId) : null,
       numero: f.numero?.trim() || null,
       fechaVencFrom: f.fechaVencFrom || null,
-      fechaVencTo: f.fechaVencTo || null
+      fechaVencTo: f.fechaVencTo || null,
+      origen: f.origen ? Number(f.origen) : null
     };
     this.chequeService.listCheques(filters).subscribe({
       next: cheques => { this.cheques = cheques; this.loading = false; },

@@ -7,6 +7,12 @@ export enum ChequeStatus {
   Entregado = 6
 }
 
+/** Tercero: lo entregó un cliente. Propio: lo emitió la empresa para pagarle a un proveedor. */
+export enum ChequeOrigen {
+  Tercero = 1,
+  Propio = 2
+}
+
 export interface ChequeListItem {
   id: string;
   numero: string;
@@ -18,6 +24,19 @@ export interface ChequeListItem {
   estadoName: string;
   saleCode: string | null;
   saleType: string;
+  origen: number;
+  /** Proveedor al que se le entregó un cheque propio. */
+  supplierName: string | null;
+}
+
+/** Cheque propio que vence hoy (el lunes, también los del fin de semana). */
+export interface OwnChequeDue {
+  id: string;
+  numero: string;
+  bankName: string;
+  supplierName: string | null;
+  monto: number;
+  fechaVencimiento: string;
 }
 
 export interface ChequeDetail {
@@ -37,6 +56,8 @@ export interface ChequeDetail {
   saleType: string;
   createdAt: string;
   updatedAt: string;
+  origen: number;
+  supplierName: string | null;
 }
 
 export interface ChequeFilters {
@@ -45,6 +66,7 @@ export interface ChequeFilters {
   fechaVencFrom?: string | null;
   fechaVencTo?: string | null;
   numero?: string | null;
+  origen?: number | null;
 }
 
 // Entregado se alcanza solo al endosar el cheque a un proveedor (pago de compra), no desde el cambio manual de estado.

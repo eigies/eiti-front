@@ -37,11 +37,23 @@
     <div class="panel__header panel__header--filters">
       <div>
         <span>Filtros</span>
-        <p>Refina por estado, banco emisor, numero o rango de vencimiento.</p>
+        <p>Refina por origen, estado, banco emisor, numero o rango de vencimiento.</p>
       </div>
       <span class="panel__counter">{{ activeFilterCount }} activos</span>
     </div>
     <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="filter-form">
+      <label class="field">
+        <span>Origen</span>
+        <app-searchable-select
+          formControlName="origen"
+          [options]="origenOptions"
+          [allowClear]="true"
+          clearLabel="Todos"
+          [clearValue]="null"
+          placeholder="Todos"
+          searchPlaceholder="Buscar origen...">
+        </app-searchable-select>
+      </label>
       <label class="field">
         <span>Estado</span>
         <app-searchable-select
@@ -117,7 +129,7 @@
           <div class="cheque-card__amount">${{ c.monto | number:'1.2-2' }}</div>
           <div class="cheque-card__meta">
             <span>{{ c.bankName }}</span>
-            <span>{{ c.titular }}</span>
+            <span>{{ c.supplierName || c.titular }}</span>
           </div>
           <div class="cheque-card__footer">
             <span>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
@@ -136,7 +148,7 @@
               <th class="text-right">Monto</th>
               <th>Vencimiento</th>
               <th>Estado</th>
-              <th>Venta</th>
+              <th>Venta / proveedor</th>
             </tr>
           </thead>
           <tbody>
@@ -144,7 +156,7 @@
               <td class="cell">
                 <div class="stack">
                   <span class="cell cell--code">#{{ c.numero }}</span>
-                  <span class="cell-hint">Cheque recibido</span>
+                  <span class="cell-hint">{{ c.origen === chequeOrigen.Propio ? 'Cheque propio' : 'Cheque recibido' }}</span>
                 </div>
               </td>
               <td class="cell">
@@ -163,7 +175,7 @@
               <td><span [class]="statusClass(c.estado)">{{ statusLabel(c.estado) }}</span></td>
               <td class="cell cell--sale">
                 <div class="stack stack--compact">
-                  <span *ngIf="c.saleCode; else noSale">{{ c.saleCode }}</span>
+                  <span *ngIf="c.saleCode || c.supplierName; else noSale">{{ c.saleCode || c.supplierName }}</span>
                   <ng-template #noSale><span class="cell-hint">Sin venta asociada</span></ng-template>
                   <span class="sale-type-badge" *ngIf="c.saleType">{{ c.saleType }}</span>
                 </div>
@@ -209,9 +221,13 @@
               <span class="detail-field__label">Titular</span>
               <span>{{ c.titular }}</span>
             </div>
-            <div class="detail-field">
+            <div class="detail-field" *ngIf="c.cuitDni">
               <span class="detail-field__label">CUIT / DNI</span>
               <span>{{ c.cuitDni }}</span>
+            </div>
+            <div class="detail-field" *ngIf="c.supplierName">
+              <span class="detail-field__label">Proveedor</span>
+              <span>{{ c.supplierName }}</span>
             </div>
             <div class="detail-field">
               <span class="detail-field__label">Monto</span>

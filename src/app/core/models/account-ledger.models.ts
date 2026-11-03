@@ -27,6 +27,8 @@ export interface LedgerMeans {
   dueDate: string | null;
   cardInstallments: number | null;
   cardSurcharge: number | null;
+  /** Cheque emitido por la empresa: al anular el pago queda anulado, no vuelve a cartera. */
+  ownCheque?: boolean;
 }
 
 /** A qué factura/venta se aplicó (parte de) un pago, cobro o nota de crédito. */
@@ -133,6 +135,14 @@ export interface GroupedPaymentCheque {
   notas: string | null;
 }
 
+/** Cheque que emite la empresa en un pago al proveedor. El monto es el de la línea; fechaVencimiento, la fecha de pago. */
+export interface GroupedPaymentOwnCheque {
+  bankId: number;
+  numero: string;
+  fechaEmision: string;
+  fechaVencimiento: string;
+}
+
 /** Un medio tal como sale del modal. Los campos que no aplican al medio van en null. */
 export interface GroupedPaymentLine {
   method: number;
@@ -143,6 +153,7 @@ export interface GroupedPaymentLine {
   cardCuotas: number | null;
   transferBankId: number | null;   // cliente: banco receptor de la transferencia
   cheque: GroupedPaymentCheque | null; // cliente: cheque recibido
+  ownCheque?: GroupedPaymentOwnCheque | null; // proveedor: cheque propio emitido
 }
 
 export interface GroupedPaymentSubmit {
