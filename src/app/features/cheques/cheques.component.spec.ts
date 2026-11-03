@@ -73,6 +73,36 @@ describe('ChequesComponent · origen', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('tr.data-row')?.textContent).toContain('03/11/2026');
   });
 
+  // Un cheque propio sale Entregado y sigue vigente: es justo el que el banco va a debitar.
+  it('un cheque propio que vence hoy cuenta como urgente', () => {
+    const today = new Date().toLocaleDateString('en-CA');
+    const cheque = { ...own, fechaVencimiento: `${today}T00:00:00Z` };
+
+    expect(fixture.componentInstance.isUrgent(cheque)).toBeTrue();
+    expect(fixture.componentInstance.urgencyLabel(cheque)).toBe('Vence hoy');
+  });
+
+  // No hay estado "debitado": si contara, los ya pagados inflarían Urgentes para siempre.
+  it('un cheque propio con la fecha ya pasada no queda urgente', () => {
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
+
+    expect(fixture.componentInstance.isUrgent({ ...own, fechaVencimiento: `${yesterday}T00:00:00Z` })).toBeFalse();
+  });
+
+  it('un cheque de tercero ya entregado no es urgente', () => {
+    const today = new Date().toLocaleDateString('en-CA');
+    const endorsed = { ...third, estado: ChequeStatus.Entregado, fechaVencimiento: `${today}T00:00:00Z` };
+
+    expect(fixture.componentInstance.isUrgent(endorsed)).toBeFalse();
+  });
+
+  it('el detalle de un cheque propio explica cómo anularlo, no dice que terminó', () => {
+    const label = fixture.componentInstance.terminalStateLabel({ origen: ChequeOrigen.Propio, estado: ChequeStatus.Entregado });
+
+    expect(label).toContain('pago');
+    expect(label).not.toContain('terminal');
+  });
+
   it('un cheque en cartera que vence hoy cuenta como urgente', () => {
     const today = new Date().toLocaleDateString('en-CA');
     const cheque = { ...third, fechaVencimiento: `${today}T00:00:00Z` };

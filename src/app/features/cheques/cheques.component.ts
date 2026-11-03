@@ -201,7 +201,14 @@ export class ChequesComponent implements OnInit {
 
   statusLabel(estado: number): string { return this.statusLabels[estado] ?? estado.toString(); }
   statusClass(estado: number): string { return this.statusBadge[estado] ?? 'badge'; }
-  isUrgent(cheque: Pick<ChequeListItem, 'estado' | 'fechaVencimiento'>): boolean {
+  isUrgent(cheque: Pick<ChequeListItem, 'estado' | 'fechaVencimiento' | 'origen'>): boolean {
+    // Un cheque propio sale Entregado y sigue vigente hasta que el banco lo debita. Sin estado "debitado",
+    // pasada la fecha ya no cuenta: si no, Urgentes crecería para siempre.
+    if (cheque.origen === ChequeOrigen.Propio && cheque.estado === ChequeStatus.Entregado) {
+      const days = this.daysUntil(cheque.fechaVencimiento);
+      return days >= 0 && days <= this.soonWindowDays;
+    }
+
     if (cheque.estado === ChequeStatus.Acreditado || cheque.estado === ChequeStatus.Rechazado || cheque.estado === ChequeStatus.Anulado || cheque.estado === ChequeStatus.Entregado) {
       return false;
     }
@@ -216,6 +223,12 @@ export class ChequesComponent implements OnInit {
     if (diffDays === 0) return 'Vence hoy';
     if (diffDays === 1) return 'Vence manana';
     return `Vence en ${diffDays} dias`;
+  }
+
+  terminalStateLabel(cheque: Pick<ChequeDetail, 'origen' | 'estado'>): string {
+    return cheque.origen === ChequeOrigen.Propio && cheque.estado === ChequeStatus.Entregado
+      ? 'Cheque propio entregado al proveedor. Si hay que anularlo, se anula desde su pago.'
+      : 'Estado terminal - no hay transiciones disponibles.';
   }
 
   /** Fecha de negocio: llega como medianoche UTC y no se pasa por Date, que en Argentina la corre al día anterior. */

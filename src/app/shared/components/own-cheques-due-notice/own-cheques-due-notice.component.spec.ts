@@ -58,7 +58,13 @@ describe('OwnChequesDueNoticeComponent', () => {
     expect(text).toContain('BANCO GALICIA');
     expect(text).toContain('Distribuidora Norte');
     expect(text).toContain('450.000,50');
-    expect(auth.markDailyNoticeSeen).toHaveBeenCalledOnceWith('own-cheques');
+  });
+
+  // Si recarga la página con el aviso abierto, sin haberlo leído, tiene que volver a salir.
+  it('no lo da por visto hasta que lo cierran', () => {
+    render();
+
+    expect(auth.markDailyNoticeSeen).not.toHaveBeenCalled();
   });
 
   it('avisa la fecha de los que no vencen hoy (el lunes, los del fin de semana)', () => {
@@ -69,13 +75,24 @@ describe('OwnChequesDueNoticeComponent', () => {
     expect(rows[1].textContent).toContain('31/10');
   });
 
-  it('sin cheques que venzan no aparece nada, y no vuelve a preguntar hoy', () => {
+  // Un día sin cheques no gasta el aviso: si después cargan uno que vence hoy, sale al entrar de nuevo.
+  it('sin cheques que venzan no aparece nada y no da el día por visto', () => {
     cheques.listOwnDue.and.returnValue(of([]));
 
     const el = render();
 
     expect(el.querySelector('[role="dialog"]')).toBeNull();
-    expect(auth.markDailyNoticeSeen).toHaveBeenCalledOnceWith('own-cheques');
+    expect(auth.markDailyNoticeSeen).not.toHaveBeenCalled();
+  });
+
+  it('sin cheques no vuelve a preguntar en cada navegación', () => {
+    cheques.listOwnDue.and.returnValue(of([]));
+    render();
+
+    routerEvents.next(new NavigationEnd(1, '/ventas', '/ventas'));
+    routerEvents.next(new NavigationEnd(2, '/caja', '/caja'));
+
+    expect(cheques.listOwnDue).toHaveBeenCalledTimes(1);
   });
 
   it('sin el permiso de cheques no consulta nada', () => {
@@ -125,6 +142,7 @@ describe('OwnChequesDueNoticeComponent', () => {
     fixture.detectChanges();
 
     expect(el.querySelector('[role="dialog"]')).toBeNull();
+    expect(auth.markDailyNoticeSeen).toHaveBeenCalledOnceWith('own-cheques');
   });
 
   it('Ver cheques lleva a la pantalla de cheques', () => {

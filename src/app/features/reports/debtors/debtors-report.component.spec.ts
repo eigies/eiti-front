@@ -61,17 +61,39 @@ describe('DebtorsReportComponent · filtros', () => {
     expect(reports.customerDebtors.calls.mostRecent().args[0]).toEqual({ branchId: null, customerId: null });
   });
 
-  // El saldo a favor no está repartido por sucursal: sin aclararlo, Neto parece de esa sucursal.
-  it('con sucursal aclara que A favor es el saldo total del cliente', () => {
-    fixture.componentInstance.filterForm.patchValue({ branchId: 'b-1' });
+  function headers(): string[] {
+    return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('thead th'))
+      .map(th => (th.textContent ?? '').trim());
+  }
 
+  function filterByBranch(): void {
+    fixture.componentInstance.filterForm.patchValue({ branchId: 'b-1' });
     fixture.componentInstance.load();
     fixture.detectChanges();
+  }
 
-    expect(text()).toContain('saldo total del cliente');
+  // El saldo a favor es del cliente: restado de la deuda de una sucursal da un Neto que no existe.
+  it('con sucursal muestra solo lo adeudado y aclara por qué', () => {
+    filterByBranch();
+
+    expect(headers()).not.toContain('A favor');
+    expect(headers()).not.toContain('Neto');
+    expect(text()).toContain('el saldo a favor es del cliente');
   });
 
-  it('sin sucursal no muestra la aclaración', () => {
-    expect(text()).not.toContain('saldo total del cliente');
+  it('sin sucursal muestra A favor y Neto, sin aclaración', () => {
+    expect(headers()).toContain('A favor');
+    expect(headers()).toContain('Neto');
+    expect(text()).not.toContain('el saldo a favor es del cliente');
+  });
+
+  it('el Excel con sucursal tampoco lleva A favor ni Neto', () => {
+    filterByBranch();
+
+    expect(Object.keys(fixture.componentInstance.exportRows()[0])).toEqual(['Cliente', 'Ventas abiertas', 'Más antigua', 'Adeudado']);
+  });
+
+  it('el Excel sin sucursal lleva todas las columnas', () => {
+    expect(Object.keys(fixture.componentInstance.exportRows()[0])).toContain('Neto');
   });
 });

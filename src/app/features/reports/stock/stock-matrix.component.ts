@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import { ReportService } from '../../../core/services/report.service';
@@ -26,6 +27,7 @@ export class StockMatrixComponent implements OnInit {
   hideEmpty = false;
   branchId: string | null = null;
   branches: BranchResponse[] = [];
+  private loadRequest?: Subscription;
 
   constructor(
     private readonly reportService: ReportService,
@@ -52,7 +54,8 @@ export class StockMatrixComponent implements OnInit {
 
   load(): void {
     this.loading = true;
-    this.reportService.stockMatrix(this.branchId ?? undefined).subscribe({
+    this.loadRequest?.unsubscribe();
+    this.loadRequest = this.reportService.stockMatrix(this.branchId ?? undefined).subscribe({
       next: res => { this.data = res; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => { this.loading = false; this.toast.error(err?.error?.detail || 'No se pudo cargar el reporte.'); }
     });

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { BranchResponse } from '../../../core/models/branch.models';
+import { StockMatrixResponse } from '../../../core/models/report.models';
 import { BranchService } from '../../../core/services/branch.service';
 import { ReportService } from '../../../core/services/report.service';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
@@ -59,6 +60,20 @@ describe('StockMatrixComponent · sucursal', () => {
     fixture.componentInstance.selectBranch(null);
 
     expect(reports.stockMatrix.calls.mostRecent().args[0]).toBeUndefined();
+  });
+
+  it('si la respuesta de otra sucursal llega tarde, no pisa la elegida', () => {
+    render([]);
+    const slow = new Subject<StockMatrixResponse>();
+    const fast = new Subject<StockMatrixResponse>();
+    reports.stockMatrix.and.returnValues(slow, fast);
+
+    fixture.componentInstance.selectBranch('b-1');
+    fixture.componentInstance.selectBranch('b-2');
+    fast.next({ branches: [{ id: 'b-2', name: 'San Cristobal' }], rows: [] });
+    slow.next({ branches: [{ id: 'b-1', name: 'Mataderos' }], rows: [] });
+
+    expect(fixture.componentInstance.data?.branches[0].id).toBe('b-2');
   });
 
   it('la sucursal cuenta como filtro activo', () => {

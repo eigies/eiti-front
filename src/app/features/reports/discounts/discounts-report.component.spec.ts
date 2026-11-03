@@ -136,6 +136,17 @@ describe('DiscountsReportComponent', () => {
         expect(component.activeOptionalFiltersCount).toBe(1);
     });
 
+    it('el PDF dice los filtros aplicados, no los que quedaron sin aplicar', () => {
+        setup();
+        component.branchOptions = [{ value: 'b-1', label: 'Mataderos' }, { value: 'b-2', label: 'San Cristobal' }];
+        component.filterForm.patchValue({ branchId: 'b-1' });
+        component.search();
+        component.filterForm.patchValue({ branchId: 'b-2' });
+
+        expect(component.pdfSubtitle()).toContain('Mataderos');
+        expect(component.pdfSubtitle()).not.toContain('San Cristobal');
+    });
+
     it('el cliente cuenta como filtro activo', () => {
         setup();
         component.filterForm.patchValue({ customerId: 'c-ana' });

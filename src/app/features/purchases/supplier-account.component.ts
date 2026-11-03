@@ -3,7 +3,8 @@ import { formatMoney } from '../../shared/utils/money.util';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { SupplierAccountService } from '../../core/services/supplier-account.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BankService } from '../../core/services/bank.service';
@@ -132,24 +133,25 @@ export class SupplierAccountComponent implements OnInit {
 
   private loadChequeOptions(): void {
     this.carteraLoading = true;
+    // Cada lista falla por su cuenta: sin bancos igual se puede pagar con cheques de cartera.
     forkJoin({
-      cheques: this.purchaseService.listCarteraCheques(),
-      banks: this.bankService.listBanks(true, 'cheque')
-    }).subscribe({
-      next: ({ cheques, banks }) => {
-        this.carteraCheques = cheques;
-        this.chequeBanks = banks;
-        this.carteraLoading = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.carteraCheques = [];
-        this.chequeBanks = [];
-        this.carteraLoading = false;
-        this.toast.error('No se pudieron cargar los cheques y bancos');
-        this.cdr.markForCheck();
-      }
+      cheques: this.purchaseService.listCarteraCheques().pipe(
+        catchError(() => this.chequeOptionsFailed('No se pudieron cargar los cheques en cartera'))
+      ),
+      banks: this.bankService.listBanks(true, 'cheque').pipe(
+        catchError(() => this.chequeOptionsFailed('No se pudieron cargar los bancos para cheques propios'))
+      )
+    }).subscribe(({ cheques, banks }) => {
+      this.carteraCheques = cheques;
+      this.chequeBanks = banks;
+      this.carteraLoading = false;
+      this.cdr.markForCheck();
     });
+  }
+
+  private chequeOptionsFailed(message: string): Observable<never[]> {
+    this.toast.error(message);
+    return of([]);
   }
 
   submitPaymentOrder(payment: GroupedPaymentSubmit): void {

@@ -15,7 +15,8 @@ const NOTICE = 'own-cheques';
 /**
  * Aviso de los cheques propios que vencen hoy, una vez por día y por usuario. Mira al iniciar sesión y en
  * cada navegación: la sesión puede quedar abierta de un día para el otro y ahí no hay login que lo dispare.
- * Si la consulta falla no lo da por visto, y reintenta en la próxima navegación.
+ * Queda visto recién al cerrarlo, y solo si había cheques: recargar con el aviso abierto no lo pierde, y un
+ * día sin cheques no gasta el aviso. Si la consulta falla, reintenta en la próxima navegación.
  */
 @Component({
   selector: 'app-own-cheques-due-notice',
@@ -28,6 +29,8 @@ const NOTICE = 'own-cheques';
 export class OwnChequesDueNoticeComponent implements OnInit {
   cheques: OwnChequeDue[] = [];
   private checking = false;
+  /** Evita preguntar en cada navegación cuando hoy no había cheques; dura hasta recargar la página. */
+  private checkedOn: string | null = null;
 
   constructor(
     private readonly auth: AuthService,
@@ -48,11 +51,14 @@ export class OwnChequesDueNoticeComponent implements OnInit {
     if (!this.auth.isAuthenticated() || !this.auth.hasPermission(PermissionCodes.chequesManage)) return;
     if (!this.auth.isDailyNoticePending(NOTICE)) return;
 
+    const today = new Date().toLocaleDateString('en-CA');
+    if (this.checkedOn === today) return;
+
     this.checking = true;
-    this.chequeService.listOwnDue().subscribe({
+    this.chequeService.listOwnDue().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: cheques => {
         this.checking = false;
-        this.auth.markDailyNoticeSeen(NOTICE);
+        this.checkedOn = today;
         this.cheques = cheques;
         this.cdr.markForCheck();
       },
@@ -81,6 +87,7 @@ export class OwnChequesDueNoticeComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   close(): void {
+    if (this.cheques.length > 0) this.auth.markDailyNoticeSeen(NOTICE);
     this.cheques = [];
     this.cdr.markForCheck();
   }

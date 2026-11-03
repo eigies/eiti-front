@@ -22,8 +22,8 @@ export class DebtorsReportComponent implements OnInit {
   filterForm: FormGroup;
   loading = false;
   data: CustomerDebtorsResponse | null = null;
-  /** El resultado en pantalla es de una sucursal: el saldo a favor sigue siendo el total del cliente. */
-  branchFiltered = false;
+  /** Sucursal del resultado en pantalla. El saldo a favor es del cliente: por sucursal no hay A favor ni Neto. */
+  private appliedBranchId: string | null = null;
   branches: BranchResponse[] = [];
   customers: CustomerResponse[] = [];
 
@@ -36,6 +36,8 @@ export class DebtorsReportComponent implements OnInit {
   ) {
     this.filterForm = this.fb.group({ branchId: [null], customerId: [null] });
   }
+
+  get branchFiltered(): boolean { return this.appliedBranchId !== null; }
 
   get branchOptions(): SearchableSelectOption[] { return this.branches.map(b => ({ value: b.id, label: b.name })); }
   get customerOptions(): SearchableSelectOption[] { return this.customers.map(c => ({ value: c.id, label: c.fullName })); }
@@ -56,7 +58,7 @@ export class DebtorsReportComponent implements OnInit {
     const { branchId, customerId } = this.filterForm.value;
     this.loading = true;
     this.reportService.customerDebtors({ branchId, customerId }).subscribe({
-      next: res => { this.data = res; this.branchFiltered = !!branchId; this.loading = false; },
+      next: res => { this.data = res; this.appliedBranchId = branchId || null; this.loading = false; },
       error: (err: { error?: { detail?: string } }) => { this.loading = false; this.toast.error(err?.error?.detail || 'No se pudo cargar el reporte.'); }
     });
   }
@@ -71,17 +73,21 @@ export class DebtorsReportComponent implements OnInit {
 
   exportExcel(): void {
     if (!this.data || this.data.rows.length === 0) { this.toast.error('No hay datos para exportar.'); return; }
-    const rows = this.data.rows.map(r => ({
+    const ws = XLSX.utils.json_to_sheet(this.exportRows());
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Deudores');
+    const branch = this.branches.find(b => b.id === this.appliedBranchId)?.name.replace(/\s+/g, '_');
+    const name = ['clientes_deudores', branch, new Date().toLocaleDateString('en-CA')].filter(Boolean).join('_');
+    XLSX.writeFile(wb, `${name}.xlsx`, { compression: true });
+  }
+
+  exportRows(): Record<string, string | number>[] {
+    return (this.data?.rows ?? []).map(r => ({
       'Cliente': r.customerName,
       'Ventas abiertas': r.openSalesCount,
       'Más antigua': this.formatDate(r.oldestDate),
       'Adeudado': r.owed,
-      'A favor': r.creditBalance,
-      'Neto': r.net
+      ...(this.branchFiltered ? {} : { 'A favor': r.creditBalance, 'Neto': r.net })
     }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Deudores');
-    XLSX.writeFile(wb, `clientes_deudores_${new Date().toLocaleDateString('en-CA')}.xlsx`, { compression: true });
   }
 }

@@ -12,7 +12,7 @@ import { CustomerService } from '../../../core/services/customer.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { DiscountsReportResponse, DiscountsReportRow, REPORT_SALE_TYPES } from '../../../core/models/report.models';
+import { DiscountsReportFilters, DiscountsReportResponse, DiscountsReportRow, REPORT_SALE_TYPES } from '../../../core/models/report.models';
 import { PermissionCodes } from '../../../core/models/permission.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
@@ -47,6 +47,8 @@ export class DiscountsReportComponent implements OnInit {
   branchOptions: SearchableSelectOption[] = [];
   customerOptions: SearchableSelectOption[] = [];
   readonly saleTypeOptions: SearchableSelectOption[] = REPORT_SALE_TYPES;
+  /** Los filtros de lo que está en pantalla: el formulario puede haber cambiado sin Aplicar. */
+  private appliedFilters: DiscountsReportFilters | null = null;
   /**
    * Quien aplico descuentos. La lista de usuarios pide users.manage: sin ese permiso las opciones salen
    * de los usuarios que aparecen en los resultados (y se acumulan entre busquedas).
@@ -98,16 +100,18 @@ export class DiscountsReportComponent implements OnInit {
 
     this.loading = true;
     this.hasSearched = true;
-    this.reportService.getDiscountsReport({
+    const filters: DiscountsReportFilters = {
       dateFrom: v.dateFrom,
       dateTo: v.dateTo,
       branchId: v.branchId || null,
       userId: v.userId || null,
       customerId: v.customerId || null,
       saleType: v.saleType
-    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    };
+    this.reportService.getDiscountsReport(filters).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: res => {
         this.data = res;
+        this.appliedFilters = filters;
         this.loading = false;
         res.rows.forEach(row => {
           if (row.appliedByUserId && row.appliedByUserName) {
@@ -168,6 +172,17 @@ export class DiscountsReportComponent implements OnInit {
     XLSX.writeFile(wb, this.fileName('xlsx'), { compression: true });
   }
 
+  pdfSubtitle(): string {
+    const f = this.appliedFilters;
+    return [
+      'Reporteria / Ventas',
+      f && `Desde ${f.dateFrom} hasta ${f.dateTo}`,
+      this.branchOptions.find(o => o.value === f?.branchId)?.label,
+      this.customerOptions.find(o => o.value === f?.customerId)?.label,
+      REPORT_SALE_TYPES.find(t => t.value === f?.saleType && t.value !== 'all')?.label
+    ].filter(Boolean).join(' · ');
+  }
+
   async exportPdf(): Promise<void> {
     if (!this.data || this.data.rows.length === 0) { this.toast.error('No hay datos para exportar.'); return; }
     const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
@@ -175,15 +190,8 @@ export class DiscountsReportComponent implements OnInit {
     const margin = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const f = this.filterForm.value;
     const title = 'Descuentos en ventas';
-    const subtitle = [
-      'Reporteria / Ventas',
-      `Desde ${f.dateFrom} hasta ${f.dateTo}`,
-      this.branchOptions.find(o => o.value === f.branchId)?.label,
-      this.customerOptions.find(o => o.value === f.customerId)?.label,
-      REPORT_SALE_TYPES.find(t => t.value === f.saleType && t.value !== 'all')?.label
-    ].filter(Boolean).join(' · ');
+    const subtitle = this.pdfSubtitle();
     let y = 12;
 
     const drawDocumentHeader = (continuation = false): void => {

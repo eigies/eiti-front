@@ -210,6 +210,16 @@ describe('DailySalesControlComponent · filtros', () => {
     }));
   });
 
+  it('el PDF dice los filtros aplicados, no los que quedaron sin aplicar', () => {
+    const component = fixture.componentInstance;
+    component.filterForm.patchValue({ branchId: 'b-1' });
+    component.search();
+    component.filterForm.patchValue({ branchId: 'b-2' });
+
+    expect(component.pdfSubtitle(5)).toContain('Mataderos');
+    expect(component.pdfSubtitle(5)).not.toContain('San Cristobal');
+  });
+
   it('todos los desplegables usan el select de la app', () => {
     const form = (fixture.nativeElement as HTMLElement).querySelector('form');
 

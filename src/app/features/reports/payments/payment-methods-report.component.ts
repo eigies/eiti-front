@@ -9,7 +9,7 @@ import { CustomerService } from '../../../core/services/customer.service';
 import { BranchResponse } from '../../../core/models/branch.models';
 import { CustomerResponse } from '../../../core/models/customer.models';
 import { ToastService } from '../../../shared/services/toast.service';
-import { PaymentMethodsReportResponse } from '../../../core/models/report.models';
+import { PaymentMethodsReportFilters, PaymentMethodsReportResponse, REPORT_SALE_TYPES } from '../../../core/models/report.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
 import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
@@ -29,6 +29,8 @@ export class PaymentMethodsReportComponent implements OnInit {
   data: PaymentMethodsReportResponse | null = null;
   branches: BranchResponse[] = [];
   customers: CustomerResponse[] = [];
+  /** Los filtros de lo que está en pantalla: el formulario puede haber cambiado sin Aplicar. */
+  private appliedFilters: PaymentMethodsReportFilters | null = null;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -51,11 +53,7 @@ export class PaymentMethodsReportComponent implements OnInit {
     });
   }
 
-  readonly saleTypes = [
-    { value: 'all', label: 'Todas' },
-    { value: 'wholesale', label: 'Mayorista (CC)' },
-    { value: 'retail', label: 'Minorista' }
-  ];
+  readonly saleTypes = REPORT_SALE_TYPES;
 
   get branchOptions(): SearchableSelectOption[] { return this.branches.map(b => ({ value: b.id, label: b.name })); }
   get saleTypeOptions(): SearchableSelectOption[] { return this.saleTypes.map(t => ({ value: t.value, label: t.label })); }
@@ -88,6 +86,7 @@ export class PaymentMethodsReportComponent implements OnInit {
     this.reportService.paymentMethods(v.dateFrom, v.dateTo, v.branchId || undefined, v.saleType, v.customerId || undefined).subscribe({
       next: res => {
         this.data = res;
+        this.appliedFilters = v;
         this.loading = false;
         this.publishContext(v, res);
       },
@@ -128,6 +127,16 @@ export class PaymentMethodsReportComponent implements OnInit {
     XLSX.writeFile(wb, `medios_de_pago_${f.dateFrom}_${f.dateTo}.xlsx`, { compression: true });
   }
 
+  pdfSubtitle(): string {
+    const f = this.appliedFilters;
+    return [
+      f && `Medios de pago · Desde ${f.dateFrom} hasta ${f.dateTo}`,
+      f?.branchId ? this.branches.find(b => b.id === f.branchId)?.name : 'Todas las sucursales',
+      this.saleTypes.find(t => t.value === (f?.saleType || 'all'))?.label,
+      this.customers.find(c => c.id === f?.customerId)?.fullName
+    ].filter(Boolean).join(' · ');
+  }
+
   async exportPdf(): Promise<void> {
     if (!this.data || this.data.rows.length === 0) { this.toast.error('No hay datos para exportar.'); return; }
     const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'portrait' });
@@ -136,15 +145,7 @@ export class PaymentMethodsReportComponent implements OnInit {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const f = this.filterForm.value;
-    const branchName = f.branchId ? (this.branches.find(b => b.id === f.branchId)?.name ?? '') : 'Todas las sucursales';
-    const saleTypeName = this.saleTypes.find(t => t.value === (f.saleType || 'all'))?.label ?? 'Todas';
-    const customerName = this.customers.find(c => c.id === f.customerId)?.fullName;
-    const subtitle = [
-      `Medios de pago · Desde ${f.dateFrom} hasta ${f.dateTo}`,
-      branchName,
-      saleTypeName,
-      customerName
-    ].filter(Boolean).join(' · ');
+    const subtitle = this.pdfSubtitle();
     let y = 12;
 
     const drawDocumentHeader = (continuation = false): void => {

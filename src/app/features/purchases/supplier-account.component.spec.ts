@@ -221,6 +221,19 @@ describe('SupplierAccountComponent · extracto y orden de pago', () => {
     expect(component.carteraLoading).toBeFalse();
   });
 
+  it('si fallan los bancos igual ofrece los cheques de cartera', () => {
+    const { component, purchases, banks, toast } = setup();
+    purchases.listCarteraCheques.and.returnValue(of([{ id: 'ch-1' }]) as never);
+    banks.listBanks.and.returnValue(throwError(() => new Error('500')));
+
+    component.openPayment();
+
+    expect(component.carteraCheques.length).toBe(1);
+    expect(component.chequeBanks).toEqual([]);
+    expect(component.carteraLoading).toBeFalse();
+    expect(toast.error).toHaveBeenCalled();
+  });
+
   it('el cheque propio viaja en su línea', () => {
     const { component, accountService } = setup();
     component.openPayment();

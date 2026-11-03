@@ -236,6 +236,14 @@ export interface PaymentMethodsReportTotals {
     total: number;
 }
 
+export interface PaymentMethodsReportFilters {
+    dateFrom: string;
+    dateTo: string;
+    branchId?: string | null;
+    saleType?: string | null;
+    customerId?: string | null;
+}
+
 export interface PaymentMethodsReportResponse {
     rows: PaymentMethodsReportRow[];
     totals: PaymentMethodsReportTotals;

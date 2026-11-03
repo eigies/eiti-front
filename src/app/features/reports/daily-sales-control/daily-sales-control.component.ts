@@ -6,6 +6,7 @@ import { catchError } from 'rxjs/operators';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import {
+  DailySalesControlFilters,
   DailySalesControlResponse,
   DailySalesControlRow,
   DailySalesControlTotals,
@@ -37,6 +38,8 @@ export class DailySalesControlComponent implements OnInit {
 
   branches: { id: string; label: string }[] = [];
   customers: { id: string; label: string }[] = [];
+  /** Los filtros de lo que está en pantalla: el formulario puede haber cambiado sin Aplicar. */
+  private appliedFilters: DailySalesControlFilters | null = null;
 
   readonly saleTypeOptions: SearchableSelectOption[] = REPORT_SALE_TYPES;
   readonly statusOptions: SearchableSelectOption[] = [
@@ -116,16 +119,18 @@ export class DailySalesControlComponent implements OnInit {
 
     this.loading = true;
     this.hasSearched = true;
-    this.reportService.dailySalesControl({
+    const filters: DailySalesControlFilters = {
       dateFrom: value.dateFrom,
       dateTo: value.dateTo,
       status: Number(value.status ?? 0),
       branchId: value.branchId || null,
       customerId: value.customerId || null,
       saleType: value.saleType
-    }).subscribe({
+    };
+    this.reportService.dailySalesControl(filters).subscribe({
       next: response => {
         this.data = response;
+        this.appliedFilters = filters;
         this.loading = false;
       },
       error: (err: { error?: { detail?: string } }) => {
@@ -237,6 +242,17 @@ export class DailySalesControlComponent implements OnInit {
     );
   }
 
+  pdfSubtitle(rowCount: number): string {
+    const f = this.appliedFilters;
+    return [
+      f && `${f.dateFrom} a ${f.dateTo}`,
+      `${rowCount} venta(s)`,
+      this.branches.find(branch => branch.id === f?.branchId)?.label,
+      this.customers.find(customer => customer.id === f?.customerId)?.label,
+      REPORT_SALE_TYPES.find(type => type.value === f?.saleType && type.value !== 'all')?.label
+    ].filter(Boolean).join(' - ');
+  }
+
   async exportPdf(): Promise<void> {
     const rows = this.filteredRows;
     if (rows.length === 0) {
@@ -264,17 +280,10 @@ export class DailySalesControlComponent implements OnInit {
     let y = 12;
 
     const drawHeader = (continuation = false): void => {
-      const value = this.filterForm.value;
       this.pdfBranding.drawWatermark(doc, branding, pageWidth, pageHeight);
       y = this.pdfBranding.drawHeader(doc, branding, {
         title: 'Control diario de ventas',
-        subtitle: [
-          `${value.dateFrom} a ${value.dateTo}`,
-          `${rows.length} venta(s)`,
-          this.branches.find(branch => branch.id === value.branchId)?.label,
-          this.customers.find(customer => customer.id === value.customerId)?.label,
-          REPORT_SALE_TYPES.find(type => type.value === value.saleType && type.value !== 'all')?.label
-        ].filter(Boolean).join(' - '),
+        subtitle: this.pdfSubtitle(rows.length),
         continuation,
         margin,
         y: 12,

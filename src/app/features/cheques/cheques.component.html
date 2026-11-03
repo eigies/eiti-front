@@ -264,7 +264,7 @@
             </button>
           </div>
           <div class="state-terminal" *ngIf="getNextStates(c.estado).length === 0">
-            Estado terminal - no hay transiciones disponibles.
+            {{ terminalStateLabel(c) }}
           </div>
         </div>
       </ng-container>

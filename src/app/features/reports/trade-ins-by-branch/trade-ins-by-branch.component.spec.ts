@@ -22,7 +22,7 @@ describe('TradeInsByBranchComponent · tipo de venta', () => {
       imports: [TradeInsByBranchComponent],
       providers: [
         { provide: ReportService, useValue: reports },
-        { provide: BranchService, useValue: { listBranches: () => of([]) } },
+        { provide: BranchService, useValue: { listBranches: () => of([{ id: 'b-1', name: 'Mataderos' }, { id: 'b-2', name: 'San Cristobal' }]) } },
         { provide: CustomerService, useValue: { listCustomers: () => of([]) } },
         { provide: ToastService, useValue: jasmine.createSpyObj('ToastService', ['success', 'error']) },
         { provide: PdfBrandingService, useValue: {} },
@@ -61,6 +61,16 @@ describe('TradeInsByBranchComponent · tipo de venta', () => {
     fixture.componentInstance.filterForm.patchValue({ saleType: 'retail' });
 
     expect(fixture.componentInstance.activeOptionalFiltersCount).toBe(1);
+  });
+
+  it('el PDF dice los filtros aplicados, no los que quedaron sin aplicar', () => {
+    const component = fixture.componentInstance;
+    component.filterForm.patchValue({ branchId: 'b-1' });
+    component.search();
+    component.filterForm.patchValue({ branchId: 'b-2' });
+
+    expect(component.pdfSubtitle()).toContain('Mataderos');
+    expect(component.pdfSubtitle()).not.toContain('San Cristobal');
   });
 
   it('Limpiar vuelve a todas las ventas', () => {
