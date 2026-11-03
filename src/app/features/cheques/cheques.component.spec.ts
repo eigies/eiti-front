@@ -62,4 +62,22 @@ describe('ChequesComponent · origen', () => {
     expect(rows[1].textContent).toContain('Distribuidora Norte');
     expect(rows[1].textContent).not.toContain('Sin venta asociada');
   });
+
+  // La API manda la fecha de negocio como medianoche UTC: pasarla por Date la corre al día anterior en Argentina.
+  it('muestra el día del vencimiento, sin correrlo por el huso horario', () => {
+    cheques.listCheques.and.returnValue(of([{ ...own, fechaVencimiento: '2026-11-03T00:00:00Z' }]));
+
+    fixture.componentInstance.loadCheques();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('tr.data-row')?.textContent).toContain('03/11/2026');
+  });
+
+  it('un cheque en cartera que vence hoy cuenta como urgente', () => {
+    const today = new Date().toLocaleDateString('en-CA');
+    const cheque = { ...third, fechaVencimiento: `${today}T00:00:00Z` };
+
+    expect(fixture.componentInstance.isUrgent(cheque)).toBeTrue();
+    expect(fixture.componentInstance.urgencyLabel(cheque)).toBe('Vence hoy');
+  });
 });

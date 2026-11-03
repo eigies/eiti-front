@@ -17,6 +17,7 @@ import {
 import { BankResponse } from '../../core/models/bank.models';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { formatLedgerDate } from '../../shared/utils/ledger-format.util';
 
 @Component({
   selector: 'app-cheques',
@@ -205,23 +206,26 @@ export class ChequesComponent implements OnInit {
       return false;
     }
 
-    const dueDate = new Date(`${cheque.fechaVencimiento}T00:00:00`);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
-    return diffDays <= this.soonWindowDays;
+    return this.daysUntil(cheque.fechaVencimiento) <= this.soonWindowDays;
   }
 
   urgencyLabel(cheque: Pick<ChequeListItem, 'fechaVencimiento'>): string {
-    const dueDate = new Date(`${cheque.fechaVencimiento}T00:00:00`);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
+    const diffDays = this.daysUntil(cheque.fechaVencimiento);
 
     if (diffDays < 0) return 'Vencido';
     if (diffDays === 0) return 'Vence hoy';
     if (diffDays === 1) return 'Vence manana';
     return `Vence en ${diffDays} dias`;
+  }
+
+  /** Fecha de negocio: llega como medianoche UTC y no se pasa por Date, que en Argentina la corre al día anterior. */
+  dateLabel(value: string): string { return formatLedgerDate(value); }
+
+  private daysUntil(value: string): number {
+    const dueDate = new Date(`${value.slice(0, 10)}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
   }
 
   trackById(_: number, item: ChequeListItem): string { return item.id; }

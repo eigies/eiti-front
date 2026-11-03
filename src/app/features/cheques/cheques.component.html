@@ -132,7 +132,7 @@
             <span>{{ c.supplierName || c.titular }}</span>
           </div>
           <div class="cheque-card__footer">
-            <span>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+            <span>{{ dateLabel(c.fechaVencimiento) }}</span>
             <span class="urgency-pill" *ngIf="isUrgent(c)">{{ urgencyLabel(c) }}</span>
             <span class="sale-type-badge" *ngIf="!isUrgent(c) && c.saleType">{{ c.saleType }}</span>
           </div>
@@ -168,7 +168,7 @@
               <td class="text-right cell cell--amount">${{ c.monto | number:'1.2-2' }}</td>
               <td class="cell">
                 <div class="stack stack--compact">
-                  <span class="cell cell--due">{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+                  <span class="cell cell--due">{{ dateLabel(c.fechaVencimiento) }}</span>
                   <span class="urgency-pill" *ngIf="isUrgent(c)">{{ urgencyLabel(c) }}</span>
                 </div>
               </td>
@@ -208,7 +208,7 @@
               </div>
               <div class="cheque-summary__item">
                 <span class="detail-field__label">Vencimiento</span>
-                <strong>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</strong>
+                <strong>{{ dateLabel(c.fechaVencimiento) }}</strong>
               </div>
             </div>
           </div>
@@ -235,11 +235,11 @@
             </div>
             <div class="detail-field">
               <span class="detail-field__label">Emision</span>
-              <span>{{ c.fechaEmision | date:'dd/MM/yyyy' }}</span>
+              <span>{{ dateLabel(c.fechaEmision) }}</span>
             </div>
             <div class="detail-field">
               <span class="detail-field__label">Vencimiento</span>
-              <span>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+              <span>{{ dateLabel(c.fechaVencimiento) }}</span>
             </div>
             <div class="detail-field" *ngIf="c.saleCode">
               <span class="detail-field__label">Venta</span>
