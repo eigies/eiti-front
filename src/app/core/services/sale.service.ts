@@ -61,10 +61,13 @@ export class SaleService {
     // refundMode (solo ventas CC con cobros): 1 = saldo a favor, 2 = anular pagos (cuentas a 0).
     // confirmInvoiceReceiver: el usuario vio que la factura salio a otro receptor que el de la ficha y confirmo
     // que la NC vaya al de la factura (el back responde Sales.Cancel.InvoiceReceiverChanged hasta tenerlo).
-    cancelSale(id: string, refundMode?: number, confirmInvoiceReceiver = false): Observable<void> {
+    // cancelLinkedCreditNotes: el usuario vio las notas de credito vigentes de la venta y confirmo anularlas con ella
+    // (el back responde Sales.Cancel.HasActiveCreditNote hasta tenerlo).
+    cancelSale(id: string, refundMode?: number, confirmInvoiceReceiver = false, cancelLinkedCreditNotes = false): Observable<void> {
         const params = new URLSearchParams();
         if (refundMode) params.set('refundMode', String(refundMode));
         if (confirmInvoiceReceiver) params.set('confirmInvoiceReceiver', 'true');
+        if (cancelLinkedCreditNotes) params.set('cancelLinkedCreditNotes', 'true');
         const query = params.toString();
         return this.http.post<void>(`${this.base}/${id}/cancel${query ? `?${query}` : ''}`, {});
     }

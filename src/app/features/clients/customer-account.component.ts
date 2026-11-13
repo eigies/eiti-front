@@ -30,6 +30,7 @@ import { ConfirmationService } from '../../shared/services/confirmation.service'
 import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
 import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
 import { creditNoteReceiverConfirmation, isInvoiceReceiverChanged } from '../../shared/utils/fiscal-receivers.util';
+import { hasActiveLinkedCreditNotes, linkedCreditNotesConfirmation } from '../../shared/utils/linked-credit-notes.util';
 import { canDownloadSaleCreditNote, canDownloadSaleDebitNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { AccountLedgerComponent } from '../../shared/components/account-ledger/account-ledger.component';
@@ -479,17 +480,23 @@ export class CustomerAccountComponent implements OnInit {
     if (!sale || this.cancelingSale) return;
     // Solo manda el modo si hay cobros que resolver.
     const refundMode = this.detalleHasCobros ? this.cancelRefundMode : undefined;
-    this.cancelSale(sale, refundMode, false);
+    this.cancelSale(sale, refundMode, false, false);
   }
 
   /**
-   * Si la factura salio a otro receptor que el de la ficha, el back no anula hasta que el usuario vea los dos
-   * CUIT y confirme que la NC vaya al de la factura.
+   * El back no anula hasta tener cada confirmacion que le falta, y responde una por vez: si la venta tiene notas de
+   * credito vigentes, el usuario ve cuales se anulan con ella; si la factura salio a otro receptor que el de la
+   * ficha, ve los dos CUIT. Cada reintento conserva lo ya confirmado.
    */
-  private cancelSale(sale: SaleByIdResponse, refundMode: number | undefined, confirmInvoiceReceiver: boolean): void {
+  private cancelSale(
+    sale: SaleByIdResponse,
+    refundMode: number | undefined,
+    confirmInvoiceReceiver: boolean,
+    cancelLinkedCreditNotes: boolean
+  ): void {
     this.cancelingSale = true;
     this.cdr.markForCheck();
-    this.saleService.cancelSale(sale.id, refundMode, confirmInvoiceReceiver).subscribe({
+    this.saleService.cancelSale(sale.id, refundMode, confirmInvoiceReceiver, cancelLinkedCreditNotes).subscribe({
       next: () => {
         this.cancelingSale = false;
         this.cancelModalOpen = false;
@@ -499,11 +506,17 @@ export class CustomerAccountComponent implements OnInit {
         this.cdr.markForCheck();
         this.load();
       },
-      error: (err: { error?: { detail?: string; errorCode?: string } }) => {
+      error: async (err: { error?: { detail?: string; errorCode?: string } }) => {
         this.cancelingSale = false;
         this.cdr.markForCheck();
+        if (!cancelLinkedCreditNotes && hasActiveLinkedCreditNotes(err)) {
+          const confirmed = await this.confirmation.confirm(
+            linkedCreditNotesConfirmation(err, 'Anular la venta y sus notas de crédito'));
+          if (confirmed) this.cancelSale(sale, refundMode, confirmInvoiceReceiver, true);
+          return;
+        }
         if (!confirmInvoiceReceiver && isInvoiceReceiverChanged(err)) {
-          this.askInvoiceReceiver(sale, refundMode);
+          this.askInvoiceReceiver(sale, refundMode, cancelLinkedCreditNotes);
           return;
         }
         this.toast.error(err?.error?.detail || 'No se pudo anular la venta');
@@ -512,7 +525,7 @@ export class CustomerAccountComponent implements OnInit {
   }
 
   /** Muestra a quien se emitio la factura contra la ficha actual y anula solo si el usuario confirma. */
-  private askInvoiceReceiver(sale: SaleByIdResponse, refundMode: number | undefined): void {
+  private askInvoiceReceiver(sale: SaleByIdResponse, refundMode: number | undefined, cancelLinkedCreditNotes: boolean): void {
     this.saleService.getFiscalReceivers(sale.id).subscribe({
       next: async receivers => {
         if (!receivers.available || !receivers.invoice) {
@@ -521,7 +534,7 @@ export class CustomerAccountComponent implements OnInit {
         }
 
         if (await this.confirmation.confirm(creditNoteReceiverConfirmation(receivers, 'cancel'))) {
-          this.cancelSale(sale, refundMode, true);
+          this.cancelSale(sale, refundMode, true, cancelLinkedCreditNotes);
         }
       },
       error: (err: { error?: { detail?: string } }) =>

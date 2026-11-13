@@ -428,8 +428,33 @@ describe('SalesPageComponent (price override)', () => {
             expect(options.comparison?.secondary.identification).toBe('CUIT: 30-51743143-1');
             expect(options.confirmLabel?.replace(/⁠/g, '')).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
             expect((saleSpy as any).cancelSale.calls.allArgs()).toEqual([
-                ['sale-1', undefined, false],
-                ['sale-1', undefined, true]
+                ['sale-1', undefined, false, false],
+                ['sale-1', undefined, true, false]
+            ]);
+        });
+
+        // Con una NC vigente el back pide primero confirmar que se anula con la venta; despues, el CUIT. El
+        // segundo reintento conserva la primera confirmacion.
+        it('con una nota de credito vigente, confirma las dos cosas y reenvia con ambas', async () => {
+            const confirm = spyOn(TestBed.inject(ConfirmationService), 'confirm').and.resolveTo(true);
+            const detail = 'La venta tiene vigente la nota de crédito NCC-003 por $ 195.000,00. Si confirmás, se anula junto con la venta.';
+            (saleSpy as any).cancelSale.and.returnValues(
+                throwError(() => ({ error: { errorCode: 'Sales.Cancel.HasActiveCreditNote', detail } })),
+                throwError(() => ({ error: { errorCode: 'Sales.Cancel.InvoiceReceiverChanged' } })),
+                of(void 0));
+            (saleSpy as any).getFiscalReceivers.and.returnValue(of(receivers));
+            component.cancelSaleModal = sale;
+
+            component.confirmCancelSale();
+            await new Promise(resolve => setTimeout(resolve));
+            await new Promise(resolve => setTimeout(resolve));
+
+            expect(confirm.calls.first().args[0].message).toBe(detail);
+            expect(confirm.calls.first().args[0].confirmLabel).toBe('Cancelar la venta y sus notas de crédito');
+            expect((saleSpy as any).cancelSale.calls.allArgs()).toEqual([
+                ['sale-1', undefined, false, false],
+                ['sale-1', undefined, false, true],
+                ['sale-1', undefined, true, true]
             ]);
         });
 

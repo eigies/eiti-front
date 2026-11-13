@@ -41,6 +41,7 @@ import {
     receiverLabel,
     regularizationConfirmation
 } from '../../shared/utils/fiscal-receivers.util';
+import { hasActiveLinkedCreditNotes, linkedCreditNotesConfirmation } from '../../shared/utils/linked-credit-notes.util';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { InvoicingControlComponent } from './components/invoicing-control/invoicing-control.component';
@@ -1289,16 +1290,17 @@ confirmCancelSale(): void {
         return;
     }
 
-    this.cancelSale(this.cancelSaleModal, false);
+    this.cancelSale(this.cancelSaleModal, false, false);
 }
 
 /**
- * Si la factura salio a otro receptor que el de la ficha, el back no anula hasta que el usuario vea los dos
- * CUIT y confirme que la NC vaya al de la factura.
+ * El back no anula hasta tener cada confirmacion que le falta, y responde una por vez: si la venta tiene notas de
+ * credito vigentes, el usuario ve cuales se anulan con ella; si la factura salio a otro receptor que el de la ficha,
+ * ve los dos CUIT. Cada reintento conserva lo ya confirmado.
  */
-private cancelSale(sale: SaleResponse, confirmInvoiceReceiver: boolean): void {
+private cancelSale(sale: SaleResponse, confirmInvoiceReceiver: boolean, cancelLinkedCreditNotes: boolean): void {
     this.cancelingSaleId = sale.id;
-    this.saleService.cancelSale(sale.id, undefined, confirmInvoiceReceiver).subscribe({
+    this.saleService.cancelSale(sale.id, undefined, confirmInvoiceReceiver, cancelLinkedCreditNotes).subscribe({
         next: () => {
             this.cancelingSaleId = null;
             this.cancelSaleModal = null;
@@ -1306,11 +1308,18 @@ private cancelSale(sale: SaleResponse, confirmInvoiceReceiver: boolean): void {
             this.toast.success('Venta cancelada');
             this.loadSales();
         },
-        error: err => {
+        error: async err => {
             this.cancelingSaleId = null;
+            if (!cancelLinkedCreditNotes && hasActiveLinkedCreditNotes(err)) {
+                this.cancelSaleModal = null;
+                const confirmed = await this.confirmation.confirm(
+                    linkedCreditNotesConfirmation(err, 'Cancelar la venta y sus notas de crédito'));
+                if (confirmed) this.cancelSale(sale, confirmInvoiceReceiver, true);
+                return;
+            }
             if (!confirmInvoiceReceiver && isInvoiceReceiverChanged(err)) {
                 this.cancelSaleModal = null;
-                this.askInvoiceReceiver(sale, 'cancel', () => this.cancelSale(sale, true));
+                this.askInvoiceReceiver(sale, 'cancel', () => this.cancelSale(sale, true, cancelLinkedCreditNotes));
                 return;
             }
             this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cancelar la venta');
