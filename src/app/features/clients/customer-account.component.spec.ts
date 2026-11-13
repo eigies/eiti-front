@@ -262,9 +262,45 @@ describe('CustomerAccountComponent · notas de crédito', () => {
 
     expect(confirmation.confirm.calls.mostRecent().args[0].confirmLabel?.replace(/⁠/g, '')).toBe('Anular y emitir la NC a CUIT 30-68225650-4');
     expect(sales.cancelSale.calls.allArgs()).toEqual([
-      ['sale-1', undefined, false],
-      ['sale-1', undefined, true]
+      ['sale-1', undefined, false, false],
+      ['sale-1', undefined, true, false]
     ]);
+  });
+
+  // MAT-3844: la venta tiene una NC vigente. El usuario ve cuál se anula con la venta y, si confirma, se reenvía con
+  // el mismo modo elegido para lo cobrado.
+  it('anular una venta con una nota de credito vigente pide confirmarla y reenvia con el mismo modo', async () => {
+    const { component, sales, confirmation } = setup();
+    const detail = 'La venta tiene vigente la nota de crédito NCC-003 por $ 195.000,00. Si confirmás, se anula junto con la venta.';
+    sales.cancelSale.and.returnValues(
+      throwError(() => ({ error: { errorCode: 'Sales.Cancel.HasActiveCreditNote', detail } })),
+      of(void 0));
+    component.detalleModalSale = { id: 'sale-1', ccPaidTotal: 14407.17, details: [] } as never;
+    component.setCancelRefundMode(1);
+
+    component.confirmCancelSale();
+    await new Promise(resolve => setTimeout(resolve));
+
+    const options = confirmation.confirm.calls.mostRecent().args[0];
+    expect(options.message).toBe(detail);
+    expect(options.confirmLabel).toBe('Anular la venta y sus notas de crédito');
+    expect(sales.cancelSale.calls.allArgs()).toEqual([
+      ['sale-1', 1, false, false],
+      ['sale-1', 1, false, true]
+    ]);
+  });
+
+  it('si el usuario vuelve, la venta y sus notas de credito quedan como estaban', async () => {
+    const { component, sales, confirmation } = setup();
+    confirmation.confirm.and.resolveTo(false);
+    sales.cancelSale.and.returnValue(
+      throwError(() => ({ error: { errorCode: 'Sales.Cancel.HasActiveCreditNote', detail: 'NCC-003' } })));
+    component.detalleModalSale = { id: 'sale-1', ccPaidTotal: 0, details: [] } as never;
+
+    component.confirmCancelSale();
+    await new Promise(resolve => setTimeout(resolve));
+
+    expect(sales.cancelSale).toHaveBeenCalledTimes(1);
   });
 
   describe('observaciones del detalle', () => {

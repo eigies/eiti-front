@@ -7,6 +7,8 @@ import { PurchaseDetailResponse, PurchasePaymentMethod, PurchaseStatus } from '.
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
+import { extractApiError } from '../../shared/utils/api-error.util';
+import { hasActiveLinkedCreditNotes, linkedCreditNotesConfirmation } from '../../shared/utils/linked-credit-notes.util';
 
 const PURCHASE_PAYMENT_METHOD_LABELS: Record<PurchasePaymentMethod, string> = {
   [PurchasePaymentMethod.Cash]: 'Efectivo',
@@ -137,13 +139,28 @@ export class PurchaseDetailComponent implements OnInit {
     if (!this.purchase || this.cancelling) return;
     // Sin pagos imputados no se manda refundMode (el backend no lo exige).
     const refundMode = this.hasPaidAmount ? this.cancelRefundMode : undefined;
+    this.cancelPurchase(refundMode, false);
+  }
+
+  /**
+   * Si la compra tiene notas de credito vigentes, el back no la cancela hasta que el usuario vea cuales se anulan
+   * con ella y lo confirme (mismo ida y vuelta que el receptor de la factura al anular una venta).
+   */
+  private cancelPurchase(refundMode: number | undefined, cancelLinkedCreditNotes: boolean): void {
     this.cancelling = true;
-    this.purchaseService.cancelPurchase(this.purchaseId, refundMode).subscribe({
+    this.cdr.markForCheck();
+    this.purchaseService.cancelPurchase(this.purchaseId, refundMode, cancelLinkedCreditNotes).subscribe({
       next: () => { this.cancelModalOpen = false; this.toast.success('Compra cancelada'); this.backToAccount(); },
-      error: (err: { error?: { detail?: string } }) => {
-        this.toast.error(err?.error?.detail || 'Error al cancelar la compra');
+      error: async (err: unknown) => {
         this.cancelling = false;
         this.cdr.markForCheck();
+        if (!cancelLinkedCreditNotes && hasActiveLinkedCreditNotes(err)) {
+          const confirmed = await this.confirmation.confirm(
+            linkedCreditNotesConfirmation(err, 'Cancelar la compra y sus notas de crédito'));
+          if (confirmed) this.cancelPurchase(refundMode, true);
+          return;
+        }
+        this.toast.error(extractApiError(err, 'Error al cancelar la compra'));
       }
     });
   }
