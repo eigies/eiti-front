@@ -1,0 +1,40 @@
+<div class="cancel-paid">
+  <span class="cancel-paid__label">Monto ya cobrado</span>
+  <strong>${{ paidTotal | number:'1.2-2' }}</strong>
+</div>
+
+<fieldset class="cancel-options">
+  <legend>¿Qué querés hacer con ese dinero?</legend>
+
+  <label class="cancel-opt" [class.cancel-opt--active]="mode === modes.Credit">
+    <input type="radio" [name]="groupName" [checked]="mode === modes.Credit" (change)="select(modes.Credit)" />
+    <span class="cancel-opt__control" aria-hidden="true"><span></span></span>
+    <span class="cancel-opt__body">
+      <span class="cancel-opt__heading">
+        <span class="cancel-opt__title">Dejar saldo a favor</span>
+        <span class="cancel-opt__tag">Sin mover caja</span>
+      </span>
+      <span class="cancel-opt__desc">El cliente podrá usar el monto en próximas compras.</span>
+      <span class="cancel-opt__result">
+        <span>Saldo disponible</span>
+        <strong>+${{ paidTotal | number:'1.2-2' }}</strong>
+      </span>
+    </span>
+  </label>
+
+  <label class="cancel-opt" [class.cancel-opt--active]="mode === modes.ReversePayments">
+    <input type="radio" [name]="groupName" [checked]="mode === modes.ReversePayments" (change)="select(modes.ReversePayments)" />
+    <span class="cancel-opt__control" aria-hidden="true"><span></span></span>
+    <span class="cancel-opt__body">
+      <span class="cancel-opt__heading">
+        <span class="cancel-opt__title">Anular los pagos</span>
+        <span class="cancel-opt__tag cancel-opt__tag--danger">Revierte caja</span>
+      </span>
+      <span class="cancel-opt__desc">Se revierten los cobros vinculados y no se genera saldo a favor.</span>
+      <span class="cancel-opt__result">
+        <span>Saldo a favor</span>
+        <strong>$0.00</strong>
+      </span>
+    </span>
+  </label>
+</fieldset>

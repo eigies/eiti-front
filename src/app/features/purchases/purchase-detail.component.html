@@ -36,7 +36,7 @@
         <button
           class="btn-danger"
           type="button"
-          *ngIf="purchase.status === PurchaseStatus.Active"
+          *ngIf="purchase.status !== PurchaseStatus.Cancelled"
           [disabled]="cancelling"
           (click)="openCancelModal()">
           {{ cancelling ? 'Cancelando...' : 'Cancelar compra' }}

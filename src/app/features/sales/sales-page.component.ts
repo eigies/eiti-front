@@ -11,7 +11,7 @@ import { CompanyService } from '../../core/services/company.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { CustomerResponse, CustomerSearchItem, BILLING_IVA_CONDITION_OPTIONS } from '../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit, SaleFiscalReceiversResponse, applyGeneralDiscount, saleDiscountIssue, SALE_INVOICING_STATUS } from '../../core/models/sale.models';
+import { CcCancelRefundMode, CreateSaleRequest, SaleDetailResponse, SaleResponse, SaleSourceChannel, SALE_SOURCE_CHANNELS, CreateSaleResponse, cancelInvoicingNotice, CancelInvoicingNotice, fiscalDocumentLabel, fiscalNumberLabel, saleCreatedNotice, invoicingCustomerIssue, InvoiceLetter, suggestedInvoiceLetter, isValidCuit, SaleFiscalReceiversResponse, applyGeneralDiscount, saleDiscountIssue, SALE_INVOICING_STATUS } from '../../core/models/sale.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
 import { BranchService } from '../../core/services/branch.service';
@@ -32,6 +32,8 @@ import { PermissionCodes } from '../../core/models/permission.models';
 import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
 import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
 import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
+import { CcCancelRefundOptionsComponent } from '../../shared/components/cc-cancel-refund-options/cc-cancel-refund-options.component';
+import { extractApiError } from '../../shared/utils/api-error.util';
 import { canDownloadSaleCreditNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import {
@@ -41,6 +43,7 @@ import {
     receiverLabel,
     regularizationConfirmation
 } from '../../shared/utils/fiscal-receivers.util';
+import { hasActiveLinkedCreditNotes, linkedCreditNotesConfirmation } from '../../shared/utils/linked-credit-notes.util';
 import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
 import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { InvoicingControlComponent } from './components/invoicing-control/invoicing-control.component';
@@ -76,6 +79,9 @@ import { emptySaleDiscountDraft, QuickSaleStage, SaleDiscountDraft, SalesPageMod
 import { ProductPickerModalComponent } from '../../shared/components/product-picker-modal/product-picker-modal.component';
 import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../shared/components/product-picker-modal/product-picker-modal.models';
 
+/** El back pide elegir que hacer con lo cobrado de una venta CC antes de anularla. */
+const REFUND_MODE_REQUIRED = 'Sales.Cancel.RefundModeRequired';
+
 function localDateString(date = new Date()): string {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -100,6 +106,7 @@ function localDateString(date = new Date()): string {
         QuickSaleSummaryComponent,
         SaleActionsMenuComponent,
         SaleNotesComponent,
+        CcCancelRefundOptionsComponent,
         SalesManagementComponent,
         SaleListItemComponent,
         SaleDiscountControlComponent,
@@ -187,6 +194,12 @@ export class SalesPageComponent implements OnInit {
     showOnboardingCompleteNotice = false;
     infoModal: { title: string; rows: Array<{ label: string; value: string }> } | null = null;
     cancelSaleModal: SaleResponse | null = null;
+    /**
+     * Lo ya cobrado de la venta CC que se anula. Sale del detalle (la lista no lo trae) y se consulta al abrir el
+     * modal: null mientras tanto, y confirmar queda deshabilitado hasta tenerlo.
+     */
+    cancelSaleCcPaid: number | null = 0;
+    cancelRefundMode = CcCancelRefundMode.Credit;
     expandedSaleId: string | null = null;
     invoicingSaleId: string | null = null;
     /** Venta con una NC (reintento o regularizacion) en curso. */
@@ -1274,6 +1287,38 @@ requestCancelSale(sale: SaleResponse): void {
     }
 
     this.cancelSaleModal = sale;
+    this.cancelRefundMode = CcCancelRefundMode.Credit;
+    this.cancelSaleCcPaid = 0;
+    if (sale.isCuentaCorriente) {
+        this.loadCancelSaleCcPaid(sale);
+    }
+}
+
+/** Con cobros, el modal pregunta qué hacer con ellos, igual que la cuenta del cliente. */
+get cancelSaleHasCobros(): boolean {
+    return (this.cancelSaleCcPaid ?? 0) > 0;
+}
+
+get cancelSaleCheckingCobros(): boolean {
+    return this.cancelSaleCcPaid === null;
+}
+
+private loadCancelSaleCcPaid(sale: SaleResponse): void {
+    this.cancelSaleCcPaid = null;
+    this.saleService.getSaleById(sale.id).subscribe({
+        next: detail => {
+            if (this.cancelSaleModal?.id === sale.id) {
+                this.cancelSaleCcPaid = detail.ccPaidTotal;
+            }
+        },
+        error: err => {
+            if (this.cancelSaleModal?.id === sale.id) {
+                this.cancelSaleModal = null;
+                this.cancelSaleCcPaid = 0;
+            }
+            this.toast.error(extractApiError(err, 'No se pudo consultar lo cobrado de la venta.'));
+        }
+    });
 }
 
 closeCancelSaleModal(): void {
@@ -1285,20 +1330,28 @@ closeCancelSaleModal(): void {
 }
 
 confirmCancelSale(): void {
-    if (!this.cancelSaleModal) {
+    if (!this.cancelSaleModal || this.cancelSaleCheckingCobros) {
         return;
     }
 
-    this.cancelSale(this.cancelSaleModal, false);
+    // Solo manda el modo si hay cobros que resolver.
+    const refundMode = this.cancelSaleHasCobros ? this.cancelRefundMode : undefined;
+    this.cancelSale(this.cancelSaleModal, refundMode, false, false);
 }
 
 /**
- * Si la factura salio a otro receptor que el de la ficha, el back no anula hasta que el usuario vea los dos
- * CUIT y confirme que la NC vaya al de la factura.
+ * El back no anula hasta tener cada confirmacion que le falta, y responde una por vez: si la venta tiene notas de
+ * credito vigentes, el usuario ve cuales se anulan con ella; si la factura salio a otro receptor que el de la ficha,
+ * ve los dos CUIT. Cada reintento conserva lo ya confirmado, tambien el destino de lo cobrado elegido en el modal.
  */
-private cancelSale(sale: SaleResponse, confirmInvoiceReceiver: boolean): void {
+private cancelSale(
+    sale: SaleResponse,
+    refundMode: CcCancelRefundMode | undefined,
+    confirmInvoiceReceiver: boolean,
+    cancelLinkedCreditNotes: boolean
+): void {
     this.cancelingSaleId = sale.id;
-    this.saleService.cancelSale(sale.id, undefined, confirmInvoiceReceiver).subscribe({
+    this.saleService.cancelSale(sale.id, refundMode, confirmInvoiceReceiver, cancelLinkedCreditNotes).subscribe({
         next: () => {
             this.cancelingSaleId = null;
             this.cancelSaleModal = null;
@@ -1306,11 +1359,25 @@ private cancelSale(sale: SaleResponse, confirmInvoiceReceiver: boolean): void {
             this.toast.success('Venta cancelada');
             this.loadSales();
         },
-        error: err => {
+        error: async err => {
             this.cancelingSaleId = null;
+            if (!cancelLinkedCreditNotes && hasActiveLinkedCreditNotes(err)) {
+                this.cancelSaleModal = null;
+                const confirmed = await this.confirmation.confirm(
+                    linkedCreditNotesConfirmation(err, 'Cancelar la venta y sus notas de crédito'));
+                if (confirmed) this.cancelSale(sale, refundMode, confirmInvoiceReceiver, true);
+                return;
+            }
             if (!confirmInvoiceReceiver && isInvoiceReceiverChanged(err)) {
                 this.cancelSaleModal = null;
-                this.askInvoiceReceiver(sale, 'cancel', () => this.cancelSale(sale, true));
+                this.askInvoiceReceiver(sale, 'cancel', () => this.cancelSale(sale, refundMode, true, cancelLinkedCreditNotes));
+                return;
+            }
+            // La venta tiene cobros que el modal no conocia (se registraron con el modal abierto): en vez de un
+            // toast sin salida, se vuelve a consultar y el modal pregunta que hacer con ellos.
+            if (refundMode === undefined && err?.error?.errorCode === REFUND_MODE_REQUIRED) {
+                this.cancelSaleModal = sale;
+                this.loadCancelSaleCcPaid(sale);
                 return;
             }
             this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cancelar la venta');

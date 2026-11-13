@@ -43,9 +43,15 @@ export class PurchaseService {
     return this.http.get<PurchaseDetailResponse>(`${this.base}/${id}`);
   }
 
-  cancelPurchase(id: string, refundMode?: number): Observable<void> {
-    const query = refundMode ? `?refundMode=${refundMode}` : '';
-    return this.http.delete<void>(`${this.base}/${id}${query}`);
+  // refundMode (solo con pagos imputados): 1 = saldo a favor, 2 = revertir el pago.
+  // cancelLinkedCreditNotes: el usuario vio las notas de credito vigentes de la compra y confirmo anularlas con ella
+  // (el back responde Purchases.Cancel.HasActiveCreditNote hasta tenerlo).
+  cancelPurchase(id: string, refundMode?: number, cancelLinkedCreditNotes = false): Observable<void> {
+    const params = new URLSearchParams();
+    if (refundMode) params.set('refundMode', String(refundMode));
+    if (cancelLinkedCreditNotes) params.set('cancelLinkedCreditNotes', 'true');
+    const query = params.toString();
+    return this.http.delete<void>(`${this.base}/${id}${query ? `?${query}` : ''}`);
   }
 
   listCarteraCheques(): Observable<CarteraChequeOption[]> {
