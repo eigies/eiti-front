@@ -98,6 +98,17 @@ export function isValidCuit(value: string | null | undefined): boolean {
     return Number(digits[10]) === expected;
 }
 
+/**
+ * Qué hacer con lo ya cobrado al anular una venta de cuenta corriente con cobros. Mismos valores que
+ * CcCancellationRefundMode del back.
+ */
+export enum CcCancelRefundMode {
+    /** Lo cobrado queda como saldo a favor del cliente (no toca la caja). */
+    Credit = 1,
+    /** Se anulan los cobros vinculados (el efectivo sale de la caja) y no queda saldo a favor. */
+    ReversePayments = 2
+}
+
 /** Letra que elige el vendedor. Mismos valores que InvoiceLetter del back. */
 export enum InvoiceLetter {
     A = 1,

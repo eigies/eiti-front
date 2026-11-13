@@ -3283,6 +3283,18 @@
     background: color-mix(in srgb, var(--amber) 10%, transparent);
 }
 
+/* Anular una venta CC con cobros: mientras se consulta lo cobrado, y la eleccion de que hacer con eso. Mismo aire
+   antes de los botones que el aviso fiscal. */
+.confirm-checking {
+    margin: 0 0 1.25rem;
+    color: var(--text-dim);
+    font-size: .8rem;
+}
+
+.confirm-refund {
+    margin-bottom: 1.25rem;
+}
+
 /* Popup de facturar: la letra al lado de su etiqueta y aire antes de los botones. */
 .invoice-modal__letter {
     display: flex;
