@@ -1085,9 +1085,16 @@
     </div>
     <p class="confirm-fiscal" *ngIf="cancelSaleInvoicingNotice as notice"
        [class.confirm-fiscal--warning]="notice.tone === 'warning'">{{ notice.text }}</p>
+    <p class="confirm-checking" *ngIf="cancelSaleCheckingCobros" role="status">Consultando lo cobrado de la venta…</p>
+    <app-cc-cancel-refund-options
+      class="confirm-refund"
+      *ngIf="cancelSaleHasCobros"
+      [paidTotal]="cancelSaleCcPaid ?? 0"
+      [(mode)]="cancelRefundMode">
+    </app-cc-cancel-refund-options>
     <div class="modal-panel__actions">
       <button class="btn btn--ghost" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">Volver</button>
-      <button class="btn btn--danger-solid" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="confirmCancelSale()">{{ cancelingSaleId === cancelSaleModal.id ? 'Cancelando...' : 'Confirmar cancelacion' }}</button>
+      <button class="btn btn--danger-solid" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id || cancelSaleCheckingCobros" (click)="confirmCancelSale()">{{ cancelingSaleId === cancelSaleModal.id ? 'Cancelando...' : 'Confirmar cancelacion' }}</button>
     </div>
   </div>
 </section>

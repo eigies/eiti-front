@@ -19,9 +19,9 @@ import { OnboardingService } from '../../core/services/onboarding.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
-import { CreateSaleRequest, SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
+import { CcCancelRefundMode, CreateSaleRequest, SaleByIdResponse, SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
 import { ProductResponse } from '../../core/models/product.models';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 describe('SalesPageComponent (price override)', () => {
     let component: SalesPageComponent;
@@ -37,7 +37,7 @@ describe('SalesPageComponent (price override)', () => {
         authSpy = jasmine.createSpyObj('AuthService', ['hasPermission', 'getToken', 'isAuthenticated'], { currentUser$: of(null), currentUser: null });
         const productSpy = createMockService<ProductService>(['listProducts']);
         (productSpy as any).listProducts.and.returnValue(of([]));
-        saleSpy = createMockService<SaleService>(['listSales', 'createSale', 'updateSale', 'cancelSale', 'getFiscalReceivers']);
+        saleSpy = createMockService<SaleService>(['listSales', 'createSale', 'updateSale', 'cancelSale', 'getFiscalReceivers', 'getSaleById']);
         (saleSpy as any).listSales.and.returnValue(of([]));
         (saleSpy as any).createSale.and.returnValue(of({}));
         saleSpy.updateSale.and.returnValue(of({} as SaleResponse));
@@ -485,6 +485,138 @@ describe('SalesPageComponent (price override)', () => {
 
             expect(confirm).not.toHaveBeenCalled();
             expect(toast.error).toHaveBeenCalledWith('No se pudo consultar al servicio de facturación a quién se emitió el comprobante.');
+        });
+    });
+
+    // Gestión de Ventas nunca mandaba refundMode: anular ahí una venta CC con cobros terminaba en el toast
+    // Sales.Cancel.RefundModeRequired (10 veces en 90 días en producción). Ahora ofrece la misma elección que la
+    // cuenta del cliente, con lo cobrado consultado al abrir el modal.
+    describe('anular una venta de cuenta corriente con cobros', () => {
+        const ccSale = { id: 'sale-cc', code: 'MAT-4001', idSaleStatus: 1, isCuentaCorriente: true, totalAmount: 200000, details: [] } as unknown as SaleResponse;
+        const detail = (ccPaidTotal: number) => ({ id: 'sale-cc', ccPaidTotal } as SaleByIdResponse);
+        const receivers: SaleFiscalReceiversResponse = {
+            available: true,
+            unavailableReason: null,
+            invoice: { document: 'Factura A 00010-00000039', name: 'LACTEOS BARRAZA', vatCondition: 'IVA Responsable Inscripto', identification: 'CUIT: 30-68225650-4' },
+            customer: { document: null, name: 'LACTEOS BARRAZA', vatCondition: 'IVA Responsable Inscripto', identification: 'CUIT: 30-51743143-1' },
+            customerMatchesInvoice: false,
+            creditNote: null,
+            creditNoteMatchesInvoice: true,
+            regularizationStep: 'none',
+            debitNote: null
+        };
+        const confirmButton = (): HTMLButtonElement =>
+            fixture.nativeElement.querySelector('.modal-panel__card--confirm .btn--danger-solid');
+        const refundOptions = (): HTMLInputElement[] =>
+            Array.from(fixture.nativeElement.querySelectorAll('.modal-panel__card--confirm app-cc-cancel-refund-options input[type="radio"]'));
+
+        it('consulta lo cobrado al abrir y no deja confirmar mientras tanto', () => {
+            const pending = new Subject<SaleByIdResponse>();
+            saleSpy.getSaleById.and.returnValue(pending);
+
+            component.requestCancelSale(ccSale);
+            fixture.detectChanges();
+
+            expect(saleSpy.getSaleById).toHaveBeenCalledWith('sale-cc');
+            expect(confirmButton().disabled).toBeTrue();
+            component.confirmCancelSale();
+            expect(saleSpy.cancelSale).not.toHaveBeenCalled();
+
+            pending.next(detail(50000));
+            pending.complete();
+            fixture.detectChanges();
+
+            expect(confirmButton().disabled).toBeFalse();
+            expect(refundOptions().length).toBe(2);
+        });
+
+        it('con cobros pregunta qué hacer y por defecto los deja como saldo a favor', () => {
+            saleSpy.getSaleById.and.returnValue(of(detail(50000)));
+            saleSpy.cancelSale.and.returnValue(of(void 0));
+
+            component.requestCancelSale(ccSale);
+            fixture.detectChanges();
+            expect(refundOptions()[0].checked).toBeTrue();
+            confirmButton().click();
+
+            expect(saleSpy.cancelSale.calls.allArgs()).toEqual([['sale-cc', CcCancelRefundMode.Credit, false, false]]);
+        });
+
+        // Las confirmaciones de NC vinculadas y del receptor de la factura llegan una por vez; cada reintento conserva
+        // el modo elegido en el modal.
+        it('"Anular los pagos" se conserva en los reintentos de las notas de crédito y del receptor', async () => {
+            const confirm = spyOn(TestBed.inject(ConfirmationService), 'confirm').and.resolveTo(true);
+            saleSpy.getSaleById.and.returnValue(of(detail(50000)));
+            saleSpy.cancelSale.and.returnValues(
+                throwError(() => ({ error: { errorCode: 'Sales.Cancel.HasActiveCreditNote', detail: 'La venta tiene vigente la nota de crédito NCC-010.' } })),
+                throwError(() => ({ error: { errorCode: 'Sales.Cancel.InvoiceReceiverChanged' } })),
+                of(void 0));
+            saleSpy.getFiscalReceivers.and.returnValue(of(receivers));
+
+            component.requestCancelSale(ccSale);
+            fixture.detectChanges();
+            refundOptions()[1].click();
+            fixture.detectChanges();
+            confirmButton().click();
+            await new Promise(resolve => setTimeout(resolve));
+            await new Promise(resolve => setTimeout(resolve));
+
+            expect(confirm).toHaveBeenCalledTimes(2);
+            expect(saleSpy.cancelSale.calls.allArgs()).toEqual([
+                ['sale-cc', CcCancelRefundMode.ReversePayments, false, false],
+                ['sale-cc', CcCancelRefundMode.ReversePayments, false, true],
+                ['sale-cc', CcCancelRefundMode.ReversePayments, true, true]
+            ]);
+        });
+
+        it('sin cobros no pregunta ni manda el modo', () => {
+            saleSpy.getSaleById.and.returnValue(of(detail(0)));
+            saleSpy.cancelSale.and.returnValue(of(void 0));
+
+            component.requestCancelSale(ccSale);
+            fixture.detectChanges();
+            expect(refundOptions().length).toBe(0);
+            confirmButton().click();
+
+            expect(saleSpy.cancelSale.calls.allArgs()).toEqual([['sale-cc', undefined, false, false]]);
+        });
+
+        it('una venta de mostrador no consulta cobros', () => {
+            saleSpy.cancelSale.and.returnValue(of(void 0));
+
+            component.requestCancelSale({ ...ccSale, isCuentaCorriente: false });
+            fixture.detectChanges();
+            confirmButton().click();
+
+            expect(saleSpy.getSaleById).not.toHaveBeenCalled();
+            expect(saleSpy.cancelSale.calls.allArgs()).toEqual([['sale-cc', undefined, false, false]]);
+        });
+
+        // Un cobro registrado con el modal abierto: en vez del toast, el modal vuelve a consultar y pregunta.
+        it('si el back pide el modo, vuelve a consultar lo cobrado y pregunta', () => {
+            const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+            saleSpy.getSaleById.and.returnValues(of(detail(0)), of(detail(30000)));
+            saleSpy.cancelSale.and.returnValue(throwError(() => ({ error: { errorCode: 'Sales.Cancel.RefundModeRequired', detail: 'La venta tiene cobros.' } })));
+
+            component.requestCancelSale(ccSale);
+            component.confirmCancelSale();
+            fixture.detectChanges();
+
+            expect(saleSpy.getSaleById).toHaveBeenCalledTimes(2);
+            expect(component.cancelSaleModal).toBe(ccSale);
+            expect(refundOptions().length).toBe(2);
+            expect(toast.error).not.toHaveBeenCalled();
+        });
+
+        it('si no se puede consultar lo cobrado, avisa y no abre el modal a medias', () => {
+            const toast = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+            saleSpy.getSaleById.and.returnValue(throwError(() => ({ error: { detail: 'Sin conexión.' } })));
+
+            component.requestCancelSale(ccSale);
+
+            expect(component.cancelSaleModal).toBeNull();
+            expect(toast.error).toHaveBeenCalledWith('Sin conexión.');
+            expect(saleSpy.cancelSale).not.toHaveBeenCalled();
         });
     });
 

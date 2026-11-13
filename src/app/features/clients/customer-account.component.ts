@@ -23,12 +23,13 @@ import {
   PendingDocument
 } from '../../core/models/account-ledger.models';
 import { BankResponse } from '../../core/models/bank.models';
-import { cancelInvoicingNotice, CancelInvoicingNotice, SaleByIdResponse, SaleFiscalDocumentKind } from '../../core/models/sale.models';
+import { cancelInvoicingNotice, CancelInvoicingNotice, CcCancelRefundMode, SaleByIdResponse, SaleFiscalDocumentKind } from '../../core/models/sale.models';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
 import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
+import { CcCancelRefundOptionsComponent } from '../../shared/components/cc-cancel-refund-options/cc-cancel-refund-options.component';
 import { creditNoteReceiverConfirmation, isInvoiceReceiverChanged } from '../../shared/utils/fiscal-receivers.util';
 import { hasActiveLinkedCreditNotes, linkedCreditNotesConfirmation } from '../../shared/utils/linked-credit-notes.util';
 import { canDownloadSaleCreditNote, canDownloadSaleDebitNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
@@ -40,7 +41,7 @@ import { meansDetail } from '../../shared/utils/ledger-format.util';
 @Component({
   selector: 'app-customer-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent, AccountLedgerComponent, GroupedPaymentModalComponent, SaleNotesComponent],
+  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent, AccountLedgerComponent, GroupedPaymentModalComponent, SaleNotesComponent, CcCancelRefundOptionsComponent],
   templateUrl: './customer-account.component.html',
   styleUrls: ['./customer-account.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -412,7 +413,7 @@ export class CustomerAccountComponent implements OnInit {
 
   // Modal de anulación de venta (con elección de qué hacer con los cobros).
   cancelModalOpen = false;
-  cancelRefundMode = 1; // 1 = saldo a favor, 2 = anular pagos
+  cancelRefundMode = CcCancelRefundMode.Credit;
 
   // Solo ventas pendientes (1) o pagadas (2) y con permiso de anulación.
   /** Las observaciones se corrigen con la venta en cualquier estado salvo anulada (no son dato fiscal). */
@@ -450,7 +451,7 @@ export class CustomerAccountComponent implements OnInit {
 
   openCancelModal(): void {
     if (!this.detalleModalSale) return;
-    this.cancelRefundMode = 1;
+    this.cancelRefundMode = CcCancelRefundMode.Credit;
     this.cancelModalOpen = true;
     this.cdr.markForCheck();
   }
@@ -470,7 +471,7 @@ export class CustomerAccountComponent implements OnInit {
     if (this.detalleModalOpen) this.closeDetalle();
   }
 
-  setCancelRefundMode(mode: number): void {
+  setCancelRefundMode(mode: CcCancelRefundMode): void {
     this.cancelRefundMode = mode;
     this.cdr.markForCheck();
   }

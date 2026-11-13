@@ -1,0 +1,210 @@
+/* El host apila el monto cobrado y las opciones con el mismo aire que el cuerpo del modal de anular. */
+:host {
+  display: grid;
+  gap: 1rem;
+}
+
+.cancel-paid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: .15rem .1rem 0;
+}
+
+.cancel-paid__label {
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .65rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.cancel-paid strong {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 1.15rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cancel-options {
+  display: grid;
+  gap: .65rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.cancel-options legend {
+  margin-bottom: .68rem;
+  padding: 0;
+  color: var(--text);
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cancel-opt {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15rem minmax(0, 1fr);
+  gap: .78rem;
+  align-items: start;
+  padding: .9rem .95rem;
+  overflow: hidden;
+  border: 1px solid var(--border-2);
+  border-radius: 11px;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.cancel-opt:hover {
+  border-color: color-mix(in srgb, var(--amber) 40%, var(--border-2));
+  background: color-mix(in srgb, var(--amber) 4%, var(--bg));
+  transform: translateY(-1px);
+}
+
+.cancel-opt--active {
+  border-color: color-mix(in srgb, var(--amber) 72%, var(--border-2));
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--amber) 9%, var(--bg-panel)), color-mix(in srgb, var(--amber) 3%, var(--bg-panel)));
+  box-shadow:
+    0 8px 22px -20px color-mix(in srgb, var(--amber) 70%, transparent),
+    inset 3px 0 0 color-mix(in srgb, var(--amber) 85%, transparent);
+}
+
+.cancel-opt input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cancel-opt:focus-within {
+  outline: 2px solid color-mix(in srgb, var(--amber) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.cancel-opt__control {
+  display: grid;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: .12rem;
+  border: 1px solid var(--border-2);
+  border-radius: 50%;
+  background: var(--bg-panel);
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.cancel-opt--active .cancel-opt__control {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 11%, transparent);
+}
+
+.cancel-opt__control span {
+  width: .48rem;
+  height: .48rem;
+  border-radius: 50%;
+  background: var(--amber);
+  opacity: 0;
+  transform: scale(.4);
+  transition: opacity .15s ease, transform .18s cubic-bezier(.22, 1, .36, 1);
+}
+
+.cancel-opt--active .cancel-opt__control span {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cancel-opt__body {
+  display: grid;
+  gap: .34rem;
+  min-width: 0;
+}
+
+.cancel-opt__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+}
+
+.cancel-opt__title {
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: .76rem;
+  font-weight: 600;
+}
+
+.cancel-opt__tag {
+  flex: 0 0 auto;
+  padding: .2rem .42rem;
+  border: 1px solid color-mix(in srgb, var(--success) 24%, var(--border));
+  border-radius: 999px;
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 7%, transparent);
+  font-family: 'DM Mono', monospace;
+  font-size: .54rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.cancel-opt__tag--danger {
+  border-color: color-mix(in srgb, var(--danger, #c55252) 25%, var(--border));
+  color: var(--danger, #c55252);
+  background: color-mix(in srgb, var(--danger, #c55252) 6%, transparent);
+}
+
+.cancel-opt__desc {
+  color: var(--text-dim);
+  font-family: 'Crimson Pro', serif;
+  font-size: .88rem;
+  line-height: 1.35;
+}
+
+.cancel-opt__result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: .18rem;
+  padding-top: .5rem;
+  border-top: 1px dashed color-mix(in srgb, var(--border-2) 72%, transparent);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: .59rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.cancel-opt__result strong {
+  color: var(--text);
+  font-size: .69rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 620px) {
+  .cancel-opt {
+    padding: .82rem;
+  }
+
+  .cancel-opt__heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cancel-opt {
+    transition: none;
+  }
+}
