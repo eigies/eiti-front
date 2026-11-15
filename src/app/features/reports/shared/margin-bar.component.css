@@ -1,0 +1,6 @@
+:host { display: grid; grid-template-columns: minmax(48px, 1fr) 56px; gap: 8px; align-items: center; min-width: 120px; }
+.mb__bar { display: block; height: 8px; border-radius: 4px; background: var(--surface-sunken); overflow: hidden; }
+.mb__bar i { display: block; height: 100%; border-radius: 4px; background: var(--success); }
+.mb__bar i.mb__neg { background: var(--danger); width: 100% !important; opacity: .35; }
+.mb__pct { text-align: right; font-size: 14px; }
+.mb__pct--neg { color: var(--danger); }

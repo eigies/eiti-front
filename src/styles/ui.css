@@ -307,3 +307,8 @@ button.ui-stat:disabled:hover { background: var(--surface-sunken); }
 .ui-srow__actions { display: flex; gap: 8px; justify-content: flex-start; }
 @media (max-width: 900px) { .ui-srow { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 20px; } }
 @media (max-width: 560px) { .ui-srow__fields { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── Ticket compacto (totales de reportes, popups de pago) ── */
+.ui-ticket.ui-ticket--compact { gap: 4px; padding: 20px 24px 26px; }
+.ui-ticket--compact .ui-ticket__figure { font-size: 38px; line-height: 44px; }
+.ui-ticket__sub { font: 400 14px/20px var(--font-sans); color: var(--text-2); }

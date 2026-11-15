@@ -1,0 +1,33 @@
+<section class="ui-card rep-filters">
+  <div class="rep-filters__main filter-form__primary">
+    <ng-content select="[reportMain]"></ng-content>
+    <button
+      *ngIf="hasMore"
+      class="ui-btn ui-btn--secondary rep-filters__more-btn btn--filters"
+      type="button"
+      [class.is-open]="open"
+      [attr.aria-expanded]="open"
+      [attr.aria-controls]="moreId"
+      (click)="toggle.emit()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      {{ open ? 'Ocultar filtros' : 'Más filtros' }}
+      <span class="ui-count rep-filters__count filter-count" *ngIf="count > 0">{{ count }}</span>
+    </button>
+    <ng-content select="[reportExtra]"></ng-content>
+    <span class="rep-filters__spacer"></span>
+    <div class="rep-filters__actions">
+      <button class="ui-btn ui-btn--primary" type="submit" [disabled]="!canApply">{{ applyLabel }}</button>
+      <button *ngIf="showClear" class="ui-btn ui-btn--ghost" type="button" (click)="clear.emit()">Limpiar</button>
+    </div>
+  </div>
+  <div class="rep-filters__more filter-form__advanced" [id]="moreId" [hidden]="!open">
+    <ng-content select="[reportMore]"></ng-content>
+  </div>
+</section>
+<div class="rep-chips" *ngIf="chips.length > 0">
+  <span class="rep-chips__label">Filtrando por</span>
+  <button class="ui-badge ui-badge--brand rep-chip" type="button" *ngFor="let chip of chips; trackBy: trackChip" [attr.aria-label]="'Quitar filtro ' + chip.label" (click)="removeChip.emit(chip.key)">
+    {{ chip.label }}
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+</div>

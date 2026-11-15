@@ -1,0 +1,90 @@
+<main class="ui-page debtors-report" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Clientes</span>
+      <h1>Clientes deudores</h1>
+      <p>Clientes con saldo pendiente en cuenta corriente. "Neto" descuenta el saldo a favor.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.load()" novalidate>
+    <app-report-filters [chips]="chips" (clear)="f.clearFilters()" (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field rep-field--grow" *ngIf="f.branches.length > 1"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label reportMain class="ui-field rep-field--grow"><span class="ui-field__label">Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="f.customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="f.data && f.data.rows.length > 0">
+    <ui-ticket *ngIf="!f.branchFiltered" class="ui-ticket--compact" label="Neto a cobrar" [figure]="f.data.totalNet | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="ui-ticket__sub">{{ f.data.rows.length }} {{ f.data.rows.length === 1 ? 'cliente' : 'clientes' }} con saldo pendiente</span>
+    </ui-ticket>
+    <ui-ticket *ngIf="f.branchFiltered" class="ui-ticket--compact" label="Adeudado en la sucursal" [figure]="f.data.totalOwed | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="ui-ticket__sub">{{ f.data.rows.length }} {{ f.data.rows.length === 1 ? 'cliente' : 'clientes' }} con saldo pendiente</span>
+    </ui-ticket>
+    <div class="rep-stat" *ngIf="!f.branchFiltered"><span class="rep-stat__label">Adeudado</span><strong class="rep-stat__value rep-stat__value--neg">{{ f.data.totalOwed | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">{{ openSales }} {{ openSales === 1 ? 'venta abierta' : 'ventas abiertas' }}</span></div>
+    <div class="rep-stat" *ngIf="!f.branchFiltered"><span class="rep-stat__label">Saldo a favor</span><strong class="rep-stat__value rep-stat__value--pos">{{ f.data.totalCredit | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">Se descuenta en el neto</span></div>
+    <div class="rep-stat" *ngIf="f.branchFiltered"><span class="rep-stat__label">Ventas abiertas</span><strong class="rep-stat__value">{{ openSales }}</strong><span class="rep-stat__hint">En la sucursal elegida</span></div>
+  </div>
+
+  <ui-card heading="Deudores" [count]="f.data ? f.data.rows.length : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.load()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Actualizar</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+    </div>
+
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.data && f.data.rows.length === 0">
+      <ui-empty icon="list" heading="No hay clientes con saldo pendiente" text="Todo al día."></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table">
+          <thead>
+            <tr>
+              <th class="rep-sticky">Cliente</th>
+              <th class="is-num">Ventas abiertas</th>
+              <th>Más antigua</th>
+              <th class="is-num">Adeudado</th>
+              <th class="is-num" *ngIf="!f.branchFiltered">A favor</th>
+              <th class="is-num" *ngIf="!f.branchFiltered">Neto</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of f.data.rows">
+              <td class="rep-sticky">
+                <div class="rep-who"><ui-avatar [name]="r.customerName" [key]="r.customerName" [size]="32"></ui-avatar><span class="ui-table__main">{{ r.customerName }}</span></div>
+              </td>
+              <td class="is-num">{{ r.openSalesCount }}</td>
+              <td>
+                <span class="rep-date">{{ f.formatDate(r.oldestDate) }}</span>
+                <span class="rep-age" [class]="ageBadge(ageDays(r.oldestDate))">{{ ageDays(r.oldestDate) }} {{ ageDays(r.oldestDate) === 1 ? 'día' : 'días' }}</span>
+              </td>
+              <td class="is-num rep-neg">{{ r.owed | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num rep-dim" *ngIf="!f.branchFiltered">{{ r.creditBalance | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num rep-net" *ngIf="!f.branchFiltered" [class.rep-neg]="r.net > 0" [class.rep-pos]="r.net <= 0">{{ r.net | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="rep-sticky">Total</td>
+              <td class="is-num">{{ openSales }}</td>
+              <td></td>
+              <td class="is-num">{{ f.data.totalOwed | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num" *ngIf="!f.branchFiltered">{{ f.data.totalCredit | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num" *ngIf="!f.branchFiltered">{{ f.data.totalNet | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="rep-notes">
+        <p>Antigüedad desde la venta abierta más antigua: 15 días o más en ámbar, 60 o más en rojo.</p>
+        <p *ngIf="f.branchFiltered">Por sucursal se ve solo lo adeudado: el saldo a favor es del cliente, no de una sucursal.</p>
+      </div>
+    </ng-container>
+  </ui-card>
+</main>

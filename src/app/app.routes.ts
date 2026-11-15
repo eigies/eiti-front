@@ -223,73 +223,73 @@ export const routes: Routes = [
         path: 'reportes/ventas/mayorista-cliente',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsWholesaleByCustomer },
-        loadComponent: () => import('./features/reports/wholesale-by-customer/wholesale-by-customer.component').then(m => m.WholesaleByCustomerComponent)
+        loadComponent: () => import('./features/reports/wholesale-by-customer/pages/wholesale-by-customer-page.component').then(m => m.WholesaleByCustomerPageComponent)
     },
     {
         path: 'reportes/ventas/canjes',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesTradeIns },
-        loadComponent: () => import('./features/reports/trade-ins-by-branch/trade-ins-by-branch.component').then(m => m.TradeInsByBranchComponent)
+        loadComponent: () => import('./features/reports/trade-ins-by-branch/pages/trade-ins-by-branch-page.component').then(m => m.TradeInsByBranchPageComponent)
     },
     {
         path: 'reportes/ventas/descuentos',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesDiscounts },
-        loadComponent: () => import('./features/reports/discounts/discounts-report.component').then(m => m.DiscountsReportComponent)
+        loadComponent: () => import('./features/reports/discounts/pages/discounts-report-page.component').then(m => m.DiscountsReportPageComponent)
     },
     {
         path: 'reportes/ventas/modelo',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesModel, tipo: 'product' },
-        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+        loadComponent: () => import('./features/reports/sales/pages/sales-report-page.component').then(m => m.SalesReportPageComponent)
     },
     {
         path: 'reportes/ventas/marca',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesBrand, tipo: 'brand' },
-        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+        loadComponent: () => import('./features/reports/sales/pages/sales-report-page.component').then(m => m.SalesReportPageComponent)
     },
     {
         path: 'reportes/ventas/canal',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesChannel, tipo: 'channel' },
-        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+        loadComponent: () => import('./features/reports/sales/pages/sales-report-page.component').then(m => m.SalesReportPageComponent)
     },
     {
         path: 'reportes/ventas/canal-marca',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesChannelBrand, tipo: 'channel_brand' },
-        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+        loadComponent: () => import('./features/reports/sales/pages/sales-report-page.component').then(m => m.SalesReportPageComponent)
     },
     {
         path: 'reportes/ventas/transporte',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesTransport, tipo: 'installer' },
-        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+        loadComponent: () => import('./features/reports/sales/pages/sales-report-page.component').then(m => m.SalesReportPageComponent)
     },
     {
         path: 'reportes/ventas/ranking',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesRanking, tipo: 'product_ranking' },
-        loadComponent: () => import('./features/reports/sales/sales-report.component').then(m => m.SalesReportComponent)
+        loadComponent: () => import('./features/reports/sales/pages/sales-report-page.component').then(m => m.SalesReportPageComponent)
     },
     {
         path: 'reportes/comparativo',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesComparison },
-        loadComponent: () => import('./features/reports/comparison/comparison-report.component').then(m => m.ComparisonReportComponent)
+        loadComponent: () => import('./features/reports/comparison/pages/comparison-report-page.component').then(m => m.ComparisonReportPageComponent)
     },
     {
         path: 'reportes/deudores',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsDebtors },
-        loadComponent: () => import('./features/reports/debtors/debtors-report.component').then(m => m.DebtorsReportComponent)
+        loadComponent: () => import('./features/reports/debtors/pages/debtors-report-page.component').then(m => m.DebtorsReportPageComponent)
     },
     {
         path: 'reportes/caja',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsCash },
-        loadComponent: () => import('./features/reports/cash/cash-report.component').then(m => m.CashReportComponent)
+        loadComponent: () => import('./features/reports/cash/pages/cash-report-page.component').then(m => m.CashReportPageComponent)
     },
     {
         path: 'reportes/stock',
@@ -301,7 +301,7 @@ export const routes: Routes = [
         path: 'reportes/medios-pago',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsPayments },
-        loadComponent: () => import('./features/reports/payments/payment-methods-report.component').then(m => m.PaymentMethodsReportComponent)
+        loadComponent: () => import('./features/reports/payments/pages/payment-methods-report-page.component').then(m => m.PaymentMethodsReportPageComponent)
     },
     {
         path: 'reportes/movimientos-stock',
