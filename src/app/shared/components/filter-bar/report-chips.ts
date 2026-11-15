@@ -1,5 +1,5 @@
 import { FormGroup } from '@angular/forms';
-import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SearchableSelectOption } from '../searchable-select/searchable-select.component';
 import { ReportChip } from './report-filters.component';
 
 /** Un filtro opcional del reporte: su control, su nombre, sus opciones y el valor que significa "todos". */

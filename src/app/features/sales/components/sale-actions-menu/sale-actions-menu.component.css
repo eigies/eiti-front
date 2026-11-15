@@ -192,3 +192,32 @@ svg {
   .sale-actions__icon {
     transition: none;}
 }
+
+/* EITI 2: mismos botones que el resto del sistema (40 px, ámbar para cobrar, borde fino para el resto). */
+.sale-actions__primary {
+  min-height: 40px;
+  min-width: 84px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-md, 8px);
+  background: var(--brand);
+  color: var(--on-brand);
+  font: 600 14px/20px var(--font-sans);
+  letter-spacing: 0;
+}
+.sale-actions__primary:hover:not(:disabled) { background: var(--brand-hover); }
+.sale-actions__primary--secondary {
+  border: 1px solid var(--border-control, var(--border));
+  background: var(--surface);
+  color: var(--text);
+}
+.sale-actions__primary--secondary:hover:not(:disabled) { background: var(--surface-sunken); }
+.sale-actions__icon {
+  width: 40px;
+  min-height: 40px;
+  border-radius: var(--radius-md, 8px);
+  border-color: var(--border-control, var(--border));
+  background: var(--surface);
+  color: var(--text-2);
+}
+.sale-actions__icon:hover:not(:disabled) { background: var(--surface-sunken); color: var(--text); }

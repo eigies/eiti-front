@@ -77,6 +77,8 @@ import {
 } from '../../core/models/sale-payment.models';
 import { emptySaleDiscountDraft, QuickSaleStage, SaleDiscountDraft, SalesPageMode, SaleUiAction } from './sales-page-ui.models';
 import { ProductPickerModalComponent } from '../../shared/components/product-picker-modal/product-picker-modal.component';
+import { ReportChip, ReportChipDef, ReportFiltersComponent, clearReportFilter, reportChips } from '../../shared/components/filter-bar';
+import { UiButtonComponent, UiEmptyComponent, UiModalComponent } from '../../shared/ui';
 import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../shared/components/product-picker-modal/product-picker-modal.models';
 
 /** El back pide elegir que hacer con lo cobrado de una venta CC antes de anularla. */
@@ -110,7 +112,11 @@ function localDateString(date = new Date()): string {
         SalesManagementComponent,
         SaleListItemComponent,
         SaleDiscountControlComponent,
-        ProductPickerModalComponent
+        ProductPickerModalComponent,
+        ReportFiltersComponent,
+        UiButtonComponent,
+        UiEmptyComponent,
+        UiModalComponent
     ],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
@@ -1842,6 +1848,29 @@ trackByItem(_: number, item: DraftItem): string {
 
 trackBySale(_: number, sale: SaleResponse): string {
     return sale.id;
+}
+
+/** Barra de filtros (presentación): "Más filtros" abierto o cerrado. */
+salesMoreFiltersOpen = false;
+
+private get saleChipDefs(): ReportChipDef[] {
+    return [
+        { key: 'invoicingStatus', label: 'Facturación', options: this.invoicingFilterOptions, empty: '' },
+        { key: 'productId', label: 'Producto', options: this.productFilterOptions, empty: '' },
+        { key: 'transportStatus', label: 'Transporte', options: this.transportStatusOptions, empty: '' },
+        { key: 'phone', label: 'Teléfono', empty: '' },
+        { key: 'deliveryAddress', label: 'Dirección', empty: '' }
+    ];
+}
+
+/** Etiquetas de los filtros de "Más filtros" que están activos. */
+get saleFilterChips(): ReportChip[] {
+    return reportChips(this.filterForm, this.saleChipDefs);
+}
+
+removeSaleFilterChip(key: string): void {
+    clearReportFilter(this.filterForm, this.saleChipDefs, key);
+    this.applySaleFilters();
 }
 
 applySaleFilters(): void {

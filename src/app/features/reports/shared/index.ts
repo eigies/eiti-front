@@ -1,3 +1,2 @@
-export * from './report-filters.component';
+export * from '../../../shared/components/filter-bar';
 export * from './margin-bar.component';
-export * from './report-chips';

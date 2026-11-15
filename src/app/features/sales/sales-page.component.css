@@ -3377,3 +3377,160 @@ button.pos-chip, .pos-chip .ch-sel__trigger { cursor: pointer; }
   .pos-chip__input { width: 100%; }
   .sales-head__guided { margin-left: 0; }
 }
+
+/* ================================================================
+   EITI 2 — Gestionar ventas
+   Barra de filtros común, una tarjeta con la lista en forma de tabla
+   (sin cajas dentro de cajas), importes en mono a la derecha y la
+   edición de la venta en un popup.
+   ================================================================ */
+.sales-manage { display: grid; gap: 16px; }
+
+.sales-list { padding: 0; overflow: hidden; }
+.sales-list__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; }
+.sales-list__head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font: 600 18px/24px var(--font-sans); color: var(--text); }
+.sales-list__size { display: inline-flex; align-items: center; gap: 8px; font: 500 14px/20px var(--font-sans); color: var(--text-2); }
+.sales-list__size app-searchable-select { width: 88px; }
+.sales-list__empty { padding: 32px 20px 40px; border-top: 1px solid var(--border); }
+.sales-list .ui-pager { border-top: 1px solid var(--border); }
+
+.sales-list .sales-list-head,
+.sales-list .sale-card__row {
+    grid-template-columns:
+        minmax(132px, 1fr)
+        minmax(150px, 1.2fr)
+        minmax(118px, .8fr)
+        minmax(130px, .95fr)
+        minmax(150px, 1fr)
+        212px;
+    gap: 16px;
+}
+
+.sales-list .sales-list-head {
+    padding: 10px 20px;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: var(--surface-sunken);
+    color: var(--text-2);
+    font: 600 13px/18px var(--font-sans);
+}
+.sales-list .sales-list-head > span:nth-child(5) { text-align: right; }
+.sales-list .sales-list-head > span:nth-child(6) { text-align: right; }
+
+.sales-list .sales-stack { border: 0; border-radius: 0; background: transparent; }
+.sales-list .sale-card { border-bottom: 1px solid var(--border); cursor: pointer; }
+.sales-list .sale-card:last-child { border-bottom: 0; }
+.sales-list .sale-card:hover { background: color-mix(in srgb, var(--brand) 5%, transparent); }
+.sales-list .sale-card[aria-expanded="true"] { background: color-mix(in srgb, var(--brand) 7%, transparent); box-shadow: inset 3px 0 0 var(--brand); }
+.sales-list .sale-card__row { min-height: 72px; padding: 12px 20px; }
+
+.sales-list .sale-card__identity strong { font: 600 15px/20px var(--font-mono); }
+.sales-list .sale-card__customer strong,
+.sales-list .sale-card__delivery strong { font: 600 15px/20px var(--font-sans); }
+.sales-list .sale-card__delivery strong { font-weight: 500; }
+.sales-list .sale-card__identity span,
+.sales-list .sale-card__identity small,
+.sales-list .sale-card__customer span,
+.sales-list .sale-card__delivery span,
+.sales-list .sale-card__status small { font-size: 13px; line-height: 18px; color: var(--text-3); }
+
+.sales-list .sale-status { width: max-content; }
+.sales-list .sale-status.chip--sale-pending { background: var(--warning-soft); color: var(--warning); }
+.sales-list .sale-status.chip--sale-paid { background: var(--success-soft); color: var(--success); }
+.sales-list .sale-status.chip--sale-cancelled { background: var(--danger-soft); color: var(--danger); }
+
+.sales-list .sale-card__amount-block { justify-items: end; text-align: right; gap: 4px; }
+.sales-list .sale-card__amount { font: 600 16px/22px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
+.sales-list .sale-card__discount-tag { font-size: 13px; color: var(--brand-text); }
+
+/* Medio de pago: texto chico, sin pastilla de color (el color queda para el estado). */
+.sales-list .sale-card__payment {
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-2);
+    font: 500 13px/18px var(--font-sans);
+    letter-spacing: 0;
+}
+.sales-list .sale-card__payment svg { width: 14px; height: 14px; color: var(--text-3); }
+.sales-list .sale-card__payment--cc { color: var(--brand-text); }
+.sales-list .sale-card__payment--none { color: var(--text-3); }
+.sales-list .sale-card__payment--combined { display: grid; width: auto; padding: 0; justify-items: end; }
+.sales-list .sale-card__payment-line { justify-content: flex-end; }
+.sales-list .sale-card__payment-method,
+.sales-list .sale-card__payment-amount { font-size: 13px; }
+.sales-list .sale-card__payment-amount { font-family: var(--font-mono); font-weight: 600; font-size: 14px; }
+
+.sales-list .sale-card__details {
+    padding: 16px 20px 20px;
+    border-top: 1px dashed var(--border);
+    background: var(--surface-sunken);
+    cursor: default;
+}
+.sales-list .sale-card__details .table-wrap { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+
+.sales-list .sales-skeleton { padding: 12px 20px; }
+
+@media (max-width: 1180px) {
+    .sales-list .sales-list-head,
+    .sales-list .sale-card__row {
+        grid-template-columns: minmax(120px, 1fr) minmax(140px, 1.2fr) minmax(110px, .8fr) minmax(140px, 1fr) 212px;
+    }
+    .sales-list .sales-list-head > span:nth-child(4),
+    .sales-list .sale-card__delivery { display: none; }
+}
+
+@media (max-width: 900px) {
+    .sales-list .sales-list-head { display: none; }
+    .sales-list .sales-stack { gap: 0; }
+    .sales-list .sale-card { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: transparent; }
+    .sales-list .sale-card__row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 16px; }
+    .sales-list .sale-card__delivery { display: grid; }
+    .sales-list .sale-card__actions { border-top: 0; padding-top: 4px; }
+}
+
+/* Popup de edición */
+.sale-edit { display: grid; gap: 20px; }
+.sale-edit .edit-meta-section,
+.sale-edit .editor { margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.sale-edit .editor__head h2 { margin: 0 0 8px; font: 600 16px/22px var(--font-sans); color: var(--text); }
+.sale-edit .edit-meta-section__label { display: block; margin-bottom: 8px; font: 600 16px/22px var(--font-sans); color: var(--text); text-transform: none; letter-spacing: 0; }
+.sale-edit__foot { align-items: center; }
+.sale-edit__total { display: grid; margin-right: auto; }
+.sale-edit__total span { font-size: 13px; color: var(--text-3); }
+.sale-edit__total strong { font: 600 20px/26px var(--font-mono); color: var(--text); }
+.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--search { flex: 1 1 180px; min-width: 170px; }
+.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--date { flex: 0 1 152px; min-width: 140px; }
+.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--status { flex: 0 1 150px; min-width: 130px; }
+.sales-list .sales-stack .sale-card[aria-expanded="true"] {
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
+}
+.sales-list .sale-card__details thead th { text-transform: none; letter-spacing: 0; font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.sales-list .sale-card__details td:nth-child(n+2), .sales-list .sale-card__details th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
+.sales-list .invoicing-bar { border-top-color: var(--border); }
+.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--date { flex: 0 1 146px; min-width: 132px; }
+.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--status { flex: 0 1 140px; min-width: 120px; }
+.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--search { flex: 1 1 170px; min-width: 150px; }
+.sales-list .sale-card__actions { justify-self: end; }
+.sales-list .sale-card__actions { padding-left: 8px; }
+.sale-edit .control,
+.sale-edit .ch-sel__trigger {
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--border-control, var(--border));
+    border-radius: var(--radius-md, 8px);
+    background: var(--surface);
+    color: var(--text);
+    font: 400 15px/22px var(--font-sans);
+}
+.sale-edit .control:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--brand); }
+.sale-edit .field__label { font: 600 14px/20px var(--font-sans); color: var(--text-2); text-transform: none; letter-spacing: 0; }
+.sale-edit .toggle-check { min-height: 46px; }
