@@ -1,0 +1,53 @@
+<main class="ui-page advances" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Adelantos de sueldo</h1>
+      <p>Se descuentan solos en la próxima liquidación del empleado.</p>
+    </div>
+    <button *ngIf="f.canManageAdvances" uiBtn="primary" type="button" (click)="f.openCreateForm()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo adelanto
+    </button>
+  </header>
+
+  <form class="ui-card payroll-filters" [formGroup]="f.filterForm" (ngSubmit)="f.applyFilters()">
+    <label class="ui-field payroll-filters__grow">
+      <span class="ui-field__label">Empleado</span>
+      <app-searchable-select formControlName="employeeId" [options]="f.employeeOptions" [allowClear]="true" clearLabel="Todos" clearValue="" placeholder="Todos" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+    </label>
+    <label class="ui-field payroll-filters__status">
+      <span class="ui-field__label">Estado</span>
+      <app-searchable-select formControlName="status" [options]="f.statusOptions" [allowClear]="true" clearLabel="Todos" clearValue="" placeholder="Todos" searchPlaceholder="Buscar estado..."></app-searchable-select>
+    </label>
+    <button uiBtn="secondary" type="submit">Aplicar</button>
+  </form>
+
+  <ui-card heading="Adelantos" [count]="f.advances.length" [flush]="true" class="payroll-card">
+    <div class="payroll-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="payroll-state" *ngIf="!f.loading && f.advances.length === 0">
+      <ui-empty icon="list" heading="No hay adelantos registrados" text="Cargá uno con Nuevo adelanto."></ui-empty>
+    </div>
+    <app-advance-list
+      *ngIf="!f.loading && f.advances.length > 0"
+      [advances]="f.advances"
+      [canManage]="f.canManageAdvances"
+      [cancellingId]="f.cancellingId"
+      [nameOf]="nameOf"
+      [statusOf]="statusOf"
+      [badgeOf]="badgeOf"
+      [payOf]="payOf"
+      (cancel)="f.cancelAdvance($event)">
+    </app-advance-list>
+  </ui-card>
+
+  <app-advance-form-modal
+    *ngIf="f.showCreate && f.canManageAdvances"
+    [form]="f.createForm"
+    [employeeOptions]="f.employeeOptions"
+    [paymentMethods]="f.paymentMethods"
+    [cashDrawerOptions]="f.cashDrawerOptions"
+    [usesCash]="f.usesCash"
+    [saving]="f.savingCreate"
+    (submitted)="f.submitCreate()"
+    (closed)="f.closeCreateForm()">
+  </app-advance-form-modal>
+</main>

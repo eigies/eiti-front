@@ -1,0 +1,49 @@
+:host { display: block; container-type: inline-size; }
+.liq__head, .liq__row { display: grid; grid-template-columns: minmax(0, 1fr) 136px 148px 96px 200px; gap: 12px; align-items: center; padding: 10px 16px; }
+.liq__head { font: 600 13px/18px var(--font-sans); color: var(--text-2); background: var(--surface-sunken); border-bottom: 1px solid var(--border); }
+.liq__head .is-num { text-align: right; }
+.liquidation-item { border-top: 1px solid var(--border); }
+.liq__head + .liquidation-item { border-top: 0; }
+.liq__row { min-height: 64px; padding-top: 14px; padding-bottom: 14px; }
+.liquidation-item--expanded { background: var(--brand-soft); }
+.liq__who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.liq__who > div { display: grid; min-width: 0; }
+.liq__who strong { font: 600 15px/22px var(--font-sans); overflow-wrap: anywhere; }
+.liq__sub { display: block; font-size: 13px; line-height: 18px; color: var(--text-3); }
+.liq__pay { display: grid; gap: 2px; justify-items: start; }
+.liq__muted { font-size: 14px; color: var(--text-3); }
+.liq__num { text-align: right; font: 500 15px/22px var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.liq__amounts { display: grid; justify-items: end; }
+.liq__gross { white-space: nowrap; }
+.liq__net { font-weight: 700; }
+.liq__actions { display: flex; justify-content: flex-end; gap: 4px; }
+.liq__actions .ui-btn { min-height: 40px; }
+.liq__toggle { width: 40px; }
+.liq__toggle svg { transition: transform .15s ease-out; }
+.liq__toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.liq__detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 12px; padding: 4px 16px 16px 64px; align-items: start; }
+.liq__boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.liq__receipt ::ng-deep .ui-receipt__total { gap: 12px; }
+.liq__box { display: grid; gap: 6px; padding: 14px 16px; align-content: start; }
+.liq__label { font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.liq__none { margin: 0; font-size: 14px; color: var(--text-3); }
+.liq__line { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.liq__line--total { padding-top: 6px; margin-top: 2px; border-top: 1px dashed var(--border-control); font-weight: 700; }
+.liq__minus { color: var(--danger); }
+.liq__plus { color: var(--success); }
+.liq__receipt { display: grid; gap: 10px; }
+.liq__receipt .liq__label { display: block; margin-bottom: 4px; }
+.receipt-actions { display: flex; justify-content: flex-end; }
+
+@container (max-width: 680px) {
+  .liq__head { display: none; }
+  .liq__row { grid-template-columns: minmax(0, 1fr) auto; }
+  .liq__who { grid-column: 1 / -1; }
+  .liq__amounts { justify-items: start; }
+  .liq__actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .liq__detail { grid-template-columns: minmax(0, 1fr); padding-left: 16px; }
+}
+@container (max-width: 560px) {
+  .liq__detail { grid-template-columns: minmax(0, 1fr); }
+}

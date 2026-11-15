@@ -48,35 +48,35 @@ export const routes: Routes = [
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.payrollManage },
                 loadComponent: () =>
-                    import('./features/payroll/deduction-concepts/deduction-concepts.component').then(m => m.DeductionConceptsComponent)
+                    import('./features/payroll/deduction-concepts/pages/deduction-concepts-page.component').then(m => m.DeductionConceptsPageComponent)
             },
             {
                 path: 'payroll/advances',
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.payrollAdvancesManage },
                 loadComponent: () =>
-                    import('./features/payroll/advances/advances.component').then(m => m.AdvancesComponent)
+                    import('./features/payroll/advances/pages/advances-page.component').then(m => m.AdvancesPageComponent)
             },
             {
                 path: 'payroll/liquidations',
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.payrollManage },
                 loadComponent: () =>
-                    import('./features/payroll/liquidations/liquidations.component').then(m => m.LiquidationsComponent)
+                    import('./features/payroll/liquidations/pages/liquidations-page.component').then(m => m.LiquidationsPageComponent)
             },
             {
                 path: 'payroll/bonus-concepts',
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.payrollManage },
                 loadComponent: () =>
-                    import('./features/payroll/bonus-concepts/bonus-concepts.component').then(m => m.BonusConceptsComponent)
+                    import('./features/payroll/bonus-concepts/pages/bonus-concepts-page.component').then(m => m.BonusConceptsPageComponent)
             },
             {
                 path: 'payroll/bonuses',
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.payrollManage },
                 loadComponent: () =>
-                    import('./features/payroll/bonuses/bonuses.component').then(m => m.BonusesComponent)
+                    import('./features/payroll/bonuses/pages/bonuses-page.component').then(m => m.BonusesPageComponent)
             },
             {
                 path: 'auditoria',

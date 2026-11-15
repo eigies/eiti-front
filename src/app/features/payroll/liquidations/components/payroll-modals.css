@@ -1,0 +1,13 @@
+.pm { display: grid; gap: var(--space-4); }
+.pm__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.pm__grid--one { grid-template-columns: minmax(0, 1fr); }
+.pm__wide { grid-column: 1 / -1; }
+.pm__result { display: grid; gap: 6px; padding: 12px 14px; border-radius: 10px; font-size: 14px; }
+.pm__result--ok { background: var(--success-soft); }
+.pm__result--ok strong { color: var(--success); font-size: 15px; }
+.pm__result--warn { background: var(--warning-soft); }
+.pm__line { display: flex; justify-content: space-between; gap: 8px; }
+.pm__ticket-sub { font-size: 14px; color: var(--text-2); }
+@media (max-width: 560px) { .pm__grid { grid-template-columns: minmax(0, 1fr); } }
+:host ::ng-deep .pm__ticket { gap: 4px; padding: 20px 24px 26px; }
+:host ::ng-deep .pm__ticket .ui-ticket__figure { font-size: 38px; line-height: 44px; }

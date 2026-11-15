@@ -1,0 +1,81 @@
+<main class="ui-page liquidations" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Liquidaciones de sueldo</h1>
+      <p>Generá períodos, pagá liquidaciones y revisá descuentos, bonificaciones y adelantos.</p>
+    </div>
+    <button *ngIf="f.canGenerate" uiBtn="primary" type="button" (click)="f.openGenerateForm()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Generar liquidaciones
+    </button>
+  </header>
+
+  <form class="ui-card liquidations__filters" [formGroup]="f.filterForm" (ngSubmit)="f.applyFilters()">
+    <label class="ui-field liquidations__employee">
+      <span class="ui-field__label">Empleado</span>
+      <app-searchable-select formControlName="employeeId" [options]="f.employeeOptions" [allowClear]="true" clearLabel="Todos" clearValue="" placeholder="Todos" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+    </label>
+    <label class="ui-field liquidations__period">
+      <span class="ui-field__label">Período</span>
+      <input class="ui-input" type="text" placeholder="2026-07" formControlName="periodLabel" />
+    </label>
+    <label class="ui-field liquidations__status">
+      <span class="ui-field__label">Estado</span>
+      <app-searchable-select formControlName="status" [options]="f.statusOptions" [allowClear]="true" clearLabel="Todos" clearValue="" placeholder="Todos" searchPlaceholder="Buscar estado..."></app-searchable-select>
+    </label>
+    <button uiBtn="secondary" type="submit">Aplicar</button>
+  </form>
+
+  <ui-card [flush]="true" class="liquidations__card">
+    <div class="liquidations__state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="liquidations__state" *ngIf="!f.loading && f.liquidations.length === 0">
+      <ui-empty icon="list" heading="No hay liquidaciones registradas" text="Generá un período con Generar liquidaciones."></ui-empty>
+    </div>
+    <app-liquidation-list
+      *ngIf="!f.loading && f.liquidations.length > 0"
+      [liquidations]="f.liquidations"
+      [expandedId]="f.expandedId"
+      [canPay]="f.canPay"
+      [cancellingId]="f.cancellingId"
+      [nameOf]="nameOf"
+      [statusOf]="statusOf"
+      [methodOf]="methodOf"
+      [totalOf]="totalOf"
+      (pay)="f.openPayForm($event)"
+      (cancel)="f.cancelLiquidation($event)"
+      (toggle)="f.toggleDetail($event)"
+      (receipt)="f.exportReceiptPdf($event)">
+    </app-liquidation-list>
+    <div class="ui-pager" *ngIf="f.totalPages > 1">
+      <span class="ui-pager__info">{{ f.totalCount }} liquidaciones</span>
+      <div class="ui-pager__nav">
+        <button uiBtn="ghost" size="sm" type="button" (click)="f.previousPage()" [disabled]="f.page <= 1">Anterior</button>
+        <span class="ui-pager__info">Página {{ f.page }} de {{ f.totalPages }}</span>
+        <button uiBtn="ghost" size="sm" type="button" (click)="f.nextPage()" [disabled]="f.page >= f.totalPages">Siguiente</button>
+      </div>
+    </div>
+  </ui-card>
+
+  <app-generate-liquidations-modal
+    *ngIf="f.showGenerate && f.canGenerate"
+    [form]="f.generateForm"
+    [periodicities]="f.periodicities"
+    [generating]="f.generating"
+    [result]="f.generateResult"
+    (periodChanged)="f.syncMonthlyPeriodDates()"
+    (submitted)="f.submitGenerate()"
+    (closed)="f.closeGenerateForm()">
+  </app-generate-liquidations-modal>
+
+  <app-pay-liquidation-modal
+    *ngIf="f.payTarget as target"
+    [form]="f.payForm"
+    [target]="target"
+    [employeeName]="f.employeeName(target.employeeId)"
+    [paymentMethods]="f.paymentMethods"
+    [cashDrawerOptions]="f.cashDrawerOptions"
+    [usesCash]="f.usesCashForPay"
+    [paying]="f.paying"
+    (submitted)="f.submitPay()"
+    (closed)="f.closePayForm()">
+  </app-pay-liquidation-modal>
+</main>

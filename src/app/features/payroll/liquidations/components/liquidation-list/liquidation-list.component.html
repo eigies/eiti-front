@@ -1,0 +1,84 @@
+<div class="liq" role="table" aria-label="Liquidaciones">
+  <div class="liq__head" role="row">
+    <span role="columnheader">Empleado y período</span>
+    <span role="columnheader">Pago</span>
+    <span role="columnheader" class="is-num">Neto</span>
+    <span role="columnheader">Estado</span>
+    <span role="columnheader"><span class="ui-sr-only">Acciones</span></span>
+  </div>
+
+  <article class="liquidation-item" *ngFor="let liquidation of liquidations; trackBy: trackById" [class.liquidation-item--expanded]="expandedId === liquidation.id">
+    <div class="liq__row liquidation-row" role="row">
+      <div class="liq__who" role="cell">
+        <ui-avatar [name]="nameOf(liquidation.employeeId)" [key]="liquidation.employeeId" [size]="36"></ui-avatar>
+        <div>
+          <strong class="liquidation-row__name">{{ nameOf(liquidation.employeeId) }}</strong>
+          <span class="liq__sub">{{ liquidation.periodLabel }}</span>
+        </div>
+      </div>
+      <div class="liq__pay" role="cell">
+        <ng-container *ngIf="liquidation.paidAt; else unpaid">
+          <span class="ui-mov ui-mov--payroll">{{ methodOf(liquidation.paymentMethod) }}</span>
+          <span class="liq__sub">{{ liquidation.paidAt | date:'dd/MM/yy HH:mm' }}</span>
+        </ng-container>
+        <ng-template #unpaid><span class="liq__muted">Sin pago</span></ng-template>
+      </div>
+      <div class="liq__amounts" role="cell">
+        <span class="liq__num liq__net">{{ liquidation.netAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+        <span class="liq__sub liq__gross">Bruto <span class="ui-num">{{ liquidation.grossAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></span>
+      </div>
+      <span role="cell"><span [class]="badge(liquidation.status)">{{ statusOf(liquidation.status) }}</span></span>
+      <div class="liq__actions liquidation-row__actions" role="cell">
+        <button *ngIf="canPay && liquidation.status === 1" class="ui-btn ui-btn--primary ui-btn--sm" type="button" (click)="pay.emit(liquidation)">Pagar</button>
+        <button *ngIf="canPay && liquidation.status !== 3" class="ui-btn ui-btn--danger-ghost ui-btn--sm" type="button" [disabled]="cancellingId === liquidation.id" (click)="cancel.emit(liquidation)">Cancelar</button>
+        <button
+          class="ui-btn ui-btn--ghost ui-btn--icon ui-btn--sm liq__toggle"
+          type="button"
+          [attr.aria-expanded]="expandedId === liquidation.id"
+          [attr.aria-label]="(expandedId === liquidation.id ? 'Ocultar detalle de ' : 'Ver detalle de ') + nameOf(liquidation.employeeId)"
+          (click)="toggle.emit(liquidation)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="liquidation-expand liq__detail" *ngIf="expandedId === liquidation.id">
+      <div class="liq__boxes">
+      <section class="ui-card liq__box">
+        <span class="liq__label">Descuentos</span>
+        <p class="liq__none" *ngIf="liquidation.deductionLines.length === 0">Sin descuentos.</p>
+        <div class="liq__line" *ngFor="let line of liquidation.deductionLines"><span>{{ line.label }}</span><span class="ui-num">{{ line.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="liq__line liq__line--total"><span>Total</span><span class="ui-num liq__minus">−{{ totalOf(liquidation.deductionLines) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      </section>
+      <section class="ui-card liq__box">
+        <span class="liq__label">Bonificaciones</span>
+        <p class="liq__none" *ngIf="liquidation.bonusLines.length === 0">Sin bonificaciones.</p>
+        <div class="liq__line" *ngFor="let line of liquidation.bonusLines"><span>{{ line.label }}</span><span class="ui-num">{{ line.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="liq__line liq__line--total"><span>Total</span><span class="ui-num liq__plus">+{{ totalOf(liquidation.bonusLines) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      </section>
+      <section class="ui-card liq__box">
+        <span class="liq__label">Adelantos</span>
+        <p class="liq__none" *ngIf="liquidation.advanceLines.length === 0">Sin adelantos.</p>
+        <div class="liq__line" *ngFor="let line of liquidation.advanceLines"><span>{{ line.label }}</span><span class="ui-num">{{ line.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="liq__line liq__line--total"><span>Total</span><span class="ui-num liq__minus">−{{ totalOf(liquidation.advanceLines) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      </section>
+      </div>
+      <div class="liq__receipt">
+        <ui-receipt>
+          <span class="liq__label">Recibo de sueldo</span>
+          <div class="ui-receipt__row total-line"><span>Bruto</span><span>{{ liquidation.grossAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+          <div class="ui-receipt__row"><span>Descuentos</span><span>−{{ totalOf(liquidation.deductionLines) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+          <div class="ui-receipt__row"><span>Bonificaciones</span><span>+{{ totalOf(liquidation.bonusLines) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+          <div class="ui-receipt__row"><span>Adelantos</span><span>−{{ totalOf(liquidation.advanceLines) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+          <div class="ui-receipt__total total-line total-line--net"><span>Neto</span><span>{{ liquidation.netAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        </ui-receipt>
+        <div class="receipt-actions">
+          <button class="ui-btn ui-btn--secondary ui-btn--sm receipt-btn" type="button" [disabled]="liquidation.status !== 2" (click)="receipt.emit(liquidation)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+            Descargar recibo
+          </button>
+        </div>
+      </div>
+    </div>
+  </article>
+</div>

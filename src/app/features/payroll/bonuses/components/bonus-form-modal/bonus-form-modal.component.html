@@ -1,0 +1,33 @@
+<ui-modal eyebrow="Sueldos" heading="Nueva bonificación" sub="Se suma sola al generar la próxima liquidación del empleado." [closable]="!saving" (closed)="closed.emit()">
+  <form id="bonus-form" class="pm" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <div class="pm__grid">
+      <label class="ui-field pm__wide">
+        <span class="ui-field__label">Empleado</span>
+        <app-searchable-select formControlName="employeeId" [options]="employeeOptions" placeholder="Seleccionar empleado" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+      </label>
+      <label class="ui-field pm__wide">
+        <span class="ui-field__label">Concepto</span>
+        <app-searchable-select formControlName="conceptId" [options]="conceptOptions" placeholder="Seleccionar concepto" searchPlaceholder="Buscar concepto..."></app-searchable-select>
+      </label>
+      <label class="ui-field">
+        <span class="ui-field__label">Tipo</span>
+        <select class="ui-select" formControlName="amountType">
+          <option *ngFor="let type of amountTypes" [value]="type.value">{{ type.label }}</option>
+        </select>
+      </label>
+      <label class="ui-field">
+        <span class="ui-field__label">{{ isPercentage ? 'Porcentaje (%)' : 'Monto ($)' }}</span>
+        <input class="ui-input ui-input--num" type="number" step="0.01" min="0" [max]="isPercentage ? 100 : null" formControlName="value" />
+        <span class="ui-field__hint" *ngIf="percentagePreview">{{ percentagePreview }}</span>
+      </label>
+      <label class="ui-field pm__wide">
+        <span class="ui-field__label">Notas <em>(opcional)</em></span>
+        <input class="ui-input" type="text" maxlength="500" formControlName="notes" />
+      </label>
+    </div>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" [disabled]="saving" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="bonus-form" [disabled]="form.invalid || saving">{{ saving ? 'Guardando...' : 'Crear bonificación' }}</button>
+  </footer>
+</ui-modal>
