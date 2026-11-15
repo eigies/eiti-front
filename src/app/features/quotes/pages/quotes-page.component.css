@@ -1,0 +1,3 @@
+.quotes__card { overflow: hidden; }
+.quotes__tabs { padding: var(--space-2) var(--space-5) 0; }
+.quotes__state { display: grid; gap: var(--space-3); padding: var(--space-5); }

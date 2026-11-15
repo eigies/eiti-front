@@ -1,104 +1,88 @@
-<!-- src/app/features/quotes/quote-form/quote-form.component.html -->
-<div class="quote-form">
-  <label class="quote-form__field">Sucursal
-    <app-searchable-select [(ngModel)]="selectedBranchId" (ngModelChange)="onBranchChange()"
-      [options]="branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal...">
-    </app-searchable-select>
-  </label>
+<div class="qf" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div><h1>Nuevo presupuesto</h1><p>Los presupuestos no reservan stock.</p></div>
+    <button uiBtn="secondary" type="button" (click)="back.emit()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Volver al listado</button>
+  </header>
 
-  <div class="quote-form__field">
-    <span>Tipo de cliente</span>
-    <label class="toggle-check">
-      <input type="checkbox" [(ngModel)]="isProspectMode" [ngModelOptions]="{ standalone: true }" />
-      <span class="toggle-check__track"></span>
-      <span class="toggle-check__text">{{ isProspectMode ? 'Prospecto' : 'Cliente existente' }}</span>
-    </label>
-    <small class="quote-form__hint">Prospecto sin cuenta en el sistema.</small>
+  <div class="qf__layout">
+    <div class="qf__main">
+      <ui-card>
+        <div class="qf__grid">
+          <label class="ui-field"><span class="ui-field__label">Sucursal</span>
+            <app-searchable-select [(ngModel)]="f.selectedBranchId" (ngModelChange)="f.onBranchChange()" [options]="f.branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+          </label>
+          <label class="ui-field"><span class="ui-field__label">Válido hasta</span><input class="ui-input" type="date" [(ngModel)]="f.expiresAt" /></label>
+        </div>
+      </ui-card>
+
+      <ui-card heading="Cliente">
+        <div uiCardActions class="ui-segmented" role="radiogroup" aria-label="Tipo de cliente">
+          <label><input type="radio" name="quoteCustomerMode" [checked]="!f.isProspectMode" (change)="f.isProspectMode = false" /><span>Cliente existente</span></label>
+          <label><input type="radio" name="quoteCustomerMode" [checked]="f.isProspectMode" (change)="f.isProspectMode = true" /><span>Prospecto</span></label>
+        </div>
+        <ng-container *ngIf="f.customerMode === 'existing'">
+          <div class="qf__search" *ngIf="!f.selectedCustomer">
+            <label class="ui-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input class="ui-input" type="search" aria-label="Buscar cliente" placeholder="Buscar cliente" [(ngModel)]="f.customerQuery" (keyup.enter)="f.searchCustomers()" />
+            </label>
+            <button uiBtn="secondary" type="button" (click)="f.searchCustomers()">Buscar</button>
+          </div>
+          <ul class="qf__results" *ngIf="!f.selectedCustomer && f.searchResults.length > 0">
+            <li *ngFor="let customer of f.searchResults"><button type="button" (click)="f.selectCustomer(customer)">{{ customer.fullName }}</button></li>
+          </ul>
+          <div class="qf__picked" *ngIf="f.selectedCustomer">
+            <strong>{{ f.selectedCustomer.fullName }}</strong>
+            <button uiBtn="ghost" size="sm" type="button" (click)="f.clearCustomer()">Cambiar</button>
+          </div>
+        </ng-container>
+        <div class="qf__grid" *ngIf="f.customerMode === 'prospect'">
+          <label class="ui-field"><span class="ui-field__label">Nombre</span><input class="ui-input" type="text" [(ngModel)]="f.prospectName" /></label>
+          <label class="ui-field"><span class="ui-field__label">Contacto <em>(opcional)</em></span><input class="ui-input" type="text" [(ngModel)]="f.prospectContact" /></label>
+          <span class="ui-field__hint qf__wide">Prospecto sin cuenta en el sistema.</span>
+        </div>
+      </ui-card>
+
+      <ui-card heading="Productos" [count]="f.draftItems.length || null" [flush]="true">
+        <button uiCardActions uiBtn="secondary" type="button" (click)="f.openProductModal()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Agregar productos</button>
+        <ui-table-wrap *ngIf="f.draftItems.length > 0">
+          <table class="ui-table qf__table">
+            <thead><tr><th>Producto</th><th class="is-num">Cant.</th><th class="is-num">Precio unit.</th><th class="is-num">Desc. %</th><th class="is-num" *ngIf="f.hasLineDiscount">Unit. c/desc.</th><th class="is-num">Total</th><th><span class="ui-sr-only">Quitar</span></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let item of f.draftItems">
+                <td><span class="ui-table__main">{{ item.stock.brand }} {{ item.stock.name }}</span></td>
+                <td class="is-num">{{ item.quantity }}</td>
+                <td class="is-num"><input class="ui-input ui-input--sm ui-input--num qf__in" type="number" aria-label="Precio unitario" [value]="item.unitPrice" (change)="f.setItemPrice(item.stock.productId, $any($event.target).valueAsNumber)" /></td>
+                <td class="is-num"><input class="ui-input ui-input--sm ui-input--num qf__in qf__in--sm" type="number" aria-label="Descuento %" [value]="item.discountPercent" (change)="f.setItemDiscount(item.stock.productId, $any($event.target).value)" /></td>
+                <td class="is-num" *ngIf="f.hasLineDiscount">{{ f.discountedUnitPrice(item) | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                <td class="is-num">{{ item.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                <td><button uiBtn="danger-ghost" size="sm" [iconOnly]="true" type="button" aria-label="Quitar producto" (click)="f.removeItem(item.stock.productId)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </ui-table-wrap>
+        <div class="qf__empty" *ngIf="f.draftItems.length === 0"><ui-empty icon="box" text="Agregá productos para armar el presupuesto."></ui-empty></div>
+      </ui-card>
+    </div>
+
+    <aside class="qf__side">
+      <ui-card>
+        <div class="qf__side-fields">
+          <label class="ui-field"><span class="ui-field__label">Descuento general (%)</span><input class="ui-input ui-input--num" type="number" [value]="f.generalDiscountPercent" (change)="f.setGeneralDiscount($any($event.target).value)" /></label>
+          <label class="ui-field"><span class="ui-field__label">IVA</span><app-searchable-select [(ngModel)]="f.vatRate" (ngModelChange)="f.setVatRate($event)" [options]="f.vatRateSelectOptions"></app-searchable-select></label>
+          <label class="ui-switch"><input type="checkbox" [checked]="f.includesVat" (change)="f.setIncludesVat($any($event.target).checked)" /><span class="ui-switch__track"></span>Sumar IVA</label>
+          <span class="ui-field__hint">Los precios se cargan sin IVA.</span>
+        </div>
+      </ui-card>
+      <ui-ticket class="qf__ticket" label="Total del presupuesto" [figure]="f.grandTotal | currency:'ARS':'symbol-narrow':'1.2-2'">
+        <div class="qf__rows">
+          <div><span>Neto</span><span class="ui-num">{{ f.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+          <div *ngIf="f.includesVat && f.vatRate > 0"><span>IVA {{ f.vatRate | number:'1.0-1' }}%</span><span class="ui-num">{{ f.vatAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        </div>
+        <button uiBtn="primary" size="lg" [block]="true" type="button" [disabled]="!f.canSubmit" (click)="f.submit()">Crear presupuesto</button>
+      </ui-ticket>
+    </aside>
   </div>
 
-  <ng-container *ngIf="customerMode === 'existing'">
-    <div *ngIf="!selectedCustomer" class="quote-form__customer-search">
-      <input type="text" [(ngModel)]="customerQuery" placeholder="Buscar cliente" (keyup.enter)="searchCustomers()">
-      <button type="button" (click)="searchCustomers()">Buscar</button>
-      <ul *ngIf="searchResults.length > 0" class="quote-form__customer-results">
-        <li *ngFor="let customer of searchResults" (click)="selectCustomer(customer)">{{ customer.fullName }}</li>
-      </ul>
-    </div>
-    <div *ngIf="selectedCustomer" class="quote-form__customer-selected">
-      <span>{{ selectedCustomer.fullName }}</span>
-      <button type="button" (click)="clearCustomer()">Cambiar</button>
-    </div>
-  </ng-container>
-
-  <ng-container *ngIf="customerMode === 'prospect'">
-    <label class="quote-form__field">Nombre <input type="text" [(ngModel)]="prospectName"></label>
-    <label class="quote-form__field">Contacto <input type="text" [(ngModel)]="prospectContact"></label>
-  </ng-container>
-
-  <label class="quote-form__field">Valido hasta <input type="date" [(ngModel)]="expiresAt"></label>
-
-  <button type="button" (click)="openProductModal()">Agregar productos</button>
-
-  <table class="quote-form__table" *ngIf="draftItems.length > 0">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Cant.</th>
-        <th>Precio unit.</th>
-        <th>Desc. %</th>
-        <th *ngIf="hasLineDiscount">Unit. c/desc.</th>
-        <th>Total</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let item of draftItems">
-        <td>{{ item.stock.brand }} {{ item.stock.name }}</td>
-        <td>{{ item.quantity }}</td>
-        <td><input type="number" [value]="item.unitPrice" (change)="setItemPrice(item.stock.productId, $any($event.target).valueAsNumber)"></td>
-        <td><input type="number" [value]="item.discountPercent" (change)="setItemDiscount(item.stock.productId, $any($event.target).value)"></td>
-        <td *ngIf="hasLineDiscount">{{ discountedUnitPrice(item) | number: '1.2-2' }}</td>
-        <td>{{ item.total | number: '1.2-2' }}</td>
-        <td><button type="button" (click)="removeItem(item.stock.productId)">Quitar</button></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <label class="quote-form__field">Descuento general (%)
-    <input type="number" [value]="generalDiscountPercent" (change)="setGeneralDiscount($any($event.target).value)">
-  </label>
-
-  <div class="quote-form__vat">
-    <label class="quote-form__field">IVA
-      <app-searchable-select [(ngModel)]="vatRate" (ngModelChange)="setVatRate($event)" [options]="vatRateSelectOptions"></app-searchable-select>
-    </label>
-    <div class="quote-form__field">
-      <span>Cobrar IVA</span>
-      <label class="toggle-check">
-        <input type="checkbox" [checked]="includesVat" (change)="setIncludesVat($any($event.target).checked)">
-        <span class="toggle-check__track"></span>
-        <span class="toggle-check__text">{{ includesVat ? 'Sumar IVA' : 'Sin IVA' }}</span>
-      </label>
-      <small class="quote-form__hint">Los precios se cargan sin IVA.</small>
-    </div>
-  </div>
-
-  <div class="quote-form__summary">
-    <div class="quote-form__summary-row"><span>Neto</span><span>{{ total | number: '1.2-2' }}</span></div>
-    <div class="quote-form__summary-row" *ngIf="includesVat && vatRate > 0">
-      <span>IVA {{ vatRate | number: '1.0-1' }}%</span><span>{{ vatAmount | number: '1.2-2' }}</span>
-    </div>
-    <div class="quote-form__summary-row quote-form__summary-row--total">
-      <span>Total</span><span>{{ grandTotal | number: '1.2-2' }}</span>
-    </div>
-  </div>
-
-  <button type="button" [disabled]="!canSubmit" (click)="submit()">Crear presupuesto</button>
-
-  <app-product-picker-modal
-    *ngIf="productModalOpen"
-    [rows]="pickerRows"
-    (confirm)="onPickerConfirm($event)"
-    (cancel)="closeProductModal()">
-  </app-product-picker-modal>
+  <app-product-picker-modal *ngIf="f.productModalOpen" [rows]="f.pickerRows" (confirm)="f.onPickerConfirm($event)" (cancel)="f.closeProductModal()"></app-product-picker-modal>
 </div>

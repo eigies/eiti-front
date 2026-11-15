@@ -1,97 +1,49 @@
-<!-- src/app/features/quotes/quote-detail-modal/quote-detail-modal.component.html -->
-<div class="modal-backdrop" *ngIf="quoteId" (click)="close.emit()"></div>
-<div class="modal-panel" *ngIf="quoteId">
-  <div class="modal-card modal-card--detalle" (click)="$event.stopPropagation()">
-    <div class="modal-head">
-      <div class="modal-head__copy">
-        <p class="eyebrow">Detalle de presupuesto</p>
-        <h2 *ngIf="quote">{{ quote.code || 'S/N' }} · {{ quote.customerFullName ?? quote.prospectName }}</h2>
-        <h2 *ngIf="!quote && loading">Cargando...</h2>
-      </div>
-      <div class="modal-head__actions">
-        <button class="detalle-remito-btn" type="button" *ngIf="quote" (click)="downloadPdf()">↓ Descargar PDF</button>
-        <button class="detalle-remito-btn" type="button" *ngIf="canConvert" (click)="requestConvert()">Convertir a venta</button>
-        <button class="modal-close" type="button" (click)="close.emit()">×</button>
+<ui-modal eyebrow="Detalle de presupuesto" [heading]="quote ? (quote.code || 'S/N') + ' · ' + (quote.customerFullName ?? quote.prospectName ?? 'Sin cliente') : 'Cargando...'" size="lg" width="720px" (closed)="close.emit()">
+  <div class="qdm__loading" *ngIf="loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+
+  <div class="qdm" *ngIf="!loading && quote as q">
+    <div class="qdm__meta">
+      <span class="ui-badge" [class.ui-badge--danger]="statusBadgeClass === 'badge--expired'" [class.ui-badge--brand]="statusBadgeClass === 'badge--pending'" [class.ui-badge--success]="statusBadgeClass === 'badge--paid'">{{ statusLabel }}</span>
+      <span>Sucursal: {{ q.branchName }}</span>
+      <span>Válido hasta <span class="ui-num">{{ q.expiresAt | date:'dd/MM/yyyy' }}</span></span>
+    </div>
+
+    <div class="ui-banner ui-banner--warning" *ngIf="stockWarnings.length > 0">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/></svg>
+      <div>
+        <strong>Atención: stock insuficiente</strong>
+        <ul class="qdm__warn">
+          <li *ngFor="let warning of stockWarnings">{{ warning.productLabel }} — pediste {{ warning.quoted }}, hay {{ warning.available }} disponible{{ warning.available === 1 ? '' : 's' }}<ng-container *ngIf="warning.available === 0"> (sin stock)</ng-container></li>
+        </ul>
       </div>
     </div>
 
-    <div *ngIf="loading" class="hint">Cargando...</div>
-
-    <ng-container *ngIf="!loading && quote as q">
-      <div class="detalle-header">
-        <div class="detalle-header__row">
-          <span class="detalle-header__code">{{ q.code || 'S/N' }}</span>
-          <span class="badge" [ngClass]="statusBadgeClass">{{ statusLabel }}</span>
-        </div>
-        <div class="detalle-header__meta">
-          <span>{{ q.customerFullName ?? q.prospectName ?? 'Sin cliente' }}</span>
-          <span>Sucursal: {{ q.branchName }}</span>
-          <span>Valido hasta {{ q.expiresAt | date: 'dd/MM/yyyy' }}</span>
-        </div>
+    <ui-receipt>
+      <div class="qdm__line qdm__line--head" [ngClass]="{ 'qdm__line--d': hasDiscount, 'qdm__line--l': hasLineDiscount }">
+        <span>Producto</span><span>Cant.</span><span>Unitario</span><span *ngIf="hasDiscount">Desc.</span><span *ngIf="hasLineDiscount">Unit. c/desc.</span><span>Subtotal</span>
       </div>
-
-      <div class="detalle-section detalle-section--warning" *ngIf="stockWarnings.length > 0">
-        <div class="detalle-section__title detalle-section__title--warning">Atencion: stock insuficiente</div>
-        <ul class="stock-warning-list">
-          <li *ngFor="let warning of stockWarnings">
-            {{ warning.productLabel }} — pediste {{ warning.quoted }}, hay {{ warning.available }} disponible{{ warning.available === 1 ? '' : 's' }}
-            <span *ngIf="warning.available === 0">(sin stock)</span>
-          </li>
-        </ul>
+      <div class="qdm__line" *ngFor="let detail of q.details" [ngClass]="{ 'qdm__line--d': hasDiscount, 'qdm__line--l': hasLineDiscount, 'qdm__line--issue': hasStockIssue(detail.productId) }">
+        <span>{{ detail.productBrand }} / {{ detail.productName }}</span>
+        <span class="ui-num">{{ detail.quantity }}</span>
+        <span class="ui-num">{{ detail.unitPrice | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+        <span class="ui-num" *ngIf="hasDiscount"><ng-container *ngIf="detail.discountPercent > 0">{{ detail.discountPercent }}%</ng-container></span>
+        <span class="ui-num" *ngIf="hasLineDiscount">{{ discountedUnitPrice(detail) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+        <span class="ui-num">{{ detail.lineTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
       </div>
-
-      <div class="detalle-section">
-        <div class="detalle-section__title">Productos</div>
-        <table class="detalle-table">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th class="text-right">Cant.</th>
-              <th class="text-right">Unitario</th>
-              <th class="text-right" *ngIf="hasDiscount">Desc.</th>
-              <th class="text-right" *ngIf="hasLineDiscount">Unit. c/desc.</th>
-              <th class="text-right">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let detail of q.details" [class.row--stock-issue]="hasStockIssue(detail.productId)">
-              <td>{{ detail.productBrand }} / {{ detail.productName }}</td>
-              <td class="text-right">{{ detail.quantity }}</td>
-              <td class="text-right">${{ detail.unitPrice | number: '1.2-2' }}</td>
-              <td class="text-right" *ngIf="hasDiscount">
-                <span *ngIf="detail.discountPercent > 0">{{ detail.discountPercent }}%</span>
-              </td>
-              <td class="text-right cell--discounted" *ngIf="hasLineDiscount">
-                ${{ discountedUnitPrice(detail) | number: '1.2-2' }}
-              </td>
-              <td class="text-right">${{ detail.lineTotal | number: '1.2-2' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="detalle-totals">
-        <div class="detalle-totals__row" *ngIf="q.generalDiscountPercent > 0">
-          <span>Subtotal</span>
-          <span>${{ subtotal | number: '1.2-2' }}</span>
-        </div>
-        <div class="detalle-totals__row detalle-totals__row--discount" *ngIf="q.generalDiscountPercent > 0">
-          <span>Descuento general ({{ q.generalDiscountPercent }}%)</span>
-          <span>-${{ (subtotal - q.totalAmount) | number: '1.2-2' }}</span>
-        </div>
-        <div class="detalle-totals__row" *ngIf="q.includesVat && q.vatRate > 0">
-          <span>Neto</span>
-          <span>${{ q.netAmount | number: '1.2-2' }}</span>
-        </div>
-        <div class="detalle-totals__row" *ngIf="q.includesVat && q.vatRate > 0">
-          <span>IVA {{ q.vatRate | number: '1.0-1' }}%</span>
-          <span>${{ q.vatAmount | number: '1.2-2' }}</span>
-        </div>
-        <div class="detalle-totals__row detalle-totals__row--total">
-          <span>Total</span>
-          <span>${{ q.grandTotal | number: '1.2-2' }}</span>
-        </div>
-      </div>
-    </ng-container>
+      <ng-container *ngIf="q.generalDiscountPercent > 0">
+        <div class="ui-receipt__row"><span>Subtotal</span><span>{{ subtotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__row"><span>Descuento general ({{ q.generalDiscountPercent }}%)</span><span>-{{ (subtotal - q.totalAmount) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      </ng-container>
+      <ng-container *ngIf="q.includesVat && q.vatRate > 0">
+        <div class="ui-receipt__row"><span>Neto</span><span>{{ q.netAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__row"><span>IVA {{ q.vatRate | number:'1.0-1' }}%</span><span>{{ q.vatAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      </ng-container>
+      <div class="ui-receipt__total"><span>Total</span><span>{{ q.grandTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+    </ui-receipt>
   </div>
-</div>
+
+  <footer uiModalFoot class="ui-modal__foot" *ngIf="quote">
+    <button uiBtn="secondary" type="button" (click)="downloadPdf()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Descargar PDF</button>
+    <button *ngIf="canConvert" uiBtn="primary" type="button" (click)="requestConvert()">Convertir a venta</button>
+  </footer>
+</ui-modal>

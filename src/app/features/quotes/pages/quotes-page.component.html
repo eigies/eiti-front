@@ -1,0 +1,23 @@
+<main class="ui-page quotes" *ngIf="facade as f">
+  <app-quote-form *ngIf="f.showForm" (created)="f.onCreated()" (back)="f.showForm = false"></app-quote-form>
+
+  <ng-container *ngIf="!f.showForm">
+    <header class="ui-page-head">
+      <div><h1>Presupuestos</h1><p>Cotizaciones para clientes y prospectos. Se convierten en venta cuando el cliente acepta.</p></div>
+      <button uiBtn="primary" type="button" (click)="f.showForm = true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo presupuesto</button>
+    </header>
+
+    <ui-card [flush]="true" class="quotes__card">
+      <div class="ui-tabs quotes__tabs" role="tablist" aria-label="Estado">
+        <button *ngFor="let option of f.statusOptions" type="button" role="tab" [attr.aria-selected]="isTab(option.value)" (click)="selectTab(option.value)">{{ option.label }}</button>
+      </div>
+      <div class="quotes__state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+      <div class="quotes__state" *ngIf="!f.loading && f.quotes.length === 0"><ui-empty icon="list" text="No hay presupuestos para este estado."></ui-empty></div>
+      <app-quotes-table *ngIf="!f.loading && f.quotes.length > 0" [quotes]="f.quotes" [canConvertFn]="canConvert"
+        (open)="f.openDetail($event)" (convert)="f.convertQuote($event)" (cancel)="f.cancelQuote($event)">
+      </app-quotes-table>
+    </ui-card>
+  </ng-container>
+
+  <app-quote-detail-modal *ngIf="f.detailQuoteId" [quoteId]="f.detailQuoteId" (close)="f.closeDetail()" (convert)="f.convertQuote($event)"></app-quote-detail-modal>
+</main>

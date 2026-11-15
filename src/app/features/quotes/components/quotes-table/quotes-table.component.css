@@ -1,0 +1,6 @@
+.qt th:first-child, .qt td:first-child { padding-left: var(--space-5); }
+.qt th:last-child, .qt td:last-child { padding-right: var(--space-5); }
+.qt__code { font-weight: 600; white-space: nowrap; }
+.qt__date { font-size: 14px; white-space: nowrap; }
+.qt__prospect { margin-top: 4px; }
+.qt__actions { display: flex; justify-content: flex-end; gap: var(--space-1); }

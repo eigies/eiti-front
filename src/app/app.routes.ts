@@ -144,7 +144,7 @@ export const routes: Routes = [
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.quotesAccess },
         loadComponent: () =>
-            import('./features/quotes/quotes.component').then(m => m.QuotesComponent)
+            import('./features/quotes/pages/quotes-page.component').then(m => m.QuotesPageComponent)
     },
     {
         path: 'payroll/deduction-concepts',
