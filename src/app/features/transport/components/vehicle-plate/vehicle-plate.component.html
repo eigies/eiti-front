@@ -1,0 +1,4 @@
+<span class="vp" [class]="'vp vp--' + style" [attr.aria-label]="'Patente ' + text">
+  <span class="vp__strip" *ngIf="style === 'mercosur'" aria-hidden="true">ARGENTINA</span>
+  <span class="vp__text">{{ text }}</span>
+</span>

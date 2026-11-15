@@ -1,0 +1,24 @@
+<section class="ui-card va">
+  <header class="va__head">
+    <app-vehicle-plate [plate]="vehicle.plate"></app-vehicle-plate>
+    <div class="va__copy">
+      <strong>{{ vehicle.model }}</strong>
+      <span>{{ vehicle.brand || 'Sin marca' }}<ng-container *ngIf="vehicle.year"> · {{ vehicle.year }}</ng-container> · {{ vehicle.fuelTypeName }}</span>
+    </div>
+    <button uiBtn="primary" type="button" (click)="newLog.emit()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo registro</button>
+  </header>
+  <div class="va__facts">
+    <div><span class="ui-stat__label">Odómetro</span><strong class="ui-num">{{ vehicle.currentOdometer != null ? (vehicle.currentOdometer | number:'1.0-0') + ' km' : '—' }}</strong></div>
+    <div><span class="ui-stat__label">Última carga</span><strong class="ui-num">{{ vehicle.lastFuelLoadedAt ? (vehicle.lastFuelLoadedAt | date:'dd/MM/yy') : '—' }}</strong></div>
+    <div><span class="ui-stat__label">Último mantenimiento</span><strong class="ui-num">{{ vehicle.lastMaintenanceAt ? (vehicle.lastMaintenanceAt | date:'dd/MM/yy') : '—' }}</strong></div>
+  </div>
+  <div class="va__logs" *ngIf="logs.length > 0; else noLogs">
+    <span class="ui-field__label">Actividad · {{ logs.length }} {{ logs.length === 1 ? 'registro' : 'registros' }}</span>
+    <div class="va__log" *ngFor="let log of logs">
+      <ui-mov-pill [kind]="kind(log.typeName)" [label]="labelFn(log.typeName)"></ui-mov-pill>
+      <span class="va__desc">{{ log.description }}<span class="va__meta ui-num">{{ log.occurredAt | date:'dd/MM/yy HH:mm' }}<ng-container *ngIf="log.odometer != null"> · {{ log.odometer | number:'1.0-0' }} km</ng-container></span></span>
+      <span class="ui-num va__cost" *ngIf="log.fuelCost">{{ log.fuelCost | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+    </div>
+  </div>
+  <ng-template #noLogs><ui-empty icon="clock" text="Este vehículo todavía no tiene registros."></ui-empty></ng-template>
+</section>

@@ -1,0 +1,15 @@
+<ul class="vl">
+  <li *ngFor="let vehicle of vehicles">
+    <div class="vl__item" [class.is-selected]="vehicle.id === selectedId">
+      <button class="vl__main" type="button" [attr.aria-pressed]="vehicle.id === selectedId" (click)="select.emit(vehicle.id)">
+        <app-vehicle-plate [plate]="vehicle.plate"></app-vehicle-plate>
+        <span class="vl__copy">
+          <strong>{{ vehicle.model }}</strong>
+          <span>{{ vehicle.brand || 'Sin marca' }}<ng-container *ngIf="vehicle.year"> · {{ vehicle.year }}</ng-container> · {{ vehicle.fuelTypeName }}</span>
+          <span [class.vl__none]="!vehicle.assignedDriverFullName">{{ vehicle.assignedDriverFullName || 'Sin conductor asignado' }}</span>
+        </span>
+      </button>
+      <button uiBtn="ghost" size="sm" [iconOnly]="true" type="button" [attr.aria-label]="'Editar ' + vehicle.plate" (click)="edit.emit(vehicle)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
+    </div>
+  </li>
+</ul>

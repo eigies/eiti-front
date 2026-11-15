@@ -306,7 +306,7 @@ export const routes: Routes = [
         path: 'transport',
         canActivate: [authGuard],
         loadComponent: () =>
-            import('./features/transport/transport.component').then(m => m.TransportComponent)
+            import('./features/transport/pages/transport-page.component').then(m => m.TransportPageComponent)
     },
     {
         path: 'suppliers',

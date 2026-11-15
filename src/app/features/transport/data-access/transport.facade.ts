@@ -1,24 +1,27 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { EmployeeService } from '../../core/services/employee.service';
-import { VehicleService } from '../../core/services/vehicle.service';
-import { DriverResponse } from '../../core/models/employee.models';
-import { FleetLogResponse, VehicleResponse } from '../../core/models/vehicle.models';
-import { ToastService } from '../../shared/services/toast.service';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { AuthService } from '../../core/services/auth.service';
-import { PermissionCodes } from '../../core/models/permission.models';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { EmployeeService } from '../../../core/services/employee.service';
+import { VehicleService } from '../../../core/services/vehicle.service';
+import { DriverResponse } from '../../../core/models/employee.models';
+import { FleetLogResponse, VehicleResponse } from '../../../core/models/vehicle.models';
+import { ToastService } from '../../../shared/services/toast.service';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { PermissionCodes } from '../../../core/models/permission.models';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
 
-@Component({
-  selector: 'app-transport',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
-  templateUrl: './transport.component.html',
-  styleUrls: ['./transport.component.css']
-})
-export class TransportComponent implements OnInit {
+/**
+ * Estado y reglas de transporte (vehículos, conductores y registros de flota).
+ * Movido tal cual desde TransportComponent: mismas llamadas, validaciones y mensajes.
+ */
+@Injectable()
+export class TransportFacade {
+  /** Avisos para que la pantalla cierre el popup de alta cuando terminó bien. */
+  readonly driverCreated$ = new Subject<void>();
+  readonly vehicleCreated$ = new Subject<void>();
+  readonly logCreated$ = new Subject<void>();
+
   driverForm: FormGroup;
   vehicleForm: FormGroup;
   logForm: FormGroup;
@@ -91,7 +94,8 @@ export class TransportComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  /** Arranque (antes ngOnInit). */
+  init(): void {
     this.loadDrivers();
     this.loadVehicles();
   }
@@ -151,6 +155,7 @@ export class TransportComponent implements OnInit {
           next: () => {
             this.driverForm.reset({ firstName: '', lastName: '', documentNumber: '', phone: '', licenseNumber: '', licenseExpiresAt: '' });
             this.toast.success('Conductor creado');
+            this.driverCreated$.next();
             this.loadDrivers();
           },
           error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo guardar el perfil del conductor')
@@ -348,6 +353,7 @@ export class TransportComponent implements OnInit {
       next: () => {
         this.vehicleForm.reset({ plate: '', model: '', brand: '', year: null, fuelType: 1, assignedDriverEmployeeId: '' });
         this.toast.success('Vehiculo creado');
+        this.vehicleCreated$.next();
         this.loadVehicles();
       },
       error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el vehiculo')
@@ -377,6 +383,7 @@ export class TransportComponent implements OnInit {
       next: () => {
         this.logForm.patchValue({ occurredAt: this.toInputDate(new Date()), odometer: null, fuelLiters: null, fuelCost: null, description: '' });
         this.toast.success('Registro de flota creado');
+        this.logCreated$.next();
         this.loadVehicles();
         this.loadLogs();
       },

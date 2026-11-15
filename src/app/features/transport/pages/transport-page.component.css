@@ -1,0 +1,5 @@
+.transport__split { display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+.transport__card { overflow: hidden; }
+.transport__state { padding: var(--space-5); }
+.ui-tabs .ui-count { margin-left: var(--space-2); }
+@media (max-width: 1000px) { .transport__split { grid-template-columns: 1fr; } }
