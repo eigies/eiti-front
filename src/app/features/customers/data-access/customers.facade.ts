@@ -1,26 +1,22 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { extractApiError } from '../../shared/utils/api-error.util';
-import { CommonModule } from '@angular/common';
+import { Injectable, OnDestroy } from '@angular/core';
+import { extractApiError } from '../../../shared/utils/api-error.util';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
-import { CustomerService } from '../../core/services/customer.service';
-import { CreateCustomerRequest, CustomerResponse } from '../../core/models/customer.models';
-import { ToastService } from '../../shared/services/toast.service';
-import { AuthService } from '../../core/services/auth.service';
-import { PermissionCodes } from '../../core/models/permission.models';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
+import { CustomerService } from '../../../core/services/customer.service';
+import { CreateCustomerRequest, CustomerResponse } from '../../../core/models/customer.models';
+import { ToastService } from '../../../shared/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { PermissionCodes } from '../../../core/models/permission.models';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
 
-@Component({
-  selector: 'app-customers',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, SearchableSelectComponent],
-  templateUrl: './customers.component.html',
-  styleUrls: ['./customers.component.css']
-})
-export class CustomersComponent implements OnInit, OnDestroy {
+/**
+ * Estado y reglas del listado de clientes. Movido tal cual desde CustomersComponent:
+ * mismas llamadas, validaciones y mensajes.
+ */
+@Injectable()
+export class CustomersFacade implements OnDestroy {
   form: FormGroup;
   customers: CustomerResponse[] = [];
   searchTerm = '';
@@ -104,7 +100,8 @@ export class CustomersComponent implements OnInit, OnDestroy {
 
   private addressValidatorSub: Subscription | null = null;
 
-  ngOnInit(): void {
+  /** Arranque de la pantalla (antes ngOnInit). */
+  init(): void {
     this.loadCustomers();
     // Domicilio todo-o-nada: recalcula los validadores al cambiar cualquier campo del form.
     this.addressValidatorSub = this.form.valueChanges.subscribe(() => this.syncAddressValidators());
@@ -249,22 +246,6 @@ export class CustomersComponent implements OnInit, OnDestroy {
     });
   }
 
-  customerInitial(customer: CustomerResponse): string {
-    const source = customer.name || customer.fullName || customer.email || '?';
-    return source.charAt(0).toUpperCase();
-  }
-
-  formatDocument(customer: CustomerResponse): string {
-    const documentNumber = customer.documentNumber?.trim();
-    const taxId = customer.taxId?.trim();
-    const documentLabel = customer.documentTypeName || 'Doc.';
-    const parts = [
-      documentNumber ? `${documentLabel} ${documentNumber}` : null,
-      taxId ? `CUIT ${taxId}` : null
-    ].filter(Boolean);
-    return parts.length > 0 ? parts.join(' / ') : 'Sin documento';
-  }
-
   private closeFormPanel(): void {
     if (!this.formPanelOpen || this.formPanelClosing) { return; }
     this.formPanelClosing = true;
@@ -369,19 +350,6 @@ export class CustomersComponent implements OnInit, OnDestroy {
         this.toast.error(this.resolveCustomerErrorMessage(err, 'No se pudieron cargar los clientes'));
       }
     });
-  }
-
-  formatAddress(customer: CustomerResponse): string {
-    const address = customer.address;
-    if (!address) {
-      return 'Sin direccion';
-    }
-
-    const street = [address.street, address.streetNumber].filter(Boolean).join(' ').trim();
-    const locality = [address.city, address.stateOrProvince].filter(Boolean).join(', ').trim();
-    const postal = address.postalCode ? `CP ${address.postalCode}` : '';
-    const country = address.country || '';
-    return [street, locality, postal, country].filter(Boolean).join(' - ');
   }
 
   private nullIfEmpty(value: string | null | undefined): string | null {

@@ -1,0 +1,39 @@
+<main class="ui-page customers" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div class="customers__title">
+      <h1>Clientes</h1>
+      <span class="ui-count customers__total">{{ f.customers.length }}</span>
+    </div>
+    <button uiBtn="primary" type="button" (click)="f.openCreatePanel()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo cliente
+    </button>
+  </header>
+
+  <div class="customers__search">
+    <label class="ui-search ui-search--lg">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="ui-input" type="search" aria-label="Buscar cliente" placeholder="Buscar por nombre, email, teléfono, documento o CUIT"
+             [value]="f.searchTerm" (input)="f.searchTerm = $any($event.target).value" />
+    </label>
+    <span class="customers__count">Mostrando <strong class="ui-num">{{ f.filteredCustomers.length }}</strong> de <strong class="ui-num">{{ f.customers.length }}</strong></span>
+  </div>
+
+  <ui-card [flush]="true" class="customers__card">
+    <app-customer-table *ngIf="f.filteredCustomers.length > 0"
+      [customers]="f.filteredCustomers" [canDelete]="f.canDeleteCustomers" [deletingId]="f.deletingId"
+      (edit)="f.beginEdit($event)" (remove)="f.deleteCustomer($event)">
+    </app-customer-table>
+    <div class="customers__empty" *ngIf="f.customers.length === 0">
+      <ui-empty icon="list" heading="No hay clientes cargados" text="Crealos desde el botón Nuevo cliente para empezar a operar."></ui-empty>
+    </div>
+    <div class="customers__empty" *ngIf="f.customers.length > 0 && f.filteredCustomers.length === 0">
+      <ui-empty icon="search" heading="Sin resultados" text="Ningún cliente coincide con la búsqueda actual."></ui-empty>
+    </div>
+  </ui-card>
+
+  <app-customer-form-modal *ngIf="f.formPanelOpen"
+    [form]="f.form" [editing]="f.isEditing" [saving]="f.creating"
+    [documentTypeOptions]="f.documentTypeOptions" [ivaConditionOptions]="f.ivaConditionOptions"
+    (submitted)="f.submit()" (closed)="f.cancelEdit()">
+  </app-customer-form-modal>
+</main>

@@ -30,7 +30,7 @@ export const routes: Routes = [
         path: 'customers',
         canActivate: [authGuard],
         loadComponent: () =>
-            import('./features/customers/customers.component').then(m => m.CustomersComponent)
+            import('./features/customers/pages/customers-page.component').then(m => m.CustomersPageComponent)
     },
     {
         path: 'fiscal-settings',
