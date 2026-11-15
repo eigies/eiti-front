@@ -231,6 +231,23 @@ export class DashboardComponent implements OnInit {
       ?? this.auth.hasPermission(PermissionCodes.branchesViewAll);
   }
 
+  /** Parte minorista del mes (por importe si se ven montos, si no por unidades), en %. */
+  get monthRetailShare(): number {
+    const month = this.summary?.month;
+    if (!month) return 0;
+    const retail = this.canViewFinancials ? month.retail.amount : month.retail.units;
+    const total = this.canViewFinancials ? month.total.amount : month.total.units;
+    return total > 0 ? Math.round((retail / total) * 100) : 0;
+  }
+
+  /** Parte cobrada de las ventas del mes, en % (por cantidad de ventas). */
+  get paidShare(): number {
+    const c = this.summary?.collections;
+    if (!c) return 0;
+    const total = c.paidCount + c.pendingCount;
+    return total > 0 ? Math.round((c.paidCount / total) * 100) : 0;
+  }
+
   get username(): string {
     return this.auth.currentUser?.username ?? '';
   }

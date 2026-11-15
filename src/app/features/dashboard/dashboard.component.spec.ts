@@ -366,25 +366,21 @@ describe('DashboardComponent', () => {
       .toBeGreaterThan(8);
   });
 
-  it('presenta la lectura mensual como bandas elevadas y separa mes de hoy', async () => {
+  it('muestra lo vendido hoy en el ticket y el mes en su propia tarjeta', async () => {
     const { fixture, component } = await setupFixture();
     component.summary = summary;
     component.loading = false;
     fixture.detectChanges();
 
-    const rowStart = fixture.nativeElement.querySelector('.month-table tbody th') as HTMLElement;
-    const monthCell = fixture.nativeElement.querySelector('.month-table tbody .month-table__month') as HTMLElement | null;
-    const todayCell = fixture.nativeElement.querySelector('.month-table tbody .month-table__today') as HTMLElement | null;
+    const ticket = fixture.nativeElement.querySelector('.db-ticket') as HTMLElement | null;
+    const month = fixture.nativeElement.querySelector('.db-month') as HTMLElement | null;
 
-    expect(Number.parseFloat(getComputedStyle(rowStart).borderTopLeftRadius))
-      .withContext('cada segmento debe percibirse como una banda redondeada')
-      .toBeGreaterThan(8);
-    expect(monthCell).withContext('las celdas del mes deben tener una superficie propia').not.toBeNull();
-    expect(todayCell).withContext('las celdas de hoy deben tener una superficie propia').not.toBeNull();
-    if (!monthCell || !todayCell) return;
-    expect(getComputedStyle(monthCell).backgroundColor)
-      .withContext('mes y hoy deben distinguirse sin agregar contenido')
-      .not.toBe(getComputedStyle(todayCell).backgroundColor);
+    expect(ticket).withContext('lo vendido hoy va en el ticket').not.toBeNull();
+    expect(month).withContext('el mes en curso tiene su tarjeta').not.toBeNull();
+    if (!ticket || !month) return;
+    expect(ticket.textContent).toContain(String(summary.today.total.count));
+    expect(month.textContent).toContain(String(summary.month.total.count));
+    expect(fixture.nativeElement.textContent).not.toContain('Operación viva para');
   });
 
   it('mantiene visibles los valores del ritmo comercial en mobile', async () => {
