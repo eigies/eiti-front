@@ -516,3 +516,32 @@
   .picker__check::before {
     transition: none;}
 }
+
+/* ══ EITI 2 ══ */
+.picker-backdrop { background: var(--overlay); animation: ui-backdrop-in var(--dur-in) var(--ease-out); }
+.picker { border: 0; border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-3); animation: ui-pop-in var(--dur-in) var(--ease-out); }
+.picker__head { padding: var(--space-6) var(--space-6) var(--space-4); border: 0; }
+.picker__title { font: 600 20px/26px var(--font-sans); letter-spacing: 0; text-transform: none; }
+.picker__close { width: 36px; height: 36px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--text-2); }
+.picker__close:hover { background: var(--surface-hover); color: var(--text); }
+.picker__search { margin: 0 var(--space-6); }
+.picker__search-input { min-height: var(--control-lg); border: 1px solid var(--border-control); border-radius: var(--radius-lg); background: var(--surface); font: 400 17px/24px var(--font-sans); box-shadow: none; }
+.picker__search-input:focus { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+.picker__meta { margin: var(--space-2) var(--space-6) 0; color: var(--text-3); font: 500 13px/18px var(--font-sans); letter-spacing: 0; text-transform: none; }
+.picker__row--head { color: var(--text-2); font: 600 13px/18px var(--font-sans); letter-spacing: 0; text-transform: none; background: var(--surface-sunken); }
+.picker__row { border-color: var(--border); }
+.picker__row:hover:not(.picker__row--disabled) { background: var(--surface-hover); }
+.picker__row--selected { background: var(--brand-soft); }
+.picker__product strong { font: 600 16px/22px var(--font-sans); }
+.picker__product small { font: 500 13px/18px var(--font-mono); color: var(--text-3); letter-spacing: 0; }
+.picker__check { width: 18px; height: 18px; accent-color: var(--brand); }
+.picker__chip { border: 0; border-radius: var(--radius-sm); font: 600 13px/18px var(--font-mono); letter-spacing: 0; }
+.picker__stepper { border-color: var(--border-control); border-radius: var(--radius-md); }
+.picker__stepper input { font: 600 15px/20px var(--font-mono); }
+.picker__actions { padding: var(--space-4) var(--space-6); border-top: 1px solid var(--border); background: var(--surface-sunken); border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+.picker__btn { min-height: var(--control-md); padding: 0 var(--space-5); border-radius: var(--radius-md); font: 600 15px/20px var(--font-sans); letter-spacing: 0; text-transform: none; }
+.picker__btn--ghost { border: 0; background: transparent; color: var(--text); }
+.picker__btn--ghost:hover { background: var(--surface-hover); }
+.picker__btn--primary { border: 0; background: var(--brand); color: var(--on-brand); }
+.picker__btn--primary:hover:not(:disabled) { background: var(--brand-hover); }
+.picker__btn--primary:disabled { opacity: .5; }

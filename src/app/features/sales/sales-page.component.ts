@@ -191,6 +191,8 @@ export class SalesPageComponent implements OnInit {
     editOriginalDiscountPercent = 0;
     activeMode: SalesPageMode = 'sell';
     activeCreateStage: QuickSaleStage = 'config';
+    /** Muestra contacto y observaciones aunque la venta sea con retiro. */
+    showCreateContact = false;
     showOnboardingCompleteNotice = false;
     infoModal: { title: string; rows: Array<{ label: string; value: string }> } | null = null;
     cancelSaleModal: SaleResponse | null = null;
@@ -965,6 +967,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.createCustomerSuggestions = [];
         this.showCreateCustomerResults = false;
         this.activeCreateStage = 'config';
+        this.showCreateContact = false;
         this.saving = false;
         this.currentSalesPage = 1;
         this.loadDrawers(branchId, true);
@@ -1871,6 +1874,23 @@ changeSalesPageSize(rawPageSize: string): void {
 this.salesPageSize = parsedPageSize;
 this.currentSalesPage = 1;
     }
+
+/** Atajos del mostrador: F2 busca producto, F9 confirma la venta. */
+@HostListener('document:keydown', ['$event'])
+handleSellShortcuts(event: KeyboardEvent): void {
+    if (this.activeMode !== 'sell' || event.defaultPrevented) return;
+    if (event.key === 'F2') {
+        if (this.createProductModalOpen || !this.auth.hasPermission(this.permissionCodes.salesCreate)) return;
+        event.preventDefault();
+        this.openCreateProductModal();
+        return;
+    }
+    if (event.key === 'F9') {
+        if (this.createProductModalOpen || this.saving || this.draftItems.length === 0) return;
+        event.preventDefault();
+        this.createSale();
+    }
+}
 
 @HostListener('document:click', ['$event'])
 handleDocumentClick(event: MouseEvent): void {

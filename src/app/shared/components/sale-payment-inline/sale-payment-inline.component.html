@@ -1,7 +1,6 @@
 <section class="payment-block" [class.payment-block--compact]="compact">
   <div class="payment-block__head">
     <div>
-      <p class="payment-block__eyebrow">Cobro inline</p>
       <h3>{{ headline }}</h3>
     </div>
     <p class="payment-block__copy">{{ description }}</p>
@@ -26,23 +25,22 @@
       <div class="payment-stack">
         <div class="section-head">
           <div>
-            <span class="section-head__eyebrow">Payments</span>
             <h4>Medios de pago</h4>
           </div>
-          <button class="action-chip action-chip--icon" type="button" *ngIf="state.hasCombinedPayment" (click)="addPaymentLine()" title="Agregar metodo de pago">+</button>
+          <button class="action-chip action-chip--icon" type="button" *ngIf="state.hasCombinedPayment" (click)="addPaymentLine()" title="Agregar medio de pago" aria-label="Agregar medio de pago">+</button>
         </div>
 
         <div class="payment-line" *ngFor="let payment of state.payments; let index = index; trackBy: trackByIndex">
           <div class="payment-line__row">
             <label class="field">
-              <span class="field__label">Metodo</span>
+              <span class="field__label">Método</span>
               <app-searchable-select
                 [ngModel]="payment.idPaymentMethod"
                 (ngModelChange)="updatePaymentMethod(index, $event)"
                 [ngModelOptions]="{ standalone: true }"
                 [options]="paymentMethodOptionsFor(index)"
-                placeholder="Seleccionar metodo"
-                searchPlaceholder="Buscar metodo...">
+                placeholder="Elegir método"
+                searchPlaceholder="Buscar método...">
               </app-searchable-select>
             </label>
 
@@ -52,8 +50,8 @@
             </label>
 
             <label class="field field--wide">
-              <span class="field__label">Referencia</span>
-              <input class="control" type="text" maxlength="120" [value]="payment.notes" (input)="updatePaymentNotes(index, $any($event.target).value)" placeholder="Ultimos 4 digitos, banco, observacion" />
+              <span class="field__label">Referencia <em>(opcional)</em></span>
+              <input class="control" type="text" maxlength="120" [value]="payment.notes" (input)="updatePaymentNotes(index, $any($event.target).value)" placeholder="Últimos 4 dígitos, banco u observación" />
             </label>
 
             <button class="line-remove" type="button" [disabled]="state.payments.length === 1 && !state.hasCombinedPayment" (click)="removePaymentLine(index)">Quitar</button>
@@ -164,13 +162,13 @@
                       [ngModelOptions]="{standalone: true}" />
                   </label>
                   <label class="field">
-                    <span>Fecha emision *</span>
+                    <span>Fecha de emisión *</span>
                     <input class="control" type="date"
                       [(ngModel)]="payment.chequeData.fechaEmision"
                       [ngModelOptions]="{standalone: true}" />
                   </label>
                   <label class="field">
-                    <span>Fecha vencimiento *</span>
+                    <span>Fecha de vencimiento *</span>
                     <input class="control" type="date"
                       [(ngModel)]="payment.chequeData.fechaVencimiento"
                       [ngModelOptions]="{standalone: true}" />
@@ -192,7 +190,6 @@
       <div class="payment-stack" *ngIf="showTradeIn && state.hasTradeIn">
         <div class="section-head">
           <div>
-            <span class="section-head__eyebrow">Trade-ins</span>
             <h4>Productos recibidos en canje</h4>
           </div>
           <button class="action-chip" type="button" (click)="addTradeInLine()">Agregar item</button>
@@ -279,7 +276,6 @@
       </div>
 
       <div class="drawer-card" *ngIf="requiresCashDrawer">
-        <span class="drawer-card__eyebrow">Cash drawer</span>
         <label class="field">
           <span class="field__label">Caja obligatoria por efectivo</span>
           <app-searchable-select
@@ -294,8 +290,8 @@
       </div>
 
       <div class="summary-note">
-        <p *ngIf="statusId === paidStatusId">Estado pagada: el cobro debe cubrir el total. Si hay efectivo de mas, se indica como vuelto a entregar.</p>
-        <p *ngIf="statusId !== paidStatusId">Estado en espera: puedes cargar cobros parciales sin exceder el total.</p>
+        <p *ngIf="statusId === paidStatusId">Pagada: el cobro tiene que cubrir el total. Si sobra efectivo, se muestra el vuelto.</p>
+        <p *ngIf="statusId !== paidStatusId">En espera: podés cargar cobros parciales sin pasarte del total.</p>
       </div>
     </aside>
   </div>
