@@ -1,10 +1,9 @@
 .page {
   min-height: calc(100vh - 64px);
-  max-width: 1360px;
+  background: transparent;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 2rem 1.75rem 3rem;
-  background:
-    var(--surface);
+  padding: 28px 32px 48px;
 }
 
 .page__header {
@@ -72,9 +71,11 @@
   margin: 0;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: clamp(1.45rem, 2.8vw, 2.25rem);
-  font-weight: 400;
-  line-height: 1.05;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
 }
 
 .invoice-number {
@@ -608,7 +609,11 @@
 
 @media (max-width: 760px) {
   .page {
-    padding: 1rem .85rem 1.5rem;}
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
 
   .page__header,
   .summary-grid,

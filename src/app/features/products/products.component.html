@@ -19,7 +19,6 @@
 
   <header class="ph">
     <div class="ph__body">
-      <div class="ph__tag">_ Productos</div>
       <h1 class="ph__title">{{ viewMode === 'create' ? 'Nuevo producto' : viewMode === 'detail' ? 'Administrador de productos' : 'Catalogo activo' }}</h1>
       <p class="ph__desc" *ngIf="viewMode === 'list'">Catálogo operativo con vista de lista o cards y edición masiva sobre productos seleccionados.</p>
       <p class="ph__desc" *ngIf="viewMode === 'create'">Carga un producto nuevo sin mezclar el alta con la grilla de trabajo.</p>

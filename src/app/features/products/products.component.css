@@ -39,11 +39,13 @@
 .ph__title {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  
   color: var(--text);
-  font-weight: 400;
-  line-height: 1.1;
-  max-width: 14ch;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
 }
 
 .ph__desc {
@@ -1892,7 +1894,12 @@
     grid-row: auto;}
   .sale-config {
     grid-template-columns: 1fr;}
-  .page { padding: 2rem 0.85rem 1.25rem;}
+  .page {
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
   .ph { flex-direction: column; align-items: flex-start; gap: 1rem;}
   .ph__actions {
     width: 100%;
@@ -1903,7 +1910,13 @@
   .ph__actions .btn {
     width: 100%;
     min-width: 0;}
-  .ph__title { max-width: none;}
+  .ph__title {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
+}
   .card__head,
   .card__head-static,
   .card__body,
@@ -1984,9 +1997,11 @@
     white-space: normal;}
 
   .page {
-    max-width: none;
-    background:
-      var(--surface);}
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
 
   .ph {
     margin-bottom: 1.25rem;
@@ -2179,7 +2194,12 @@
   .stock-movement-form > .f { flex-basis: 100%; max-width: none;}
   .stock-movement-form__actions { width: 100%;}
   .stock-movement-form__actions .btn { width: 100%;}
-  .page { padding-left: 0.7rem; padding-right: 0.7rem;}
+  .page { padding-left: 0.7rem; padding-right: 0.7rem;
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
 
   .card__head-static {
     align-items: flex-start;
@@ -2196,7 +2216,12 @@
     padding: 0.2rem 0.7rem 0.85rem;}
 
   .ph__title {
-    font-size: 1.5rem;}
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
+}
 
   .ph__actions {
     grid-template-columns: 1fr;}

@@ -1,10 +1,14 @@
 .page {
   position: relative;
   min-height: calc(100vh - 64px);
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 2.4rem 1.6rem 3rem;
+  
+  
+  
   overflow: visible;
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
 }
 
 .hero {
@@ -46,8 +50,11 @@
   margin: 0;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: clamp(2rem, 4.2vw, 3.4rem);
-  line-height: .92;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
 }
 
 .hero p {
@@ -634,7 +641,11 @@
 
 @media (max-width: 720px) {
   .page {
-    padding: 1rem .85rem 2rem;}
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
 
   .hero__copy,
   .panel {

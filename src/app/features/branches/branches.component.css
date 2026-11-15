@@ -1,9 +1,9 @@
 .page {
     min-height: calc(100vh - 64px);
-    background: var(--surface);
-    padding: 2rem 1.75rem 2.75rem;
-    max-width: 1180px;
-    margin: 0 auto;
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
 }
 
 .page--guided-lock .panel {
@@ -25,7 +25,11 @@
     margin: 0;
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: clamp(1.8rem, 4vw, 2.55rem);
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
 }
 
 .hero p {
@@ -385,7 +389,11 @@
 
 @media (max-width: 640px) {
     .page {
-        padding: 1rem .85rem 1.5rem;}
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
 
     .panel,
     .modal {

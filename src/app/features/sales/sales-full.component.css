@@ -5,10 +5,10 @@
 
 .page {
     min-height: calc(100vh - 64px);
-    background: var(--surface);
-    padding: 2.7rem 2rem 3rem;
-    max-width: 1180px;
-    margin: 0 auto;
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
 }
 
 .panel {
@@ -632,7 +632,11 @@ h2 {
 
 @media (max-width: 920px) {
     .page {
-        padding: 2rem 1rem 2rem;}
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
 
     .panel {
         padding: 1rem;}

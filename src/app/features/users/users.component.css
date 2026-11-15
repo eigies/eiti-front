@@ -12,11 +12,13 @@
 .page {
   width: min(100%, 1320px);
   min-height: calc(100vh - 64px);
-  margin: 0 auto;
-  padding: clamp(1rem, 2vw, 2rem) clamp(.85rem, 2vw, 1.75rem) 3rem;
+  
+  
   overflow-x: clip;
-  background:
-    var(--surface);
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
 }
 
 .hero {

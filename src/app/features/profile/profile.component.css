@@ -35,9 +35,14 @@
 .profile-hero__copy h1 {
   margin: 0.25rem 0 0;
   font-family: var(--font-sans);
-  font-size: clamp(2rem, 4.1vw, 3.4rem);
-  line-height: 0.96;
+  
+  
   color: var(--text);
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
 }
 
 .profile-hero__copy p:last-child {
@@ -348,7 +353,12 @@
     border-radius: var(--radius-md);}
 
   .profile-hero__copy h1 {
-    font-size: 2.2rem;}
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
+}
 
   .profile-permission-chip {
     width: 100%;

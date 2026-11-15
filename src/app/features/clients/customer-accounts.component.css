@@ -1,10 +1,9 @@
 .page {
   min-height: calc(100vh - 64px);
-  padding: 2rem 1.75rem 3rem;
-  max-width: 1400px;
+  background: transparent;
+  max-width: 1320px;
   margin: 0 auto;
-  background:
-    var(--surface);
+  padding: 28px 32px 48px;
 }
 
 .page__header {
@@ -31,9 +30,11 @@
   margin: .25rem 0 0;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 1.72rem;
-  font-weight: 400;
-  line-height: 1.12;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
 }
 
 .filters-bar {
@@ -311,7 +312,12 @@
 }
 
 @media (max-width: 760px) {
-  .page { padding: 1rem .85rem 1.5rem;}
+  .page {
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
   .page__header { align-items: flex-start; flex-direction: column;}
   .filters-bar { grid-template-columns: 1fr;}
   .filter-actions { display: grid; grid-template-columns: 1fr 1fr;}

@@ -1,9 +1,9 @@
 .page {
   min-height: calc(100vh - 64px);
-  background: var(--surface);
-  padding: 2.7rem 2rem 3rem;
-  max-width: 1120px;
+  background: transparent;
+  max-width: 1320px;
   margin: 0 auto;
+  padding: 28px 32px 48px;
 }
 
 .hero,
@@ -73,12 +73,21 @@
 .bank-row__name,
 .expand-section__head strong {
   font-family: var(--font-sans);
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
 }
 
 .hero h1 {
   margin: 0;
   color: var(--text);
-  font-size: clamp(1.7rem, 3.2vw, 2.4rem);
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  max-width: none;
 }
 
 .hero p {
@@ -534,7 +543,11 @@
 
 @media (max-width: 720px) {
   .page {
-    padding: 2rem 1rem;}
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
 
   .panel {
     padding: 1rem;}
