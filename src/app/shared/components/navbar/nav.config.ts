@@ -90,19 +90,7 @@ export const NAV_GROUPS: NavGroup[] = [
           { label: 'Proveedores', link: '/suppliers', visible: can => can(P.suppliersManage) }
         ]
       },
-      { label: 'Transporte', icon: 'transport', link: '/transport', match: ['/transport'] },
-      {
-        label: 'Sueldos', icon: 'payroll', match: ['/employees', '/payroll'],
-        visible: can => PAYROLL_PERMISSIONS.some(code => can(code)),
-        children: [
-          { label: 'Empleados', link: '/employees', visible: can => can(P.payrollManage) },
-          { label: 'Adelantos', link: '/payroll/advances', visible: can => can(P.payrollAdvancesManage) },
-          { label: 'Liquidaciones', link: '/payroll/liquidations', visible: can => can(P.payrollManage) },
-          { label: 'Bonificaciones', link: '/payroll/bonuses', visible: can => can(P.payrollManage) },
-          { label: 'Conceptos de descuento', link: '/payroll/deduction-concepts', visible: can => can(P.payrollManage) },
-          { label: 'Conceptos de bonificación', link: '/payroll/bonus-concepts', visible: can => can(P.payrollManage) }
-        ]
-      }
+      { label: 'Transporte', icon: 'transport', link: '/transport', match: ['/transport'] }
     ]
   },
   {
@@ -125,12 +113,15 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Configuración',
     items: [
       {
-        label: 'Administración', icon: 'admin', match: ['/company', '/branches', '/fiscal-settings', '/users', '/auditoria'],
+        // Sueldos vive acá (Administración > Equipo), no como entrada propia del menú principal.
+        label: 'Administración', icon: 'admin', match: ['/company', '/branches', '/fiscal-settings', '/users', '/auditoria', '/employees', '/payroll'],
         children: [
           { label: 'Empresa', link: '/company' },
           { label: 'Sucursales', link: '/branches' },
           { label: 'Facturación', link: '/fiscal-settings', visible: can => can(P.salesInvoice) },
           { label: 'Usuarios y perfiles', link: '/users', visible: can => can(P.usersManage) },
+          { label: 'Sueldos', link: '/payroll/liquidations', visible: can => can(P.payrollManage) },
+          { label: 'Adelantos de sueldo', link: '/payroll/advances', visible: can => can(P.payrollAdvancesManage) && !can(P.payrollManage) },
           { label: 'Auditoría', link: '/auditoria', visible: can => can(P.reportsAudit) }
         ]
       }

@@ -36,12 +36,15 @@
 .liq__receipt .liq__label { display: block; margin-bottom: 4px; }
 .receipt-actions { display: flex; justify-content: flex-end; }
 
-@container (max-width: 840px) {
+@container (max-width: 760px) {
   .liq__head { display: none; }
-  .liq__row { grid-template-columns: minmax(0, 1fr) auto; }
-  .liq__who { grid-column: 1 / -1; }
-  .liq__amounts { justify-items: start; }
-  .liq__actions { grid-column: 1 / -1; justify-content: flex-start; }
+  /* Dos columnas: quién y cuánto arriba; pago, estado y acciones abajo. */
+  .liq__row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "who amt" "pay amt" "st act"; row-gap: 8px; }
+  .liq__who { grid-area: who; }
+  .liq__pay { grid-area: pay; padding-left: 48px; }
+  .liq__amounts { grid-area: amt; align-self: start; }
+  .liq__row > [role="cell"]:nth-child(4) { grid-area: st; padding-left: 48px; }
+  .liq__actions { grid-area: act; }
   .liq__detail { grid-template-columns: minmax(0, 1fr); padding-left: 16px; }
 }
 @container (max-width: 560px) {
