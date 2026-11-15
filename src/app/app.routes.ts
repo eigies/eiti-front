@@ -217,7 +217,7 @@ export const routes: Routes = [
         path: 'reportes/ventas/control-diario',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesDailyControl },
-        loadComponent: () => import('./features/reports/daily-sales-control/daily-sales-control.component').then(m => m.DailySalesControlComponent)
+        loadComponent: () => import('./features/reports/daily-sales-control/pages/daily-sales-control-page.component').then(m => m.DailySalesControlPageComponent)
     },
     {
         path: 'reportes/ventas/mayorista-cliente',
@@ -295,7 +295,7 @@ export const routes: Routes = [
         path: 'reportes/stock',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsStock },
-        loadComponent: () => import('./features/reports/stock/stock-matrix.component').then(m => m.StockMatrixComponent)
+        loadComponent: () => import('./features/reports/stock/pages/stock-matrix-page.component').then(m => m.StockMatrixPageComponent)
     },
     {
         path: 'reportes/medios-pago',
@@ -307,7 +307,7 @@ export const routes: Routes = [
         path: 'reportes/movimientos-stock',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsStock },
-        loadComponent: () => import('./features/reports/stock-movements/stock-movements-report.component').then(m => m.StockMovementsReportComponent)
+        loadComponent: () => import('./features/reports/stock-movements/pages/stock-movements-page.component').then(m => m.StockMovementsPageComponent)
     },
     {
         path: 'transport',

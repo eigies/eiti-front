@@ -1,28 +1,24 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Injectable, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import { ReportService } from '../../../core/services/report.service';
-import { ProductService } from '../../../core/services/product.service';
-import { BranchService } from '../../../core/services/branch.service';
-import { StockService } from '../../../core/services/stock.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { StockMovementsReportResponse, StockMovementsReportRow } from '../../../core/models/report.models';
-import { TransferDetailResponse } from '../../../core/models/stock.models';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
-import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
-import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
+import { ReportService } from '../../../../core/services/report.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { BranchService } from '../../../../core/services/branch.service';
+import { StockService } from '../../../../core/services/stock.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { StockMovementsReportResponse, StockMovementsReportRow } from '../../../../core/models/report.models';
+import { TransferDetailResponse } from '../../../../core/models/stock.models';
+import { SearchableSelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
+import { PdfBrandingService } from '../../../../shared/services/pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from '../../../../shared/services/pdf-layout.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 
-@Component({
-  selector: 'app-stock-movements-report',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
-  templateUrl: './stock-movements-report.component.html',
-  styleUrls: ['../reports.shared.css', './stock-movements-report.component.css']
-})
-export class StockMovementsReportComponent implements OnInit, OnDestroy {
+/**
+ * Estado y reglas del reporte Movimientos de stock: filtros, paginado, detalle de traspasos y exportaciones. Movido tal cual desde StockMovementsReportComponent.
+ */
+@Injectable()
+export class StockMovementsReportFacade {
   filterForm: FormGroup;
   loading = false;
   hasSearched = false;
@@ -70,7 +66,7 @@ export class StockMovementsReportComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void {
+  init(): void {
     this.productService.listProducts().subscribe({
       next: products => this.products = products.map(p => ({ id: p.id, label: `${p.code} · ${p.brand} ${p.name}`.trim() })),
       error: () => this.products = []
@@ -166,7 +162,7 @@ export class StockMovementsReportComponent implements OnInit, OnDestroy {
     this.transferLoading = false;
   }
 
-  @HostListener('document:keydown.escape')
+  /** El popup (ui-modal) ya cierra con Escape; queda por compatibilidad. */
   closeTransferWithEscape(): void {
     if (this.transferPopup || this.transferLoading) this.closeTransfer();
   }

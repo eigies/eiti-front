@@ -5,22 +5,24 @@ import {
   DailySalesControlResponse,
   DailySalesControlRow,
   DailySalesPaymentItem
-} from '../../../core/models/report.models';
-import { BranchResponse } from '../../../core/models/branch.models';
-import { CustomerResponse } from '../../../core/models/customer.models';
-import { BranchService } from '../../../core/services/branch.service';
-import { CustomerService } from '../../../core/services/customer.service';
-import { ReportService } from '../../../core/services/report.service';
-import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
-import { PdfLayoutService } from '../../../shared/services/pdf-layout.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { DailySalesControlComponent } from './daily-sales-control.component';
+} from '../../../../core/models/report.models';
+import { BranchResponse } from '../../../../core/models/branch.models';
+import { CustomerResponse } from '../../../../core/models/customer.models';
+import { BranchService } from '../../../../core/services/branch.service';
+import { CustomerService } from '../../../../core/services/customer.service';
+import { ReportService } from '../../../../core/services/report.service';
+import { PdfBrandingService } from '../../../../shared/services/pdf-branding.service';
+import { PdfLayoutService } from '../../../../shared/services/pdf-layout.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { DailySalesControlFacade } from '../data-access/daily-sales-control.facade';
+import { DailySalesControlPageComponent } from './daily-sales-control-page.component';
 
-describe('DailySalesControlComponent payment breakdown', () => {
-  let component: DailySalesControlComponent;
+describe('DailySalesControlPage payment breakdown', () => {
+  // El estado y las reglas viven en la facade; la página solo conecta.
+  let component: DailySalesControlFacade;
 
   beforeEach(() => {
-    component = new DailySalesControlComponent(
+    component = new DailySalesControlFacade(
       new FormBuilder(),
       {} as ReportService,
       {} as ToastService,
@@ -63,7 +65,7 @@ describe('DailySalesControlComponent payment breakdown', () => {
 });
 
 // La búsqueda filtra solo en pantalla: los totales del back no la conocen, así que las tarjetas salen de las filas visibles.
-describe('DailySalesControlComponent · tarjetas', () => {
+describe('DailySalesControlPage · tarjetas', () => {
   const response: DailySalesControlResponse = {
     rows: [
       sale('1', 'Mataderos', [2, 1], 1, 1000.5),
@@ -73,14 +75,14 @@ describe('DailySalesControlComponent · tarjetas', () => {
     totals: { salesCount: 3, unitsSold: 8, salesWithTradeIn: 2, totalAmount: 3500.5 }
   };
 
-  let fixture: ComponentFixture<DailySalesControlComponent>;
+  let fixture: ComponentFixture<DailySalesControlPageComponent>;
 
   beforeEach(() => {
     const reports = jasmine.createSpyObj<ReportService>('ReportService', ['dailySalesControl']);
     reports.dailySalesControl.and.returnValue(of(response));
 
     TestBed.configureTestingModule({
-      imports: [DailySalesControlComponent],
+      imports: [DailySalesControlPageComponent],
       providers: [
         { provide: ReportService, useValue: reports },
         { provide: BranchService, useValue: { listBranches: () => of([]) } },
@@ -90,26 +92,27 @@ describe('DailySalesControlComponent · tarjetas', () => {
         { provide: PdfLayoutService, useValue: {} }
       ]
     });
-    fixture = TestBed.createComponent(DailySalesControlComponent);
+    fixture = TestBed.createComponent(DailySalesControlPageComponent);
     fixture.detectChanges();
   });
 
   it('sin búsqueda dan lo mismo que los totales del reporte', () => {
-    expect(cards()).toEqual(['3', '8', '2', '$ 3.500,50']);
+    // El total va primero, en el ticket; después ventas, baterías y canjes.
+    expect(cards()).toEqual(['$ 3.500,50', '3', '8', '2']);
   });
 
   it('con búsqueda cuentan solo las ventas visibles', () => {
-    fixture.componentInstance.filterForm.patchValue({ search: 'mataderos' });
+    fixture.componentInstance.facade.filterForm.patchValue({ search: 'mataderos' });
     fixture.detectChanges();
 
-    expect(cards()).toEqual(['2', '4', '1', '$ 1.500,50']);
+    expect(cards()).toEqual(['$ 1.500,50', '2', '4', '1']);
   });
 
   it('si la búsqueda no encuentra nada quedan en cero', () => {
-    fixture.componentInstance.filterForm.patchValue({ search: 'no existe' });
+    fixture.componentInstance.facade.filterForm.patchValue({ search: 'no existe' });
     fixture.detectChanges();
 
-    expect(cards()).toEqual(['0', '0', '0', '$ 0,00']);
+    expect(cards()).toEqual(['$ 0,00', '0', '0', '0']);
   });
 
   function cards(): string[] {
@@ -159,8 +162,8 @@ describe('DailySalesControlComponent · tarjetas', () => {
   }
 });
 
-describe('DailySalesControlComponent · filtros', () => {
-  let fixture: ComponentFixture<DailySalesControlComponent>;
+describe('DailySalesControlPage · filtros', () => {
+  let fixture: ComponentFixture<DailySalesControlPageComponent>;
   let reports: jasmine.SpyObj<ReportService>;
 
   beforeEach(() => {
@@ -171,7 +174,7 @@ describe('DailySalesControlComponent · filtros', () => {
     }));
 
     TestBed.configureTestingModule({
-      imports: [DailySalesControlComponent],
+      imports: [DailySalesControlPageComponent],
       providers: [
         { provide: ReportService, useValue: reports },
         {
@@ -184,16 +187,16 @@ describe('DailySalesControlComponent · filtros', () => {
         { provide: PdfLayoutService, useValue: {} }
       ]
     });
-    fixture = TestBed.createComponent(DailySalesControlComponent);
+    fixture = TestBed.createComponent(DailySalesControlPageComponent);
     fixture.detectChanges();
   });
 
   it('manda la sucursal, el cliente y el tipo de venta elegidos', () => {
-    fixture.componentInstance.filterForm.patchValue({
+    fixture.componentInstance.facade.filterForm.patchValue({
       dateFrom: '2026-10-01', dateTo: '2026-10-30', status: 2, branchId: 'b-1', customerId: 'c-1', saleType: 'retail'
     });
 
-    fixture.componentInstance.search();
+    fixture.componentInstance.facade.search();
 
     expect(reports.dailySalesControl).toHaveBeenCalledWith({
       dateFrom: '2026-10-01', dateTo: '2026-10-30', status: 2, branchId: 'b-1', customerId: 'c-1', saleType: 'retail'
@@ -201,9 +204,9 @@ describe('DailySalesControlComponent · filtros', () => {
   });
 
   it('Hoy limpia también los filtros nuevos', () => {
-    fixture.componentInstance.filterForm.patchValue({ branchId: 'b-1', customerId: 'c-1', saleType: 'retail' });
+    fixture.componentInstance.facade.filterForm.patchValue({ branchId: 'b-1', customerId: 'c-1', saleType: 'retail' });
 
-    fixture.componentInstance.clearFilters();
+    fixture.componentInstance.facade.clearFilters();
 
     expect(reports.dailySalesControl.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({
       status: 0, branchId: null, customerId: null, saleType: 'all'
@@ -211,7 +214,7 @@ describe('DailySalesControlComponent · filtros', () => {
   });
 
   it('el PDF dice los filtros aplicados, no los que quedaron sin aplicar', () => {
-    const component = fixture.componentInstance;
+    const component = fixture.debugElement.injector.get(DailySalesControlFacade);
     component.filterForm.patchValue({ branchId: 'b-1' });
     component.search();
     component.filterForm.patchValue({ branchId: 'b-2' });

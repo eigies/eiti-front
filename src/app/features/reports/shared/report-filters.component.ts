@@ -23,6 +23,7 @@ export class ReportFiltersComponent {
   @Input() canApply = true;
   @Input() showClear = true;
   @Input() applyLabel = 'Aplicar';
+  @Input() clearLabel = 'Limpiar';
   @Input() chips: ReportChip[] = [];
   @Input() moreId = 'report-more-filters';
   @Output() toggle = new EventEmitter<void>();

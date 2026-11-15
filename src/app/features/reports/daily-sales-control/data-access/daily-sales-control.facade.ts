@@ -1,6 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Injectable } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import jsPDF from 'jspdf';
@@ -14,23 +13,20 @@ import {
   DailySalesProductItem,
   DailySalesTradeInItem,
   REPORT_SALE_TYPES
-} from '../../../core/models/report.models';
-import { BranchService } from '../../../core/services/branch.service';
-import { CustomerService } from '../../../core/services/customer.service';
-import { ReportService } from '../../../core/services/report.service';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
-import { ToastService } from '../../../shared/services/toast.service';
-import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
-import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
+} from '../../../../core/models/report.models';
+import { BranchService } from '../../../../core/services/branch.service';
+import { CustomerService } from '../../../../core/services/customer.service';
+import { ReportService } from '../../../../core/services/report.service';
+import { SearchableSelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { PdfBrandingService } from '../../../../shared/services/pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from '../../../../shared/services/pdf-layout.service';
 
-@Component({
-  selector: 'app-daily-sales-control',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
-  templateUrl: './daily-sales-control.component.html',
-  styleUrls: ['../reports.shared.css', './daily-sales-control.component.css']
-})
-export class DailySalesControlComponent implements OnInit {
+/**
+ * Estado y reglas del Control diario de ventas: filtros, búsqueda en pantalla, totales visibles y exportaciones. Movido tal cual desde DailySalesControlComponent.
+ */
+@Injectable()
+export class DailySalesControlFacade {
   filterForm: FormGroup;
   loading = false;
   hasSearched = false;
@@ -70,7 +66,7 @@ export class DailySalesControlComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  init(): void {
     this.loadLookups();
     this.search();
   }

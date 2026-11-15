@@ -1,0 +1,103 @@
+<main class="ui-page daily-report" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Ventas</span>
+      <h1>Control diario de ventas</h1>
+      <p>Revisión de comprobantes, productos vendidos, referencias de pago y productos recibidos en canje. Abre con las ventas activas del día.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.search()" novalidate>
+    <app-report-filters [hasMore]="true" [open]="moreOpen" [count]="chips.length" [canApply]="!f.filterForm.invalid" clearLabel="Hoy" [chips]="chips" moreId="daily-more-filters" (toggle)="moreOpen = !moreOpen" (clear)="f.clearFilters()" (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field"><span class="ui-field__label">Desde</span><input class="ui-input" type="date" formControlName="dateFrom" /></label>
+      <label reportMain class="ui-field"><span class="ui-field__label">Hasta</span><input class="ui-input" type="date" formControlName="dateTo" /></label>
+      <label reportMain class="ui-field"><span class="ui-field__label">Estado</span>
+        <app-searchable-select formControlName="status" [options]="f.statusOptions" placeholder="Activas"></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field" *ngIf="f.branches.length > 1"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="f.customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="f.saleTypeOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="!f.loading && f.data && f.visibleTotals as totals">
+    <ui-ticket class="ui-ticket--compact daily-metric" label="Total" [figure]="'$ ' + f.money(totals.totalAmount)">
+      <span class="ui-ticket__sub">Importe de las ventas visibles</span>
+    </ui-ticket>
+    <div class="rep-stat daily-metric"><span class="rep-stat__label">Ventas</span><strong class="rep-stat__value">{{ totals.salesCount }}</strong><span class="rep-stat__hint">En el filtro aplicado</span></div>
+    <div class="rep-stat daily-metric"><span class="rep-stat__label">Baterías</span><strong class="rep-stat__value">{{ totals.unitsSold }}</strong><span class="rep-stat__hint">Unidades vendidas</span></div>
+    <div class="rep-stat daily-metric"><span class="rep-stat__label">Con canje</span><strong class="rep-stat__value">{{ totals.salesWithTradeIn }}</strong><span class="rep-stat__hint">Con producto recibido</span></div>
+  </div>
+
+  <ui-card heading="Detalle" [count]="f.data ? f.filteredRows.length : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions daily-tools" [formGroup]="f.filterForm">
+      <label class="ui-search daily-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="ui-sr-only">Buscar en resultados</span>
+        <input class="ui-input" type="search" formControlName="search" placeholder="Comprobante, cliente, producto..." />
+      </label>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="f.filteredRows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportPdf()" [disabled]="f.filteredRows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button>
+    </div>
+
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.hasSearched && f.data && f.filteredRows.length === 0">
+      <ui-empty icon="search" heading="No hay ventas para esos filtros" text="Probá otra fecha, estado o término de búsqueda."></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.data && f.filteredRows.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table daily-table">
+          <thead>
+            <tr><th class="rep-sticky">Venta</th><th>Sucursal / cliente</th><th>Batería vendida</th><th>Pago / referencia</th><th>Canje</th><th>Estado</th><th class="is-num">Total</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of f.filteredRows; trackBy: f.trackBySaleId">
+              <td class="rep-sticky"><div class="daily-stack"><strong class="ui-num">{{ row.code || row.saleId.slice(0, 8) }}</strong><span>{{ f.formatDateTime(row.createdAt) }}</span></div></td>
+              <td><div class="daily-stack"><strong>{{ row.branchName }}</strong><span>{{ row.customerName }}</span></div></td>
+              <td>
+                <div class="daily-list">
+                  <div *ngFor="let product of row.products"><strong class="ui-num">{{ product.quantity }}× {{ product.code }}</strong><span>{{ product.brand }} {{ product.name }}</span></div>
+                </div>
+              </td>
+              <td>
+                <div class="daily-list" *ngIf="row.payments.length > 0; else noPayments">
+                  <div *ngFor="let payment of row.payments">
+                    <div class="daily-pay"><strong>{{ f.paymentMethodLabel(payment) }}</strong><strong class="ui-num" *ngIf="f.hasCombinedPayments(row.payments)">{{ payment.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></div>
+                    <span>{{ payment.reference ? 'Ref. ' + payment.reference : 'Sin referencia' }}</span>
+                  </div>
+                </div>
+                <ng-template #noPayments><span class="daily-empty">Sin pago registrado</span></ng-template>
+              </td>
+              <td>
+                <div class="daily-list" *ngIf="row.tradeIns.length > 0; else noTradeIn">
+                  <div *ngFor="let tradeIn of row.tradeIns"><strong class="ui-num">{{ tradeIn.quantity }}× {{ tradeIn.code }}</strong><span>{{ tradeIn.brand }} {{ tradeIn.name }}</span><small class="ui-num">{{ tradeIn.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</small></div>
+                </div>
+                <ng-template #noTradeIn><span class="daily-empty">Sin canje</span></ng-template>
+              </td>
+              <td>
+                <span class="ui-badge" [class.ui-badge--success]="row.statusCode === 2" [class.ui-badge--brand]="row.statusCode === 1">{{ f.statusLabel(row) }}</span>
+              </td>
+              <td class="is-num rep-main">{{ row.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr *ngIf="f.visibleTotals as totals">
+              <td class="rep-sticky">Total</td><td>{{ totals.salesCount }} ventas</td><td>{{ totals.unitsSold }} u</td><td></td><td>{{ totals.salesWithTradeIn }} con canje</td><td></td>
+              <td class="is-num">{{ totals.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="rep-notes">
+        <p>{{ f.filteredRows.length }} de {{ f.data.rows.length }} ventas visibles. La búsqueda filtra en pantalla: los totales salen de las ventas visibles.</p>
+      </div>
+    </ng-container>
+  </ui-card>
+</main>

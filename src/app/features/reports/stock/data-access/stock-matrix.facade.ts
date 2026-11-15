@@ -1,26 +1,21 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Injectable } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import { ReportService } from '../../../core/services/report.service';
-import { BranchService } from '../../../core/services/branch.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { BranchResponse } from '../../../core/models/branch.models';
-import { StockMatrixResponse, StockMatrixRow } from '../../../core/models/report.models';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
-import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
-import { PdfLayoutService, PdfTableColumn } from '../../../shared/services/pdf-layout.service';
+import { ReportService } from '../../../../core/services/report.service';
+import { BranchService } from '../../../../core/services/branch.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { BranchResponse } from '../../../../core/models/branch.models';
+import { StockMatrixResponse, StockMatrixRow } from '../../../../core/models/report.models';
+import { SearchableSelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
+import { PdfBrandingService } from '../../../../shared/services/pdf-branding.service';
+import { PdfLayoutService, PdfTableColumn } from '../../../../shared/services/pdf-layout.service';
 
-@Component({
-  selector: 'app-stock-matrix-report',
-  standalone: true,
-  imports: [CommonModule, FormsModule, SearchableSelectComponent],
-  templateUrl: './stock-matrix.component.html',
-  styleUrls: ['../reports.shared.css', './stock-matrix.component.css']
-})
-export class StockMatrixComponent implements OnInit {
+/**
+ * Estado y reglas del reporte Stock por sucursal: carga, búsqueda, filtros, totales y exportaciones. Movido tal cual desde StockMatrixComponent.
+ */
+@Injectable()
+export class StockMatrixFacade {
   loading = false;
   data: StockMatrixResponse | null = null;
   search = '';
@@ -39,7 +34,7 @@ export class StockMatrixComponent implements OnInit {
 
   get branchOptions(): SearchableSelectOption[] { return this.branches.map(b => ({ value: b.id, label: b.name })); }
 
-  ngOnInit(): void {
+  init(): void {
     this.branchService.listBranches().subscribe({
       next: branches => this.branches = branches,
       error: () => this.branches = []

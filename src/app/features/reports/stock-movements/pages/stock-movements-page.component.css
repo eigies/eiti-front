@@ -1,0 +1,7 @@
+.smv-table { min-width: 860px; }
+.smv-date { white-space: nowrap; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.smv-product { display: grid; gap: 2px; }
+.smv-product span { font-size: 13px; color: var(--text-3); }
+.smv-doc { color: var(--text-2); }
+.sm-in { color: var(--success-text, var(--success)); }
+.sm-out { color: var(--danger-text, var(--danger)); }

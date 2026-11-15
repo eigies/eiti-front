@@ -1,23 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
-import { BranchResponse } from '../../../core/models/branch.models';
-import { StockMatrixResponse } from '../../../core/models/report.models';
-import { BranchService } from '../../../core/services/branch.service';
-import { ReportService } from '../../../core/services/report.service';
-import { PdfBrandingService } from '../../../shared/services/pdf-branding.service';
-import { PdfLayoutService } from '../../../shared/services/pdf-layout.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { StockMatrixComponent } from './stock-matrix.component';
+import { BranchResponse } from '../../../../core/models/branch.models';
+import { StockMatrixResponse } from '../../../../core/models/report.models';
+import { BranchService } from '../../../../core/services/branch.service';
+import { ReportService } from '../../../../core/services/report.service';
+import { PdfBrandingService } from '../../../../shared/services/pdf-branding.service';
+import { PdfLayoutService } from '../../../../shared/services/pdf-layout.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { StockMatrixFacade } from '../data-access/stock-matrix.facade';
+import { StockMatrixPageComponent } from './stock-matrix-page.component';
 
-describe('StockMatrixComponent · sucursal', () => {
-  let fixture: ComponentFixture<StockMatrixComponent>;
+describe('StockMatrixPage · sucursal', () => {
+  let fixture: ComponentFixture<StockMatrixPageComponent>;
   let reports: jasmine.SpyObj<ReportService>;
 
   function render(branches: Partial<BranchResponse>[]): void {
     reports = jasmine.createSpyObj<ReportService>('ReportService', ['stockMatrix']);
     reports.stockMatrix.and.returnValue(of({ branches: [{ id: 'b-1', name: 'Mataderos' }], rows: [] }));
     TestBed.configureTestingModule({
-      imports: [StockMatrixComponent],
+      imports: [StockMatrixPageComponent],
       providers: [
         { provide: ReportService, useValue: reports },
         { provide: BranchService, useValue: { listBranches: () => of(branches) } },
@@ -26,7 +27,7 @@ describe('StockMatrixComponent · sucursal', () => {
         { provide: PdfLayoutService, useValue: {} }
       ]
     });
-    fixture = TestBed.createComponent(StockMatrixComponent);
+    fixture = TestBed.createComponent(StockMatrixPageComponent);
     fixture.detectChanges();
   }
 
@@ -39,25 +40,25 @@ describe('StockMatrixComponent · sucursal', () => {
   it('elegir una sucursal la pide al reporte', () => {
     render([]);
 
-    fixture.componentInstance.selectBranch('b-1');
+    fixture.componentInstance.facade.selectBranch('b-1');
 
     expect(reports.stockMatrix.calls.mostRecent().args[0]).toBe('b-1');
   });
 
   it('Actualizar mantiene la sucursal elegida', () => {
     render([]);
-    fixture.componentInstance.selectBranch('b-1');
+    fixture.componentInstance.facade.selectBranch('b-1');
 
-    fixture.componentInstance.load();
+    fixture.componentInstance.facade.load();
 
     expect(reports.stockMatrix.calls.mostRecent().args[0]).toBe('b-1');
   });
 
   it('quitar la sucursal vuelve a todas', () => {
     render([]);
-    fixture.componentInstance.selectBranch('b-1');
+    fixture.componentInstance.facade.selectBranch('b-1');
 
-    fixture.componentInstance.selectBranch(null);
+    fixture.componentInstance.facade.selectBranch(null);
 
     expect(reports.stockMatrix.calls.mostRecent().args[0]).toBeUndefined();
   });
@@ -68,20 +69,20 @@ describe('StockMatrixComponent · sucursal', () => {
     const fast = new Subject<StockMatrixResponse>();
     reports.stockMatrix.and.returnValues(slow, fast);
 
-    fixture.componentInstance.selectBranch('b-1');
-    fixture.componentInstance.selectBranch('b-2');
+    fixture.componentInstance.facade.selectBranch('b-1');
+    fixture.componentInstance.facade.selectBranch('b-2');
     fast.next({ branches: [{ id: 'b-2', name: 'San Cristobal' }], rows: [] });
     slow.next({ branches: [{ id: 'b-1', name: 'Mataderos' }], rows: [] });
 
-    expect(fixture.componentInstance.data?.branches[0].id).toBe('b-2');
+    expect(fixture.componentInstance.facade.data?.branches[0].id).toBe('b-2');
   });
 
   it('la sucursal cuenta como filtro activo', () => {
     render([]);
 
-    fixture.componentInstance.selectBranch('b-1');
+    fixture.componentInstance.facade.selectBranch('b-1');
 
-    expect(fixture.componentInstance.hasActiveFilters).toBeTrue();
+    expect(fixture.componentInstance.facade.hasActiveFilters).toBeTrue();
   });
 
   it('ofrece el filtro cuando hay más de una sucursal', () => {
