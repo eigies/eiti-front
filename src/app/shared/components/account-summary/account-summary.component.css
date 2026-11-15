@@ -1,13 +1,14 @@
-.as { display: grid; grid-template-columns: 440px minmax(0, 1fr); gap: var(--space-5); align-items: stretch; }
+.as { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: var(--space-5); align-items: stretch; }
 .as__ticket { gap: 6px; }
 .as__ticket ::ng-deep .ui-ticket__figure { font-size: 48px; line-height: 54px; }
 .as__hint { font-size: 14px; color: var(--text-2); }
-.as__card { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.as__card { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); container-type: inline-size; }
 .as__cell { display: grid; gap: 4px; align-content: center; padding: 20px 22px; min-width: 0; }
 .as__cell + .as__cell { border-left: 1px solid var(--border); }
-.as__value { font-size: 22px; line-height: 28px; font-weight: 600; overflow-wrap: anywhere; }
+.as__value { font-size: clamp(16px, 3.2cqi, 22px); line-height: 28px; font-weight: 600; white-space: nowrap; }
 .as__value--paid { color: var(--success); }
 .as__value--zero { color: var(--text-3); }
 .as__meta { font-size: 13px; color: var(--text-3); }
 @media (max-width: 1100px) { .as { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .as__card { grid-template-columns: 1fr; } .as__cell + .as__cell { border-left: 0; border-top: 1px solid var(--border); } }
+@media (max-width: 640px) { .as__value { font-size: 20px; } }
