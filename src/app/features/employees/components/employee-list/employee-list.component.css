@@ -1,0 +1,12 @@
+:host { display: block; }
+.emp-scroll { overflow-x: auto; }
+.emp-table { min-width: 620px; }
+.emp-table th:first-child, .emp-table th:last-child { border-radius: 0; }
+.emp-table tbody tr:last-child td { border-bottom: 0; }
+.emp-who { display: flex; align-items: center; gap: 12px; }
+.emp-sub { display: block; font-size: 13px; line-height: 18px; color: var(--text-3); }
+.emp-period { font-size: 14px; }
+.emp-muted { color: var(--text-3); }
+.emp-actions { text-align: right; }
+.emp-actions .ui-btn { min-height: 40px; }
+.emp-actions .ui-btn svg { width: 16px; height: 16px; }

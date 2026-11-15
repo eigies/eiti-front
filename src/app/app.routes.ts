@@ -15,19 +15,19 @@ export const routes: Routes = [
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.salesInvoice },
                 loadComponent: () =>
-                    import('./features/fiscal-settings/fiscal-settings.component').then(m => m.FiscalSettingsComponent)
+                    import('./features/fiscal-settings/pages/fiscal-settings-page.component').then(m => m.FiscalSettingsPageComponent)
             },
             {
                 path: 'branches',
                 canActivate: [authGuard],
                 loadComponent: () =>
-                    import('./features/branches/branches.component').then(m => m.BranchesComponent)
+                    import('./features/branches/pages/branches-page.component').then(m => m.BranchesPageComponent)
             },
             {
                 path: 'company',
                 canActivate: [authGuard],
                 loadComponent: () =>
-                    import('./features/companies/company.component').then(m => m.CompanyComponent)
+                    import('./features/companies/pages/company-page.component').then(m => m.CompanyPageComponent)
             },
             {
                 path: 'users',
@@ -41,7 +41,7 @@ export const routes: Routes = [
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.payrollManage },
                 loadComponent: () =>
-                    import('./features/employees/employees.component').then(m => m.EmployeesComponent)
+                    import('./features/employees/pages/employees-page.component').then(m => m.EmployeesPageComponent)
             },
             {
                 path: 'payroll/deduction-concepts',
@@ -83,13 +83,13 @@ export const routes: Routes = [
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.reportsAudit },
                 loadComponent: () =>
-                    import('./features/audit/audit.component').then(m => m.AuditComponent)
+                    import('./features/audit/pages/audit-page.component').then(m => m.AuditPageComponent)
             },
             {
                 path: 'profile',
                 canActivate: [authGuard],
                 loadComponent: () =>
-                    import('./features/profile/profile.component').then(m => m.ProfileComponent)
+                    import('./features/profile/pages/profile-page.component').then(m => m.ProfilePageComponent)
             }
         ]
     },

@@ -325,10 +325,14 @@ describe('UserAccessListComponent', () => {
       .toBeLessThanOrEqual(row.getBoundingClientRect().right + 0.5);
   });
 
-  it('computes two responsive columns at 768px and one at 375px', async () => {
+  it('keeps the table at 768px and computes two card columns at 640px and one at 375px', async () => {
     await setViewport(768);
     let row = fixture.nativeElement.querySelector('.user-list__row') as HTMLElement;
-    expect(fixture.nativeElement.clientWidth).toBe(768);
+    expect(columnCount(row)).toBe(6);
+
+    await setViewport(640);
+    row = fixture.nativeElement.querySelector('.user-list__row') as HTMLElement;
+    expect(fixture.nativeElement.clientWidth).toBe(640);
     expect(columnCount(row)).toBe(2);
     expect(minimumPixelHeight(
       fixture.nativeElement.querySelector('.user-list__open') as HTMLElement

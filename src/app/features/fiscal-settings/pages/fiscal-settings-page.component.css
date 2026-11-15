@@ -1,0 +1,13 @@
+.fiscal__loading { display: grid; gap: 12px; }
+.fiscal__facts { gap: 10px; font-size: 14px; }
+.fiscal__cuit { font-weight: 700; }
+.fiscal__cert { color: var(--text-2); }
+.fiscal__cert--soon { color: var(--warning); font-weight: 600; }
+.fiscal__pos { gap: 0; }
+.fiscal__pos-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 96px; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+.fiscal__pos-row:first-child { border-top: 0; padding-top: 0; }
+.fiscal__pos-row--busy { opacity: .6; }
+.fiscal__pos-number { font: 700 15px/22px var(--font-mono); }
+.fiscal__pos-add { padding-top: 12px; }
+.fiscal__empty { margin: 0 0 12px; color: var(--text-2); font-size: 14px; }
+@media (max-width: 560px) { .fiscal__pos-row { grid-template-columns: 90px minmax(0, 1fr); } .fiscal__pos-row > :last-child { grid-column: 1 / -1; justify-self: start; } }
