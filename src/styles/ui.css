@@ -238,3 +238,4 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
 /* Contenedor de página (EITI 2): ancho cómodo y aire parejo en todas las pantallas. */
 .ui-page { display: grid; gap: var(--space-6); width: 100%; max-width: 1320px; margin: 0 auto; padding: 28px 32px 48px; box-sizing: border-box; }
 @media (max-width: 720px) { .ui-page { padding: 20px 16px 40px; gap: var(--space-5); } }
+.ui-table th.is-num { font-family: var(--font-sans); font-weight: 600; }
