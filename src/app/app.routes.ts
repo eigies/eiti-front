@@ -6,6 +6,94 @@ import { PermissionCodes } from './core/models/permission.models';
 export const routes: Routes = [
     { path: '', redirectTo: 'login', pathMatch: 'full' },
     {
+        // Administración: menú propio a la izquierda; cada pantalla conserva su ruta y sus permisos.
+        path: '',
+        loadComponent: () => import('./features/admin/admin-shell.component').then(m => m.AdminShellComponent),
+        children: [
+            {
+                path: 'fiscal-settings',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.salesInvoice },
+                loadComponent: () =>
+                    import('./features/fiscal-settings/fiscal-settings.component').then(m => m.FiscalSettingsComponent)
+            },
+            {
+                path: 'branches',
+                canActivate: [authGuard],
+                loadComponent: () =>
+                    import('./features/branches/branches.component').then(m => m.BranchesComponent)
+            },
+            {
+                path: 'company',
+                canActivate: [authGuard],
+                loadComponent: () =>
+                    import('./features/companies/company.component').then(m => m.CompanyComponent)
+            },
+            {
+                path: 'users',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.usersManage },
+                loadComponent: () =>
+                    import('./features/users/users.component').then(m => m.UsersComponent)
+            },
+            {
+                path: 'employees',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.payrollManage },
+                loadComponent: () =>
+                    import('./features/employees/employees.component').then(m => m.EmployeesComponent)
+            },
+            {
+                path: 'payroll/deduction-concepts',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.payrollManage },
+                loadComponent: () =>
+                    import('./features/payroll/deduction-concepts/deduction-concepts.component').then(m => m.DeductionConceptsComponent)
+            },
+            {
+                path: 'payroll/advances',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.payrollAdvancesManage },
+                loadComponent: () =>
+                    import('./features/payroll/advances/advances.component').then(m => m.AdvancesComponent)
+            },
+            {
+                path: 'payroll/liquidations',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.payrollManage },
+                loadComponent: () =>
+                    import('./features/payroll/liquidations/liquidations.component').then(m => m.LiquidationsComponent)
+            },
+            {
+                path: 'payroll/bonus-concepts',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.payrollManage },
+                loadComponent: () =>
+                    import('./features/payroll/bonus-concepts/bonus-concepts.component').then(m => m.BonusConceptsComponent)
+            },
+            {
+                path: 'payroll/bonuses',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.payrollManage },
+                loadComponent: () =>
+                    import('./features/payroll/bonuses/bonuses.component').then(m => m.BonusesComponent)
+            },
+            {
+                path: 'auditoria',
+                canActivate: [authGuard, permissionGuard],
+                data: { permission: PermissionCodes.reportsAudit },
+                loadComponent: () =>
+                    import('./features/audit/audit.component').then(m => m.AuditComponent)
+            },
+            {
+                path: 'profile',
+                canActivate: [authGuard],
+                loadComponent: () =>
+                    import('./features/profile/profile.component').then(m => m.ProfileComponent)
+            }
+        ]
+    },
+    {
         path: 'login',
         loadComponent: () =>
             import('./features/auth/login/login.component').then(m => m.LoginComponent)
@@ -33,19 +121,6 @@ export const routes: Routes = [
             import('./features/customers/pages/customers-page.component').then(m => m.CustomersPageComponent)
     },
     {
-        path: 'fiscal-settings',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.salesInvoice },
-        loadComponent: () =>
-            import('./features/fiscal-settings/fiscal-settings.component').then(m => m.FiscalSettingsComponent)
-    },
-    {
-        path: 'branches',
-        canActivate: [authGuard],
-        loadComponent: () =>
-            import('./features/branches/branches.component').then(m => m.BranchesComponent)
-    },
-    {
         path: 'products/new',
         canActivate: [authGuard],
         loadComponent: () =>
@@ -62,12 +137,6 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadComponent: () =>
             import('./features/products/pages/products-page.component').then(m => m.ProductsPageComponent)
-    },
-    {
-        path: 'company',
-        canActivate: [authGuard],
-        loadComponent: () =>
-            import('./features/companies/company.component').then(m => m.CompanyComponent)
     },
     {
         path: 'sales',
@@ -119,20 +188,6 @@ export const routes: Routes = [
             import('./features/cash/cash-drawer-assignment/cash-drawer-assignment.component').then(m => m.CashDrawerAssignmentComponent)
     },
     {
-        path: 'users',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.usersManage },
-        loadComponent: () =>
-            import('./features/users/users.component').then(m => m.UsersComponent)
-    },
-    {
-        path: 'employees',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.payrollManage },
-        loadComponent: () =>
-            import('./features/employees/employees.component').then(m => m.EmployeesComponent)
-    },
-    {
         path: 'banks',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.banksManage },
@@ -147,53 +202,11 @@ export const routes: Routes = [
             import('./features/quotes/pages/quotes-page.component').then(m => m.QuotesPageComponent)
     },
     {
-        path: 'payroll/deduction-concepts',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.payrollManage },
-        loadComponent: () =>
-            import('./features/payroll/deduction-concepts/deduction-concepts.component').then(m => m.DeductionConceptsComponent)
-    },
-    {
-        path: 'payroll/advances',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.payrollAdvancesManage },
-        loadComponent: () =>
-            import('./features/payroll/advances/advances.component').then(m => m.AdvancesComponent)
-    },
-    {
-        path: 'payroll/liquidations',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.payrollManage },
-        loadComponent: () =>
-            import('./features/payroll/liquidations/liquidations.component').then(m => m.LiquidationsComponent)
-    },
-    {
-        path: 'payroll/bonus-concepts',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.payrollManage },
-        loadComponent: () =>
-            import('./features/payroll/bonus-concepts/bonus-concepts.component').then(m => m.BonusConceptsComponent)
-    },
-    {
-        path: 'payroll/bonuses',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.payrollManage },
-        loadComponent: () =>
-            import('./features/payroll/bonuses/bonuses.component').then(m => m.BonusesComponent)
-    },
-    {
         path: 'cheques',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.chequesManage },
         loadComponent: () =>
             import('./features/cheques/pages/cheques-page.component').then(m => m.ChequesPageComponent)
-    },
-    {
-        path: 'auditoria',
-        canActivate: [authGuard, permissionGuard],
-        data: { permission: PermissionCodes.reportsAudit },
-        loadComponent: () =>
-            import('./features/audit/audit.component').then(m => m.AuditComponent)
     },
     {
         path: 'reportes',
@@ -295,12 +308,6 @@ export const routes: Routes = [
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsStock },
         loadComponent: () => import('./features/reports/stock-movements/stock-movements-report.component').then(m => m.StockMovementsReportComponent)
-    },
-    {
-        path: 'profile',
-        canActivate: [authGuard],
-        loadComponent: () =>
-            import('./features/profile/profile.component').then(m => m.ProfileComponent)
     },
     {
         path: 'transport',
