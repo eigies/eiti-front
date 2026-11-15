@@ -10,7 +10,7 @@ import { ToastService } from '../../../shared/services/toast.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './forgot-password.component.html',
-  styleUrls: ['./forgot-password.component.css']
+  styleUrls: ['../auth.shared.css']
 })
 export class ForgotPasswordComponent {
   step: 1 | 2 = 1;

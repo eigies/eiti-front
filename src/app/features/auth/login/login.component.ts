@@ -12,7 +12,7 @@ import { PermissionCodes } from '../../../core/models/permission.models';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['../auth.shared.css']
 })
 export class LoginComponent {
   form: FormGroup;
