@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { BankService } from '../../core/services/bank.service';
-import { ChequeService } from '../../core/services/cheque.service';
-import { ChequeListItem, ChequeOrigen, ChequeStatus } from '../../core/models/cheque.models';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { ChequesComponent } from './cheques.component';
+import { BankService } from '../../../core/services/bank.service';
+import { ChequeService } from '../../../core/services/cheque.service';
+import { ChequeListItem, ChequeOrigen, ChequeStatus } from '../../../core/models/cheque.models';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { ChequesPageComponent } from './cheques-page.component';
 
 // La pantalla muestra los cheques de terceros y los propios: un propio se reconoce y muestra su proveedor.
-describe('ChequesComponent · origen', () => {
+describe('ChequesPageComponent · origen', () => {
   const third: ChequeListItem = {
     id: 't1', numero: '111', bankName: 'BBVA', titular: 'Cliente SA', monto: 100, fechaVencimiento: '2026-12-01',
     estado: ChequeStatus.EnCartera, estadoName: 'EnCartera', saleCode: 'MAT-1', saleType: 'Regular',
@@ -20,7 +20,7 @@ describe('ChequesComponent · origen', () => {
     origen: ChequeOrigen.Propio, supplierName: 'Distribuidora Norte'
   };
 
-  let fixture: ComponentFixture<ChequesComponent>;
+  let fixture: ComponentFixture<ChequesPageComponent>;
   let cheques: jasmine.SpyObj<ChequeService>;
 
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe('ChequesComponent · origen', () => {
     banks.listBanks.and.returnValue(of([]));
 
     TestBed.configureTestingModule({
-      imports: [ChequesComponent],
+      imports: [ChequesPageComponent],
       providers: [
         { provide: ChequeService, useValue: cheques },
         { provide: BankService, useValue: banks },
@@ -38,20 +38,20 @@ describe('ChequesComponent · origen', () => {
         { provide: ConfirmationService, useValue: jasmine.createSpyObj('ConfirmationService', ['confirm']) }
       ]
     });
-    fixture = TestBed.createComponent(ChequesComponent);
+    fixture = TestBed.createComponent(ChequesPageComponent);
     fixture.detectChanges();
   });
 
   it('filtra por origen', () => {
-    fixture.componentInstance.filterForm.patchValue({ origen: ChequeOrigen.Propio });
+    fixture.componentInstance.facade.filterForm.patchValue({ origen: ChequeOrigen.Propio });
 
-    fixture.componentInstance.applyFilters();
+    fixture.componentInstance.facade.applyFilters();
 
     expect(cheques.listCheques.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ origen: ChequeOrigen.Propio }));
   });
 
   it('el filtro ofrece Terceros y Propios', () => {
-    expect(fixture.componentInstance.origenOptions.map(o => o.label)).toEqual(['Terceros', 'Propios']);
+    expect(fixture.componentInstance.facade.origenOptions.map(o => o.label)).toEqual(['Terceros', 'Propios']);
   });
 
   it('un cheque propio se reconoce y muestra su proveedor', () => {
@@ -67,7 +67,7 @@ describe('ChequesComponent · origen', () => {
   it('muestra el día del vencimiento, sin correrlo por el huso horario', () => {
     cheques.listCheques.and.returnValue(of([{ ...own, fechaVencimiento: '2026-11-03T00:00:00Z' }]));
 
-    fixture.componentInstance.loadCheques();
+    fixture.componentInstance.facade.loadCheques();
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('tr.data-row')?.textContent).toContain('03/11/2026');
@@ -78,26 +78,26 @@ describe('ChequesComponent · origen', () => {
     const today = new Date().toLocaleDateString('en-CA');
     const cheque = { ...own, fechaVencimiento: `${today}T00:00:00Z` };
 
-    expect(fixture.componentInstance.isUrgent(cheque)).toBeTrue();
-    expect(fixture.componentInstance.urgencyLabel(cheque)).toBe('Vence hoy');
+    expect(fixture.componentInstance.facade.isUrgent(cheque)).toBeTrue();
+    expect(fixture.componentInstance.facade.urgencyLabel(cheque)).toBe('Vence hoy');
   });
 
   // No hay estado "debitado": si contara, los ya pagados inflarían Urgentes para siempre.
   it('un cheque propio con la fecha ya pasada no queda urgente', () => {
     const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
 
-    expect(fixture.componentInstance.isUrgent({ ...own, fechaVencimiento: `${yesterday}T00:00:00Z` })).toBeFalse();
+    expect(fixture.componentInstance.facade.isUrgent({ ...own, fechaVencimiento: `${yesterday}T00:00:00Z` })).toBeFalse();
   });
 
   it('un cheque de tercero ya entregado no es urgente', () => {
     const today = new Date().toLocaleDateString('en-CA');
     const endorsed = { ...third, estado: ChequeStatus.Entregado, fechaVencimiento: `${today}T00:00:00Z` };
 
-    expect(fixture.componentInstance.isUrgent(endorsed)).toBeFalse();
+    expect(fixture.componentInstance.facade.isUrgent(endorsed)).toBeFalse();
   });
 
   it('el detalle de un cheque propio explica cómo anularlo, no dice que terminó', () => {
-    const label = fixture.componentInstance.terminalStateLabel({ origen: ChequeOrigen.Propio, estado: ChequeStatus.Entregado });
+    const label = fixture.componentInstance.facade.terminalStateLabel({ origen: ChequeOrigen.Propio, estado: ChequeStatus.Entregado });
 
     expect(label).toContain('pago');
     expect(label).not.toContain('terminal');
@@ -107,7 +107,7 @@ describe('ChequesComponent · origen', () => {
     const today = new Date().toLocaleDateString('en-CA');
     const cheque = { ...third, fechaVencimiento: `${today}T00:00:00Z` };
 
-    expect(fixture.componentInstance.isUrgent(cheque)).toBeTrue();
-    expect(fixture.componentInstance.urgencyLabel(cheque)).toBe('Vence hoy');
+    expect(fixture.componentInstance.facade.isUrgent(cheque)).toBeTrue();
+    expect(fixture.componentInstance.facade.urgencyLabel(cheque)).toBe('Vence hoy');
   });
 });

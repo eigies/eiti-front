@@ -137,7 +137,7 @@ export const routes: Routes = [
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.banksManage },
         loadComponent: () =>
-            import('./features/banks/banks.component').then(m => m.BanksComponent)
+            import('./features/banks/pages/banks-page.component').then(m => m.BanksPageComponent)
     },
     {
         path: 'quotes',
@@ -186,7 +186,7 @@ export const routes: Routes = [
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.chequesManage },
         loadComponent: () =>
-            import('./features/cheques/cheques.component').then(m => m.ChequesComponent)
+            import('./features/cheques/pages/cheques-page.component').then(m => m.ChequesPageComponent)
     },
     {
         path: 'auditoria',

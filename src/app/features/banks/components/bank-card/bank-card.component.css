@@ -1,0 +1,15 @@
+.bc { display: grid; gap: var(--space-4); padding: var(--space-4) var(--space-5); }
+.bc--off .bc__name { color: var(--text-3); }
+.bc__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.bc__who { display: grid; gap: var(--space-2); }
+.bc__name { font: 600 17px/24px var(--font-sans); }
+.bc__uses { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.bc__none { font-size: 14px; color: var(--text-3); }
+.bc__actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.bc__chev { transition: transform .15s; }
+.bc__chev--open { transform: rotate(180deg); }
+.bc__plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.bc__plan { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-sunken); }
+.bc__plan--on { border-color: var(--mov-indigo); background: var(--mov-indigo-soft); }
+.bc__plan-head { display: flex; justify-content: space-between; align-items: center; }
+.bc__plan-switch { min-height: 32px; }

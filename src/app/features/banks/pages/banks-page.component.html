@@ -1,0 +1,19 @@
+<main class="ui-page banks" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div><h1>Bancos</h1><p>Bancos para tarjetas, transferencias y cheques, con sus planes de cuotas.</p></div>
+    <button uiBtn="primary" type="button" (click)="createOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo banco</button>
+  </header>
+
+  <ui-empty *ngIf="f.banks.length === 0" icon="list" heading="Todavía no hay bancos" text="Cargá los bancos con los que operás para usarlos en cobros y pagos."></ui-empty>
+
+  <div class="banks__list">
+    <app-bank-card *ngFor="let view of f.banks; trackBy: trackById"
+      [bank]="view.bank" [active]="view.bank.active" [expanded]="view.expanded" [planForm]="f.planForms.get(view.bank.id) ?? null"
+      [cuotas]="f.VALID_CUOTAS" [savingPlan]="f.savingPlan"
+      (toggleExpand)="f.toggleExpand(view)" (toggleActive)="f.toggleActive(view)" (edit)="f.startEdit(view)" (savePlan)="f.savePlan(view.bank.id, $event)">
+    </app-bank-card>
+  </div>
+
+  <app-bank-form-modal *ngIf="createOpen" [form]="f.createForm" [saving]="f.savingCreate" (submitted)="f.submitCreate()" (closed)="createOpen = false"></app-bank-form-modal>
+  <app-bank-form-modal *ngIf="f.editingBank" [form]="f.editForm" [editing]="true" [saving]="f.savingEdit" (submitted)="f.submitEdit()" (closed)="f.cancelEdit()"></app-bank-form-modal>
+</main>

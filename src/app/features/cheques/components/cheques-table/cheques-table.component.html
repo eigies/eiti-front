@@ -1,0 +1,22 @@
+<ui-table-wrap>
+  <table class="ui-table cht">
+    <thead><tr><th>Cheque</th><th>Banco y titular</th><th class="is-num">Monto</th><th>Vencimiento</th><th>Estado</th><th>Venta / proveedor</th></tr></thead>
+    <tbody>
+      <tr class="data-row is-clickable" *ngFor="let c of cheques; trackBy: trackById" (click)="open.emit(c)">
+        <td><span class="ui-table__main ui-num">#{{ c.numero }}</span><span class="cht__hint">{{ c.origen === propio ? 'Cheque propio' : 'Cheque recibido' }}</span></td>
+        <td><span class="ui-table__main">{{ c.bankName }}</span><span class="cht__hint">{{ c.titular }}</span></td>
+        <td class="is-num cht__amount">{{ c.monto | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+        <td>
+          <span class="ui-num cht__due">{{ dateLabelFn(c.fechaVencimiento) }}</span>
+          <span class="ui-badge ui-badge--warning cht__urgent" *ngIf="isUrgentFn(c)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ urgencyLabelFn(c) }}</span>
+        </td>
+        <td><span [class]="badge(c.estado)">{{ statusLabels[c.estado] || c.estado }}</span></td>
+        <td>
+          <span *ngIf="c.saleCode || c.supplierName; else noSale">{{ c.saleCode || c.supplierName }}</span>
+          <ng-template #noSale><span class="cht__hint">Sin venta asociada</span></ng-template>
+          <span class="ui-badge cht__type" *ngIf="c.saleType">{{ c.saleType }}</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</ui-table-wrap>

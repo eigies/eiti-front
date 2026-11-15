@@ -1,24 +1,24 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { BankService } from '../../core/services/bank.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { BankResponse } from '../../core/models/bank.models';
+import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { BankService } from '../../../core/services/bank.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { BankResponse } from '../../../core/models/bank.models';
 
-type BankView = {
+export type BankView = {
   bank: BankResponse;
   expanded: boolean;
   editingPlan: boolean;
 };
 
-@Component({
-  selector: 'app-banks',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './banks.component.html',
-  styleUrls: ['./banks.component.css']
-})
-export class BanksComponent implements OnInit {
+/**
+ * Estado y reglas de bancos (usos, estado y planes de cuotas). Movido tal cual desde BanksComponent.
+ */
+@Injectable()
+export class BanksFacade {
+  /** Avisa a la pantalla que el alta terminó bien, para cerrar el popup. */
+  readonly created$ = new Subject<void>();
+
   createForm: FormGroup;
   editForm: FormGroup;
   planForms: Map<number, FormGroup> = new Map();
@@ -50,7 +50,8 @@ export class BanksComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void { this.loadBanks(); }
+  /** Arranque (antes ngOnInit). */
+  init(): void { this.loadBanks(); }
 
   loadBanks(): void {
     this.bankService.listBanks(false).subscribe({
@@ -129,6 +130,7 @@ export class BanksComponent implements OnInit {
         this.savingCreate = false;
         this.loadBanks();
         this.toast.success('Banco creado');
+        this.created$.next();
       },
       error: () => { this.savingCreate = false; this.toast.error('Error al crear banco'); }
     });
@@ -183,5 +185,4 @@ export class BanksComponent implements OnInit {
     return (this.planForms.get(bankId)?.get(controlName) ?? new FormControl()) as FormControl;
   }
 
-  trackById(_index: number, view: BankView): number { return view.bank.id; }
 }

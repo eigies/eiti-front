@@ -1,0 +1,36 @@
+<ui-modal eyebrow="Detalle del cheque" [heading]="cheque ? 'Cheque #' + cheque.numero : 'Cargando...'" width="640px" (closed)="closed.emit()">
+  <div class="cdm__loading" *ngIf="loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+  <div class="cdm" *ngIf="!loading && cheque as c">
+    <div class="cdm__state">
+      <span [class]="badge(c.estado)">{{ statusLabels[c.estado] || c.estado }}</span>
+      <span class="cdm__origin">{{ c.origen === propio ? 'Cheque propio' : 'Cheque recibido' }}</span>
+    </div>
+
+    <article class="cdm__cheque" aria-label="Cheque">
+      <header class="cdm__top">
+        <div class="cdm__f"><span>Banco emisor</span><strong>{{ c.bankName }}</strong></div>
+        <div class="cdm__f cdm__f--num"><span>Nº</span><strong class="ui-num">{{ c.numero }}</strong></div>
+      </header>
+      <div class="cdm__row">
+        <div class="cdm__f"><span>Emisión</span><strong class="ui-num">{{ dateLabelFn(c.fechaEmision) }}</strong></div>
+        <div class="cdm__f"><span>Vencimiento</span><strong class="ui-num">{{ dateLabelFn(c.fechaVencimiento) }}</strong></div>
+        <div class="cdm__amount"><span>Monto</span><strong class="ui-num">{{ c.monto | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></div>
+      </div>
+      <div class="cdm__row">
+        <div class="cdm__f cdm__f--grow"><span>Titular</span><strong>{{ c.titular }}</strong></div>
+        <div class="cdm__f" *ngIf="c.cuitDni"><span>CUIT / DNI</span><strong class="ui-num">{{ c.cuitDni }}</strong></div>
+      </div>
+      <div class="cdm__row" *ngIf="c.supplierName || c.saleCode">
+        <div class="cdm__f cdm__f--grow" *ngIf="c.supplierName"><span>Proveedor</span><strong>{{ c.supplierName }}</strong></div>
+        <div class="cdm__f cdm__f--grow" *ngIf="c.saleCode"><span>Venta</span><strong>{{ c.saleCode }} ({{ c.saleType }})</strong></div>
+      </div>
+      <div class="cdm__f cdm__f--grow" *ngIf="c.notas"><span>Notas</span><strong>{{ c.notas }}</strong></div>
+    </article>
+
+    <p class="cdm__terminal" *ngIf="nextStates.length === 0">{{ terminalLabel }}</p>
+  </div>
+  <footer uiModalFoot class="ui-modal__foot cdm__foot" *ngIf="!loading && cheque && nextStates.length > 0">
+    <span class="cdm__foot-label">Cambiar estado</span>
+    <button *ngFor="let next of nextStates" [uiBtn]="$any(button(next))" type="button" [disabled]="updating" (click)="changeStatus.emit(next)">{{ statusLabels[next] }}</button>
+  </footer>
+</ui-modal>

@@ -1,0 +1,3 @@
+.bfm { display: grid; gap: var(--space-4); }
+.bfm__uses { display: grid; gap: var(--space-1); margin: 0; padding: 0; border: 0; }
+.bfm__uses legend { margin-bottom: var(--space-1); }

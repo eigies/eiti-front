@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ChequeService } from '../../core/services/cheque.service';
-import { BankService } from '../../core/services/bank.service';
-import { ToastService } from '../../shared/services/toast.service';
+import { Injectable } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { ChequeService } from '../../../core/services/cheque.service';
+import { BankService } from '../../../core/services/bank.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import {
   ChequeDetail,
   ChequeFilters,
@@ -13,20 +12,18 @@ import {
   CHEQUE_TRANSITIONS,
   ChequeOrigen,
   ChequeStatus
-} from '../../core/models/cheque.models';
-import { BankResponse } from '../../core/models/bank.models';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { formatLedgerDate } from '../../shared/utils/ledger-format.util';
+} from '../../../core/models/cheque.models';
+import { BankResponse } from '../../../core/models/bank.models';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { formatLedgerDate } from '../../../shared/utils/ledger-format.util';
 
-@Component({
-  selector: 'app-cheques',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SearchableSelectComponent],
-  templateUrl: './cheques.component.html',
-  styleUrls: ['./cheques.component.css']
-})
-export class ChequesComponent implements OnInit {
+/**
+ * Estado y reglas de la pantalla de cheques. Movido tal cual desde ChequesComponent:
+ * mismos filtros, llamadas, transiciones y mensajes.
+ */
+@Injectable()
+export class ChequesFacade {
   cheques: ChequeListItem[] = [];
   banks: BankResponse[] = [];
   loading = false;
@@ -108,7 +105,8 @@ export class ChequesComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
+  /** Arranque (antes ngOnInit). */
+  init(): void {
     this.loadBanks();
     this.loadCheques();
   }
@@ -241,5 +239,4 @@ export class ChequesComponent implements OnInit {
     return Math.ceil((dueDate.getTime() - today.getTime()) / 86400000);
   }
 
-  trackById(_: number, item: ChequeListItem): string { return item.id; }
 }
