@@ -292,6 +292,9 @@ button.ui-stat:disabled:hover { background: var(--surface-sunken); }
 .ui-table__sort span { color: var(--text-3); }
 .ui-table__sort.is-active span { color: var(--brand-text); }
 .ui-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Las tablas que se desplazan de costado son el bloque contenedor de sus textos ocultos (ui-sr-only):
+   si no, esos textos quedan fuera del desplazamiento y ensanchan la página en pantallas angostas. */
+.ui-table-wrap, .ui-table-scroll, .rep-scroll, .table-wrap { position: relative; }
 .ui-mov--lg { padding: 5px 12px 5px 10px; font-size: 14px; line-height: 20px; }
 .ui-page > * { min-width: 0; }
 
