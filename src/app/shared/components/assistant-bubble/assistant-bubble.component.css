@@ -46,12 +46,9 @@ button {
   border-radius: 50%;
   color: color-mix(in srgb, var(--amber) 90%, var(--text));
   background:
-    radial-gradient(circle at 33% 26%, color-mix(in srgb, white 16%, transparent), transparent 42%),
-    radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--amber) 15%, var(--bg-panel)), var(--bg-panel) 72%);
+    var(--surface);
   box-shadow:
-    0 18px 40px -20px rgba(0, 0, 0, .72),
-    0 5px 16px rgba(0, 0, 0, .2),
-    inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+    none;
   cursor: pointer;
   pointer-events: auto;
   transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
@@ -59,11 +56,8 @@ button {
 
 .assistant-fab:hover {
   border-color: color-mix(in srgb, var(--amber) 74%, var(--border-2));
-  transform: translateY(-2px);
   box-shadow:
-    0 22px 46px -20px rgba(0, 0, 0, .78),
-    0 6px 18px rgba(0, 0, 0, .24),
-    inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+    none;
 }
 
 .assistant-fab__glyph {
@@ -121,12 +115,12 @@ button {
   display: inline-block;
   padding: .42rem .8rem;
   border: 1px solid color-mix(in srgb, var(--amber) 38%, var(--border-2));
-  border-radius: 15px;
+  border-radius: var(--radius-md);
   color: var(--text);
   background: var(--bg-panel);
-  box-shadow: 0 14px 28px -16px rgba(0, 0, 0, .65);
+  box-shadow: none;
   font-family: var(--font-sans);
-  font-size: .72rem;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: .04em;
   white-space: nowrap;
@@ -166,16 +160,12 @@ button {
   min-height: 420px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--amber) 22%, var(--border));
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   color: var(--text);
   background:
-    radial-gradient(circle at 0 0, color-mix(in srgb, var(--amber) 8%, transparent), transparent 30%),
-    linear-gradient(145deg, color-mix(in srgb, white 2.5%, transparent), transparent 45%),
-    var(--bg-panel);
+    var(--surface);
   box-shadow:
-    0 34px 90px -30px rgba(0, 0, 0, .78),
-    0 12px 30px rgba(0, 0, 0, .24),
-    inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+    none;
   pointer-events: auto;
   font-optical-sizing: auto;
   text-rendering: optimizeLegibility;
@@ -203,7 +193,6 @@ button {
   padding: .85rem 1rem .8rem;
   border-bottom: 1px solid color-mix(in srgb, var(--amber) 13%, var(--border));
   background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
-  backdrop-filter: blur(14px);
 }
 
 .assistant-brand {
@@ -223,7 +212,7 @@ button {
   border-radius: 9px;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 8%, var(--bg));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+  box-shadow: none;
   transform-origin: center;
   animation: assistant-mark-in .42s cubic-bezier(.34, 1.56, .64, 1) both;
 }
@@ -323,8 +312,7 @@ button {
   border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
   border-radius: 50%;
   background:
-    radial-gradient(circle, color-mix(in srgb, var(--amber) 9%, transparent), transparent 63%),
-    var(--bg);
+    var(--surface);
 }
 
 .assistant-empty__signal::before,
@@ -366,21 +354,19 @@ button {
   height: .35rem;
   border-radius: 50%;
   background: var(--amber);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--amber) 65%, transparent);
+  box-shadow: none;
 }
 
-.assistant-empty__signal > span:nth-child(1) { top: .45rem; right: 1.1rem; }
-.assistant-empty__signal > span:nth-child(2) { right: .2rem; bottom: 1.5rem; opacity: .55; }
-.assistant-empty__signal > span:nth-child(3) { bottom: .55rem; left: 1.25rem; opacity: .3; }
+.assistant-empty__signal > span:nth-child(1) { top: .45rem; right: 1.1rem;}
+.assistant-empty__signal > span:nth-child(2) { right: .2rem; bottom: 1.5rem; opacity: .55;}
+.assistant-empty__signal > span:nth-child(3) { bottom: .55rem; left: 1.25rem; opacity: .3;}
 
 :host-context(body.theme-light) .assistant-empty__signal {
   border-color: color-mix(in srgb, var(--amber) 42%, var(--border));
   background:
-    radial-gradient(circle, color-mix(in srgb, var(--amber) 15%, transparent), transparent 64%),
-    color-mix(in srgb, var(--bg-panel) 72%, white);
+    var(--surface);
   box-shadow:
-    0 0 0 5px color-mix(in srgb, var(--amber) 5%, transparent),
-    0 12px 28px -20px color-mix(in srgb, var(--amber) 80%, transparent);
+    none;
 }
 
 :host-context(body.theme-light) .assistant-empty__signal::before {
@@ -417,7 +403,7 @@ button {
   margin: .55rem 0 0;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .92rem;
+  font-size: 15px;
   line-height: 1.45;
 }
 
@@ -441,7 +427,7 @@ button {
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 54%, transparent);
   font-family: var(--font-sans);
-  font-size: .88rem;
+  font-size: 15px;
   line-height: 1.28;
   text-align: left;
   cursor: pointer;
@@ -451,7 +437,7 @@ button {
 .assistant-suggestions button > span {
   color: color-mix(in srgb, var(--amber) 72%, var(--text-dim));
   font-family: var(--font-sans);
-  font-size: .64rem;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: .06em;
 }
@@ -503,9 +489,9 @@ button {
   gap: .5rem;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .64rem;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -601,9 +587,9 @@ button {
   color: var(--text);
 }
 
-.assistant-msg__content ::ng-deep h4 { font-size: 1.05rem; }
-.assistant-msg__content ::ng-deep h5 { font-size: 1rem; }
-.assistant-msg__content ::ng-deep h6 { font-size: .95rem; }
+.assistant-msg__content ::ng-deep h4 { font-size: 1.05rem;}
+.assistant-msg__content ::ng-deep h5 { font-size: 1rem;}
+.assistant-msg__content ::ng-deep h6 { font-size: 16px;}
 
 .assistant-msg__content ::ng-deep .assistant-table-wrap {
   overflow-x: auto;
@@ -612,7 +598,7 @@ button {
 
 .assistant-msg__content ::ng-deep table {
   border-collapse: collapse;
-  font-size: .9rem;
+  font-size: 15px;
 }
 
 .assistant-msg__content ::ng-deep th,
@@ -635,9 +621,9 @@ button {
 .assistant-msg--user .assistant-msg__bubble {
   padding: .75rem .9rem;
   border: 1px solid color-mix(in srgb, var(--amber) 27%, var(--border));
-  border-radius: 12px 12px 4px 12px;
+  border-radius: var(--radius-md) var(--radius-md) 4px var(--radius-md);
   background:
-    linear-gradient(110deg, color-mix(in srgb, var(--amber) 10%, var(--bg)), color-mix(in srgb, var(--amber) 4%, var(--bg)));
+    var(--surface);
 }
 
 .assistant-msg--bot {
@@ -649,9 +635,9 @@ button {
   max-width: 100%;
   padding: .8rem 1rem .8rem 1.05rem;
   border: 1px solid var(--border);
-  border-radius: 4px 12px 12px 12px;
+  border-radius: 4px var(--radius-md) var(--radius-md) var(--radius-md);
   background: color-mix(in srgb, var(--bg-elevated) 72%, var(--bg-panel));
-  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--amber) 72%, transparent);
+  box-shadow: none;
 }
 
 .assistant-typing {
@@ -678,19 +664,19 @@ button {
   animation: assistant-wave 1s ease-in-out infinite;
 }
 
-.assistant-typing__wave i:nth-child(1) { animation-delay: 0s; }
-.assistant-typing__wave i:nth-child(2) { animation-delay: .12s; }
-.assistant-typing__wave i:nth-child(3) { animation-delay: .24s; }
-.assistant-typing__wave i:nth-child(4) { animation-delay: .36s; }
+.assistant-typing__wave i:nth-child(1) { animation-delay: 0s;}
+.assistant-typing__wave i:nth-child(2) { animation-delay: .12s;}
+.assistant-typing__wave i:nth-child(3) { animation-delay: .24s;}
+.assistant-typing__wave i:nth-child(4) { animation-delay: .36s;}
 
 .assistant-typing em {
   margin-left: .35rem;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .65rem;
+  font-size: 12px;
   font-weight: 500;
   font-style: normal;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -738,7 +724,7 @@ button {
   color: var(--text);
   background: transparent;
   font-family: var(--font-sans);
-  font-size: .92rem;
+  font-size: 15px;
 }
 
 .assistant-feedback input::placeholder {
@@ -753,10 +739,9 @@ button {
   color: var(--text);
   background: color-mix(in srgb, var(--amber) 8%, transparent);
   font-family: var(--font-sans);
-  font-size: .62rem;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: .06em;
-  text-transform: uppercase;
   cursor: pointer;
 }
 
@@ -789,7 +774,7 @@ button {
   background: transparent;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .72rem;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: color .16s ease;
@@ -823,8 +808,7 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .assistant-docs__link {
-    transition: none;
-  }
+    transition: none;}
 }
 
 .assistant-followups {
@@ -847,7 +831,7 @@ button {
   color: var(--text-dim);
   background: transparent;
   font-family: var(--font-sans);
-  font-size: .9rem;
+  font-size: 15px;
   line-height: 1.25;
   text-align: left;
   cursor: pointer;
@@ -892,7 +876,7 @@ button {
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 54%, transparent);
   font-family: var(--font-sans);
-  font-size: .82rem;
+  font-size: 14px;
   line-height: 1.2;
   cursor: pointer;
   transition: color .16s ease, border-color .16s ease, background .16s ease;
@@ -914,7 +898,6 @@ button {
   padding: .9rem 1rem .8rem;
   border-top: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
-  backdrop-filter: blur(16px);
 }
 
 .assistant-streaming {
@@ -928,9 +911,9 @@ button {
   color: var(--text-dim);
   background: color-mix(in srgb, var(--amber) 5%, var(--bg));
   font-family: var(--font-sans);
-  font-size: .64rem;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: .07em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -945,7 +928,7 @@ button {
   height: .4rem;
   border-radius: 50%;
   background: var(--amber);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: none;
   animation: assistant-live 1.2s ease-in-out infinite;
 }
 
@@ -955,10 +938,9 @@ button {
   color: color-mix(in srgb, var(--danger) 82%, var(--text));
   background: transparent;
   font-family: var(--font-sans);
-  font-size: .63rem;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: .07em;
-  text-transform: uppercase;
+  letter-spacing: .01em;
   cursor: pointer;
 }
 
@@ -974,17 +956,16 @@ button {
   align-items: end;
   padding: .42rem;
   border: 1px solid var(--border-2);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--bg) 72%, var(--bg-panel));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 7%, transparent);
+  box-shadow: none;
   transition: border-color .18s ease, box-shadow .18s ease;
 }
 
 .assistant-composer__field:focus-within {
   border-color: color-mix(in srgb, var(--amber) 68%, var(--border-2));
   box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--amber) 8%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+    none;
 }
 
 .assistant-composer textarea {
@@ -1023,8 +1004,7 @@ button {
     color-mix(in srgb, var(--amber) 86%, white),
     color-mix(in srgb, var(--amber) 86%, black));
   box-shadow:
-    0 7px 14px -10px color-mix(in srgb, var(--amber) 80%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, .25);
+    none;
   cursor: pointer;
   transition: transform .16s ease, filter .16s ease, opacity .16s ease;
 }
@@ -1041,7 +1021,6 @@ button {
 
 .assistant-send:hover:not(:disabled) {
   filter: brightness(1.08);
-  transform: translateY(-1px);
 }
 
 .assistant-send:disabled {
@@ -1058,7 +1037,7 @@ button {
   padding-inline: .15rem;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .64rem;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: .02em;
   text-align: center;
@@ -1148,8 +1127,7 @@ button {
 @media (max-width: 640px) {
   :host {
     right: .7rem;
-    bottom: .7rem;
-  }
+    bottom: .7rem;}
 
   .assistant-panel {
     position: fixed;
@@ -1158,62 +1136,51 @@ button {
     max-width: none;
     height: auto;
     min-height: 0;
-    border-radius: 16px;
-    transform-origin: center bottom;
-  }
+    border-radius: var(--radius-md);
+    transform-origin: center bottom;}
 
   .assistant-fab {
     width: 50px;
-    height: 50px;
-  }
+    height: 50px;}
 
   .assistant-fab__glyph {
     width: 30px;
-    height: 30px;
-  }
+    height: 30px;}
 
   .assistant-fab--open {
     opacity: 0;
     pointer-events: none;
-    transform: translateY(8px) scale(.9);
-  }
+    transform: translateY(8px) scale(.9);}
 
   .assistant-panel__messages {
-    padding: 1rem;
-  }
+    padding: 1rem;}
 
   .assistant-empty {
     justify-content: flex-start;
-    padding-top: 1.2rem;
-  }
+    padding-top: 1.2rem;}
 
   .assistant-empty__signal {
     width: 4.6rem;
     height: 4.6rem;
-    margin-bottom: .8rem;
-  }
+    margin-bottom: .8rem;}
 
   .assistant-composer {
-    padding: .8rem;
-  }
+    padding: .8rem;}
 
 }
 
 @media (max-height: 650px) and (min-width: 641px) {
   .assistant-panel {
     height: calc(100vh - 110px);
-    min-height: 380px;
-  }
+    min-height: 380px;}
 
   .assistant-empty__signal {
     width: 4.4rem;
     height: 4.4rem;
-    margin-bottom: .7rem;
-  }
+    margin-bottom: .7rem;}
 
   .assistant-empty {
-    justify-content: flex-start;
-  }
+    justify-content: flex-start;}
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1228,19 +1195,16 @@ button {
   .assistant-fab__thought,
   .assistant-brand__mark {
     animation-duration: .01ms;
-    animation-iteration-count: 1;
-  }
+    animation-iteration-count: 1;}
 
   .assistant-fab,
   .assistant-icon-btn,
   .assistant-suggestions button,
   .assistant-send {
-    transition: none;
-  }
+    transition: none;}
 
   .assistant-panel__messages {
-    scroll-behavior: auto;
-  }
+    scroll-behavior: auto;}
 }
 
 /* ── Extractos adjuntos ─────────────────────────────────────── */
@@ -1313,7 +1277,7 @@ button {
   border-radius: 999px;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .72rem;
+  font-size: 13px;
 }
 
 .assistant-attached span {
@@ -1345,7 +1309,7 @@ button {
   padding: .75rem .9rem .8rem;
   border: 1px solid var(--border-2);
   border-top: 2px dashed color-mix(in srgb, var(--amber) 55%, var(--border-2));
-  border-radius: 4px 4px 12px 12px;
+  border-radius: 4px 4px var(--radius-md) var(--radius-md);
   background: color-mix(in srgb, var(--bg) 80%, var(--bg-panel));
 }
 
@@ -1375,7 +1339,7 @@ button {
 .assistant-slip__name {
   overflow: hidden;
   font-family: var(--font-sans);
-  font-size: .98rem;
+  font-size: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1388,7 +1352,7 @@ button {
   margin: .55rem 0 0;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .9rem;
+  font-size: 15px;
 }
 
 .assistant-slip--error .assistant-slip__status {
@@ -1406,7 +1370,7 @@ button {
 .assistant-slip__figures dt {
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .62rem;
+  font-size: 12px;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -1415,7 +1379,7 @@ button {
   margin: .1rem 0 0;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .82rem;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -1424,7 +1388,7 @@ button {
   margin: .35rem 0 0;
   color: var(--amber);
   font-family: var(--font-sans);
-  font-size: .86rem;
+  font-size: 14px;
 }
 
 .assistant-slip__cta {
@@ -1438,7 +1402,7 @@ button {
   color: var(--amber);
   background: transparent;
   font-family: var(--font-sans);
-  font-size: .94rem;
+  font-size: 16px;
   cursor: pointer;
 }
 
@@ -1459,17 +1423,14 @@ button {
 
 @media (max-width: 480px) {
   .assistant-slip {
-    max-width: 100%;
-  }
+    max-width: 100%;}
 
   .assistant-slip__figures {
-    grid-template-columns: repeat(2, auto);
-  }
+    grid-template-columns: repeat(2, auto);}
 }
 
 @media (prefers-reduced-motion: reduce) {
   .assistant-attach,
   .assistant-slip__cta svg {
-    transition: none;
-  }
+    transition: none;}
 }

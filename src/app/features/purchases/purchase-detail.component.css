@@ -4,8 +4,7 @@
   margin: 0 auto;
   padding: 2rem 1.75rem 3rem;
   background:
-    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--amber) 10%, transparent), transparent 28%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    var(--surface);
 }
 
 .page__header {
@@ -17,9 +16,8 @@
   border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
   border-radius: 8px;
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--bg-panel) 94%, transparent), color-mix(in srgb, var(--amber) 5%, var(--bg-panel))),
-    var(--bg-panel);
-  box-shadow: 0 20px 42px -34px rgba(0, 0, 0, .35), inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+    var(--surface);
+  box-shadow: none;
   animation: hero-in .45s cubic-bezier(.22,1,.36,1) both;
 }
 
@@ -44,24 +42,22 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--amber) 8%, transparent);
   color: color-mix(in srgb, var(--amber) 86%, var(--text));
-  font-size: .68rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 .back-link--strong:hover {
   border-color: color-mix(in srgb, var(--amber) 58%, var(--border-2));
   background: color-mix(in srgb, var(--amber) 13%, transparent);
   color: var(--text);
-  transform: translateY(-1px);
 }
 
 .page__eyebrow,
 .section-label {
   color: var(--amber);
   font-family: var(--font-sans);
-  font-size: .65rem;
-  letter-spacing: .18em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -108,7 +104,7 @@
   border-radius: 8px;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .9rem;
+  font-size: 15px;
   background: color-mix(in srgb, var(--bg) 45%, transparent);
 }
 
@@ -128,7 +124,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+  box-shadow: none;
 }
 
 .summary-card--paid {
@@ -137,14 +133,14 @@
 
 .summary-card--pending {
   border-color: color-mix(in srgb, var(--amber) 35%, var(--border));
-  background: linear-gradient(135deg, color-mix(in srgb, var(--amber) 8%, var(--bg-panel)), var(--bg-panel));
+  background: var(--surface);
 }
 
 .summary-label {
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .64rem;
-  letter-spacing: .13em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -155,13 +151,13 @@
   font-weight: 400;
 }
 
-.summary-card--paid .summary-value { color: var(--success); }
-.summary-card--pending .summary-value { color: var(--amber); }
+.summary-card--paid .summary-value { color: var(--success);}
+.summary-card--pending .summary-value { color: var(--amber);}
 
 .summary-card small {
   color: var(--success);
   font-family: var(--font-sans);
-  font-size: .82rem;
+  font-size: 14px;
 }
 
 .content-grid {
@@ -177,7 +173,7 @@
   border-radius: 8px;
   padding: 1.05rem 1.15rem;
   background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
-  box-shadow: 0 16px 34px -30px rgba(0,0,0,.28), inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
+  box-shadow: none;
 }
 
 .section-card--payment {
@@ -186,8 +182,7 @@
   margin-bottom: .9rem;
   border-color: color-mix(in srgb, var(--amber) 24%, var(--border));
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--amber) 7%, var(--bg-panel)), var(--bg-panel) 58%),
-    var(--bg-panel);
+    var(--surface);
   animation: card-in .45s cubic-bezier(.22,1,.36,1) .08s both;
 }
 
@@ -210,7 +205,7 @@
   margin: .25rem 0 0;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .9rem;
+  font-size: 15px;
 }
 
 .add-payment-form {
@@ -285,7 +280,7 @@
   display: block;
   color: var(--amber);
   font-family: var(--font-sans);
-  font-size: .72rem;
+  font-size: 13px;
   padding: .55rem 0;
   line-height: 1.5;
 }
@@ -303,8 +298,8 @@
 .field__label {
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .61rem;
-  letter-spacing: .14em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -317,7 +312,7 @@
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .78rem;
+  font-size: 14px;
   outline: none;
   transition: border-color .2s, box-shadow .2s, background .2s;
   box-sizing: border-box;
@@ -326,7 +321,7 @@
 .field__input:focus {
   border-color: color-mix(in srgb, var(--amber) 48%, var(--border-2));
   background: var(--bg);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: none;
 }
 
 .field__input--locked {
@@ -340,7 +335,7 @@
   margin-top: .35rem;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .62rem;
+  font-size: 12px;
   letter-spacing: .04em;
 }
 
@@ -368,8 +363,8 @@
 .payments-table th {
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .61rem;
-  letter-spacing: .1em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
   font-weight: 400;
 }
@@ -387,12 +382,12 @@
 .cell-product {
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .8rem;
+  font-size: 14px;
 }
 
 .cell-mono {
   font-family: var(--font-sans);
-  font-size: .78rem;
+  font-size: 14px;
   color: var(--text-dim);
 }
 
@@ -404,19 +399,19 @@
 .cell-total {
   color: var(--amber);
   font-family: var(--font-sans);
-  font-size: .82rem;
+  font-size: 14px;
 }
 
 .cell-amount {
   color: var(--success);
   font-family: var(--font-sans);
-  font-size: .82rem;
+  font-size: 14px;
 }
 
 .cell-ref {
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .86rem;
+  font-size: 14px;
 }
 
 .col-remove {
@@ -434,7 +429,7 @@
   padding: .75rem 0;
   color: var(--text-soft);
   font-family: var(--font-sans);
-  font-size: .92rem;
+  font-size: 15px;
   font-style: italic;
 }
 
@@ -445,9 +440,8 @@
   padding: .25rem .78rem;
   border-radius: 8px;
   font-family: var(--font-sans);
-  font-size: .64rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 .chip--warning {
@@ -480,20 +474,16 @@
   border: none;
   border-radius: 8px;
   padding: .68rem 1rem;
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--amber) 90%, white 10%),
-    color-mix(in srgb, var(--amber) 72%, black 28%));
-  color: var(--bg);
-  font-size: .68rem;
-  letter-spacing: .11em;
-  text-transform: uppercase;
+  background: var(--brand);
+  color: var(--on-brand);
+  font-size: 12px;
+  letter-spacing: .01em;
   white-space: nowrap;
   transition: transform .15s, box-shadow .2s, opacity .15s;
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 18px -12px color-mix(in srgb, var(--amber) 55%, transparent);
+  box-shadow: none;
 }
 
 .btn-primary:disabled {
@@ -508,15 +498,13 @@
   padding: .48rem .85rem;
   background: color-mix(in srgb, var(--danger) 8%, transparent);
   color: var(--danger);
-  font-size: .64rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: .01em;
   transition: background .15s, transform .15s;
 }
 
 .btn-danger:hover:not(:disabled) {
   background: color-mix(in srgb, var(--danger) 14%, transparent);
-  transform: translateY(-1px);
 }
 
 .btn-danger:disabled {
@@ -530,7 +518,7 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--danger) 5%, transparent);
   color: color-mix(in srgb, var(--danger) 82%, var(--text-dim));
-  font-size: .61rem;
+  font-size: 12px;
   opacity: .8;
   transition: opacity .15s, background .15s;
   white-space: nowrap;
@@ -554,9 +542,8 @@
   background: color-mix(in srgb, var(--amber) 12%, transparent);
   color: color-mix(in srgb, var(--amber) 85%, var(--text) 15%);
   font-family: var(--font-sans);
-  font-size: .64rem;
+  font-size: 12px;
   letter-spacing: .06em;
-  text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
   transition: background .15s, transform .15s;
@@ -564,7 +551,6 @@
 
 .btn-receipt:hover:not(:disabled) {
   background: color-mix(in srgb, var(--amber) 20%, transparent);
-  transform: translateY(-1px);
 }
 
 .btn-receipt:disabled {
@@ -578,7 +564,7 @@
   padding: 4rem;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .8rem;
+  font-size: 14px;
 }
 
 @keyframes hero-in {
@@ -593,83 +579,67 @@
 
 @media (max-width: 1180px) {
   .add-payment-form {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+    grid-template-columns: repeat(3, minmax(0, 1fr));}
 
   .add-payment-form--cheque {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: end;
-  }
+    align-items: end;}
 
   .add-payment-form--cheque > * {
     grid-column: auto;
-    grid-row: auto;
-  }
+    grid-row: auto;}
 
   .add-payment-form--cheque .field--cheque,
   .add-payment-form--cheque .field--notes,
   .add-payment-form--cheque .btn-payment-submit {
-    grid-column: span 2;
-  }
+    grid-column: span 2;}
 
   .field--notes,
   .btn-primary {
-    grid-column: span 3;
-  }
+    grid-column: span 3;}
 
   .add-payment-form--cheque .field--notes,
   .add-payment-form--cheque .btn-payment-submit {
-    grid-column: span 2;
-  }
+    grid-column: span 2;}
 
   .content-grid {
-    grid-template-columns: 1fr;
-  }
+    grid-template-columns: 1fr;}
 }
 
 @media (max-width: 760px) {
   .page {
-    padding: 1rem .85rem 1.5rem;
-  }
+    padding: 1rem .85rem 1.5rem;}
 
   .page__header,
   .summary-grid,
   .add-payment-form {
-    grid-template-columns: 1fr;
-  }
+    grid-template-columns: 1fr;}
 
   .page__header {
-    display: grid;
-  }
+    display: grid;}
 
   .header-actions {
-    justify-content: flex-start;
-  }
+    justify-content: flex-start;}
 
   .field--notes,
   .btn-primary {
-    grid-column: auto;
-  }
+    grid-column: auto;}
 
   .add-payment-form--cheque > *,
   .add-payment-form--cheque .field--cheque,
   .add-payment-form--cheque .field--notes,
   .add-payment-form--cheque .btn-payment-submit {
     grid-column: auto;
-    grid-row: auto;
-  }
+    grid-row: auto;}
 
   .section-card {
-    padding: .9rem;
-  }
+    padding: .9rem;}
 
   .tax-row {
-    grid-template-columns: 1fr 1fr;
-  }
+    grid-template-columns: 1fr 1fr;}
 
   .field--tax-hint {
-    grid-column: span 2;
-  }
+    grid-column: span 2;}
 }
 
 /* ── Modal de cancelación de compra (elección de destino del dinero) ── */
@@ -678,7 +648,6 @@
   inset: 0;
   z-index: 60;
   background: color-mix(in srgb, black 55%, transparent);
-  backdrop-filter: blur(2px);
 }
 
 .pcancel-panel {
@@ -695,9 +664,9 @@
   max-height: 90vh;
   overflow-y: auto;
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: var(--bg-panel);
-  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .5);
+  box-shadow: none;
 }
 
 .pcancel-head {
@@ -719,12 +688,12 @@
 .pcancel-eyebrow {
   color: var(--danger);
   font-family: var(--font-sans);
-  font-size: .64rem;
-  letter-spacing: .12em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
-.pcancel-meta { color: var(--text-soft); font-family: var(--font-sans); font-size: .74rem; }
+.pcancel-meta { color: var(--text-soft); font-family: var(--font-sans); font-size: 13px;}
 
 .pcancel-close {
   border: none;
@@ -734,18 +703,18 @@
   line-height: 1;
   cursor: pointer;
 }
-.pcancel-close:hover:not(:disabled) { color: var(--text); }
+.pcancel-close:hover:not(:disabled) { color: var(--text);}
 
-.pcancel-body { display: grid; gap: 1rem; padding: 1.1rem 1.3rem; }
+.pcancel-body { display: grid; gap: 1rem; padding: 1.1rem 1.3rem;}
 
 .pcancel-warning {
   padding: .8rem .9rem;
   border: 1px solid color-mix(in srgb, var(--danger) 26%, var(--border));
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--danger) 6%, transparent);
 }
-.pcancel-warning strong { color: var(--text); }
-.pcancel-warning p { margin-top: .2rem; color: var(--text-soft); font-size: .82rem; }
+.pcancel-warning strong { color: var(--text);}
+.pcancel-warning p { margin-top: .2rem; color: var(--text-soft); font-size: 14px;}
 
 .pcancel-paid {
   display: flex;
@@ -753,15 +722,15 @@
   justify-content: space-between;
   padding: .7rem .9rem;
   border: 1px solid var(--border-2);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--bg) 92%, transparent);
   font-family: var(--font-sans);
 }
-.pcancel-paid span { color: var(--text-dim); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
-.pcancel-paid strong { color: var(--text); font-size: 1.05rem; }
+.pcancel-paid span { color: var(--text-dim); font-size: 13px; letter-spacing: .06em; text-transform: uppercase;}
+.pcancel-paid strong { color: var(--text); font-size: 1.05rem;}
 
-.pcancel-options { display: grid; gap: .6rem; border: none; padding: 0; margin: 0; }
-.pcancel-options legend { padding: 0; margin-bottom: .3rem; color: var(--text-dim); font-family: var(--font-sans); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+.pcancel-options { display: grid; gap: .6rem; border: none; padding: 0; margin: 0;}
+.pcancel-options legend { padding: 0; margin-bottom: .3rem; color: var(--text-dim); font-family: var(--font-sans); font-size: 13px; letter-spacing: .06em; text-transform: uppercase;}
 
 .pcancel-opt {
   display: flex;
@@ -769,15 +738,15 @@
   align-items: flex-start;
   padding: .8rem .9rem;
   border: 1px solid var(--border-2);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: border-color .15s ease, background .15s ease;
 }
-.pcancel-opt--active { border-color: color-mix(in srgb, var(--amber) 55%, var(--border-2)); background: color-mix(in srgb, var(--amber) 7%, transparent); }
-.pcancel-opt input { margin-top: .2rem; accent-color: var(--amber); }
-.pcancel-opt__body { display: grid; gap: .25rem; }
-.pcancel-opt__title { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; color: var(--text); font-weight: 600; font-size: .9rem; }
-.pcancel-opt__desc { color: var(--text-soft); font-size: .8rem; line-height: 1.4; }
+.pcancel-opt--active { border-color: color-mix(in srgb, var(--amber) 55%, var(--border-2)); background: color-mix(in srgb, var(--amber) 7%, transparent);}
+.pcancel-opt input { margin-top: .2rem; accent-color: var(--amber);}
+.pcancel-opt__body { display: grid; gap: .25rem;}
+.pcancel-opt__title { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; color: var(--text); font-weight: 600; font-size: 15px;}
+.pcancel-opt__desc { color: var(--text-soft); font-size: 14px; line-height: 1.4;}
 
 .pcancel-tag {
   padding: .1rem .4rem;
@@ -785,20 +754,20 @@
   border-radius: 999px;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .58rem;
+  font-size: 11px;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
-.pcancel-tag--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+.pcancel-tag--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent);}
 
 .pcancel-nopaid {
   padding: .8rem .9rem;
   border: 1px solid color-mix(in srgb, var(--success) 26%, var(--border));
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--success) 6%, transparent);
 }
-.pcancel-nopaid strong { color: var(--text); }
-.pcancel-nopaid p { margin-top: .2rem; color: var(--text-soft); font-size: .82rem; }
+.pcancel-nopaid strong { color: var(--text);}
+.pcancel-nopaid p { margin-top: .2rem; color: var(--text-soft); font-size: 14px;}
 
 .pcancel-actions {
   display: flex;
@@ -811,15 +780,14 @@
 .pcancel-btn {
   min-height: 2.6rem;
   padding: .6rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-family: var(--font-sans);
-  font-size: .72rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: .01em;
   cursor: pointer;
 }
-.pcancel-btn:disabled { opacity: .55; cursor: not-allowed; }
-.pcancel-btn--ghost { border: 1px solid var(--border-2); background: transparent; color: var(--text-dim); }
-.pcancel-btn--ghost:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }
-.pcancel-btn--danger { border: none; background: var(--danger); color: white; }
-.pcancel-btn--danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 85%, black); }
+.pcancel-btn:disabled { opacity: .55; cursor: not-allowed;}
+.pcancel-btn--ghost { border: 1px solid var(--border-2); background: transparent; color: var(--text-dim);}
+.pcancel-btn--ghost:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim);}
+.pcancel-btn--danger { border: none; background: var(--danger); color: white;}
+.pcancel-btn--danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 85%, black);}

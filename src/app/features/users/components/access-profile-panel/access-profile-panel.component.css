@@ -12,7 +12,6 @@
   position: absolute;
   inset: 0;
   background: rgba(20, 15, 10, .38);
-  backdrop-filter: blur(2px);
   animation: profile-backdrop-in .28s ease both;
 }
 
@@ -25,9 +24,8 @@
   max-width: 100%;
   color: var(--text);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--amber) 5%, transparent), transparent 11rem),
-    var(--bg-panel);
-  box-shadow: -22px 0 52px rgba(0, 0, 0, .2);
+    var(--surface);
+  box-shadow: none;
   will-change: transform, opacity;
   animation: profile-drawer-in .42s cubic-bezier(.16, 1, .3, 1) both;
 }
@@ -58,9 +56,9 @@
 .profile-panel__section-heading > span {
   color: color-mix(in srgb, var(--amber) 72%, var(--text));
   font-family: var(--font-sans);
-  font-size: .64rem;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: .1em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -85,7 +83,7 @@
   margin-top: .35rem;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .65rem;
+  font-size: 12px;
 }
 
 .profile-panel__close {
@@ -141,7 +139,7 @@
   margin: .2rem 0 0;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .9rem;
+  font-size: 15px;
 }
 
 .profile-panel__field {
@@ -161,7 +159,7 @@
   color: var(--text);
   background: color-mix(in srgb, var(--bg) 60%, var(--bg-panel));
   font-family: var(--font-sans);
-  font-size: .95rem;
+  font-size: 16px;
   resize: vertical;
 }
 
@@ -169,7 +167,7 @@
   margin: 0;
   color: color-mix(in srgb, var(--danger) 76%, var(--text));
   font-family: var(--font-sans);
-  font-size: .64rem;
+  font-size: 12px;
 }
 
 .profile-panel__footer {
@@ -189,7 +187,7 @@
   color: var(--text);
   background: transparent;
   font-family: var(--font-sans);
-  font-size: .68rem;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -246,8 +244,7 @@
 
 @container (max-width: 900px) {
   .profile-panel {
-    width: 100%;
-  }
+    width: 100%;}
 }
 
 @container (max-width: 560px) {
@@ -255,19 +252,15 @@
   .profile-panel__body,
   .profile-panel__footer {
     padding-right: .9rem;
-    padding-left: .9rem;
-  }
+    padding-left: .9rem;}
 
   .profile-panel__footer {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
+    grid-template-columns: 1fr 1fr;}
 }
 
 @media (prefers-reduced-motion: reduce) {
   .profile-panel,
   .profile-panel__backdrop {
-    animation: none;
-    backdrop-filter: none;
-  }
+    animation: none;}
 }

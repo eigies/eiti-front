@@ -28,8 +28,8 @@
 .user-list__empty-index {
   color: var(--user-list-accent-text);
   font-family: var(--font-sans);
-  font-size: 0.68rem;
-  letter-spacing: 0.13em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -86,12 +86,11 @@ a:focus-visible {
   background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 0.68rem;
+  font-size: 12px;
   letter-spacing: 0.04em;
   cursor: pointer;
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--text) 9%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
   transition:
     transform .15s ease,
     border-color .15s ease,
@@ -103,10 +102,8 @@ a:focus-visible {
 .user-list__reload:not(:disabled):hover,
 .user-list__clear:hover,
 .user-list__empty button:hover {
-  transform: translateY(-1px);
   box-shadow:
-    0 3px 8px color-mix(in srgb, var(--text) 14%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
 }
 
 .user-list__create:active,
@@ -115,8 +112,7 @@ a:focus-visible {
 .user-list__empty button:active,
 .user-list__open:active,
 .user-list__status-action:active {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--text) 12%, transparent);
+  box-shadow: none;
 }
 
 .user-list__create {
@@ -166,7 +162,7 @@ a:focus-visible {
   outline: none;
   background-color: color-mix(in srgb, var(--bg-panel) 78%, var(--bg));
   font-family: var(--font-sans);
-  font-size: .92rem;
+  font-size: 15px;
   transition:
     border-color .18s ease,
     box-shadow .18s ease,
@@ -208,7 +204,7 @@ a:focus-visible {
 .user-list__filter select:focus-visible {
   outline: none;
   border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: none;
 }
 
 .user-list__reload,
@@ -261,8 +257,8 @@ a:focus-visible {
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 76%, var(--bg-panel));
   font-family: var(--font-sans);
-  font-size: .62rem;
-  letter-spacing: .08em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -340,7 +336,7 @@ a:focus-visible {
 .user-list__identity span {
   overflow: hidden;
   color: var(--text-dim);
-  font-size: .84rem;
+  font-size: 14px;
   line-height: 1.1;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -374,7 +370,7 @@ a:focus-visible {
 .user-list__access strong {
   display: block;
   overflow: hidden;
-  font-size: .9rem;
+  font-size: 15px;
   font-weight: 400;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -392,7 +388,7 @@ a:focus-visible {
   border: 1px solid transparent;
   border-radius: 999px;
   font-family: var(--font-sans);
-  font-size: 0.6rem;
+  font-size: 11px;
   letter-spacing: .05em;
   text-transform: uppercase;
 }
@@ -444,20 +440,16 @@ a:focus-visible {
 }
 
 .user-list__open:hover {
-  transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--amber) 56%, var(--border));
   background: color-mix(in srgb, var(--amber) 16%, var(--bg-panel));
   box-shadow:
-    0 3px 8px color-mix(in srgb, var(--amber) 22%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
 }
 
 .user-list__status-action:hover {
-  transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--amber) 30%, var(--border));
   box-shadow:
-    0 3px 8px color-mix(in srgb, var(--text) 14%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
 }
 
 .user-list__status-action--danger {
@@ -470,8 +462,7 @@ a:focus-visible {
   background: color-mix(in srgb, var(--danger) 10%, var(--bg-panel));
   color: var(--danger);
   box-shadow:
-    0 3px 8px color-mix(in srgb, var(--danger) 20%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
 }
 
 .user-list__skeleton {
@@ -536,22 +527,18 @@ a:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .user-list__skeleton span {
-    animation: none;
-  }
+    animation: none;}
 }
 
 @container (max-width: 900px) {
   .user-list__toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+    grid-template-columns: repeat(2, minmax(0, 1fr));}
 
   .user-list__search {
-    grid-column: 1 / -1;
-  }
+    grid-column: 1 / -1;}
 
   .user-list__head {
-    display: none;
-  }
+    display: none;}
 
   .user-list__row,
   .user-list__skeleton {
@@ -561,31 +548,25 @@ a:focus-visible {
     margin-bottom: .7rem;
     padding: 1rem .8rem;
     border-bottom: 1px solid var(--border);
-    border-radius: 10px;
-  }
+    border-radius: 10px;}
 
   .user-list__identity,
   .user-list__actions {
-    grid-column: 1 / -1;
-  }
+    grid-column: 1 / -1;}
 
   .user-list__profile,
   .user-list__access {
-    text-align: left;
-  }
+    text-align: left;}
 
   .user-list__state {
-    display: block;
-  }
+    display: block;}
 
   .user-list__mobile-label {
     display: block;
-    margin-bottom: 0.3rem;
-  }
+    margin-bottom: 0.3rem;}
 
   .user-list__actions {
-    justify-content: flex-start;
-  }
+    justify-content: flex-start;}
 
   .user-list__create,
   .user-list__reload,
@@ -595,49 +576,41 @@ a:focus-visible {
   .user-list__status-action,
   .user-list__search input,
   .user-list__filter select {
-    min-height: 44px;
-  }
+    min-height: 44px;}
 
   .user-list__skeleton span:first-child,
   .user-list__skeleton span:last-child {
-    grid-column: 1 / -1;
-  }
+    grid-column: 1 / -1;}
 }
 
 @container (max-width: 560px) {
   .user-list__header {
     align-items: stretch;
     flex-direction: column;
-    gap: 1rem;
-  }
+    gap: 1rem;}
 
   .user-list__create {
     justify-content: center;
-    width: 100%;
-  }
+    width: 100%;}
 
   .user-list__toolbar,
   .user-list__row,
   .user-list__skeleton {
-    grid-template-columns: minmax(0, 1fr);
-  }
+    grid-template-columns: minmax(0, 1fr);}
 
   .user-list__search,
   .user-list__identity,
   .user-list__actions,
   .user-list__skeleton span:first-child,
   .user-list__skeleton span:last-child {
-    grid-column: auto;
-  }
+    grid-column: auto;}
 
   .user-list__reload,
   .user-list__clear {
     justify-content: center;
-    width: 100%;
-  }
+    width: 100%;}
 
   .user-list__actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+    grid-template-columns: repeat(2, minmax(0, 1fr));}
 }

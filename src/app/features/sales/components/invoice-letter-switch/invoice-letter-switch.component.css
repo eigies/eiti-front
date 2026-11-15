@@ -21,7 +21,7 @@
     background: transparent;
     color: var(--text-dim);
     font-family: var(--font-sans);
-    font-size: .78rem;
+    font-size: 14px;
     letter-spacing: .04em;
     cursor: pointer;
     transition: background .18s ease, color .18s ease;

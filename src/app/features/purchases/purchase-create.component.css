@@ -4,8 +4,7 @@
   max-width: 1280px;
   margin: 0 auto;
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--amber) 6%, transparent), transparent 28%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    var(--surface);
 }
 
 .page__header {
@@ -33,8 +32,8 @@
 
 .page__eyebrow {
   color: var(--amber);
-  font-size: .66rem;
-  letter-spacing: .16em;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 .page__title {
@@ -52,12 +51,12 @@
   align-items: center;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .72rem;
+  font-size: 13px;
   text-decoration: none;
   transition: color .15s;
 }
 
-.back-link:hover { color: var(--amber); }
+.back-link:hover { color: var(--amber);}
 
 .purchase-layout {
   display: grid;
@@ -77,7 +76,7 @@
   border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
   border-radius: 8px;
   background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
-  box-shadow: 0 16px 34px -30px rgba(0,0,0,.22), inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+  box-shadow: none;
 }
 
 .section-card {
@@ -102,8 +101,8 @@
 .section-label {
   display: block;
   color: var(--text);
-  font-size: .72rem;
-  letter-spacing: .14em;
+  font-size: 13px;
+  letter-spacing: .01em;
 }
 
 .section-hint {
@@ -115,15 +114,15 @@
   border-radius: 999px;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--amber) 6%, transparent);
-  font-size: .58rem;
-  letter-spacing: .1em;
+  font-size: 11px;
+  letter-spacing: .01em;
   white-space: nowrap;
 }
 
 .section-subcopy {
   color: var(--text-dim);
-  font-size: .6rem;
-  letter-spacing: .08em;
+  font-size: 11px;
+  letter-spacing: .01em;
   line-height: 1.45;
 }
 
@@ -145,11 +144,11 @@
 
 .field__label {
   color: var(--text-dim);
-  font-size: .64rem;
-  letter-spacing: .13em;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
-.required { color: var(--danger); }
+.required { color: var(--danger);}
 
 .field__input {
   width: 100%;
@@ -159,7 +158,7 @@
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .8rem;
+  font-size: 14px;
   outline: none;
   transition: border-color .2s ease, box-shadow .2s ease;
   box-sizing: border-box;
@@ -167,7 +166,7 @@
 
 .field__input:focus {
   border-color: color-mix(in srgb, var(--amber) 42%, var(--border-2));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: none;
 }
 
 textarea.field__input {
@@ -182,7 +181,7 @@ textarea.field__input {
 .field__error {
   color: var(--danger);
   font-family: var(--font-sans);
-  font-size: .6rem;
+  font-size: 11px;
 }
 
 .product-search-wrap {
@@ -207,7 +206,7 @@ textarea.field__input {
   background: color-mix(in srgb, var(--bg-panel) 98%, transparent);
   border: 1px solid color-mix(in srgb, var(--amber) 20%, var(--border-2));
   border-radius: 8px;
-  box-shadow: 0 20px 42px -22px rgba(0,0,0,.38);
+  box-shadow: none;
   max-height: 340px;
   overflow-y: auto;
 }
@@ -230,7 +229,6 @@ textarea.field__input {
 .product-result-item:hover {
   background: color-mix(in srgb, var(--amber) 7%, var(--bg));
   border-color: color-mix(in srgb, var(--amber) 22%, var(--border-2));
-  transform: translateY(-1px);
 }
 
 .product-result-main {
@@ -242,7 +240,7 @@ textarea.field__input {
 .product-result-name {
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .8rem;
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -251,13 +249,13 @@ textarea.field__input {
 .product-result-code {
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .68rem;
+  font-size: 12px;
 }
 
 .product-result-cost {
   color: var(--amber);
   font-family: var(--font-sans);
-  font-size: .76rem;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -267,8 +265,8 @@ textarea.field__input {
   border-radius: 999px;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .58rem;
-  letter-spacing: .08em;
+  font-size: 11px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -280,7 +278,7 @@ textarea.field__input {
   background: color-mix(in srgb, var(--bg) 56%, transparent);
   color: var(--text-soft);
   font-family: var(--font-sans);
-  font-size: .74rem;
+  font-size: 13px;
 }
 
 .detail-table-wrap {
@@ -305,30 +303,30 @@ textarea.field__input {
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .61rem;
-  letter-spacing: .1em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
   font-weight: 400;
 }
 
-.detail-table tbody tr:last-child td { border-bottom: none; }
+.detail-table tbody tr:last-child td { border-bottom: none;}
 
 .cell-product {
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .8rem;
+  font-size: 14px;
 }
 
-.col-num { text-align: right; }
+.col-num { text-align: right;}
 
 .cell-total {
   color: var(--amber);
   font-family: var(--font-sans);
-  font-size: .82rem;
+  font-size: 14px;
   font-weight: 500;
 }
 
-.col-remove { text-align: right; width: 42px; }
+.col-remove { text-align: right; width: 42px;}
 
 .num-input {
   width: 96px;
@@ -338,14 +336,14 @@ textarea.field__input {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .8rem;
+  font-size: 14px;
   outline: none;
   text-align: right;
 }
 
 .num-input:focus {
   border-color: color-mix(in srgb, var(--amber) 42%, var(--border-2));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: none;
 }
 
 .btn-remove,
@@ -365,7 +363,7 @@ textarea.field__input {
 .btn-remove {
   width: 2rem;
   height: 2rem;
-  font-size: .8rem;
+  font-size: 14px;
 }
 
 .btn-remove-payment {
@@ -388,15 +386,14 @@ textarea.field__input {
   background: color-mix(in srgb, var(--amber) 8%, transparent);
   color: var(--amber);
   font-family: var(--font-sans);
-  font-size: .68rem;
-  letter-spacing: .08em;
+  font-size: 12px;
+  letter-spacing: .01em;
   cursor: pointer;
   transition: background .15s, transform .15s;
 }
 
 .btn-add:hover {
   background: color-mix(in srgb, var(--amber) 14%, transparent);
-  transform: translateY(-1px);
 }
 
 .section-card--payments {
@@ -418,8 +415,8 @@ textarea.field__input {
   align-items: center;
   justify-content: space-between;
   color: var(--text-dim);
-  font-size: .62rem;
-  letter-spacing: .1em;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 .payment-line__fields {
@@ -443,14 +440,13 @@ textarea.field__input {
   top: 1rem;
   padding: 1.1rem;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--amber) 5%, transparent), transparent 52%),
-    color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    var(--surface);
 }
 
 .summary-kicker {
   color: var(--amber);
-  font-size: .64rem;
-  letter-spacing: .14em;
+  font-size: 12px;
+  letter-spacing: .01em;
   margin-bottom: .65rem;
 }
 
@@ -461,12 +457,12 @@ textarea.field__input {
   border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
-.summary-row--pending { border-bottom: none; }
+.summary-row--pending { border-bottom: none;}
 
 .summary-label {
   color: var(--text-dim);
-  font-size: .66rem;
-  letter-spacing: .1em;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 .summary-value {
@@ -475,10 +471,10 @@ textarea.field__input {
   font-size: 1.05rem;
 }
 
-.summary-value--paid { color: var(--success); }
-.summary-value--pending { color: var(--amber); font-size: 1.22rem; }
-.summary-row--tax { padding: .45rem 0; }
-.summary-value--tax { color: var(--text-soft); font-size: .9rem; }
+.summary-value--paid { color: var(--success);}
+.summary-value--pending { color: var(--amber); font-size: 1.22rem;}
+.summary-row--tax { padding: .45rem 0;}
+.summary-value--tax { color: var(--text-soft); font-size: 15px;}
 
 .form-actions {
   display: grid;
@@ -492,24 +488,20 @@ textarea.field__input {
   border-radius: 8px;
   padding: .72rem 1rem;
   font-family: var(--font-sans);
-  font-size: .7rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: .01em;
   cursor: pointer;
 }
 
 .btn-primary {
   border: none;
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--amber) 88%, white 12%),
-    color-mix(in srgb, var(--amber) 72%, black 28%));
-  color: var(--bg);
+  background: var(--brand);
+  color: var(--on-brand);
   transition: transform .15s, box-shadow .2s;
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 16px -10px color-mix(in srgb, var(--amber) 40%, transparent);
+  box-shadow: none;
 }
 
 .btn-primary:disabled {
@@ -544,39 +536,34 @@ textarea.field__input {
 }
 
 @media (max-width: 1080px) {
-  .purchase-layout { grid-template-columns: 1fr; }
-  .summary-card { position: static; }
+  .purchase-layout { grid-template-columns: 1fr;}
+  .summary-card { position: static;}
 }
 
 @media (max-width: 900px) {
-  .page { padding: 1rem .85rem 1.5rem; }
-  .page__header { align-items: flex-start; flex-direction: column; }
-  .fields-row { grid-template-columns: 1fr 1fr; }
-  .payment-line__fields { grid-template-columns: 1fr 1fr; }
+  .page { padding: 1rem .85rem 1.5rem;}
+  .page__header { align-items: flex-start; flex-direction: column;}
+  .fields-row { grid-template-columns: 1fr 1fr;}
+  .payment-line__fields { grid-template-columns: 1fr 1fr;}
 }
 
 @media (max-width: 640px) {
   .fields-row,
   .payment-line__fields {
-    grid-template-columns: 1fr;
-  }
+    grid-template-columns: 1fr;}
 
   .section-card__head {
-    display: grid;
-  }
+    display: grid;}
 
   .product-result-item {
     grid-template-columns: 1fr;
-    gap: .45rem;
-  }
+    gap: .45rem;}
 
   .product-result-add {
-    width: fit-content;
-  }
+    width: fit-content;}
 
   .num-input {
-    width: 100%;
-  }
+    width: 100%;}
 }
 
 .supplier-credit-hint {
@@ -587,14 +574,14 @@ textarea.field__input {
   margin-top: .5rem;
   padding: .5rem .7rem;
   border: 1px solid color-mix(in srgb, var(--success) 32%, var(--border-2));
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--success) 8%, transparent);
 }
 
 .supplier-credit-hint__label {
   font-family: var(--font-sans);
-  font-size: .62rem;
-  letter-spacing: .12em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--success);
 }
@@ -605,13 +592,13 @@ textarea.field__input {
 }
 
 .supplier-credit-hint__note {
-  font-size: .72rem;
+  font-size: 13px;
   color: var(--text-dim);
 }
 
 .summary-credit-note {
   margin: -.2rem 0 .2rem;
-  font-size: .72rem;
+  font-size: 13px;
   color: var(--success);
   opacity: .85;
 }

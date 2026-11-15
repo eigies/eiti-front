@@ -24,9 +24,9 @@
 .profile-list__mobile-label {
   color: var(--profile-list-accent);
   font-family: var(--font-sans);
-  font-size: .66rem;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: .11em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -77,11 +77,10 @@ button {
   background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .68rem;
+  font-size: 12px;
   cursor: pointer;
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--text) 9%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
   transition:
     transform .15s ease,
     border-color .15s ease,
@@ -93,10 +92,8 @@ button {
 .profile-list__reload:hover,
 .profile-list__clear:hover,
 .profile-list__empty button:hover {
-  transform: translateY(-1px);
   box-shadow:
-    0 3px 8px color-mix(in srgb, var(--text) 14%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
 }
 
 .profile-list__create:active,
@@ -105,8 +102,7 @@ button {
 .profile-list__open:active,
 .profile-list__delete:active,
 .profile-list__empty button:active {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--text) 12%, transparent);
+  box-shadow: none;
 }
 
 .profile-list__create {
@@ -154,7 +150,7 @@ button {
   outline: none;
   background-color: color-mix(in srgb, var(--bg-panel) 78%, var(--bg));
   font-family: var(--font-sans);
-  font-size: .92rem;
+  font-size: 15px;
   transition:
     border-color .18s ease,
     box-shadow .18s ease,
@@ -174,7 +170,7 @@ button {
 .profile-list__filter select:focus-visible {
   outline: none;
   border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: none;
 }
 
 .profile-list__head,
@@ -193,8 +189,8 @@ button {
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 76%, var(--bg-panel));
   font-family: var(--font-sans);
-  font-size: .62rem;
-  letter-spacing: .08em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -214,7 +210,7 @@ button {
 
 .profile-list__row:not(.profile-list__row--selected):hover {
   background: color-mix(in srgb, var(--amber) 5%, var(--bg-panel));
-  box-shadow: inset 3px 0 color-mix(in srgb, var(--amber) 45%, transparent);
+  box-shadow: none;
 }
 
 .profile-list__row {
@@ -223,7 +219,7 @@ button {
 
 .profile-list__row--selected {
   background: color-mix(in srgb, var(--amber) 7%, var(--bg-panel));
-  box-shadow: inset 3px 0 var(--amber);
+  box-shadow: none;
 }
 
 .profile-list__badge {
@@ -235,9 +231,8 @@ button {
   background: color-mix(in srgb, var(--bg) 55%, var(--bg-panel));
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .56rem;
+  font-size: 11px;
   letter-spacing: .06em;
-  text-transform: uppercase;
 }
 
 .profile-list__badge--system {
@@ -265,7 +260,7 @@ button {
   overflow: hidden;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .84rem;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -274,7 +269,7 @@ button {
   min-width: 0;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  font-size: .66rem;
+  font-size: 12px;
 }
 
 .profile-list__actions {
@@ -290,12 +285,10 @@ button {
 }
 
 .profile-list__open:hover {
-  transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--amber) 56%, var(--border));
   background: color-mix(in srgb, var(--amber) 16%, var(--bg-panel));
   box-shadow:
-    0 3px 8px color-mix(in srgb, var(--amber) 22%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
 }
 
 .profile-list__delete {
@@ -303,13 +296,11 @@ button {
 }
 
 .profile-list__delete:hover {
-  transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
   background: color-mix(in srgb, var(--danger) 10%, var(--bg-panel));
   color: var(--danger);
   box-shadow:
-    0 3px 8px color-mix(in srgb, var(--danger) 20%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--bg-panel) 60%, #fff);
+    none;
 }
 
 .profile-list__mobile-label {
@@ -353,7 +344,7 @@ button {
   height: 2.4rem;
   margin-bottom: .5rem;
   padding: .55rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   color: color-mix(in srgb, var(--amber) 70%, var(--text));
   background: color-mix(in srgb, var(--amber) 10%, var(--bg-panel));
   fill: none;
@@ -375,62 +366,51 @@ button {
 
 @container (max-width: 900px) {
   .profile-list__head {
-    display: none;
-  }
+    display: none;}
 
   .profile-list__toolbar {
-    grid-template-columns: minmax(0, 1fr) minmax(130px, auto) minmax(130px, auto);
-  }
+    grid-template-columns: minmax(0, 1fr) minmax(130px, auto) minmax(130px, auto);}
 
   .profile-list__clear,
   .profile-list__reload {
-    min-height: 44px;
-  }
+    min-height: 44px;}
 
   .profile-list__row {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: .75rem 1rem;
     margin-bottom: .7rem;
     border-bottom: 1px solid var(--border);
-    border-radius: 10px;
-  }
+    border-radius: 10px;}
 
   .profile-list__identity,
   .profile-list__actions {
-    grid-column: 1 / -1;
-  }
+    grid-column: 1 / -1;}
 
   .profile-list__mobile-label {
     display: block;
-    margin-bottom: .2rem;
-  }
+    margin-bottom: .2rem;}
 
   .profile-list__open,
   .profile-list__delete {
-    min-height: 44px;
-  }
+    min-height: 44px;}
 }
 
 @container (max-width: 560px) {
   .profile-list__header {
     align-items: stretch;
-    flex-direction: column;
-  }
+    flex-direction: column;}
 
   .profile-list__create {
     justify-content: center;
-    min-height: 44px;
-  }
+    min-height: 44px;}
 
   .profile-list__toolbar,
   .profile-list__row {
-    grid-template-columns: 1fr;
-  }
+    grid-template-columns: 1fr;}
 
   .profile-list__actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
+    grid-template-columns: 1fr 1fr;}
 }
 
 @keyframes profile-skeleton {
@@ -439,6 +419,5 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .profile-list__skeleton-row {
-    animation: none;
-  }
+    animation: none;}
 }

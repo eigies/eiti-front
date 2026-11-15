@@ -16,12 +16,7 @@
   padding: clamp(1rem, 2vw, 2rem) clamp(.85rem, 2vw, 1.75rem) 3rem;
   overflow-x: clip;
   background:
-    radial-gradient(
-      circle at top right,
-      color-mix(in srgb, var(--amber) 9%, transparent),
-      transparent 26%
-    ),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    var(--surface);
 }
 
 .hero {
@@ -30,9 +25,12 @@
   justify-content: space-between;
   gap: 1.1rem;
   margin-bottom: 1.2rem;
-  padding: 1.2rem 0 1.4rem;
   border-bottom: 1px solid color-mix(in srgb, var(--amber) 18%, var(--border));
   animation: hero-in .55s cubic-bezier(.22, 1, .36, 1) both;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .hero__copy {
@@ -50,8 +48,8 @@ h1,
 .eyebrow {
   margin: 0 0 .5rem;
   color: var(--amber);
-  font-size: .68rem;
-  letter-spacing: .14em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -65,7 +63,7 @@ h1 {
   margin: .5rem 0 0;
   color: var(--text-soft);
   font-family: var(--font-sans);
-  font-size: .95rem;
+  font-size: 16px;
 }
 
 .hero__panel {
@@ -76,14 +74,10 @@ h1 {
   border: 1px solid color-mix(in srgb, var(--amber) 20%, var(--border));
   border-radius: 10px;
   background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--amber) 8%, transparent),
-      color-mix(in srgb, var(--bg-panel) 96%, transparent)
-    );
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+    var(--surface);
+  box-shadow: none;
   color: var(--text);
-  font-size: .76rem;
+  font-size: 13px;
 }
 
 .hero__panel span {
@@ -120,9 +114,9 @@ h1 {
   background: transparent;
   color: var(--text-2);
   font-family: var(--font-sans);
-  font-size: .72rem;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: .1em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   cursor: pointer;
   transition: color .18s ease, background .18s ease;
@@ -184,12 +178,7 @@ h1 {
   border: 1px solid color-mix(in srgb, var(--danger) 36%, var(--border));
   border-radius: 10px;
   background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--danger) 8%, transparent),
-      transparent 68%
-    ),
-    color-mix(in srgb, var(--bg-panel) 96%, transparent);
+    var(--surface);
   color: var(--text);
 }
 
@@ -201,9 +190,9 @@ h1 {
 
 .resource-error__eyebrow {
   color: color-mix(in srgb, var(--danger) 72%, var(--text));
-  font-size: .64rem;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: .12em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -211,7 +200,7 @@ h1 {
   margin: 0;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: .95rem;
+  font-size: 16px;
 }
 
 .resource-error button {
@@ -222,9 +211,8 @@ h1 {
   border-radius: 8px;
   background: color-mix(in srgb, var(--bg) 84%, transparent);
   color: var(--text);
-  font-size: .67rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: .01em;
   cursor: pointer;
 }
 
@@ -237,28 +225,27 @@ h1 {
   .hero {
     align-items: stretch;
     flex-direction: column;
-  }
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;}
 
   .hero__panel {
     flex-basis: auto;
-    width: 100%;
-  }
+    width: 100%;}
 
   .access-tabs {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+    grid-template-columns: repeat(2, minmax(0, 1fr));}
 
   .access-tabs__item {
     width: 100%;
     padding-inline: .5rem;
-    letter-spacing: .06em;
-  }
+    letter-spacing: .06em;}
 
   .resource-error {
     align-items: stretch;
-    flex-direction: column;
-  }
+    flex-direction: column;}
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -267,8 +254,7 @@ h1 {
   *::after {
     scroll-behavior: auto !important;
     transition: none !important;
-    animation: none !important;
-  }
+    animation: none !important;}
 }
 
 @keyframes hero-in {

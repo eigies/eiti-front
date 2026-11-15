@@ -18,7 +18,6 @@
   position: absolute;
   inset: 0;
   background: color-mix(in srgb, var(--overlay) 88%, #000 12%);
-  backdrop-filter: blur(5px);
   animation: access-backdrop-in .28s ease both;
 }
 
@@ -34,9 +33,8 @@
   overflow: hidden;
   border-left: 1px solid color-mix(in srgb, var(--amber) 20%, var(--border));
   background:
-    linear-gradient(145deg, color-mix(in srgb, var(--amber) 5%, transparent), transparent 22%),
-    var(--bg-panel);
-  box-shadow: -28px 0 72px rgba(0, 0, 0, 0.34);
+    var(--surface);
+  box-shadow: none;
   will-change: transform, opacity;
   animation: access-drawer-in .42s cubic-bezier(.16, 1, .3, 1) both;
 }
@@ -77,9 +75,9 @@
 .access-panel__eyebrow {
   margin: 0 0 0.38rem;
   color: color-mix(in srgb, var(--amber) 72%, var(--text));
-  font-size: 0.65rem;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -159,8 +157,8 @@
 
 .access-panel__index {
   color: color-mix(in srgb, var(--amber) 76%, var(--text));
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 .access-panel h3 {
@@ -173,7 +171,7 @@
 .access-panel__empty {
   margin: 0;
   color: var(--text-dim);
-  font-size: 0.88rem;
+  font-size: 15px;
   line-height: 1.45;
 }
 
@@ -186,8 +184,8 @@
 .access-panel__field > span,
 .access-panel__field > label {
   color: color-mix(in srgb, var(--text-dim) 88%, var(--text));
-  font-size: 0.67rem;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -224,7 +222,7 @@
 
 .access-panel__field--checkbox span {
   text-transform: none;
-  font-size: .8rem;
+  font-size: 14px;
   color: var(--text);
   letter-spacing: normal;
 }
@@ -232,13 +230,13 @@
 .access-panel__field--checkbox span small {
   display: block;
   color: var(--text-dim);
-  font-size: .68rem;
+  font-size: 12px;
   margin-top: .1rem;
 }
 
 .access-panel__error {
   color: var(--danger);
-  font-size: 0.78rem;
+  font-size: 14px;
   line-height: 1.4;
 }
 
@@ -295,13 +293,13 @@
 }
 
 .access-panel__permission-summary strong {
-  font-size: 0.92rem;
+  font-size: 15px;
 }
 
 .access-panel__permission-summary div span {
   margin-top: 0.1rem;
   color: var(--text-dim);
-  font-size: 0.78rem;
+  font-size: 14px;
 }
 
 .access-panel__modules {
@@ -315,8 +313,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.7rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.07em;
+  font-size: 12px;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -339,7 +337,7 @@
   border-radius: 999px;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--amber) 7%, transparent);
-  font-size: 0.75rem;
+  font-size: 13px;
 }
 
 .access-panel__branches {
@@ -409,13 +407,13 @@
 .access-panel__branch input:checked + .access-panel__check {
   border-color: var(--amber);
   background: var(--amber);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: none;
 }
 
 .access-panel__branch--all[aria-pressed="true"] .access-panel__check {
   border-color: var(--amber);
   background: var(--amber);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: none;
 }
 
 .access-panel__branch input:checked + .access-panel__check::after {
@@ -458,13 +456,13 @@
 }
 
 .access-panel__branch strong {
-  font-size: 0.9rem;
+  font-size: 15px;
 }
 
 .access-panel__branch small {
   margin-top: 0.14rem;
   color: var(--text-dim);
-  font-size: 0.72rem;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 
@@ -473,12 +471,12 @@
   gap: 0.2rem;
   margin: 0.8rem 0 0;
   color: var(--text-dim);
-  font-size: 0.8rem;
+  font-size: 14px;
 }
 
 .access-panel__scope-status strong {
   color: color-mix(in srgb, var(--amber) 72%, var(--text));
-  font-size: 0.68rem;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -498,7 +496,7 @@
   padding: 0.7rem 0.8rem;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  font-size: 0.71rem;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.03em;
   cursor: pointer;
@@ -572,8 +570,7 @@
 @container user-access-panel-host (max-width: 900px) {
   .access-panel {
     width: 100%;
-    border-left: 0;
-  }
+    border-left: 0;}
 }
 
 @media (max-width: 420px) {
@@ -581,22 +578,18 @@
   .access-panel__body,
   .access-panel__footer {
     padding-right: 1rem;
-    padding-left: 1rem;
-  }
+    padding-left: 1rem;}
 
   .access-panel__footer {
-    grid-template-columns: minmax(0, 1fr);
-  }
+    grid-template-columns: minmax(0, 1fr);}
 }
 
 @media (prefers-reduced-motion: reduce) {
   .access-panel,
   .access-panel__backdrop {
-    animation: none;
-  }
+    animation: none;}
 
   .access-panel__check,
   .access-panel__branch {
-    transition: none;
-  }
+    transition: none;}
 }

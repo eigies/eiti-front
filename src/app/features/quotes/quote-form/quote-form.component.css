@@ -5,9 +5,9 @@
     margin-bottom: 1rem;
     padding: 1.25rem;
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--bg-panel) 96%, transparent);
-    box-shadow: 0 16px 34px -28px rgba(0, 0, 0, .22), inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+    box-shadow: none;
 }
 
 .quote-form__field {
@@ -15,8 +15,8 @@
     gap: .42rem;
     color: var(--text-dim);
     font-family: var(--font-sans);
-    font-size: .66rem;
-    letter-spacing: .12em;
+    font-size: 12px;
+    letter-spacing: .06em;
     text-transform: uppercase;
 }
 
@@ -29,7 +29,7 @@
     background-color: color-mix(in srgb, var(--bg) 92%, transparent);
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: .76rem;
+    font-size: 13px;
     outline: none;
 }
 
@@ -40,7 +40,7 @@
 .quote-form input:focus,
 .quote-form select:focus {
     border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+    box-shadow: none;
 }
 
 .quote-form button {
@@ -51,9 +51,8 @@
     background: color-mix(in srgb, var(--amber) 10%, transparent);
     color: color-mix(in srgb, var(--amber) 76%, var(--text) 24%);
     font-family: var(--font-sans);
-    font-size: .68rem;
-    letter-spacing: .1em;
-    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: .01em;
     cursor: pointer;
 }
 
@@ -130,9 +129,8 @@
 .quote-form__table th {
     color: var(--text-subtle);
     font-family: var(--font-sans);
-    font-size: .64rem;
-    letter-spacing: .1em;
-    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: .01em;
 }
 
 .quote-form__table input[type="number"] {
@@ -145,7 +143,7 @@
     justify-self: end;
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: .95rem;
+    font-size: 16px;
     font-weight: 600;
 }
 
@@ -177,7 +175,7 @@
     justify-content: space-between;
     gap: 1.5rem;
     color: var(--text-dim);
-    font-size: .78rem;
+    font-size: 14px;
 }
 
 .quote-form__summary-row--total {
@@ -185,28 +183,24 @@
     padding-top: .4rem;
     border-top: 1px solid var(--border);
     color: var(--text);
-    font-size: .95rem;
+    font-size: 16px;
     font-weight: 600;
 }
 
 @media (max-width: 760px) {
     .quote-form {
         padding: 1rem;
-        overflow-x: auto;
-    }
+        overflow-x: auto;}
 
     .quote-form__customer-search {
-        display: grid;
-    }
+        display: grid;}
 
     .quote-form button,
     .quote-form__customer-search button {
-        width: 100%;
-    }
+        width: 100%;}
 
     .quote-form__table {
-        min-width: 720px;
-    }
+        min-width: 720px;}
 }
 
 /* Toggle de la app. Nota: este estilo esta duplicado en 5 componentes mas y las copias ya
@@ -223,14 +217,13 @@
     border-radius: 999px;
     background: color-mix(in srgb, var(--bg) 90%, transparent);
     cursor: pointer;
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+    box-shadow: none;
     transition: border-color .18s ease, background .18s ease, transform .12s ease;
 }
 
 .toggle-check:hover {
     border-color: color-mix(in srgb, var(--amber) 30%, var(--border-2));
     background: color-mix(in srgb, var(--amber) 7%, transparent);
-    transform: translateY(-1px);
 }
 
 .toggle-check input {
@@ -260,7 +253,7 @@
     height: .9rem;
     border-radius: 50%;
     background: var(--bg-panel);
-    box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    box-shadow: none;
     transition: transform .2s ease;
 }
 
@@ -276,15 +269,14 @@
 .toggle-check__text {
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: .72rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: .01em;
 }
 
 /* La aclaracion que antes iba pegada al check: en minuscula, sin el uppercase del rotulo. */
 .quote-form__hint {
     color: var(--text-dim);
-    font-size: .68rem;
+    font-size: 12px;
     letter-spacing: normal;
     text-transform: none;
 }

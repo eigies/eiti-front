@@ -33,8 +33,8 @@
     border-radius: 999px;
     color: var(--amber);
     font-family: var(--font-sans);
-    font-size: .6rem;
-    letter-spacing: .1em;
+    font-size: 11px;
+    letter-spacing: .06em;
     text-transform: uppercase;
 }
 
@@ -89,7 +89,7 @@
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 1rem;
-    letter-spacing: .12em;
+    letter-spacing: .01em;
     font-variant-numeric: tabular-nums;
 }
 
@@ -112,7 +112,7 @@
     margin: 0;
     color: var(--text-dim);
     font-family: var(--font-sans);
-    font-size: .7rem;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -123,12 +123,10 @@
 
 @media (max-width: 900px) {
     .config-grid.fiscal {
-        grid-template-columns: 1fr;
-    }
+        grid-template-columns: 1fr;}
 }
 
 @media (max-width: 560px) {
     .fiscal__fields {
-        grid-template-columns: 1fr;
-    }
+        grid-template-columns: 1fr;}
 }
