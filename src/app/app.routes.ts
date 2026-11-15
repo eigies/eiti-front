@@ -196,6 +196,11 @@ export const routes: Routes = [
             import('./features/audit/audit.component').then(m => m.AuditComponent)
     },
     {
+        path: 'reportes',
+        canActivate: [authGuard],
+        loadComponent: () => import('./features/reports/index/reports-index.component').then(m => m.ReportsIndexComponent)
+    },
+    {
         path: 'reportes/ventas/control-diario',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.reportsSalesDailyControl },

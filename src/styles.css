@@ -114,17 +114,24 @@ select.control option {
 }
 
 /* ── App layout shell ── */
-.app-content {
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* El menú lateral fijo ocupa la izquierda en escritorio; en tablet/celular es un cajón. */
+body.nav-shell .app-content {
+  margin-left: 248px;
+  transition: margin-left .2s cubic-bezier(.2, .7, .2, 1);
 }
 
-body.sidebar-open .app-content {
-  margin-left: 260px;
+body.nav-shell.nav-rail .app-content {
+  margin-left: 72px;
 }
 
-@media (max-width: 640px) {
-  body.sidebar-open .app-content {
+@media (max-width: 1024px) {
+  body.nav-shell .app-content,
+  body.nav-shell.nav-rail .app-content {
     margin-left: 0;
+  }
+
+  body.sidebar-open {
+    overflow: hidden;
   }
 }
 
