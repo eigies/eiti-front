@@ -17,4 +17,8 @@ export class ToastComponent implements OnInit {
   ngOnInit(): void {
     this.toastService.toasts$.subscribe(t => (this.toasts = t));
   }
+
+  trackById(_: number, toast: Toast): number {
+    return toast.id;
+  }
 }
