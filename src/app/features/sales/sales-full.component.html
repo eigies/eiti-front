@@ -226,7 +226,7 @@
                                 (change)="setDraftItemPrice(item, $any($event.target).value)" />
                         </td>
                         <ng-template #staticFullPrice>
-                            <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+                            <td>{{ item.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
                         </ng-template>
                         <td>
                             <button class="btn btn--ghost" type="button" (click)="removeItem(item.product.id)">Quitar</button>
@@ -285,9 +285,9 @@
                     <span>{{ transportForm.get('notes')?.value || 'Sin notas' }}</span>
                 </button>
                 <button type="button" class="card card--summary span" (click)="jumpToSummaryStep('sale')">
-                    <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
+                    <strong>{{ total | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
                     <span>{{ selectedBranchName }}</span>
-                    <span>{{ paymentMethodPreview }} · {{ paymentCoverage | currency:'USD':'symbol':'1.2-2' }} cobrados · {{ selectedDrawerName }}</span>
+                    <span>{{ paymentMethodPreview }} · {{ paymentCoverage | currency:'ARS':'symbol-narrow':'1.2-2' }} cobrados · {{ selectedDrawerName }}</span>
                 </button>
             </div>
         </div>

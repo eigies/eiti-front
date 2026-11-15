@@ -33,7 +33,7 @@
         class="quick-summary__product">
         <span class="quick-summary__product-name" [title]="item.label">{{ item.label }}</span>
         <span class="quick-summary__product-quantity">× {{ item.quantity }}</span>
-        <strong>{{ item.subtotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+        <strong>{{ item.subtotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
       </li>
     </ul>
 
@@ -53,7 +53,7 @@
         · {{ productCount }} {{ productCount === 1 ? 'producto' : 'productos' }}
       </span>
     </span>
-    <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
+    <strong>{{ total | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
   </div>
 
   <button

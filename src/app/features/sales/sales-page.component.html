@@ -184,9 +184,9 @@
                       <input class="control control--compact" type="number" min="0" step="0.01" [value]="item.unitPriceOverride ?? (item.product.publicPrice ?? item.product.price)" (change)="setDraftItemPrice(item, $any($event.target).value)" />
                     </td>
                     <ng-template #staticPrice>
-                      <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'USD':'symbol':'1.2-2' }}</td>
+                      <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
                     </ng-template>
-                    <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td>{{ item.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
                     <td><button class="btn btn--ghost btn--sm btn--inline-remove" type="button" (click)="removeDraftItem(item.product.id)">Quitar</button></td>
                   </tr>
                 </tbody>
@@ -506,9 +506,9 @@
                 <input class="control control--compact" type="number" min="0" step="0.01" [value]="item.unitPriceOverride ?? (item.product.publicPrice ?? item.product.price)" (change)="setEditItemPrice(item, $any($event.target).value)" />
               </td>
               <ng-template #editStaticPrice>
-                <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td>{{ (item.product.publicPrice ?? item.product.price) | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
               </ng-template>
-              <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+              <td>{{ item.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
               <td><button class="btn btn--ghost btn--sm btn--inline-remove" type="button" (click)="removeEditItem(item.product.id)">Quitar</button></td>
             </tr>
           </tbody>
@@ -522,7 +522,7 @@
       <div class="summary-row">
         <div class="metric-card">
           <span>Total editado</span>
-          <strong>{{ editTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+          <strong>{{ editTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
         </div>
         <div class="actions-inline">
           <button class="btn btn--secondary" type="button" (click)="cancelEdit()">Cancelar</button>
@@ -724,7 +724,7 @@
 
             <div class="sale-card__amount-block">
               <span class="sale-card__amount-label">Total<span class="sale-card__discount-tag" *ngIf="(sale.generalDiscountPercent ?? 0) > 0"> · desc. {{ sale.generalDiscountPercent }}%</span></span>
-              <div class="sale-card__amount">{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</div>
+              <div class="sale-card__amount">{{ sale.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</div>
               <span class="sale-card__payment"
                     [class.sale-card__payment--cc]="sale.isCuentaCorriente"
                     [class.sale-card__payment--combined]="saleHasCombinedPayments(sale)"
@@ -778,8 +778,8 @@
                   <tr *ngFor="let detail of pagedSaleDetails(sale)">
                     <td>{{ detail.productBrand }} / {{ detail.productName }}</td>
                     <td>{{ detail.quantity }}</td>
-                    <td>{{ detail.unitPrice | currency:'USD':'symbol':'1.2-2' }}</td>
-                    <td>{{ detail.totalAmount | currency:'USD':'symbol':'1.2-2' }}</td>
+                    <td>{{ detail.unitPrice | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                    <td>{{ detail.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
                   </tr>
                   <ng-container *ngIf="(sale.tradeIns?.length ?? 0) > 0 && saleDetailPage(sale.id) === 1">
                     <tr class="detail-row--tradein" [class.detail-row--tradein--first]="i === 0" *ngFor="let tradeIn of sale.tradeIns; let i = index">
@@ -791,7 +791,7 @@
                       </td>
                       <td>{{ tradeIn.quantity }}</td>
                       <td>—</td>
-                      <td>{{ tradeIn.amount | currency:'USD':'symbol':'1.2-2' }}</td>
+                      <td>{{ tradeIn.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
                     </tr>
                   </ng-container>
                 </tbody>
@@ -820,7 +820,7 @@
                 <span class="invoicing-bar__warning"
                       *ngIf="uninvoicedCardSurcharge(sale) > 0"
                       title="La venta se facturó antes de cobrarse en cuotas: la factura no incluye el recargo de la tarjeta.">
-                  Recargo no facturado {{ uninvoicedCardSurcharge(sale) | currency:'USD':'symbol':'1.2-2' }}
+                  Recargo no facturado {{ uninvoicedCardSurcharge(sale) | currency:'ARS':'symbol-narrow':'1.2-2' }}
                 </span>
               </span>
 
@@ -1013,7 +1013,7 @@
       <strong>Facturar venta</strong>
       <button class="modal-panel__close" type="button" [disabled]="invoicingSaleId === sale.id" (click)="closeInvoiceModal()">x</button>
     </div>
-    <p class="confirm-copy">Vas a emitir la factura de la venta <strong>{{ sale.code || 'seleccionada' }}</strong> por <strong>{{ sale.totalAmount | currency:'USD':'symbol':'1.2-2' }}</strong>.</p>
+    <p class="confirm-copy">Vas a emitir la factura de la venta <strong>{{ sale.code || 'seleccionada' }}</strong> por <strong>{{ sale.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>.</p>
 
     <div class="confirm-meta">
       <span *ngIf="invoiceModalLoading">Leyendo los datos del cliente...</span>
@@ -1081,7 +1081,7 @@
     <p class="confirm-copy">Vas a cancelar la venta <strong>{{ cancelSaleModal.code || 'seleccionada' }}</strong>. Esta accion cambia el estado a <strong>Cancelada</strong>.</p>
     <div class="confirm-meta">
       <span><strong>Cliente:</strong> {{ cancelSaleModal.customerFullName || 'Sin cliente' }}</span>
-      <span><strong>Total:</strong> {{ cancelSaleModal.totalAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+      <span><strong>Total:</strong> {{ cancelSaleModal.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
     </div>
     <p class="confirm-fiscal" *ngIf="cancelSaleInvoicingNotice as notice"
        [class.confirm-fiscal--warning]="notice.tone === 'warning'">{{ notice.text }}</p>

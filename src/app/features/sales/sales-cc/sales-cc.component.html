@@ -106,7 +106,7 @@
                      (ngModelChange)="setItemPrice(item.stock.productId, $event)"
                      [ngModelOptions]="{ standalone: true }"
                      [class.is-overridden]="isPriceOverridden(item)" />
-              <span *ngIf="!canOverridePrice">{{ effectiveUnitPrice(item) | currency:'USD':'symbol':'1.2-2' }}</span>
+              <span *ngIf="!canOverridePrice">{{ effectiveUnitPrice(item) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
             </td>
             <td>
               <input class="control control--compact control--discount" type="number" min="0" max="100" step="1"
@@ -114,24 +114,24 @@
                      (input)="setItemDiscount(item.stock.productId, $any($event.target).value)"
                      placeholder="0" />
             </td>
-            <td>{{ item.total | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>{{ item.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
             <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeItem(item.stock.productId)">Quitar</button></td>
           </tr>
         </tbody>
         <tfoot>
           <tr>
             <td colspan="4" class="text-right"><strong>Subtotal</strong></td>
-            <td><strong>{{ subtotalAfterItemDiscounts | currency:'USD':'symbol':'1.2-2' }}</strong></td>
+            <td><strong>{{ subtotalAfterItemDiscounts | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></td>
             <td></td>
           </tr>
           <tr *ngIf="generalDiscountPercent > 0">
             <td colspan="4" class="text-right">Descuento general ({{ generalDiscountPercent }}%)</td>
-            <td>-{{ (subtotalAfterItemDiscounts - totalAfterGeneralDiscount) | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td>-{{ (subtotalAfterItemDiscounts - totalAfterGeneralDiscount) | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
             <td></td>
           </tr>
           <tr>
             <td colspan="4" class="text-right"><strong>Total</strong></td>
-            <td><strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong></td>
+            <td><strong>{{ total | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></td>
             <td></td>
           </tr>
         </tfoot>
@@ -195,18 +195,18 @@
             <tr *ngFor="let t of tradeInDrafts; let i = index">
               <td>{{ t.brand }} / {{ t.name }}</td>
               <td>{{ t.quantity }}</td>
-              <td>{{ t.amount | currency:'USD':'symbol':'1.2-2' }}</td>
+              <td>{{ t.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
               <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeTradeIn(i)">Quitar</button></td>
             </tr>
           </tbody>
           <tfoot>
             <tr>
               <td colspan="2" class="text-right"><strong>Canje total</strong></td>
-              <td colspan="2">-{{ canjeTotal | currency:'USD':'symbol':'1.2-2' }}</td>
+              <td colspan="2">-{{ canjeTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
             </tr>
             <tr>
               <td colspan="2" class="text-right"><strong>Deuda a asumir</strong></td>
-              <td colspan="2"><strong>{{ netAfterTradeIn | currency:'USD':'symbol':'1.2-2' }}</strong></td>
+              <td colspan="2"><strong>{{ netAfterTradeIn | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></td>
             </tr>
           </tfoot>
         </table>

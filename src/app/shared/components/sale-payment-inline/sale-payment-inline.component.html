@@ -238,27 +238,27 @@
         <div class="payment-summary__totals">
           <div class="payment-summary__item payment-summary__item--total">
             <span>Total venta</span>
-            <strong>{{ total | currency:'USD':'symbol':'1.2-2' }}</strong>
+            <strong>{{ total | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
           </div>
           <div class="payment-summary__item payment-summary__item--card-surcharge" *ngIf="totalCardSurcharge > 0">
             <span>Recargo tarjeta</span>
-            <strong>+ {{ totalCardSurcharge | currency:'USD':'symbol':'1.2-2' }}</strong>
+            <strong>+ {{ totalCardSurcharge | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
           </div>
           <div class="payment-summary__item payment-summary__item--surcharge" *ngIf="autoSurcharge > 0">
             <span class="surcharge-label">
               Cargo por no entrega
               <span class="surcharge-badge">sin canje</span>
             </span>
-            <strong>{{ autoSurcharge | currency:'USD':'symbol':'1.2-2' }}</strong>
+            <strong>{{ autoSurcharge | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
           </div>
           <div class="payment-summary__item payment-summary__item--effective-total" *ngIf="totalCardSurcharge > 0">
             <span>Total a cobrar</span>
-            <strong>{{ effectiveTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+            <strong>{{ effectiveTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
           </div>
           <div class="payment-summary__item payment-summary__item--coverage">
             <div class="coverage-header" *ngIf="totalCardSurcharge === 0">
               <span>Cancelado</span>
-              <strong>{{ coverage | currency:'USD':'symbol':'1.2-2' }}</strong>
+              <strong>{{ coverage | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
             </div>
             <div class="coverage-breakdown" *ngIf="coverageLines.length > 0">
               <div class="coverage-line" *ngFor="let line of coverageLines; trackBy: trackByIndex"
@@ -267,13 +267,13 @@
                   {{ line.type === 'tradein' ? 'canje' : 'pago' }}
                 </span>
                 <span class="coverage-line__label">{{ line.label }}</span>
-                <span class="coverage-line__amount">{{ line.amount | currency:'USD':'symbol':'1.2-2' }}</span>
+                <span class="coverage-line__amount">{{ line.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
               </div>
             </div>
           </div>
           <div class="payment-summary__item payment-summary__item--balance" [class.payment-summary__item--ok]="remaining === 0" [class.payment-summary__item--warn]="remaining > 0" [class.payment-summary__item--change]="remaining < 0">
             <span>{{ remaining > 0 ? 'Restante' : remaining < 0 ? 'Vuelto a entregar' : 'Exacto' }}</span>
-            <strong>{{ (remaining >= 0 ? remaining : -remaining) | currency:'USD':'symbol':'1.2-2' }}</strong>
+            <strong>{{ (remaining >= 0 ? remaining : -remaining) | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
           </div>
         </div>
       </div>

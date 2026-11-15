@@ -96,8 +96,8 @@
             <div class="sale-config__aside">
               <div class="price-kpi">
                 <span class="f__l">Radar comercial</span>
-                <strong class="price-kpi__val">{{ createForm.get('allowsManualSaleValue')?.value ? 'En venta' : (publicPricePreview(createForm) | currency:'USD':'symbol':'1.2-2') }}</strong>
-                <small *ngIf="canViewCostPrice">Costo {{ costPricePreview(createForm) | currency:'USD':'symbol':'1.2-2' }} · Margen {{ marginPreview(createForm) | number:'1.0-0' }}%</small>
+                <strong class="price-kpi__val">{{ createForm.get('allowsManualSaleValue')?.value ? 'En venta' : (publicPricePreview(createForm) | currency:'ARS':'symbol-narrow':'1.2-2') }}</strong>
+                <small *ngIf="canViewCostPrice">Costo {{ costPricePreview(createForm) | currency:'ARS':'symbol-narrow':'1.2-2' }} · Margen {{ marginPreview(createForm) | number:'1.0-0' }}%</small>
               </div>
             </div>
           </div>
@@ -577,8 +577,8 @@
           </label>
           <div class="price-kpi price-kpi--modal">
             <span class="f__l">Lectura comercial</span>
-            <strong class="price-kpi__val">{{ editForm.get('allowsManualSaleValue')?.value ? 'Valor en venta' : (publicPricePreview(editForm) | currency:'USD':'symbol':'1.2-2') }}</strong>
-            <small *ngIf="canViewCostPrice">Costo {{ costPricePreview(editForm) | currency:'USD':'symbol':'1.2-2' }} · Margen {{ marginPreview(editForm) | number:'1.0-0' }}%</small>
+            <strong class="price-kpi__val">{{ editForm.get('allowsManualSaleValue')?.value ? 'Valor en venta' : (publicPricePreview(editForm) | currency:'ARS':'symbol-narrow':'1.2-2') }}</strong>
+            <small *ngIf="canViewCostPrice">Costo {{ costPricePreview(editForm) | currency:'ARS':'symbol-narrow':'1.2-2' }} · Margen {{ marginPreview(editForm) | number:'1.0-0' }}%</small>
           </div>
           <div class="pf__footer">
             <button class="btn btn--primary" type="submit" [disabled]="updating">{{ updating ? 'Actualizando...' : 'Guardar cambios' }}</button>
