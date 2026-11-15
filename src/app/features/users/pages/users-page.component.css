@@ -1,0 +1,7 @@
+.users__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+.users__tabs { border-bottom: 0; }
+.users__summary { font-size: 14px; color: var(--text-2); }
+.users__summary strong { color: var(--text); }
+.users__error { margin-bottom: var(--space-4); }
+.users__error p { margin: 2px 0 0; }
+.users__error div { flex: 1; }

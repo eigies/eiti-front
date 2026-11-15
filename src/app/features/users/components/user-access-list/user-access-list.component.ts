@@ -7,6 +7,7 @@ import {
   Output
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { UiAvatarComponent } from '../../../../shared/ui';
 
 import { AccessProfileResponse } from '../../../../core/models/access-profile.models';
 import { BranchResponse } from '../../../../core/models/branch.models';
@@ -24,7 +25,7 @@ import {
 @Component({
   selector: 'app-user-access-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, SearchableSelectComponent, UiAvatarComponent],
   templateUrl: './user-access-list.component.html',
   styleUrls: ['./user-access-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -111,7 +111,7 @@ describe('PermissionMatrixComponent', () => {
     expect(parseFloat(getComputedStyle(moduleTrigger).minHeight)).toBeGreaterThanOrEqual(44);
   });
 
-  it('uses soft custom checks and selected permission cards', () => {
+  it('uses soft custom checks and flat permission rows', () => {
     component.toggleExpanded('Ventas');
     fixture.detectChanges();
 
@@ -125,6 +125,6 @@ describe('PermissionMatrixComponent', () => {
     expect(getComputedStyle(check).appearance).toBe('none');
     expect(getComputedStyle(check).borderTopLeftRadius).toBe('5px');
     expect(getComputedStyle(row).borderTopWidth).toBe('1px');
-    expect(getComputedStyle(row).borderTopLeftRadius).toBe('10px');
+    expect(getComputedStyle(row).borderTopLeftRadius).toBe('0px');
   });
 });

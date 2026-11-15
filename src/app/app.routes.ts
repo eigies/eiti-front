@@ -34,7 +34,7 @@ export const routes: Routes = [
                 canActivate: [authGuard, permissionGuard],
                 data: { permission: PermissionCodes.usersManage },
                 loadComponent: () =>
-                    import('./features/users/users.component').then(m => m.UsersComponent)
+                    import('./features/users/pages/users-page.component').then(m => m.UsersPageComponent)
             },
             {
                 path: 'employees',

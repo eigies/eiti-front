@@ -1,0 +1,116 @@
+<main class="ui-page users" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Usuarios y perfiles</h1>
+      <p>Quién entra, qué puede hacer y desde qué sucursales.</p>
+    </div>
+    <button *ngIf="f.activeSection === 'users'" id="users-create" uiBtn="primary" type="button" (click)="f.openUserCreator()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo usuario
+    </button>
+    <button *ngIf="f.activeSection === 'profiles'" id="profiles-create" uiBtn="primary" type="button" (click)="f.openProfileCreator()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo perfil
+    </button>
+  </header>
+
+  <div class="users__bar">
+    <nav class="ui-tabs users__tabs" role="tablist" aria-label="Administración de accesos">
+      <button
+        id="users-tab"
+        type="button"
+        role="tab"
+        [attr.aria-selected]="f.activeSection === 'users'"
+        aria-controls="users-panel"
+        [attr.tabindex]="f.activeSection === 'users' ? 0 : -1"
+        (keydown)="onSectionTabKeydown($event)"
+        (click)="f.selectSection('users')">
+        Usuarios<span class="ui-count">{{ f.users.length }}</span>
+      </button>
+      <button
+        id="profiles-tab"
+        type="button"
+        role="tab"
+        [attr.aria-selected]="f.activeSection === 'profiles'"
+        aria-controls="profiles-panel"
+        [attr.tabindex]="f.activeSection === 'profiles' ? 0 : -1"
+        (keydown)="onSectionTabKeydown($event)"
+        (click)="f.selectSection('profiles')">
+        Perfiles<span class="ui-count">{{ f.profiles.length }}</span>
+      </button>
+    </nav>
+    <span class="users__summary" *ngIf="f.activeSection === 'users'">
+      <strong class="ui-num">{{ f.activeUsersCount }}</strong> activos de {{ f.users.length }}
+    </span>
+  </div>
+
+  <section
+    id="users-panel"
+    role="tabpanel"
+    aria-labelledby="users-tab"
+    [hidden]="f.activeSection !== 'users'">
+    <div *ngIf="f.usersLoadError" class="ui-banner ui-banner--danger users__error" data-testid="users-load-error" role="alert">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <div><strong>No pudimos cargar usuarios</strong><p>{{ f.usersLoadError }}</p></div>
+      <button uiBtn="secondary" size="sm" type="button" (click)="f.loadUsers()">Reintentar</button>
+    </div>
+    <app-user-access-list
+      [hidden]="!!f.usersLoadError"
+      [users]="f.users"
+      [profiles]="f.profiles"
+      [branches]="f.branches"
+      [loading]="f.loadingUsers"
+      [selectedUserId]="f.selectedUser?.id ?? null"
+      (createRequested)="f.openUserCreator()"
+      (userSelected)="f.openUserEditor($event)"
+      (statusRequested)="f.requestUserStatusChange($event)"
+      (reloadRequested)="f.loadUsers()">
+    </app-user-access-list>
+  </section>
+
+  <section
+    id="profiles-panel"
+    role="tabpanel"
+    aria-labelledby="profiles-tab"
+    [hidden]="f.activeSection !== 'profiles'">
+    <div *ngIf="f.profilesLoadError" class="ui-banner ui-banner--danger users__error" data-testid="profiles-load-error" role="alert">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <div><strong>No pudimos cargar perfiles</strong><p>{{ f.profilesLoadError }}</p></div>
+      <button uiBtn="secondary" size="sm" type="button" (click)="f.loadProfiles()">Reintentar</button>
+    </div>
+    <app-access-profile-list
+      [hidden]="!!f.profilesLoadError"
+      [profiles]="f.profiles"
+      [users]="f.users"
+      [loading]="f.loadingProfiles"
+      [selectedProfileId]="f.selectedProfile?.id ?? null"
+      (createRequested)="f.openProfileCreator()"
+      (profileSelected)="f.openProfileEditor($event)"
+      (deleteRequested)="f.deleteProfile($event)"
+      (reloadRequested)="f.loadProfiles()">
+    </app-access-profile-list>
+  </section>
+
+  <app-user-access-panel
+    *ngIf="f.userPanelMode !== 'closed'"
+    [class.access-panel-host--closing]="f.userPanelClosing"
+    [mode]="f.userPanelMode === 'create' ? 'create' : 'edit'"
+    [user]="f.selectedUser"
+    [profiles]="f.profiles"
+    [branches]="f.branches"
+    [permissionCatalog]="f.permissionCatalog"
+    [saving]="f.userPanelSaving"
+    (saveRequested)="f.saveUserDraft($event)"
+    (closeRequested)="f.requestUserPanelClose($event)">
+  </app-user-access-panel>
+
+  <app-access-profile-panel
+    *ngIf="f.profilePanelMode !== 'closed'"
+    [class.profile-panel-host--closing]="f.profilePanelClosing"
+    [mode]="f.profilePanelMode === 'create' ? 'create' : 'edit'"
+    [profile]="f.selectedProfile"
+    [permissionCatalog]="f.permissionCatalog"
+    [usageCount]="f.selectedProfile ? f.profileUsage(f.selectedProfile.id) : 0"
+    [saving]="f.profilePanelSaving"
+    (saveRequested)="f.saveProfileDraft($event)"
+    (closeRequested)="f.requestProfilePanelClose($event)">
+  </app-access-profile-panel>
+</main>

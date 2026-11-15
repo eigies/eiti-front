@@ -1,56 +1,32 @@
-import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  DestroyRef,
-  ElementRef,
-  inject,
-  OnDestroy,
-  OnInit
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AccessProfileResponse } from '../../core/models/access-profile.models';
-import { BranchResponse } from '../../core/models/branch.models';
-import { PermissionCatalog } from '../../core/models/permission.models';
-import { UserResponse } from '../../core/models/user.models';
-import { AccessProfileService } from '../../core/services/access-profile.service';
-import { AuthService } from '../../core/services/auth.service';
-import { BranchService } from '../../core/services/branch.service';
-import { UserService } from '../../core/services/user.service';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { AccessProfileListComponent } from './components/access-profile-list/access-profile-list.component';
-import { AccessProfilePanelComponent } from './components/access-profile-panel/access-profile-panel.component';
-import { UserAccessListComponent } from './components/user-access-list/user-access-list.component';
-import { UserAccessPanelComponent } from './components/user-access-panel/user-access-panel.component';
+import { Injectable, OnDestroy } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
+import { AccessProfileResponse } from '../../../core/models/access-profile.models';
+import { BranchResponse } from '../../../core/models/branch.models';
+import { PermissionCatalog } from '../../../core/models/permission.models';
+import { UserResponse } from '../../../core/models/user.models';
+import { AccessProfileService } from '../../../core/services/access-profile.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { BranchService } from '../../../core/services/branch.service';
+import { UserService } from '../../../core/services/user.service';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import {
   AccessPanelMode,
   AccessProfileDraft,
   AccessSection,
   profileUsageCount,
   UserAccessDraft
-} from './users-ui.models';
+} from '../users-ui.models';
 
-@Component({
-  selector: 'app-users',
-  standalone: true,
-  imports: [
-    CommonModule,
-    UserAccessListComponent,
-    UserAccessPanelComponent,
-    AccessProfileListComponent,
-    AccessProfilePanelComponent
-  ],
-  templateUrl: './users.component.html',
-  styleUrls: ['./users.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class UsersComponent implements OnInit, OnDestroy {
-  readonly sections = [
-    { id: 'users', label: 'Usuarios' },
-    { id: 'profiles', label: 'Perfiles' }
-  ] as const;
+/**
+ * Estado y reglas de Usuarios y perfiles. Movido tal cual desde UsersComponent:
+ * mismas llamadas, validaciones, confirmaciones y mensajes. La página solo conecta.
+ */
+@Injectable()
+export class UsersFacade implements OnDestroy {
+  /** Avisa que el popup de usuario terminó de cerrarse (con el id recién creado, si hubo alta). */
+  readonly userPanelClosed$ = new Subject<string | undefined>();
+
   readonly permissionCatalog = PermissionCatalog;
 
   users: UserResponse[] = [];
@@ -72,9 +48,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   usersLoadError: string | null = null;
   profilesLoadError: string | null = null;
 
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroy$ = new Subject<void>();
   private destroyed = false;
   private userPanelCloseRequestId = 0;
   private profilePanelCloseRequestId = 0;
@@ -82,7 +56,8 @@ export class UsersComponent implements OnInit, OnDestroy {
   private profileDeleteRequestId = 0;
   private userPanelCloseTimer: ReturnType<typeof setTimeout> | null = null;
   private profilePanelCloseTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly panelExitDuration = 240;
+  /** Lo que tarda en salir el popup (motion EITI 2: 120 ms). */
+  readonly panelExitDuration = 120;
 
   constructor(
     private readonly userService: UserService,
@@ -93,14 +68,13 @@ export class UsersComponent implements OnInit, OnDestroy {
     private readonly confirmation: ConfirmationService
   ) {}
 
-  ngOnInit(): void {
+  init(): void {
     this.loadData();
     this.branchService.listBranches()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: branches => {
           this.branches = branches;
-          this.cdr.markForCheck();
         },
         error: () => {}
       });
@@ -114,6 +88,8 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.profilePanelCloseRequestId++;
     this.statusRequestId++;
     this.profileDeleteRequestId++;
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get activeUsersCount(): number {
@@ -133,13 +109,12 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.loadingProfiles = true;
     this.profilesLoadError = null;
     this.accessProfileService.listAccessProfiles()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: profiles => {
           this.profiles = [...profiles]
             .sort((left, right) => left.name.localeCompare(right.name));
           this.loadingProfiles = false;
-          this.cdr.markForCheck();
         },
         error: error => {
           this.loadingProfiles = false;
@@ -148,7 +123,6 @@ export class UsersComponent implements OnInit, OnDestroy {
             'No se pudieron cargar los perfiles'
           );
           this.toast.error(this.profilesLoadError);
-          this.cdr.markForCheck();
         }
       });
   }
@@ -157,13 +131,12 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.loadingUsers = true;
     this.usersLoadError = null;
     this.userService.listUsers()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: users => {
           this.users = [...users]
             .sort((left, right) => left.username.localeCompare(right.username));
           this.loadingUsers = false;
-          this.cdr.markForCheck();
         },
         error: error => {
           this.loadingUsers = false;
@@ -172,7 +145,6 @@ export class UsersComponent implements OnInit, OnDestroy {
             'No se pudieron cargar los usuarios'
           );
           this.toast.error(this.usersLoadError);
-          this.cdr.markForCheck();
         }
       });
   }
@@ -183,7 +155,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.userPanelCloseRequestId++;
     this.selectedUser = null;
     this.userPanelMode = 'create';
-    this.cdr.markForCheck();
   }
 
   openUserEditor(user: UserResponse): void {
@@ -192,7 +163,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.userPanelCloseRequestId++;
     this.selectedUser = user;
     this.userPanelMode = 'edit';
-    this.cdr.markForCheck();
   }
 
   saveUserDraft(draft: UserAccessDraft): void {
@@ -203,21 +173,19 @@ export class UsersComponent implements OnInit, OnDestroy {
       this.userService.createUser({
         ...draft,
         employeeId: null
-      }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      }).pipe(takeUntil(this.destroy$)).subscribe({
         next: created => {
           this.users = [...this.users, created]
             .sort((left, right) => left.username.localeCompare(right.username));
           this.userPanelSaving = false;
           this.beginUserPanelClose(created.id);
           this.toast.success('Usuario creado');
-          this.cdr.markForCheck();
         },
         error: error => {
           this.userPanelSaving = false;
           this.toast.error(
             error?.error?.detail || error?.error?.message || 'No se pudo crear el usuario'
           );
-          this.cdr.markForCheck();
         }
       });
       return;
@@ -236,21 +204,19 @@ export class UsersComponent implements OnInit, OnDestroy {
       employeeId: null,
       isEmployee: draft.isEmployee,
       branchIds: draft.branchIds
-    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: updated => {
         this.patchUser(updated);
         this.userPanelSaving = false;
         this.beginUserPanelClose();
         this.toast.success('Acceso actualizado');
         this.auth.refreshCurrentUserProfile();
-        this.cdr.markForCheck();
       },
       error: error => {
         this.userPanelSaving = false;
         this.toast.error(
           error?.error?.detail || error?.error?.message || 'No se pudo actualizar el acceso'
         );
-        this.cdr.markForCheck();
       }
     });
   }
@@ -303,18 +269,16 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   toggleStatus(user: UserResponse): void {
     this.userService.setStatus(user.id, !user.isActive)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: updated => {
           this.patchUser(updated);
           this.toast.success(updated.isActive ? 'Usuario activado' : 'Usuario desactivado');
-          this.cdr.markForCheck();
         },
         error: error => {
           this.toast.error(
             error?.error?.detail || error?.error?.message || 'No se pudo actualizar el estado'
           );
-          this.cdr.markForCheck();
         }
       });
   }
@@ -325,7 +289,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.profilePanelCloseRequestId++;
     this.selectedProfile = null;
     this.profilePanelMode = 'create';
-    this.cdr.markForCheck();
   }
 
   openProfileEditor(profile: AccessProfileResponse): void {
@@ -334,7 +297,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.profilePanelCloseRequestId++;
     this.selectedProfile = profile;
     this.profilePanelMode = 'edit';
-    this.cdr.markForCheck();
   }
 
   profileUsage(profileId: string): number {
@@ -375,7 +337,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       ? this.accessProfileService.updateAccessProfile(editingProfileId, draft)
       : this.accessProfileService.createAccessProfile(draft);
 
-    action.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    action.pipe(takeUntil(this.destroy$)).subscribe({
       next: profile => {
         this.profiles = [...this.profiles.filter(item => item.id !== profile.id), profile]
           .sort((left, right) => left.name.localeCompare(right.name));
@@ -384,14 +346,12 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.toast.success(editingProfileId ? 'Perfil actualizado' : 'Perfil creado');
         this.loadUsers();
         this.auth.refreshCurrentUserProfile();
-        this.cdr.markForCheck();
       },
       error: error => {
         this.profilePanelSaving = false;
         this.toast.error(
           error?.error?.detail || error?.error?.message || 'No se pudo guardar el perfil'
         );
-        this.cdr.markForCheck();
       }
     });
   }
@@ -414,19 +374,17 @@ export class UsersComponent implements OnInit, OnDestroy {
     ) return;
 
     this.accessProfileService.deleteAccessProfile(profile.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.profiles = this.profiles.filter(item => item.id !== profile.id);
           if (this.selectedProfile?.id === profile.id) this.beginProfilePanelClose();
           this.toast.success('Perfil eliminado');
-          this.cdr.markForCheck();
         },
         error: error => {
           this.toast.error(
             error?.error?.detail || error?.error?.message || 'No se pudo eliminar el perfil'
           );
-          this.cdr.markForCheck();
         }
       });
   }
@@ -434,39 +392,6 @@ export class UsersComponent implements OnInit, OnDestroy {
   selectSection(sectionId: AccessSection): void {
     if (this.userPanelMode !== 'closed' || this.profilePanelMode !== 'closed') return;
     this.activeSection = sectionId;
-  }
-
-  onSectionTabKeydown(event: KeyboardEvent): void {
-    const tabs = Array.from(
-      (event.currentTarget as HTMLElement | null)
-        ?.parentElement
-        ?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []
-    );
-    const currentIndex = tabs.indexOf(event.currentTarget as HTMLElement);
-    if (currentIndex < 0 || tabs.length === 0) return;
-
-    let targetIndex: number;
-    switch (event.key) {
-      case 'ArrowRight':
-        targetIndex = (currentIndex + 1) % tabs.length;
-        break;
-      case 'ArrowLeft':
-        targetIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-        break;
-      case 'Home':
-        targetIndex = 0;
-        break;
-      case 'End':
-        targetIndex = tabs.length - 1;
-        break;
-      default:
-        return;
-    }
-
-    event.preventDefault();
-    const target = tabs[targetIndex];
-    this.selectSection(target.id === 'profiles-tab' ? 'profiles' : 'users');
-    target.focus();
   }
 
   private patchUser(updated: UserResponse): void {
@@ -479,7 +404,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     if (this.userPanelClosing || this.userPanelMode === 'closed') return;
     this.userPanelCloseRequestId++;
     this.userPanelClosing = true;
-    this.cdr.markForCheck();
     this.userPanelCloseTimer = setTimeout(() => {
       this.userPanelCloseTimer = null;
       this.userPanelClosing = false;
@@ -491,32 +415,13 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.userPanelCloseRequestId++;
     this.userPanelMode = 'closed';
     this.selectedUser = null;
-    this.cdr.markForCheck();
-
-    setTimeout(() => {
-      if (this.destroyed) return;
-      const activeElement = document.activeElement;
-      if (activeElement instanceof HTMLElement && activeElement !== document.body) return;
-
-      const preferredAction = preferredUserId
-        ? this.createdUserEditAction(preferredUserId)
-        : null;
-      const fallback = preferredAction
-        ?? this.host.nativeElement.querySelector<HTMLElement>('.user-list__create')
-        ?? this.host.nativeElement.querySelector<HTMLElement>('#user-list-title');
-      if (!fallback) return;
-      if (!fallback.matches('button, a, input, select, textarea, [tabindex]')) {
-        fallback.tabIndex = -1;
-      }
-      fallback.focus();
-    });
+    this.userPanelClosed$.next(preferredUserId);
   }
 
   private beginProfilePanelClose(): void {
     if (this.profilePanelClosing || this.profilePanelMode === 'closed') return;
     this.profilePanelCloseRequestId++;
     this.profilePanelClosing = true;
-    this.cdr.markForCheck();
     this.profilePanelCloseTimer = setTimeout(() => {
       this.profilePanelCloseTimer = null;
       this.profilePanelClosing = false;
@@ -528,7 +433,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.profilePanelCloseRequestId++;
     this.profilePanelMode = 'closed';
     this.selectedProfile = null;
-    this.cdr.markForCheck();
   }
 
   private clearUserPanelCloseTimer(): void {
@@ -565,13 +469,6 @@ export class UsersComponent implements OnInit, OnDestroy {
       && !this.profilePanelClosing
       && this.profilePanelMode === expectedMode
       && (this.selectedProfile?.id ?? null) === expectedProfileId;
-  }
-
-  private createdUserEditAction(userId: string): HTMLElement | null {
-    const row = Array.from(
-      this.host.nativeElement.querySelectorAll<HTMLElement>('[data-user-id]')
-    ).find(candidate => candidate.dataset['userId'] === userId);
-    return row?.querySelector<HTMLElement>('.user-list__open') ?? null;
   }
 
   private loadErrorMessage(error: unknown, fallback: string): string {

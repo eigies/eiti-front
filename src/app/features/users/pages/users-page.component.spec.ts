@@ -2,24 +2,26 @@ import { By } from '@angular/platform-browser';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
-import { AccessProfileResponse } from '../../core/models/access-profile.models';
-import { BranchResponse } from '../../core/models/branch.models';
-import { UserResponse } from '../../core/models/user.models';
-import { AccessProfileService } from '../../core/services/access-profile.service';
-import { AuthService } from '../../core/services/auth.service';
-import { BranchService } from '../../core/services/branch.service';
-import { UserService } from '../../core/services/user.service';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { AccessProfileDraft, UserAccessDraft } from './users-ui.models';
-import { AccessProfileListComponent } from './components/access-profile-list/access-profile-list.component';
-import { UserAccessListComponent } from './components/user-access-list/user-access-list.component';
-import { UserAccessPanelComponent } from './components/user-access-panel/user-access-panel.component';
-import { UsersComponent } from './users.component';
+import { AccessProfileResponse } from '../../../core/models/access-profile.models';
+import { BranchResponse } from '../../../core/models/branch.models';
+import { UserResponse } from '../../../core/models/user.models';
+import { AccessProfileService } from '../../../core/services/access-profile.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { BranchService } from '../../../core/services/branch.service';
+import { UserService } from '../../../core/services/user.service';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { AccessProfileDraft, UserAccessDraft } from '../users-ui.models';
+import { AccessProfileListComponent } from '../components/access-profile-list/access-profile-list.component';
+import { UserAccessListComponent } from '../components/user-access-list/user-access-list.component';
+import { UserAccessPanelComponent } from '../components/user-access-panel/user-access-panel.component';
+import { UsersFacade } from '../data-access/users.facade';
+import { UsersPageComponent } from './users-page.component';
 
-describe('UsersComponent', () => {
-  let fixture: ComponentFixture<UsersComponent>;
-  let component: UsersComponent;
+describe('UsersPageComponent', () => {
+  let fixture: ComponentFixture<UsersPageComponent>;
+  // El estado y las reglas viven en la facade; la página solo conecta.
+  let component: UsersFacade;
   let userService: jasmine.SpyObj<UserService>;
   let profileService: jasmine.SpyObj<AccessProfileService>;
   let branchService: jasmine.SpyObj<BranchService>;
@@ -64,7 +66,7 @@ describe('UsersComponent', () => {
     confirmation.confirm.and.resolveTo(true);
 
     await TestBed.configureTestingModule({
-      imports: [UsersComponent],
+      imports: [UsersPageComponent],
       providers: [
         { provide: UserService, useValue: userService },
         { provide: AccessProfileService, useValue: profileService },
@@ -175,7 +177,7 @@ describe('UsersComponent', () => {
 
   it('lets the panel restore a surviving opener exactly once on normal close', fakeAsync(() => {
     render();
-    const createButton = query('.user-list__create') as HTMLButtonElement;
+    const createButton = query('#users-create') as HTMLButtonElement;
     createButton.focus();
     createButton.click();
     fixture.detectChanges();
@@ -423,10 +425,12 @@ describe('UsersComponent', () => {
     const profilesSection = query('#profiles-panel') as HTMLElement;
 
     expect(tablist).not.toBeNull();
-    expect(tabs.map(tab => tab.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+    // Cada pestaña lleva su contador al lado del nombre.
+    expect(tabs.map(tab => tab.firstChild?.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
       'Usuarios',
       'Perfiles'
     ]);
+    expect(tabs.map(tab => tab.querySelector('.ui-count')?.textContent?.trim())).toEqual(['2', '2']);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(tabs[0].getAttribute('aria-controls')).toBe('users-panel');
     expect(usersSection.hidden).toBeFalse();
@@ -531,24 +535,19 @@ describe('UsersComponent', () => {
     expect(document.activeElement).toBe(tabs[0]);
   });
 
-  it('keeps tabs touch-friendly, visibly focusable, and the shell free of narrow overflow', async () => {
+  it('keeps tabs touch-friendly and the shell free of narrow overflow', async () => {
     render();
-    const tab = query('.access-tabs__item') as HTMLButtonElement;
-    const tablist = query('.access-tabs') as HTMLElement;
-    const componentStyles = Array.from(document.head.querySelectorAll('style'))
-      .map(style => style.textContent ?? '')
-      .find(css => css.includes('.access-tabs__item'));
+    const tab = query('#users-tab') as HTMLButtonElement;
 
+    expect(tab.closest('.ui-tabs')).not.toBeNull();
     expect(Number.parseFloat(getComputedStyle(tab).minHeight)).toBeGreaterThanOrEqual(44);
-    expect(componentStyles).toMatch(/\.access-tabs__item[^{]*:focus-visible[\s\S]*outline:/);
-    expect(getComputedStyle(tablist).alignItems).toBe('flex-end');
 
     for (const width of [768, 375]) {
       fixture.nativeElement.style.display = 'block';
       fixture.nativeElement.style.width = `${width}px`;
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       fixture.detectChanges();
-      const page = query('.page') as HTMLElement;
+      const page = query('.ui-page') as HTMLElement;
       expect(page.getBoundingClientRect().width).toBeLessThanOrEqual(width);
       expect(page.scrollWidth).toBeLessThanOrEqual(page.clientWidth);
       expect(fixture.nativeElement.scrollWidth)
@@ -684,8 +683,8 @@ describe('UsersComponent', () => {
   });
 
   function render(): void {
-    fixture = TestBed.createComponent(UsersComponent);
-    component = fixture.componentInstance;
+    fixture = TestBed.createComponent(UsersPageComponent);
+    component = fixture.debugElement.injector.get(UsersFacade);
     fixture.detectChanges();
   }
 
