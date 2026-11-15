@@ -41,7 +41,7 @@
 .edit-field__label,
 .expand-section__eyebrow,
 .plan-field__label {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   text-transform: uppercase;
 }
 
@@ -64,7 +64,7 @@
 .panel__header,
 .bank-row__name,
 .expand-section__head strong {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .hero h1 {
@@ -76,7 +76,7 @@
 .hero p {
   margin: .25rem 0 0;
   color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .95rem;
   max-width: 42rem;
   line-height: 1.55;
@@ -156,7 +156,7 @@
 .bank-item,
 .expand-section,
 .plan-row {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .control {
@@ -322,7 +322,7 @@
   border: 1px solid color-mix(in srgb, var(--amber) 28%, var(--border-2));
   background: color-mix(in srgb, var(--amber) 8%, transparent);
   color: color-mix(in srgb, var(--amber) 70%, var(--text) 30%);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -330,14 +330,14 @@
 
 .field__hint {
   color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .86rem;
   line-height: 1.45;
 }
 
 .empty {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
 }
 
@@ -425,7 +425,7 @@
 .bank-row__plans {
   font-size: .7rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -510,14 +510,14 @@
 }
 
 .plan-row__label {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
   font-weight: 600;
   color: var(--text);
 }
 
 .plan-row__state {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   letter-spacing: .08em;
   text-transform: uppercase;

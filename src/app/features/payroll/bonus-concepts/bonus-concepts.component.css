@@ -37,7 +37,7 @@
 .field__label,
 .edit-field__label,
 .expand-section__eyebrow {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   text-transform: uppercase;
 }
 
@@ -60,7 +60,7 @@
 .panel__header,
 .concept-row__name,
 .expand-section__head strong {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .hero h1 {
@@ -72,7 +72,7 @@
 .hero p {
   margin: .25rem 0 0;
   color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .95rem;
   max-width: 42rem;
   line-height: 1.55;
@@ -149,7 +149,7 @@
 .badge,
 .concept-item,
 .expand-section {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .control {
@@ -229,7 +229,7 @@
 
 .empty {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
 }
 
@@ -317,7 +317,7 @@
 .concept-row__plans {
   font-size: .7rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   letter-spacing: .06em;
   text-transform: uppercase;
 }

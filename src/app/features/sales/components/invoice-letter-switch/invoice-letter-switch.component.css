@@ -20,7 +20,7 @@
     border-radius: 7px;
     background: transparent;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .78rem;
     letter-spacing: .04em;
     cursor: pointer;

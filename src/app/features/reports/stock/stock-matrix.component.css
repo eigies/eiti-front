@@ -27,7 +27,7 @@
 .sm-kpi small,
 .sm-filter-note,
 .sm-legend {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .hero__ledger span,
@@ -40,7 +40,7 @@
 
 .hero__ledger strong {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 1.75rem;
   line-height: 1;
 }
@@ -83,7 +83,7 @@
 
 .sm-kpi strong {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 1.45rem;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -186,7 +186,7 @@
   outline: 0;
   background: transparent;
   color: var(--text, #2a2622);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
 }
 
@@ -208,7 +208,7 @@
     color-mix(in srgb, var(--bg) 92%, transparent),
     color-mix(in srgb, var(--bg-panel) 96%, transparent));
   color: var(--text-soft, #6b6358);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   white-space: nowrap;
   max-width: 100%;
@@ -424,7 +424,7 @@
   padding: .18rem .48rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

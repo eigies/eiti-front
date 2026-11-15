@@ -80,6 +80,6 @@ src/app/
 - **Services** return `Observable<T>` (never Promises). Use `HttpClient` directly with `environment.apiUrl` as base.
 - **Permission codes** are defined as constants in `src/app/core/models/permission.models.ts` — use those constants rather than raw strings.
 - **Toast notifications** go through `ToastService.success()` / `ToastService.error()` (auto-dismiss 4 s).
-- **Theming:** CSS custom properties in `src/styles.css`. Dark theme is default; `ThemeService` toggles a class on `<body>`.
+- **Theming:** CSS custom properties in `src/styles.css`. Tokens de EITI 2 en `src/styles/tokens.css` (claro por defecto, oscuro grafito con `data-theme="dark"` en `<html>`). Piezas compartidas `ui-*` en `src/styles/ui.css`, movimiento en `src/styles/motion.css`. `ThemeService` pone `data-theme` en `<html>` y mantiene las clases viejas en `<body>`.
 - **Exports:** PDF via jsPDF, Excel via XLSX — both used inside feature components directly.
 - **Onboarding:** `OnboardingService` controls a guided setup banner. `authGuard` checks onboarding status and may redirect before reaching the requested route.

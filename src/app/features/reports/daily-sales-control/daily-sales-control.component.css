@@ -32,7 +32,7 @@
 .daily-metric small {
   display: block;
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .daily-metric span {
@@ -45,7 +45,7 @@
   display: block;
   margin: .25rem 0;
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: 1.8rem;
   line-height: 1;
 }
@@ -118,7 +118,7 @@
 
 .daily-payment__amount {
   color: var(--amber);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .76rem;
   line-height: 1.2;
   white-space: nowrap;

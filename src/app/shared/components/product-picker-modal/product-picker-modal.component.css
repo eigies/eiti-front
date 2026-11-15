@@ -37,7 +37,7 @@
 }
 
 .picker__title {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .82rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -103,7 +103,7 @@
   border-radius: 10px;
   background: color-mix(in srgb, var(--bg-panel) 78%, var(--bg));
   color: var(--text);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .98rem;
   outline: none;
   transition: border-color .16s ease, box-shadow .16s ease;
@@ -151,7 +151,7 @@
 .picker__meta {
   padding: 0 1.35rem .35rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .6rem;
   letter-spacing: .05em;
   text-transform: uppercase;
@@ -188,7 +188,7 @@
   padding-bottom: .7rem;
   color: var(--text-dim);
   background: var(--bg-panel);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .58rem;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -268,7 +268,7 @@
 }
 
 .picker__product strong {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .96rem;
   font-weight: 600;
   color: var(--text);
@@ -278,7 +278,7 @@
 }
 
 .picker__product small {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .6rem;
   letter-spacing: .03em;
   color: var(--text-dim);
@@ -299,7 +299,7 @@
   padding: .2rem .5rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .03em;
 }
@@ -378,7 +378,7 @@
   border-right: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .74rem;
   text-align: center;
   outline: none;
@@ -422,12 +422,12 @@
 
 .picker__empty strong {
   color: var(--text);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: 1.05rem;
 }
 
 .picker__empty span {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
 }
 
 /* ---------- Footer ---------- */
@@ -448,7 +448,7 @@
   border-radius: 9px;
   background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   letter-spacing: .04em;
   cursor: pointer;

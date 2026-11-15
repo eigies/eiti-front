@@ -95,7 +95,7 @@
 
 .confirmation-card__eyebrow {
   color: var(--confirmation-accent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
   font-weight: 700;
   letter-spacing: .16em;
@@ -127,7 +127,7 @@
   border-radius: 12px;
   color: color-mix(in srgb, var(--text) 74%, var(--text-dim));
   background: color-mix(in srgb, var(--confirmation-accent-soft) 68%, transparent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
   line-height: 1.5;
   /* Un detalle puede enumerar varios items, uno por linea. */
@@ -158,7 +158,7 @@
   padding: .75rem 1rem;
   border: 1px solid transparent;
   border-radius: 11px;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
   font-weight: 700;
   letter-spacing: .035em;
@@ -234,7 +234,7 @@
 
 .confirmation-party__caption {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .6rem;
   font-weight: 700;
   letter-spacing: .12em;
@@ -251,7 +251,7 @@
 
 .confirmation-party__id {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .84rem;
   letter-spacing: .02em;
 }
@@ -264,7 +264,7 @@
 .confirmation-party__note {
   margin-top: .2rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   letter-spacing: .03em;
 }
@@ -286,7 +286,7 @@
 .confirmation-compare__sign {
   align-self: center;
   color: var(--confirmation-accent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 1.35rem;
   line-height: 1;
 }

@@ -31,7 +31,7 @@
 .onboarding-banner__eyebrow,
 .onboarding-banner__step {
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     letter-spacing: .12em;
     text-transform: uppercase
@@ -39,14 +39,14 @@
 
 .onboarding-banner__title {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .9rem
 }
 
 .onboarding-banner__text {
     margin: 0;
     color: var(--text-soft);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .74rem;
     line-height: 1.5
 }
@@ -80,7 +80,7 @@
     padding: .8rem 1rem;
     background: var(--amber);
     color: var(--bg);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .72rem;
     letter-spacing: .12em;
     text-transform: uppercase;

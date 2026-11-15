@@ -62,7 +62,7 @@
   height: 1.65rem;
   border: 1px solid var(--border-2);
   border-radius: 50%;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
 }
 
@@ -81,7 +81,7 @@
 }
 
 .quick-workspace__step strong {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .7rem;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -90,7 +90,7 @@
 .quick-workspace__step small {
   margin-top: .25rem;
   color: var(--text-soft);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .82rem;
 }
 

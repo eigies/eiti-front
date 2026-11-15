@@ -39,7 +39,7 @@
 .panel__eyebrow,
 .field__label,
 .expand-section__eyebrow {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   text-transform: uppercase;
 }
 
@@ -63,7 +63,7 @@
 .liquidation-row__name,
 .money-pair,
 .pay-modal__header strong {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .hero h1 {
@@ -75,7 +75,7 @@
 .hero p {
   margin: .25rem 0 0;
   color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .95rem;
   max-width: 42rem;
   line-height: 1.55;
@@ -161,7 +161,7 @@
 .badge,
 .liquidation-item,
 .pager {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .control {
@@ -231,7 +231,7 @@
 
 .empty {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
 }
 
@@ -306,7 +306,7 @@
 .paid-at {
   font-size: .7rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -347,13 +347,13 @@
 .result-box span {
   margin: .35rem 0;
   color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
 }
 
 .detail-grid strong,
 .result-box strong {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
 }
 

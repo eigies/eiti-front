@@ -50,14 +50,14 @@
 .modal-panel__head strong,
 .step__index,
 .step__label {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     text-transform: uppercase;
 }
 
 .eyebrow {
     margin: 0;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     letter-spacing: .16em;
     text-transform: uppercase;
@@ -75,7 +75,7 @@ h1,
 h2 {
     margin: 0;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 h1 {
@@ -118,7 +118,7 @@ h2 {
 .card,
 .toggle-check,
 .modal-panel__close {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 .step,
@@ -325,7 +325,7 @@ h2 {
     padding: .95rem 1rem;
     border: 1px dashed var(--border);
     border-radius: 8px;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .76rem;
 }
 
@@ -452,7 +452,7 @@ h2 {
 .sale-stage__section-head strong,
 .sale-stage__section-title {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .88rem;
 }
 
@@ -618,7 +618,7 @@ h2 {
     padding: .68rem .75rem;
     border-bottom: 1px solid var(--border);
     text-align: left;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 .modal-products-table th {

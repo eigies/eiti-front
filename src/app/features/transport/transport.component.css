@@ -14,14 +14,14 @@
 .hero h1 {
     margin: 0;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: clamp(1.7rem, 3vw, 2.45rem);
 }
 
 .hero p {
     margin: .42rem 0 0;
     color: var(--text-soft);
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: .92rem;
     max-width: 44rem;
 }
@@ -29,7 +29,7 @@
 .eyebrow {
     color: var(--amber);
     margin-bottom: .45rem;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .66rem;
     letter-spacing: .16em;
     text-transform: uppercase;
@@ -60,13 +60,13 @@
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: .11em;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .63rem;
 }
 
 .overview-card strong {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1rem;
 }
 
@@ -113,7 +113,7 @@
     justify-content: space-between;
     align-items: center;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .72rem;
     letter-spacing: .11em;
     text-transform: uppercase;
@@ -208,7 +208,7 @@
     background: var(--bg);
     color: var(--text);
     padding: .72rem .78rem;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .79rem;
     border-radius: 8px;
     outline: none;
@@ -223,7 +223,7 @@
 .btn {
     border-radius: 8px;
     padding: .7rem .92rem;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     letter-spacing: .1em;
     text-transform: uppercase;
@@ -245,7 +245,7 @@
 
 .empty {
     color: var(--text-soft);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .74rem;
     padding: .3rem 0;
 }
@@ -294,7 +294,7 @@
 
 .vehicle-card__top strong {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .88rem;
 }
 
@@ -360,7 +360,7 @@
 
 .activity-vehicle strong {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .88rem;
 }
 
@@ -395,7 +395,7 @@
     text-align: left;
     padding: 0 .6rem .55rem 0;
     border-bottom: 1px solid var(--border);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .63rem;
     letter-spacing: .14em;
     text-transform: uppercase;
@@ -405,7 +405,7 @@
     padding: .62rem .6rem .62rem 0;
     color: var(--text);
     border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: .86rem;
 }
 
@@ -428,7 +428,7 @@
 
 .data-card__row span {
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .62rem;
     letter-spacing: .1em;
     text-transform: uppercase;
@@ -436,7 +436,7 @@
 
 .data-card__row strong {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .78rem;
 }
 
@@ -450,7 +450,7 @@
     border: 1px solid color-mix(in srgb, #7cbc8a 38%, var(--border));
     background: color-mix(in srgb, #cfe9d4 52%, var(--bg));
     color: color-mix(in srgb, #467455 70%, var(--text) 30%);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .62rem;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -569,7 +569,7 @@
     justify-content: space-between;
     align-items: center;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .72rem;
     letter-spacing: .11em;
     text-transform: uppercase;
@@ -615,7 +615,7 @@
 
 .field__label {
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .62rem;
     letter-spacing: .1em;
     text-transform: uppercase;

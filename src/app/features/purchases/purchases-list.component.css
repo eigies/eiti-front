@@ -22,7 +22,7 @@
 .page__eyebrow,
 .filter-label {
   color: var(--amber);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -31,7 +31,7 @@
 .page__title {
   margin: .25rem 0 0;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 1.72rem;
   font-weight: 400;
   line-height: 1.12;
@@ -64,7 +64,7 @@
   border-radius: 8px;
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
   outline: none;
   transition: border-color .2s, box-shadow .2s;
@@ -105,7 +105,7 @@
 .data-table th {
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -125,12 +125,12 @@
 
 .cell-name {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .82rem;
 }
 
 .cell-mono {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
   color: var(--text-dim);
 }
@@ -138,7 +138,7 @@
 .col-num,
 .cell-num {
   text-align: right;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
 }
 
@@ -147,7 +147,7 @@
 
 .cell-arrow {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .65rem;
   text-align: right;
   white-space: nowrap;
@@ -160,7 +160,7 @@
   align-items: center;
   padding: .22rem .65rem;
   border-radius: 999px;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -196,7 +196,7 @@
 
 .pagination__info {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
 }
 
@@ -212,7 +212,7 @@
   background: color-mix(in srgb, var(--bg) 40%, transparent);
   color: var(--text-soft);
   text-align: center;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .75rem;
 }
 
@@ -234,14 +234,14 @@
   justify-content: center;
   padding: 3rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
 }
 
 .btn-primary,
 .btn-filter,
 .btn-ghost-sm {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   letter-spacing: .1em;
   text-transform: uppercase;

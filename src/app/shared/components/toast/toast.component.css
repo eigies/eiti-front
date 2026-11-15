@@ -17,7 +17,7 @@
     background: #1A1A22;
     border-left: 3px solid #555;
     color: #E8E0D0;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 0.85rem;
     min-width: 280px;
     cursor: pointer;

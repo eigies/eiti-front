@@ -21,7 +21,7 @@
 .modal h3 {
     margin: 0 0 .4rem;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1.05rem;
 }
 
@@ -39,7 +39,7 @@
 
 .field__label {
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .66rem;
     letter-spacing: .1em;
     text-transform: uppercase;
@@ -53,7 +53,7 @@
     border-radius: 8px;
     background: color-mix(in srgb, var(--bg) 92%, transparent);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .8rem;
     outline: none;
 }
@@ -80,7 +80,7 @@
     padding: .65rem .95rem;
     background: color-mix(in srgb, var(--amber) 10%, transparent);
     color: color-mix(in srgb, var(--amber) 76%, var(--text) 24%);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -115,7 +115,7 @@
     border: 0;
     background: none;
     color: var(--amber);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .72rem;
     text-align: left;
     cursor: pointer;
@@ -145,6 +145,6 @@
 
 .field__error {
     color: var(--danger);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .64rem;
 }

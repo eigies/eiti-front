@@ -21,14 +21,14 @@ button.cash-head:focus-visible { outline: 2px solid color-mix(in srgb, var(--amb
 .cash-head__left { display: grid; gap: .2rem; text-align: left; }
 .cash-head__motivo {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
   letter-spacing: .12em;
   text-transform: uppercase;
 }
-.cash-head__count { color: var(--text-soft); font-family: 'DM Mono', monospace; font-size: .68rem; }
+.cash-head__count { color: var(--text-soft); font-family: var(--font-sans); font-size: .68rem; }
 .cash-head__right { display: flex; align-items: center; gap: .8rem; }
-.cash-head__total { color: var(--text); font-family: 'Crimson Pro', serif; font-size: 1.5rem; }
+.cash-head__total { color: var(--text); font-family: var(--font-sans); font-size: 1.5rem; }
 .cash-head__chev { color: var(--text-dim); transition: transform .18s ease; }
 .cash-head__chev.is-open { transform: rotate(180deg); }
 

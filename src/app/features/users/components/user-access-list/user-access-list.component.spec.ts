@@ -203,7 +203,7 @@ describe('UserAccessListComponent', () => {
       expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
       expect(style.borderTopLeftRadius).toBe('8px');
     }
-    expect(getComputedStyle(input).fontFamily).toContain('Crimson Pro');
+    expect(getComputedStyle(input).fontFamily).toContain('Figtree');
   });
 
   it('renders inactive status with the same solid danger treatment as active status', () => {
@@ -300,7 +300,7 @@ describe('UserAccessListComponent', () => {
 
     expect(getComputedStyle(head).borderTopWidth).toBe('1px');
     expect(getComputedStyle(head).borderTopLeftRadius).toBe('10px');
-    expect(row.getBoundingClientRect().height).toBeLessThanOrEqual(72);
+    expect(row.getBoundingClientRect().height).toBeLessThanOrEqual(80);
     expect(getComputedStyle(edit).borderTopLeftRadius).toBe('8px');
   });
 

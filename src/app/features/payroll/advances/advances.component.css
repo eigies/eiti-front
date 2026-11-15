@@ -34,7 +34,7 @@
 .hero__kicker,
 .panel__eyebrow,
 .field__label {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   text-transform: uppercase;
 }
 
@@ -56,7 +56,7 @@
 .panel__header,
 .advance-row__name,
 .advance-amount {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .hero h1 {
@@ -68,7 +68,7 @@
 .hero p {
   margin: .25rem 0 0;
   color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .95rem;
   max-width: 42rem;
   line-height: 1.55;
@@ -153,7 +153,7 @@
 .btn,
 .badge,
 .advance-item {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .control {
@@ -228,7 +228,7 @@
 
 .empty {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
 }
 
@@ -296,7 +296,7 @@
 .advance-row__plans {
   font-size: .7rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -311,7 +311,7 @@
   margin: 0;
   min-width: 10rem;
   color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .95rem;
 }
 

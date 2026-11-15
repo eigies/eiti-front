@@ -5,7 +5,7 @@
 /* Copia del toggle de la pantalla de ventas: cada componente lleva sus estilos (patron del proyecto). */
 .toggle-check {
     position: relative;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     border: 1px solid var(--border-2);
 }
 
@@ -92,7 +92,7 @@
 .invoicing-control__warn {
     align-self: center;
     color: var(--danger);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .74rem;
     letter-spacing: .03em;
 }
@@ -100,7 +100,7 @@
 .invoicing-control__auto {
     align-self: center;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .74rem;
     letter-spacing: .03em;
 }

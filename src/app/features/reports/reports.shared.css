@@ -23,7 +23,7 @@
   border-radius: 999px;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 8%, transparent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .7rem;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -32,7 +32,7 @@
 .hero h1 {
   margin: 0;
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: clamp(1.9rem, 4vw, 3rem);
   line-height: .95;
 }
@@ -41,7 +41,7 @@
   margin-top: .8rem;
   max-width: 52rem;
   color: color-mix(in srgb, var(--text) 72%, var(--text-soft));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .84rem;
   line-height: 1.7;
 }
@@ -77,7 +77,7 @@
 
 .panel__header span {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .76rem;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -85,7 +85,7 @@
 
 .panel__header p {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .76rem;
 }
 
@@ -168,7 +168,7 @@
 
 .advanced-filters__head span {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .67rem;
   letter-spacing: .13em;
   text-transform: uppercase;
@@ -177,7 +177,7 @@
 .advanced-filters__head p {
   margin: 0;
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .7rem;
 }
 
@@ -203,7 +203,7 @@
 .field > span {
   display: block;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -216,7 +216,7 @@
   background: color-mix(in srgb, var(--bg-panel) 84%, var(--bg));
   color: var(--text);
   padding: .9rem 1rem;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .82rem;
   outline: none;
 }
@@ -230,7 +230,7 @@
   min-height: 2.9rem;
   padding: .8rem 1rem;
   border-radius: 16px;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -317,9 +317,9 @@
 .loading-card { height: 5rem; border-radius: 18px; border: 1px solid var(--border); background: linear-gradient(110deg, color-mix(in srgb, var(--bg-panel) 94%, transparent) 8%, color-mix(in srgb, white 8%, var(--bg-panel)) 18%, color-mix(in srgb, var(--bg-panel) 94%, transparent) 33%); background-size: 200% 100%; animation: shimmer 1.25s linear infinite; }
 
 .empty-state { display: grid; justify-items: start; gap: .55rem; padding: 1.4rem; border: 1px dashed color-mix(in srgb, var(--amber) 22%, var(--border)); border-radius: 24px; background: color-mix(in srgb, var(--amber) 5%, transparent); }
-.empty-state h2 { color: var(--text); font-family: 'Crimson Pro', serif; font-size: 1.6rem; }
-.empty-state p { color: var(--text-soft); font-family: 'DM Mono', monospace; font-size: .8rem; }
-.empty-state__eyebrow { color: var(--amber); font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; }
+.empty-state h2 { color: var(--text); font-family: var(--font-sans); font-size: 1.6rem; }
+.empty-state p { color: var(--text-soft); font-family: var(--font-sans); font-size: .8rem; }
+.empty-state__eyebrow { color: var(--amber); font-family: var(--font-sans); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; }
 
 .table-wrap {
   overflow-x: auto;
@@ -351,7 +351,7 @@
   z-index: 2;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg-panel) 96%, var(--bg));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -361,7 +361,7 @@
 
 .data-table td {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -434,7 +434,7 @@
 .totals-row td { background: color-mix(in srgb, var(--amber) 8%, transparent); font-weight: 700; border-top: 2px solid color-mix(in srgb, var(--amber) 22%, var(--border)); }
 .data-table tfoot .totals-row td:first-child { background: color-mix(in srgb, var(--amber) 8%, var(--bg)); }
 
-.note { margin-top: .8rem; color: var(--text-soft); font-family: 'DM Mono', monospace; font-size: .72rem; }
+.note { margin-top: .8rem; color: var(--text-soft); font-family: var(--font-sans); font-size: .72rem; }
 
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @keyframes filters-reveal {

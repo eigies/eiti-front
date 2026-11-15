@@ -24,7 +24,7 @@
 .modal__eyebrow,
 .field__label {
   color: var(--amber);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -33,7 +33,7 @@
 .page__title {
   margin: .25rem 0 0;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 1.72rem;
   font-weight: 400;
   line-height: 1.12;
@@ -62,7 +62,7 @@
   border-radius: 8px;
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
   outline: none;
   transition: border-color .2s ease, box-shadow .2s ease;
@@ -87,7 +87,7 @@
 
 .toolbar__metric span {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -95,7 +95,7 @@
 
 .toolbar__metric strong {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 1rem;
 }
 
@@ -120,7 +120,7 @@
 .data-table th {
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -138,7 +138,7 @@
   align-items: center;
   gap: .65rem;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .82rem;
   font-weight: 500;
 }
@@ -175,7 +175,7 @@
   border: 1px solid color-mix(in srgb, var(--amber) 36%, var(--border-2));
   background: color-mix(in srgb, var(--amber) 8%, transparent);
   color: color-mix(in srgb, var(--amber) 82%, var(--text));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .65rem;
   letter-spacing: .06em;
   font-weight: 600;
@@ -213,7 +213,7 @@
   display: flex;
   justify-content: center;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
 }
 
@@ -280,7 +280,7 @@
 .modal__title {
   margin: 0;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .98rem;
   font-weight: 400;
 }
@@ -323,7 +323,7 @@
 
 .field__error {
   color: var(--danger);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .6rem;
   letter-spacing: .06em;
 }
@@ -333,7 +333,7 @@
   min-height: 38px;
   border-radius: 8px;
   padding: .62rem 1.15rem;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .7rem;
   letter-spacing: .12em;
   text-transform: uppercase;

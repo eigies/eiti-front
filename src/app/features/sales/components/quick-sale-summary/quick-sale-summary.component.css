@@ -29,7 +29,7 @@
 .quick-summary dt,
 .quick-summary__total span,
 .quick-summary__action {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   text-transform: uppercase;
 }
 
@@ -70,7 +70,7 @@
   overflow: hidden;
   margin: 0;
   color: var(--text);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .92rem;
   text-align: right;
   text-overflow: ellipsis;
@@ -97,7 +97,7 @@
   gap: .6rem;
   min-height: 28px;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
 }
 
@@ -123,7 +123,7 @@
   border: 0;
   color: color-mix(in srgb, var(--amber) 78%, var(--text));
   background: transparent;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
   cursor: pointer;
 }
@@ -157,7 +157,7 @@
 
 .quick-summary__total strong {
   color: color-mix(in srgb, var(--amber) 80%, var(--text));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: clamp(1.2rem, 2vw, 1.65rem);
 }
 

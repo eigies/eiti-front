@@ -49,7 +49,7 @@
 .modal-head .eyebrow {
   margin: 0;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   text-transform: uppercase;
   font-size: .68rem;
   letter-spacing: .16em;
@@ -83,7 +83,7 @@
 
 .hint {
   color: var(--text-dim);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .9rem;
 }
 
@@ -93,7 +93,7 @@
   border-radius: 8px;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 8%, transparent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -159,7 +159,7 @@
 }
 
 .detalle-header__code {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 1.02rem;
   color: var(--text);
@@ -169,7 +169,7 @@
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
   color: var(--text-dim);
 }
@@ -188,7 +188,7 @@
 }
 
 .detalle-section__title {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   text-transform: uppercase;
   font-size: .7rem;
   letter-spacing: .1em;
@@ -203,7 +203,7 @@
 .stock-warning-list {
   margin: 0;
   padding-left: 1.1rem;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
   color: var(--text);
 }
@@ -215,7 +215,7 @@
 .detalle-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
   min-width: 34rem;
   border: 1px solid var(--border);
@@ -268,7 +268,7 @@
   justify-content: space-between;
   align-items: center;
   padding: .4rem 0;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .85rem;
   color: var(--text);
 }

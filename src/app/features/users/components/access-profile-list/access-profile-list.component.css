@@ -23,7 +23,7 @@
 .profile-list__filter > span,
 .profile-list__mobile-label {
   color: var(--profile-list-accent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
   font-weight: 700;
   letter-spacing: .11em;
@@ -36,7 +36,7 @@
 
 .profile-list h2 {
   margin: 0;
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: clamp(2.1rem, 4vw, 3.2rem);
   font-weight: 400;
   line-height: 1;
@@ -45,7 +45,7 @@
 .profile-list__intro {
   margin: .55rem 0 0;
   color: var(--text-dim);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: 1rem;
 }
 
@@ -76,7 +76,7 @@ button {
   border-radius: 8px;
   background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   cursor: pointer;
   box-shadow:
@@ -153,7 +153,7 @@ button {
   border-radius: 8px;
   outline: none;
   background-color: color-mix(in srgb, var(--bg-panel) 78%, var(--bg));
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .92rem;
   transition:
     border-color .18s ease,
@@ -192,7 +192,7 @@ button {
   border-radius: 10px 10px 0 0;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 76%, var(--bg-panel));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -234,7 +234,7 @@ button {
   border-radius: 999px;
   background: color-mix(in srgb, var(--bg) 55%, var(--bg-panel));
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .56rem;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -254,7 +254,7 @@ button {
 
 .profile-list__identity strong {
   overflow: hidden;
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
   text-overflow: ellipsis;
@@ -264,7 +264,7 @@ button {
 .profile-list__identity span {
   overflow: hidden;
   color: var(--text-dim);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .84rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -273,7 +273,7 @@ button {
 .profile-list__row > div:not(.profile-list__identity, .profile-list__actions) {
   min-width: 0;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
 }
 
@@ -365,12 +365,12 @@ button {
 
 .profile-list__empty strong {
   color: var(--text);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: 1.05rem;
 }
 
 .profile-list__empty span {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
 }
 
 @container (max-width: 900px) {

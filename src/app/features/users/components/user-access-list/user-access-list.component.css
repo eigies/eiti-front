@@ -27,7 +27,7 @@
 .user-list__mobile-label,
 .user-list__empty-index {
   color: var(--user-list-accent-text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 0.68rem;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -40,7 +40,7 @@
 .user-list h2,
 .user-list h3 {
   margin: 0;
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 
@@ -85,7 +85,7 @@ a:focus-visible {
   border-radius: 8px;
   background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg));
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 0.68rem;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -152,7 +152,7 @@ a:focus-visible {
   top: 50%;
   left: 0.9rem;
   color: var(--user-list-accent-text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   transform: translateY(-50%);
 }
 
@@ -165,7 +165,7 @@ a:focus-visible {
   border-radius: 8px;
   outline: none;
   background-color: color-mix(in srgb, var(--bg-panel) 78%, var(--bg));
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .92rem;
   transition:
     border-color .18s ease,
@@ -260,7 +260,7 @@ a:focus-visible {
   border-radius: 10px 10px 0 0;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 76%, var(--bg-panel));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -355,7 +355,7 @@ a:focus-visible {
 }
 
 .user-list__employee {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .78rem !important;
 }
 
@@ -391,7 +391,7 @@ a:focus-visible {
   padding: .22rem .6rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 0.6rem;
   letter-spacing: .05em;
   text-transform: uppercase;

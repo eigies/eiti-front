@@ -30,7 +30,7 @@
 .command-stats,
 .btn-primary,
 .btn-ghost {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     text-transform: uppercase;
 }
 
@@ -43,7 +43,7 @@
 .page__title {
     margin: .18rem 0 0;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: clamp(1.65rem, 3vw, 2.25rem);
     font-weight: 400;
     line-height: 1.08;
@@ -83,7 +83,7 @@
     border-radius: 8px;
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     outline: none;
     transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
@@ -168,7 +168,7 @@
     border: 1px solid color-mix(in srgb, var(--amber) 24%, transparent);
     background: color-mix(in srgb, var(--amber) 8%, transparent);
     color: var(--amber);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .8rem;
     flex-shrink: 0;
 }
@@ -237,7 +237,7 @@
     background:
         linear-gradient(145deg, color-mix(in srgb, var(--amber) 12%, transparent), color-mix(in srgb, var(--bg) 96%, transparent));
     color: var(--amber);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .82rem;
 }
 
@@ -250,7 +250,7 @@
 
 .customer-row__name {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .88rem;
     line-height: 1.2;
 }
@@ -262,7 +262,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-soft);
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: .9rem;
 }
 
@@ -358,7 +358,7 @@
     padding: 2rem 1rem;
     color: var(--text-soft);
     text-align: center;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .76rem;
 }
 
@@ -467,7 +467,7 @@
 .drawer__head h2 {
     margin: .16rem 0 0;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1.18rem;
     font-weight: 400;
 }
@@ -479,7 +479,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .9rem;
 }
 
@@ -545,7 +545,7 @@
 .form-section__head h3 {
     margin: 0;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .74rem;
     letter-spacing: .14em;
     text-transform: uppercase;
@@ -554,7 +554,7 @@
 .form-section__head p {
     margin: 0;
     color: var(--text-soft);
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: .88rem;
 }
 

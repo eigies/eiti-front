@@ -29,7 +29,7 @@
     border-radius: 999px;
     background: color-mix(in srgb, var(--amber) 8%, transparent);
     color: var(--amber);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     font-weight: 600;
     letter-spacing: .08em;
@@ -60,7 +60,7 @@
 
 .sale-discount__limit {
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .62rem;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -69,7 +69,7 @@
 .sale-discount__amount {
     margin-left: auto;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .8rem;
     font-weight: 600;
 }
@@ -89,7 +89,7 @@
 
 .sale-discount__label {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .69rem;
     letter-spacing: .12em;
     text-transform: uppercase;
@@ -109,7 +109,7 @@
     border-radius: 8px;
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     outline: none;
     transition: border-color .2s ease, box-shadow .2s ease;
 }
@@ -136,7 +136,7 @@
 
 .sale-discount__error {
     color: color-mix(in srgb, var(--danger) 76%, var(--text));
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .65rem;
     line-height: 1.4;
 }
@@ -152,7 +152,7 @@
 .sale-discount__summary {
     margin: 0;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .65rem;
 }
 
@@ -161,7 +161,7 @@
     border: 0;
     background: none;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .65rem;
     text-decoration: underline;
     cursor: pointer;

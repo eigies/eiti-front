@@ -11,7 +11,7 @@
 }
 
 .back-link {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 0.75rem;
     letter-spacing: 0.1em;
     color: var(--text-dim);
@@ -29,7 +29,7 @@
     align-items: center;
     gap: 1rem;
     padding: 5rem;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 0.8rem;
     color: var(--text-mute);
 }
@@ -64,13 +64,13 @@
 }
 
 .error-state__msg {
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--text-soft);
 }
 
 .btn-secondary {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 0.75rem;
     letter-spacing: 0.1em;
     color: var(--text-dim);
@@ -124,14 +124,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1.75rem;
     color: var(--amber);
     flex-shrink: 0;
 }
 
 .customer-card__tag {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 0.65rem;
     letter-spacing: 0.2em;
     color: var(--amber);
@@ -139,7 +139,7 @@
 }
 
 .customer-card__name {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text);
@@ -170,7 +170,7 @@
 
 .detail-field__label {
     display: block;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 0.65rem;
     letter-spacing: 0.2em;
     color: var(--text-dim);
@@ -180,14 +180,14 @@
 
 .detail-field__value {
     display: block;
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--text);
     word-break: break-word;
 }
 
 .detail-field__value--mono {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 0.82rem;
     color: var(--text-soft);
 }

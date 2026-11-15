@@ -125,7 +125,7 @@ button {
   color: var(--text);
   background: var(--bg-panel);
   box-shadow: 0 14px 28px -16px rgba(0, 0, 0, .65);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
   font-weight: 600;
   letter-spacing: .04em;
@@ -243,7 +243,7 @@ button {
   margin: 0;
   overflow: hidden;
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: 1.08rem;
   font-weight: 600;
   line-height: 1.15;
@@ -406,7 +406,7 @@ button {
   max-width: 20rem;
   margin: 0;
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: 1.3rem;
   font-weight: 600;
   line-height: 1.18;
@@ -416,7 +416,7 @@ button {
   max-width: 21rem;
   margin: .55rem 0 0;
   color: var(--text-dim);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .92rem;
   line-height: 1.45;
 }
@@ -440,7 +440,7 @@ button {
   border-radius: 11px;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 54%, transparent);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .88rem;
   line-height: 1.28;
   text-align: left;
@@ -450,7 +450,7 @@ button {
 
 .assistant-suggestions button > span {
   color: color-mix(in srgb, var(--amber) 72%, var(--text-dim));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   font-weight: 500;
   letter-spacing: .06em;
@@ -502,7 +502,7 @@ button {
   align-items: center;
   gap: .5rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   font-weight: 500;
   letter-spacing: .08em;
@@ -545,7 +545,7 @@ button {
 .assistant-msg__bubble {
   max-width: 88%;
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.55;
   overflow-wrap: anywhere;
@@ -686,7 +686,7 @@ button {
 .assistant-typing em {
   margin-left: .35rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .65rem;
   font-weight: 500;
   font-style: normal;
@@ -737,7 +737,7 @@ button {
   outline: 0;
   color: var(--text);
   background: transparent;
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .92rem;
 }
 
@@ -752,7 +752,7 @@ button {
   border-radius: 999px;
   color: var(--text);
   background: color-mix(in srgb, var(--amber) 8%, transparent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   font-weight: 500;
   letter-spacing: .06em;
@@ -788,7 +788,7 @@ button {
   border: 0;
   background: transparent;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
   font-weight: 600;
   cursor: pointer;
@@ -846,7 +846,7 @@ button {
   border: 0;
   color: var(--text-dim);
   background: transparent;
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .9rem;
   line-height: 1.25;
   text-align: left;
@@ -891,7 +891,7 @@ button {
   border-radius: 999px;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg) 54%, transparent);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .82rem;
   line-height: 1.2;
   cursor: pointer;
@@ -927,7 +927,7 @@ button {
   border-radius: 9px;
   color: var(--text-dim);
   background: color-mix(in srgb, var(--amber) 5%, var(--bg));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   font-weight: 500;
   letter-spacing: .07em;
@@ -954,7 +954,7 @@ button {
   border: 0;
   color: color-mix(in srgb, var(--danger) 82%, var(--text));
   background: transparent;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .63rem;
   font-weight: 500;
   letter-spacing: .07em;
@@ -997,7 +997,7 @@ button {
   outline: 0;
   color: var(--text);
   background: transparent;
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.4;
   resize: none;
@@ -1057,7 +1057,7 @@ button {
   gap: .35rem;
   padding-inline: .15rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   font-weight: 500;
   letter-spacing: .02em;
@@ -1312,7 +1312,7 @@ button {
   border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--border-2));
   border-radius: 999px;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
 }
 
@@ -1374,7 +1374,7 @@ button {
 
 .assistant-slip__name {
   overflow: hidden;
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .98rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1387,7 +1387,7 @@ button {
   gap: .5rem;
   margin: .55rem 0 0;
   color: var(--text-dim);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .9rem;
 }
 
@@ -1405,7 +1405,7 @@ button {
 
 .assistant-slip__figures dt {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -1414,7 +1414,7 @@ button {
 .assistant-slip__figures dd {
   margin: .1rem 0 0;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .82rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1423,7 +1423,7 @@ button {
 .assistant-slip__warn {
   margin: .35rem 0 0;
   color: var(--amber);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .86rem;
 }
 
@@ -1437,7 +1437,7 @@ button {
   border: 0;
   color: var(--amber);
   background: transparent;
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .94rem;
   cursor: pointer;
 }

@@ -18,14 +18,14 @@
     min-width: 180px;
     border: 1px solid var(--border-2);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .72rem;
 }
 
 .quotes-list p {
     padding: 1.1rem;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .75rem;
 }
 
@@ -43,7 +43,7 @@
 
 .quotes-list__table th {
     color: var(--text-subtle);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .64rem;
     letter-spacing: .1em;
     text-transform: uppercase;
@@ -67,7 +67,7 @@
     padding: .48rem .7rem;
     background: color-mix(in srgb, var(--bg) 92%, transparent);
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .66rem;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -86,7 +86,7 @@
     min-height: 1.65rem;
     padding: .24rem .55rem;
     border-radius: 999px;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .66rem;
     letter-spacing: .08em;
     text-transform: uppercase;

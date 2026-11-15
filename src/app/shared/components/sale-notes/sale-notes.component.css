@@ -12,7 +12,7 @@
 
 .sale-notes__label {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -63,7 +63,7 @@
 .sale-notes__count {
   margin-right: auto;
   color: var(--text-mute);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .62rem;
 }
 
@@ -73,7 +73,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
   cursor: pointer;
 }

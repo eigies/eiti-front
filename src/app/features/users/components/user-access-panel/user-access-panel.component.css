@@ -71,7 +71,7 @@
 .access-panel__scope-status strong,
 .access-panel__module-heading,
 .access-panel__button {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .access-panel__eyebrow {
@@ -87,7 +87,7 @@
 .access-panel h3,
 .access-panel__identity > strong,
 .access-panel__human-name {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 
@@ -283,7 +283,7 @@
 
 .access-panel__permission-count {
   color: color-mix(in srgb, var(--amber) 78%, var(--text));
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: 2.25rem;
   line-height: 1;
   text-align: center;

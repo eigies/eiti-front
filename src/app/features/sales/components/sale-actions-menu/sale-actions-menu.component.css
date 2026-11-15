@@ -14,7 +14,7 @@
 .sale-actions__icon,
 .sale-actions__popover button,
 .sale-actions__popover a {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .sale-actions__primary,
@@ -137,7 +137,7 @@ svg {
 .sale-actions__group-label {
   padding: .6rem .6rem .35rem;
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .58rem;
   font-weight: 700;
   letter-spacing: .12em;

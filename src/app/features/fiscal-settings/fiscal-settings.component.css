@@ -32,7 +32,7 @@
     border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border));
     border-radius: 999px;
     color: var(--amber);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .6rem;
     letter-spacing: .1em;
     text-transform: uppercase;
@@ -87,7 +87,7 @@
 
 .pos-row__number {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1rem;
     letter-spacing: .12em;
     font-variant-numeric: tabular-nums;
@@ -111,7 +111,7 @@
 .pos-empty {
     margin: 0;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .7rem;
     line-height: 1.6;
 }

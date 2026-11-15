@@ -65,7 +65,7 @@
     border-radius: 10px;
     background: linear-gradient(180deg, color-mix(in srgb, var(--amber) 12%, transparent), color-mix(in srgb, var(--bg) 92%, transparent));
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .76rem;
 }
 
@@ -86,7 +86,7 @@
     border-radius: 10px;
     background: color-mix(in srgb, var(--danger) 10%, transparent);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .76rem;
 }
 
@@ -109,7 +109,7 @@
 .eyebrow {
     margin: 0 0 .32rem;
     color: var(--amber);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     letter-spacing: .14em;
     text-transform: uppercase;
@@ -119,7 +119,7 @@ h1,
 h2 {
     margin: 0;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 h1 {
@@ -129,7 +129,7 @@ h1 {
 .head p:last-child {
     margin: .45rem 0 0;
     color: var(--text-soft);
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: .92rem;
     max-width: 42rem;
 }
@@ -157,7 +157,7 @@ h1 {
 
 .field__label {
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .66rem;
     letter-spacing: .12em;
     text-transform: uppercase;
@@ -188,7 +188,7 @@ h1 {
 
 .picker-summary {
     color: var(--text-soft);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     line-height: 1.45;
 }
@@ -198,7 +198,7 @@ h1 {
 .card,
 .table,
 .modal-panel__close {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 .card,
@@ -312,7 +312,7 @@ h1 {
     border: 1px dashed color-mix(in srgb, var(--border) 90%, transparent);
     border-radius: 10px;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .76rem;
     background: color-mix(in srgb, var(--bg) 74%, transparent);
 }
@@ -370,7 +370,7 @@ h1 {
     padding: .65rem .8rem .78rem 0;
     border-bottom: 1px solid var(--border);
     color: var(--text-subtle);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .64rem;
     text-transform: uppercase;
     letter-spacing: .1em;
@@ -390,7 +390,7 @@ h1 {
     border-top: 1px solid var(--border-2);
     border-bottom: none;
     padding-top: .9rem;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .8rem;
 }
 
@@ -435,7 +435,7 @@ h1 {
 
 .modal-panel__head strong,
 .modal-panel__close {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 .modal-panel__head strong {
@@ -489,7 +489,7 @@ h1 {
     padding: .62rem .72rem;
     border-bottom: 1px solid var(--border);
     text-align: left;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 .modal-products-table th {
@@ -570,7 +570,7 @@ h1 {
     background: linear-gradient(180deg, color-mix(in srgb, #e28c8c 10%, transparent), color-mix(in srgb, var(--bg) 92%, transparent));
     border-radius: 10px;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .76rem;
 }
 
@@ -633,7 +633,7 @@ h1 {
 .field__warning {
     display: block;
     margin-top: .5rem;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .65rem;
     line-height: 1.4;
 }

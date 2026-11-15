@@ -42,7 +42,7 @@
 .drawer-card__eyebrow {
     display: block;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .66rem;
     letter-spacing: .12em;
     text-transform: uppercase;
@@ -52,7 +52,7 @@
 .section-head h4 {
     margin: 0;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 .payment-block__copy {
@@ -119,7 +119,7 @@
 
 .toggle-row-inline__label {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .72rem;
     letter-spacing: .04em;
     user-select: none;
@@ -179,7 +179,7 @@
     border-radius: 999px;
     background: transparent;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -261,7 +261,7 @@
     border-radius: 8px;
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
 }
 
 .toggle-check {
@@ -451,7 +451,7 @@
 
 .payment-summary__head strong {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .9rem;
 }
 
@@ -474,7 +474,7 @@
 
 .payment-summary__item strong {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1rem;
 }
 
@@ -531,7 +531,7 @@
 
 .payment-summary__item--coverage > .coverage-header strong {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1rem;
 }
 
@@ -558,7 +558,7 @@
     border: 1px solid var(--border-2);
     background: color-mix(in srgb, var(--bg) 70%, transparent);
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .56rem;
     letter-spacing: .1em;
     text-transform: uppercase;
@@ -573,7 +573,7 @@
 
 .coverage-line__label {
     color: var(--text-soft);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .68rem;
     white-space: nowrap;
     overflow: hidden;
@@ -582,7 +582,7 @@
 
 .coverage-line__amount {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .72rem;
     white-space: nowrap;
     text-align: right;
@@ -642,7 +642,7 @@
     border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
     background: color-mix(in srgb, var(--amber) 18%, transparent);
     color: color-mix(in srgb, var(--amber) 90%, var(--text));
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .58rem;
     font-weight: 600;
     letter-spacing: .1em;
@@ -658,7 +658,7 @@
 .tradein-note {
     margin: 0;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .63rem;
     line-height: 1.45;
 }

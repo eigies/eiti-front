@@ -65,7 +65,7 @@
   border-radius: 999px;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 8%, transparent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .7rem;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -74,7 +74,7 @@
 .hero h1 {
   margin: 0;
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: clamp(2.25rem, 4.8vw, 4rem);
   line-height: .92;
   max-width: 10ch;
@@ -84,7 +84,7 @@
   margin-top: 1rem;
   max-width: 42rem;
   color: color-mix(in srgb, var(--text) 72%, var(--text-soft));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .88rem;
   line-height: 1.75;
   letter-spacing: .03em;
@@ -118,14 +118,14 @@
 
 .metric-card strong {
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: clamp(1.8rem, 3vw, 2.5rem);
   line-height: .95;
 }
 
 .metric-card small,
 .metric-card__label {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .metric-card__label {
@@ -184,7 +184,7 @@
 
 .panel__header span {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .76rem;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -192,7 +192,7 @@
 
 .panel__header p {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .76rem;
   line-height: 1.5;
 }
@@ -207,7 +207,7 @@
   border-radius: 999px;
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 8%, transparent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -228,7 +228,7 @@
 .field span {
   display: block;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -241,7 +241,7 @@
   background: color-mix(in srgb, var(--bg-panel) 84%, var(--bg));
   color: var(--text);
   padding: .9rem 1rem;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .82rem;
   outline: none;
   transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
@@ -265,7 +265,7 @@
   min-height: 2.9rem;
   padding: .8rem 1rem;
   border-radius: 16px;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -357,7 +357,7 @@
 
 .empty-state__eyebrow {
   color: var(--amber);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -365,14 +365,14 @@
 
 .empty-state h2 {
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: 2rem;
   line-height: .95;
 }
 
 .empty-state p {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
   line-height: 1.6;
 }
@@ -417,14 +417,14 @@
 
 .cheque-card__number {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .74rem;
   letter-spacing: .12em;
 }
 
 .cheque-card__amount {
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: 2rem;
   line-height: .95;
 }
@@ -433,13 +433,13 @@
   display: grid;
   gap: .28rem;
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
 }
 
 .cheque-card__footer {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .72rem;
 }
 
@@ -465,7 +465,7 @@
 .data-table th {
   color: var(--text-dim);
   background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .66rem;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -483,7 +483,7 @@
 
 .cell {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .8rem;
 }
 
@@ -504,7 +504,7 @@
 
 .cell-hint {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   letter-spacing: .04em;
 }
@@ -529,7 +529,7 @@
   align-items: center;
   width: fit-content;
   white-space: nowrap;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   text-transform: uppercase;
 }
 
@@ -627,7 +627,7 @@
 
 .modal__title {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .76rem;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -656,7 +656,7 @@
 
 .loading-text {
   color: var(--text-soft);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .78rem;
 }
 
@@ -681,7 +681,7 @@
 
 .cheque-detail__num {
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: 2rem;
   line-height: .95;
 }
@@ -710,7 +710,7 @@
 
 .cheque-summary__item strong {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .9rem;
 }
 
@@ -727,7 +727,7 @@
 
 .detail-field__label {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -735,7 +735,7 @@
 
 .detail-field span:not(.detail-field__label) {
   color: var(--text);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .82rem;
 }
 
@@ -752,7 +752,7 @@
 .state-actions__label,
 .state-terminal {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .7rem;
   letter-spacing: .08em;
   text-transform: uppercase;

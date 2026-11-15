@@ -57,7 +57,7 @@
 .profile-panel__field > span,
 .profile-panel__section-heading > span {
   color: color-mix(in srgb, var(--amber) 72%, var(--text));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
   font-weight: 700;
   letter-spacing: .1em;
@@ -72,7 +72,7 @@
 .profile-panel h2,
 .profile-panel h3 {
   margin: 0;
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-weight: 600;
 }
 
@@ -84,7 +84,7 @@
 .profile-panel__impact {
   margin-top: .35rem;
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .65rem;
 }
 
@@ -140,7 +140,7 @@
 .profile-panel__section-heading p {
   margin: .2rem 0 0;
   color: var(--text-dim);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .9rem;
 }
 
@@ -160,7 +160,7 @@
   border-radius: 8px;
   color: var(--text);
   background: color-mix(in srgb, var(--bg) 60%, var(--bg-panel));
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: var(--font-sans);
   font-size: .95rem;
   resize: vertical;
 }
@@ -168,7 +168,7 @@
 .profile-panel__error {
   margin: 0;
   color: color-mix(in srgb, var(--danger) 76%, var(--text));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .64rem;
 }
 
@@ -188,7 +188,7 @@
   border-radius: 8px;
   color: var(--text);
   background: transparent;
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: .68rem;
   cursor: pointer;
 }

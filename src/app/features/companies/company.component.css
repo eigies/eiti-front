@@ -12,7 +12,7 @@
     position: absolute;
     left: .9rem;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .84rem;
     pointer-events: none;
     user-select: none;
@@ -34,7 +34,7 @@
     position: absolute;
     right: .95rem;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .84rem;
     pointer-events: none;
     user-select: none;
@@ -80,7 +80,7 @@
     border-radius: 10px;
     background: color-mix(in srgb, var(--bg) 91%, transparent);
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: .66rem;
     letter-spacing: .12em;
     text-transform: uppercase;

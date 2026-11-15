@@ -32,7 +32,7 @@
 
 .btn-secondary,
 .composer-close {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   cursor: pointer;
 }
 
@@ -79,7 +79,7 @@
 .payment-composer__head p {
   margin: .28rem 0 0;
   color: var(--text-dim);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .9rem;
 }
 

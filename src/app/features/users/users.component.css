@@ -44,7 +44,7 @@ h1,
 .hero__panel,
 .resource-error__eyebrow,
 .resource-error button {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .eyebrow {
@@ -64,7 +64,7 @@ h1 {
   max-width: 40rem;
   margin: .5rem 0 0;
   color: var(--text-soft);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .95rem;
 }
 
@@ -118,8 +118,8 @@ h1 {
   padding: .7rem 1rem;
   border: 0;
   background: transparent;
-  color: #888276;
-  font-family: 'DM Mono', monospace;
+  color: var(--text-2);
+  font-family: var(--font-sans);
   font-size: .72rem;
   font-weight: 600;
   letter-spacing: .1em;
@@ -210,7 +210,7 @@ h1 {
 .resource-error p {
   margin: 0;
   color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  font-family: var(--font-sans);
   font-size: .95rem;
 }
 
