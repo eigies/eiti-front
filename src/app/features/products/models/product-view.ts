@@ -32,8 +32,8 @@ export function bulkFieldChanged(form: FormGroup, snapshot: ProductRequest, fiel
   const current = normalizeBulkRequest(toProductRequest(form, canViewCostPrice)) as unknown as Record<string, unknown>;
   const base = normalizeBulkRequest(snapshot) as unknown as Record<string, unknown>;
   if (field === 'allowsManualSaleValue') {
-    // Igual que antes: compara la clave del formulario, que no está en el request normalizado.
-    return current['allowsManualSaleValue'] !== base['allowsManualSaleValue'];
+    // La celda Tipo usa la clave del formulario; en el request normalizado se llama allowsManualValueInSale.
+    return current['allowsManualValueInSale'] !== base['allowsManualValueInSale'];
   }
   if (field === 'category') {
     return current['categoryId'] !== base['categoryId'];
