@@ -1,90 +1,58 @@
-<div class="page">
-  <div class="page__header">
+<main class="ui-page sup">
+  <header class="sup__head">
     <div>
-      <h1 class="page__title">Categorías de producto</h1>
+      <span class="sup__crumb">Productos</span>
+      <h1>Categorías de producto</h1>
+      <p>Para agrupar el catálogo y filtrar los reportes.</p>
     </div>
-    <button class="btn-primary" type="button" (click)="openCreate()">+ Nueva categoría</button>
-  </div>
+    <button uiBtn="primary" type="button" (click)="openCreate()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nueva categoría
+    </button>
+  </header>
 
-  <div class="toolbar">
-    <label class="search-field">
-      <span class="search-field__label">Buscar categoría</span>
-      <input
-        class="search-input"
-        type="text"
-        placeholder="Nombre..."
-        [(ngModel)]="searchQuery" />
+  <section class="ui-card sup__card">
+    <header class="sup__bar">
+      <h2>Categorías <span class="ui-count" *ngIf="!loading">{{ filteredCategories.length }}</span></h2>
+      <label class="ui-search sup__search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="ui-sr-only">Buscar categoría</span>
+        <input class="ui-input" type="search" placeholder="Nombre" [(ngModel)]="searchQuery" />
+      </label>
+    </header>
+
+    <div class="sup__state" *ngIf="loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+
+    <div class="sup__state" *ngIf="!loading && filteredCategories.length === 0">
+      <ui-empty [icon]="searchQuery ? 'search' : 'list'" [heading]="searchQuery ? 'Ninguna categoría coincide' : 'Todavía no hay categorías'" [text]="searchQuery ? 'Probá con otro nombre.' : 'Creá la primera con Nueva categoría.'"></ui-empty>
+    </div>
+
+    <div class="ui-table-wrap sup__table-wrap" *ngIf="!loading && filteredCategories.length > 0">
+      <table class="ui-table">
+        <thead><tr><th>Categoría</th><th><span class="ui-sr-only">Acciones</span></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let c of filteredCategories">
+            <td><span class="sup__who"><ui-avatar [name]="c.name" [key]="c.id" [size]="32"></ui-avatar><strong>{{ c.name }}</strong></span></td>
+            <td class="sup__actions">
+              <button uiBtn="ghost" size="sm" type="button" (click)="openEdit(c)">Editar</button>
+              <button uiBtn="ghost" size="sm" type="button" class="sup__danger" [disabled]="deleting === c.id" (click)="confirmDelete(c)">{{ deleting === c.id ? 'Eliminando…' : 'Eliminar' }}</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<ui-modal *ngIf="showModal" size="sm" [eyebrow]="editingCategory ? 'Edición' : 'Alta'" [heading]="editingCategory ? 'Editar categoría' : 'Nueva categoría'" [closable]="!saving" (closed)="closeModal()">
+  <form id="category-form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <label class="ui-field" [class.ui-field--error]="isInvalid('name')">
+      <span class="ui-field__label">Nombre</span>
+      <input class="ui-input" type="text" formControlName="name" placeholder="Batería automotor" />
+      <span class="ui-field__error" *ngIf="isInvalid('name')">Falta el nombre</span>
     </label>
-    <div class="toolbar__metric">
-      <span>Total</span>
-      <strong>{{ filteredCategories.length }}</strong>
-    </div>
-  </div>
-
-  <div class="table-wrap" *ngIf="!loading">
-    <div class="empty-state" *ngIf="filteredCategories.length === 0">
-      <span class="empty-state__icon">o</span>
-      <span>No hay categorías{{ searchQuery ? ' que coincidan con la busqueda' : ' registradas' }}</span>
-    </div>
-
-    <table class="data-table" *ngIf="filteredCategories.length > 0">
-      <thead>
-        <tr>
-          <th>Categoría</th>
-          <th class="col-actions">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let c of filteredCategories">
-          <td class="cell-name">
-            <span class="category-avatar">{{ c.name.slice(0, 1).toUpperCase() }}</span>
-            <span>{{ c.name }}</span>
-          </td>
-          <td class="cell-actions">
-            <button class="action-btn" type="button" (click)="openEdit(c)" title="Editar">Editar</button>
-            <button
-              class="action-btn action-btn--danger"
-              type="button"
-              [disabled]="deleting === c.id"
-              (click)="confirmDelete(c)"
-              title="Eliminar">
-              {{ deleting === c.id ? '...' : 'Eliminar' }}
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="loading-state" *ngIf="loading">
-    <span>Cargando categorías...</span>
-  </div>
-</div>
-
-<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()"></div>
-<div class="modal" *ngIf="showModal" role="dialog" aria-modal="true">
-  <div class="modal__header">
-    <div>
-      <span class="modal__eyebrow">{{ editingCategory ? 'Edicion' : 'Alta' }}</span>
-      <h2 class="modal__title">{{ editingCategory ? 'Editar categoría' : 'Nueva categoría' }}</h2>
-    </div>
-    <button class="modal__close" type="button" (click)="closeModal()" aria-label="Cerrar">x</button>
-  </div>
-
-  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
-    <div class="modal__body">
-      <div class="field" [class.field--error]="isInvalid('name')">
-        <label class="field__label">Nombre <span class="required">*</span></label>
-        <input class="field__input" type="text" formControlName="name" placeholder="Batería automotor" />
-        <span class="field__error" *ngIf="isInvalid('name')">El nombre es requerido</span>
-      </div>
-    </div>
-
-    <div class="modal__footer">
-      <button class="btn-ghost" type="button" (click)="closeModal()">Cancelar</button>
-      <button class="btn-primary" type="submit" [disabled]="saving">
-        {{ saving ? 'Guardando...' : (editingCategory ? 'Guardar cambios' : 'Crear categoría') }}
-      </button>
-    </div>
   </form>
-</div>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="secondary" type="button" [disabled]="saving" (click)="closeModal()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="category-form" [disabled]="saving">{{ saving ? 'Guardando...' : (editingCategory ? 'Guardar cambios' : 'Crear categoría') }}</button>
+  </footer>
+</ui-modal>

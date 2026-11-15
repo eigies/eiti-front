@@ -21,10 +21,12 @@ interface DraftDetail {
   unitCost: number;
 }
 
+import { UiButtonComponent, UiEmptyComponent, UiTicketComponent } from '../../shared/ui';
+
 @Component({
   selector: 'app-purchase-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SearchableSelectComponent, UiButtonComponent, UiEmptyComponent, UiTicketComponent],
   templateUrl: './purchase-create.component.html',
   styleUrls: ['./purchase-create.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

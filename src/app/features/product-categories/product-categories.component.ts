@@ -6,10 +6,12 @@ import { ProductCategoryResponse } from '../../core/models/product-category.mode
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 
+import { UiAvatarComponent, UiButtonComponent, UiEmptyComponent, UiModalComponent } from '../../shared/ui';
+
 @Component({
   selector: 'app-product-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, UiAvatarComponent, UiButtonComponent, UiEmptyComponent, UiModalComponent],
   templateUrl: './product-categories.component.html',
   styleUrls: ['./product-categories.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

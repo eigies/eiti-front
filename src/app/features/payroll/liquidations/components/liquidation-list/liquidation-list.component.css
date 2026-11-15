@@ -36,7 +36,7 @@
 .liq__receipt .liq__label { display: block; margin-bottom: 4px; }
 .receipt-actions { display: flex; justify-content: flex-end; }
 
-@container (max-width: 680px) {
+@container (max-width: 840px) {
   .liq__head { display: none; }
   .liq__row { grid-template-columns: minmax(0, 1fr) auto; }
   .liq__who { grid-column: 1 / -1; }

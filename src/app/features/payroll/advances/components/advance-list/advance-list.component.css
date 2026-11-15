@@ -1,4 +1,4 @@
-:host { display: block; }
+:host { display: block; min-width: 0; }
 .ui-table-scroll { overflow-x: auto; }
 .advance-table { min-width: 760px; }
 .advance-table th:first-child, .advance-table th:last-child { border-radius: 0; }

@@ -1,232 +1,197 @@
-<div class="page">
-  <section class="panel">
-    <div class="head">
-      <div>
-        <p class="eyebrow">Cuenta Corriente</p>
-        <h1>Nueva venta a cuenta corriente</h1>
-      </div>
-      <a class="btn btn--ghost" routerLink="/sales">Volver a ventas</a>
+<main class="ui-page cc-sale">
+  <header class="cc-sale__head">
+    <div>
+      <span class="cc-sale__crumb">Ventas · Cuenta corriente</span>
+      <h1>{{ convertingQuoteId ? 'Convertir presupuesto' : 'Nueva venta a cuenta corriente' }}</h1>
+      <p>La venta queda como deuda del cliente; se cobra después desde su cuenta.</p>
     </div>
+    <a uiBtn="secondary" routerLink="/sales">Volver a ventas</a>
+  </header>
 
-    <div class="quote-conversion-banner" *ngIf="convertingQuoteId">
-      <strong>Convirtiendo presupuesto</strong>
-      <span>{{ quoteConversionLabel }}</span>
-      <label class="quote-conversion-vat" *ngIf="convertVatRate > 0">
-        <input type="checkbox" [checked]="convertWithVat" (change)="convertWithVat = $any($event.target).checked">
-        <span>Cobrar IVA {{ convertVatRate | number: '1.0-1' }}% (la venta baja al total con IVA)</span>
-      </label>
-    </div>
+  <div class="cc-sale__notice" *ngIf="convertingQuoteId">
+    <strong>Convirtiendo presupuesto</strong>
+    <span>{{ quoteConversionLabel }}</span>
+    <label class="ui-switch cc-sale__vat" *ngIf="convertVatRate > 0">
+      <input type="checkbox" [checked]="convertWithVat" (change)="convertWithVat = $any($event.target).checked">
+      <span class="ui-switch__track" aria-hidden="true"></span>
+      <span>Cobrar IVA {{ convertVatRate | number: '1.0-1' }}% (la venta pasa al total con IVA)</span>
+    </label>
+  </div>
 
-    <div class="quote-stock-disclaimer" *ngIf="quoteStockDisclaimer.length > 0">
-      <strong>Ajustes por stock</strong>
-      <ul>
-        <li *ngFor="let line of quoteStockDisclaimer">{{ line }}</li>
-      </ul>
-    </div>
+  <div class="cc-sale__notice cc-sale__notice--warn" *ngIf="quoteStockDisclaimer.length > 0">
+    <strong>Ajustes por stock</strong>
+    <ul><li *ngFor="let line of quoteStockDisclaimer">{{ line }}</li></ul>
+  </div>
 
-    <div class="grid">
-      <label class="field">
-        <span class="field__label">Sucursal</span>
-        <app-searchable-select [(ngModel)]="selectedBranchId" (ngModelChange)="onBranchChange()" [options]="branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
-      </label>
-      <div class="field" *ngIf="showInvoicingControl">
-        <span class="field__label">Factura electronica</span>
-        <app-invoicing-control
-          [showToggle]="showInvoicingCheck"
-          [requested]="invoicingRequested"
-          [willInvoice]="willInvoice"
-          [letter]="invoiceLetter"
-          [missingPointOfSale]="selectedBranchMissingPointOfSale"
-          (requestedChange)="setInvoicingRequested($event)"
-          (letterChange)="setInvoiceLetter($event)"></app-invoicing-control>
-      </div>
-    </div>
+  <div class="cc-sale__body">
+    <div class="cc-sale__main">
+      <!-- Cliente -->
+      <section class="ui-card cc-sale__card">
+        <h2 class="cc-sale__title">Cliente</h2>
+        <ng-container *ngIf="!selectedCustomer">
+          <div class="cc-sale__search">
+            <label class="ui-search cc-sale__grow">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <span class="ui-sr-only">Buscar cliente</span>
+              <input class="ui-input" type="text" [(ngModel)]="customerQuery" placeholder="Nombre, email o documento" (keydown.enter)="searchCustomers()" />
+            </label>
+            <button uiBtn="secondary" type="button" (click)="searchCustomers()">Buscar</button>
+          </div>
+          <p class="cc-sale__hint" *ngIf="searchResults.length === 0">Buscá un cliente que ya exista para asignarle la venta.</p>
+          <div class="cc-sale__results" *ngIf="searchResults.length > 0">
+            <button *ngFor="let customer of searchResults" type="button" class="cc-sale__result" (click)="selectCustomer(customer)">
+              <ui-avatar [name]="customer.fullName || customer.name" [key]="customer.id" [size]="36"></ui-avatar>
+              <span class="cc-sale__who">
+                <strong>{{ customer.fullName || customer.name }}</strong>
+                <small>{{ customer.email }}<ng-container *ngIf="customer.documentNumber"> · {{ customer.documentType }} {{ customer.documentNumber }}</ng-container></small>
+              </span>
+            </button>
+          </div>
+        </ng-container>
 
-    <div class="block">
-      <h2>Cliente</h2>
-      <div *ngIf="!selectedCustomer" class="search-content">
-        <div class="row row--search">
-          <input class="control grow" type="text" [(ngModel)]="customerQuery"
-                 placeholder="Nombre, email o documento" (keydown.enter)="searchCustomers()" />
-          <button class="btn btn--secondary" type="button" (click)="searchCustomers()">Buscar</button>
+        <div *ngIf="selectedCustomer" class="cc-sale__chosen">
+          <ui-avatar [name]="selectedCustomer.fullName || selectedCustomer.name" [key]="selectedCustomer.id" [size]="40"></ui-avatar>
+          <span class="cc-sale__who">
+            <strong>{{ selectedCustomer.fullName || selectedCustomer.name }}</strong>
+            <small>{{ selectedCustomer.email }}<ng-container *ngIf="selectedCustomer.documentNumber"> · {{ selectedCustomer.documentType }} {{ selectedCustomer.documentNumber }}</ng-container></small>
+          </span>
+          <button uiBtn="ghost" size="sm" type="button" (click)="clearCustomer()">Cambiar cliente</button>
         </div>
-        <div class="hint" *ngIf="searchResults.length === 0">Busca un cliente existente para asignarlo a la venta.</div>
-        <div class="stack">
-          <button *ngFor="let customer of searchResults" type="button" class="card"
-                  (click)="selectCustomer(customer)">
-            <strong>{{ customer.fullName || customer.name }}</strong>
-            <span>{{ customer.email }}</span>
-            <span *ngIf="customer.documentNumber">{{ customer.documentType }} {{ customer.documentNumber }}</span>
+
+        <ng-container *ngIf="invoicingIssue as issue">
+          <span class="ui-field__error" role="alert" *ngIf="invoicingRequested">{{ issue }}</span>
+          <span class="cc-sale__warn" role="status" *ngIf="!invoicingRequested">
+            Esta sucursal factura automáticamente. {{ issue }} Si confirmás así, la venta se guarda y la factura queda rechazada.
+          </span>
+        </ng-container>
+      </section>
+
+      <!-- Productos -->
+      <section class="ui-card cc-sale__card">
+        <header class="cc-sale__row">
+          <h2 class="cc-sale__title">Productos <span class="ui-count" *ngIf="draftItems.length > 0">{{ draftItems.length }}</span></h2>
+          <button uiBtn="secondary" type="button" (click)="openProductModal()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Agregar productos
           </button>
+        </header>
+
+        <div class="ui-table-wrap" *ngIf="draftItems.length > 0; else noItems">
+          <table class="ui-table cc-sale__table">
+            <thead>
+              <tr><th>Producto</th><th class="is-num">Cantidad</th><th class="is-num">Precio unit.</th><th class="is-num">Desc. %</th><th class="is-num">Subtotal</th><th><span class="ui-sr-only">Quitar</span></th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of draftItems">
+                <td><strong>{{ item.stock.name }}</strong><small class="cc-sale__brand">{{ item.stock.brand }}</small></td>
+                <td class="is-num ui-num">{{ item.quantity }}</td>
+                <td class="is-num">
+                  <input *ngIf="canOverridePrice" class="ui-input ui-num cc-sale__num" type="number" min="0" step="0.01" aria-label="Precio unitario"
+                         [ngModel]="item.unitPriceOverride"
+                         (ngModelChange)="setItemPrice(item.stock.productId, $event)"
+                         [ngModelOptions]="{ standalone: true }"
+                         [class.is-overridden]="isPriceOverridden(item)" />
+                  <span class="ui-num" *ngIf="!canOverridePrice">{{ effectiveUnitPrice(item) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+                </td>
+                <td class="is-num">
+                  <input class="ui-input ui-num cc-sale__num cc-sale__num--sm" type="number" min="0" max="100" step="1" aria-label="Descuento"
+                         [value]="item.discountPercent"
+                         (input)="setItemDiscount(item.stock.productId, $any($event.target).value)"
+                         placeholder="0" />
+                </td>
+                <td class="is-num ui-num">{{ item.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                <td class="cc-sale__remove"><button uiBtn="ghost" size="sm" type="button" (click)="removeItem(item.stock.productId)">Quitar</button></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
-      <div *ngIf="selectedCustomer" class="selected-customer">
-        <div class="card card--selected">
-          <strong>{{ selectedCustomer.fullName || selectedCustomer.name }}</strong>
-          <span>{{ selectedCustomer.email }}</span>
-          <span *ngIf="selectedCustomer.documentNumber">{{ selectedCustomer.documentType }} {{ selectedCustomer.documentNumber }}</span>
+        <ng-template #noItems>
+          <ui-empty icon="box" heading="Todavía no agregaste productos" text="Elegí la sucursal y agregá productos de su stock."></ui-empty>
+        </ng-template>
+
+        <div class="cc-sale__grid" *ngIf="draftItems.length > 0">
+          <label class="ui-field"><span class="ui-field__label">Descuento general %</span>
+            <input class="ui-input ui-num" type="number" min="0" max="100" step="1" [value]="generalDiscountPercent" (input)="setGeneralDiscount($any($event.target).value)" placeholder="0" />
+          </label>
+          <label class="ui-field"><span class="ui-field__label">Precio final manual</span>
+            <input class="ui-input ui-num" type="number" min="0" step="0.01" [ngModel]="manualOverridePrice" (ngModelChange)="setManualOverride($event)" [ngModelOptions]="{ standalone: true }" placeholder="Vacío: se usan los descuentos" />
+          </label>
+          <label class="ui-field cc-sale__span"><span class="ui-field__label">Observaciones <span class="cc-sale__opt">(opcional, salen en la factura)</span></span>
+            <textarea class="ui-input cc-sale__textarea" rows="2" maxlength="500" [(ngModel)]="notes" [ngModelOptions]="{ standalone: true }" placeholder="Presupuesto, patente u otra aclaración"></textarea>
+          </label>
         </div>
-        <button class="btn btn--ghost btn--sm" type="button" (click)="clearCustomer()">Cambiar cliente</button>
-      </div>
-      <ng-container *ngIf="invoicingIssue as issue">
-        <span class="field__error" role="alert" *ngIf="invoicingRequested">{{ issue }}</span>
-        <span class="field__warning" role="status" *ngIf="!invoicingRequested">
-          Esta sucursal factura automáticamente. {{ issue }} Si confirmás así, la venta se guarda y la factura queda rechazada.
-        </span>
-      </ng-container>
+        <div class="cc-sale__warn cc-sale__warn--row" *ngIf="isManualOverride">
+          <span><strong>Precio cambiado a mano.</strong> Reemplaza los descuentos de arriba.</span>
+          <button uiBtn="ghost" size="sm" type="button" (click)="clearManualOverride()">Restaurar</button>
+        </div>
+      </section>
+
+      <!-- Canje -->
+      <section class="ui-card cc-sale__card" *ngIf="draftItems.length > 0">
+        <h2 class="cc-sale__title">Canje <span class="cc-sale__opt">(opcional)</span></h2>
+        <p class="cc-sale__hint">El producto que entrega el cliente suma al stock y baja su deuda.</p>
+        <div class="cc-sale__canje">
+          <label class="ui-field cc-sale__grow"><span class="ui-field__label">Producto del canje</span>
+            <app-searchable-select [(ngModel)]="canjeProductId" [ngModelOptions]="{ standalone: true }" [options]="tradeInProductOptions" (click)="ensureStockForCanje()" placeholder="Elegir producto" searchPlaceholder="Buscar producto..."></app-searchable-select>
+          </label>
+          <label class="ui-field cc-sale__small"><span class="ui-field__label">Cantidad</span>
+            <input class="ui-input ui-num" type="number" min="1" step="1" [(ngModel)]="canjeQuantity" [ngModelOptions]="{ standalone: true }" />
+          </label>
+          <label class="ui-field cc-sale__small"><span class="ui-field__label">Valor</span>
+            <input class="ui-input ui-num" type="number" min="0" step="0.01" [(ngModel)]="canjeAmount" [ngModelOptions]="{ standalone: true }" placeholder="0,00" />
+          </label>
+          <button uiBtn="secondary" type="button" (click)="addTradeIn()">Agregar canje</button>
+        </div>
+        <div class="ui-table-wrap" *ngIf="tradeInDrafts.length > 0">
+          <table class="ui-table">
+            <thead><tr><th>Producto</th><th class="is-num">Cantidad</th><th class="is-num">Valor</th><th><span class="ui-sr-only">Quitar</span></th></tr></thead>
+            <tbody>
+              <tr *ngFor="let t of tradeInDrafts; let i = index">
+                <td>{{ t.brand }} {{ t.name }}</td>
+                <td class="is-num ui-num">{{ t.quantity }}</td>
+                <td class="is-num ui-num">{{ t.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                <td class="cc-sale__remove"><button uiBtn="ghost" size="sm" type="button" (click)="removeTradeIn(i)">Quitar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
 
-    <div class="block">
-      <div class="row row--product">
-        <div class="product-label">
-          <span class="field__label">Productos</span>
-          <span class="picker-summary">Selecciona la sucursal y agrega productos del stock disponible.</span>
-        </div>
-        <button class="btn btn--secondary" type="button" (click)="openProductModal()">Buscar y agregar productos</button>
-        <span class="picker-summary" *ngIf="draftItems.length > 0">{{ draftItems.length }} producto(s) seleccionado(s)</span>
-      </div>
-      <table *ngIf="draftItems.length > 0" class="table">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Precio unit.</th>
-            <th>Descuento %</th>
-            <th>Subtotal</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of draftItems">
-            <td>{{ item.stock.brand }} / {{ item.stock.name }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>
-              <input *ngIf="canOverridePrice" class="control control--compact control--price" type="number" min="0" step="0.01"
-                     [ngModel]="item.unitPriceOverride"
-                     (ngModelChange)="setItemPrice(item.stock.productId, $event)"
-                     [ngModelOptions]="{ standalone: true }"
-                     [class.is-overridden]="isPriceOverridden(item)" />
-              <span *ngIf="!canOverridePrice">{{ effectiveUnitPrice(item) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
-            </td>
-            <td>
-              <input class="control control--compact control--discount" type="number" min="0" max="100" step="1"
-                     [value]="item.discountPercent"
-                     (input)="setItemDiscount(item.stock.productId, $any($event.target).value)"
-                     placeholder="0" />
-            </td>
-            <td>{{ item.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
-            <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeItem(item.stock.productId)">Quitar</button></td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="4" class="text-right"><strong>Subtotal</strong></td>
-            <td><strong>{{ subtotalAfterItemDiscounts | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></td>
-            <td></td>
-          </tr>
-          <tr *ngIf="generalDiscountPercent > 0">
-            <td colspan="4" class="text-right">Descuento general ({{ generalDiscountPercent }}%)</td>
-            <td>-{{ (subtotalAfterItemDiscounts - totalAfterGeneralDiscount) | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
-            <td></td>
-          </tr>
-          <tr>
-            <td colspan="4" class="text-right"><strong>Total</strong></td>
-            <td><strong>{{ total | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-      <div class="discounts-row" *ngIf="draftItems.length > 0">
-        <label class="field field--discount">
-          <span class="field__label">Descuento general %</span>
-          <input class="control control--compact" type="number" min="0" max="100" step="1"
-                 [value]="generalDiscountPercent"
-                 (input)="setGeneralDiscount($any($event.target).value)"
-                 placeholder="0" />
+    <aside class="cc-sale__aside" aria-label="Resumen de la venta">
+      <section class="ui-card cc-sale__card cc-sale__setup">
+        <label class="ui-field"><span class="ui-field__label">Sucursal</span>
+          <app-searchable-select [(ngModel)]="selectedBranchId" (ngModelChange)="onBranchChange()" [options]="branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
         </label>
-        <label class="field field--discount">
-          <span class="field__label">Precio final manual</span>
-          <input class="control control--compact" type="number" min="0" step="0.01"
-                 [ngModel]="manualOverridePrice"
-                 (ngModelChange)="setManualOverride($event)"
-                 [ngModelOptions]="{ standalone: true }"
-                 placeholder="Dejar vacio para usar descuentos" />
-        </label>
-      </div>
-      <label class="field field--notes" *ngIf="draftItems.length > 0">
-        <span class="field__label">Observaciones <span class="field__optional">(opcional, salen en la factura)</span></span>
-        <textarea class="control control--textarea" rows="2" maxlength="500"
-                  [(ngModel)]="notes" [ngModelOptions]="{ standalone: true }"
-                  placeholder="Presupuesto, patente u otra aclaración"></textarea>
-      </label>
-      <div class="warning-banner" *ngIf="isManualOverride">
-        <strong>Precio modificado manualmente.</strong> Los descuentos anteriores han sido reemplazados.
-        <button class="btn btn--ghost btn--sm" type="button" (click)="clearManualOverride()">Restaurar</button>
-      </div>
-
-      <div class="canje-section" *ngIf="draftItems.length > 0">
-        <h3 class="canje-title">Canje (opcional)</h3>
-        <p class="picker-summary">La batería entregada suma al stock y descuenta de la deuda del cliente.</p>
-        <div class="canje-editor">
-          <label class="field">
-            <span class="field__label">Producto del canje</span>
-            <app-searchable-select [(ngModel)]="canjeProductId" [ngModelOptions]="{ standalone: true }"
-              [options]="tradeInProductOptions" (click)="ensureStockForCanje()"
-              placeholder="Elegir producto" searchPlaceholder="Buscar producto..."></app-searchable-select>
-          </label>
-          <label class="field field--discount">
-            <span class="field__label">Cantidad</span>
-            <input class="control control--compact" type="number" min="1" step="1"
-              [(ngModel)]="canjeQuantity" [ngModelOptions]="{ standalone: true }" />
-          </label>
-          <label class="field field--discount">
-            <span class="field__label">Valor del canje</span>
-            <input class="control control--compact" type="number" min="0" step="0.01"
-              [(ngModel)]="canjeAmount" [ngModelOptions]="{ standalone: true }" placeholder="0.00" />
-          </label>
-          <button class="btn btn--secondary" type="button" (click)="addTradeIn()">Agregar canje</button>
+        <div class="ui-field" *ngIf="showInvoicingControl"><span class="ui-field__label">Factura electrónica</span>
+          <app-invoicing-control
+            [showToggle]="showInvoicingCheck"
+            [requested]="invoicingRequested"
+            [willInvoice]="willInvoice"
+            [letter]="invoiceLetter"
+            [missingPointOfSale]="selectedBranchMissingPointOfSale"
+            (requestedChange)="setInvoicingRequested($event)"
+            (letterChange)="setInvoiceLetter($event)"></app-invoicing-control>
         </div>
+      </section>
 
-        <table class="table" *ngIf="tradeInDrafts.length > 0">
-          <thead>
-            <tr><th>Producto</th><th>Cantidad</th><th>Valor</th><th></th></tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let t of tradeInDrafts; let i = index">
-              <td>{{ t.brand }} / {{ t.name }}</td>
-              <td>{{ t.quantity }}</td>
-              <td>{{ t.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
-              <td><button class="btn btn--ghost btn--sm" type="button" (click)="removeTradeIn(i)">Quitar</button></td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="2" class="text-right"><strong>Canje total</strong></td>
-              <td colspan="2">-{{ canjeTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
-            </tr>
-            <tr>
-              <td colspan="2" class="text-right"><strong>Deuda a asumir</strong></td>
-              <td colspan="2"><strong>{{ netAfterTradeIn | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
+      <dl class="cc-sale__sums" *ngIf="draftItems.length > 0">
+        <div><dt>Subtotal</dt><dd class="ui-num">{{ subtotalAfterItemDiscounts | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd></div>
+        <div *ngIf="generalDiscountPercent > 0"><dt>Descuento general ({{ generalDiscountPercent }}%)</dt><dd class="ui-num">−{{ (subtotalAfterItemDiscounts - totalAfterGeneralDiscount) | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd></div>
+        <div><dt>Total de la venta</dt><dd class="ui-num">{{ total | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd></div>
+        <div *ngIf="tradeInDrafts.length > 0"><dt>Canje</dt><dd class="ui-num">−{{ canjeTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd></div>
+      </dl>
 
-    <div class="footer">
-      <button class="btn" type="button" [disabled]="!canSubmit" (click)="submit()">
-        {{ saving ? 'Guardando...' : (convertingQuoteId ? 'Convertir presupuesto' : 'Crear venta CC') }}
+      <ui-ticket class="ui-ticket--compact" label="Deuda que asume el cliente" [figure]="(netAfterTradeIn | currency:'ARS':'symbol-narrow':'1.2-2')">
+        <span class="ui-ticket__sub">{{ selectedCustomer ? (selectedCustomer.fullName || selectedCustomer.name) : 'Falta elegir el cliente' }}</span>
+      </ui-ticket>
+
+      <button uiBtn="primary" size="lg" type="button" class="cc-sale__submit" [disabled]="!canSubmit" (click)="submit()">
+        {{ saving ? 'Guardando...' : (convertingQuoteId ? 'Convertir presupuesto' : 'Crear venta a cuenta corriente') }}
       </button>
-    </div>
-  </section>
+    </aside>
+  </div>
 
-  <!-- Product modal -->
-  <app-product-picker-modal
-    *ngIf="productModalOpen"
-    [rows]="pickerRows"
-    (confirm)="onPickerConfirm($event)"
-    (cancel)="closeProductModal()">
-  </app-product-picker-modal>
+  <app-product-picker-modal *ngIf="productModalOpen" [rows]="pickerRows" (confirm)="onPickerConfirm($event)" (cancel)="closeProductModal()"></app-product-picker-modal>
 
   <app-quick-customer-modal
     *ngIf="showQuickCustomerModal"
@@ -236,4 +201,4 @@
     (created)="onQuickCustomerCreated($event)"
     (cancel)="onQuickCustomerCancelled()">
   </app-quick-customer-modal>
-</div>
+</main>

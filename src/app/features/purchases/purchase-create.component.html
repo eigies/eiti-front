@@ -1,188 +1,120 @@
-<div class="page">
-  <div class="page__header">
+<main class="ui-page pc">
+  <header class="pc__head">
     <div>
-      <h1 class="page__title">Registrar compra</h1>
+      <span class="pc__crumb">Compras</span>
+      <h1>Registrar compra</h1>
+      <p>Los pagos se registran después, desde la cuenta del proveedor.</p>
     </div>
-    <a class="back-link" routerLink="/purchases">&larr; Volver al listado</a>
-  </div>
+    <a uiBtn="secondary" routerLink="/purchases">Volver a compras</a>
+  </header>
 
   <form [formGroup]="headerForm" (ngSubmit)="submit()" novalidate>
-    <div class="purchase-layout">
-      <div class="form-grid">
-        <div class="section-card">
-          <div class="section-card__head">
-            <span class="section-label">Informacion de la compra</span>
-            <span class="section-hint">Datos base</span>
-          </div>
-
-          <div class="fields-row">
-            <div class="field" [class.field--error]="isHeaderInvalid('branchId')">
-              <label class="field__label">Sucursal <span class="required">*</span></label>
-              <app-searchable-select
-                formControlName="branchId"
-                [options]="branchOptions"
-                placeholder="Seleccionar sucursal"
-                searchPlaceholder="Buscar sucursal...">
-              </app-searchable-select>
-              <span class="field__error" *ngIf="isHeaderInvalid('branchId')">Requerida</span>
+    <div class="pc__body">
+      <div class="pc__main">
+        <section class="ui-card pc__card">
+          <h2 class="pc__title">Datos de la compra</h2>
+          <div class="pc__grid">
+            <div class="ui-field" [class.ui-field--error]="isHeaderInvalid('branchId')">
+              <label class="ui-field__label">Sucursal</label>
+              <app-searchable-select formControlName="branchId" [options]="branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+              <span class="ui-field__error" *ngIf="isHeaderInvalid('branchId')">Elegí la sucursal</span>
             </div>
-
-            <div class="field">
-              <label class="field__label">Proveedor</label>
-              <app-searchable-select
-                formControlName="supplierId"
-                [options]="supplierOptions"
-                placeholder="Sin proveedor"
-                searchPlaceholder="Buscar proveedor..."
-                [allowClear]="true"
-                clearLabel="Sin proveedor"
-                clearValue="">
-              </app-searchable-select>
+            <div class="ui-field">
+              <label class="ui-field__label">Proveedor</label>
+              <app-searchable-select formControlName="supplierId" [options]="supplierOptions" placeholder="Sin proveedor" searchPlaceholder="Buscar proveedor..." [allowClear]="true" clearLabel="Sin proveedor" clearValue=""></app-searchable-select>
             </div>
-
-            <div class="field">
-              <label class="field__label">Nro. Factura</label>
-              <input class="field__input" type="text" formControlName="invoiceNumber" placeholder="0001-00012345" />
-            </div>
-          </div>
-
-          <div class="field">
-            <label class="field__label">Notas</label>
-            <textarea class="field__input" formControlName="notes" rows="2" placeholder="Observaciones de la compra..."></textarea>
-          </div>
-
-          <div class="fields-row">
-            <div class="field">
-              <label class="field__label">IVA</label>
-              <select class="field__input field__select" formControlName="ivaPct">
+            <label class="ui-field">
+              <span class="ui-field__label">Número de factura</span>
+              <input class="ui-input ui-num" type="text" formControlName="invoiceNumber" placeholder="0001-00012345" />
+            </label>
+            <label class="ui-field">
+              <span class="ui-field__label">IVA</span>
+              <select class="ui-select" formControlName="ivaPct">
                 <option value="">Exento</option>
-                <option value="10.5">10.5%</option>
+                <option value="10.5">10,5%</option>
                 <option value="21">21%</option>
               </select>
-            </div>
-            <div class="field">
-              <label class="field__label">IIBB %</label>
-              <input class="field__input" type="number" min="0" step="0.01" placeholder="0.00" formControlName="ingresosBrutosPct" />
-            </div>
+            </label>
+            <label class="ui-field">
+              <span class="ui-field__label">IIBB %</span>
+              <input class="ui-input ui-num" type="number" min="0" step="0.01" placeholder="0,00" formControlName="ingresosBrutosPct" />
+            </label>
+            <label class="ui-field pc__span">
+              <span class="ui-field__label">Notas <span class="pc__opt">(opcional)</span></span>
+              <textarea class="ui-input pc__textarea" formControlName="notes" rows="2" placeholder="Observaciones de la compra"></textarea>
+            </label>
           </div>
-        </div>
+        </section>
 
-        <div class="section-card">
-          <div class="section-card__head">
-            <div>
-              <span class="section-label">Productos</span>
-              <span class="section-subcopy">Enfoca el buscador para ver productos disponibles o escribi para filtrar.</span>
-            </div>
-            <span class="section-hint">{{ details.length }} item{{ details.length === 1 ? '' : 's' }}</span>
-          </div>
+        <section class="ui-card pc__card">
+          <h2 class="pc__title">Productos <span class="ui-count" *ngIf="details.length > 0">{{ details.length }}</span></h2>
 
-          <div class="product-search-wrap">
-            <input
-              class="field__input product-search-input"
-              type="text"
-              placeholder="Buscar producto por nombre, codigo o SKU..."
-              [(ngModel)]="productSearch"
-              [ngModelOptions]="{ standalone: true }"
-              (input)="onProductSearchInput()"
-              (focus)="openProductResults()"
-              (blur)="closeProductResults()"
-              (keydown.escape)="closeProductResults()"
-              autocomplete="off" />
+          <div class="pc__search">
+            <label class="ui-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <span class="ui-sr-only">Buscar producto</span>
+              <input
+                class="ui-input"
+                type="text"
+                placeholder="Buscar por nombre, código o SKU"
+                [(ngModel)]="productSearch"
+                [ngModelOptions]="{ standalone: true }"
+                (input)="onProductSearchInput()"
+                (focus)="openProductResults()"
+                (blur)="closeProductResults()"
+                (keydown.escape)="closeProductResults()"
+                autocomplete="off" />
+            </label>
 
-            <div class="product-results" *ngIf="showProductResults">
-              <button
-                class="product-result-item"
-                type="button"
-                *ngFor="let p of productSearchResults"
-                (mousedown)="$event.preventDefault()"
-                (click)="selectProduct(p)">
-                <span class="product-result-main">
-                  <span class="product-result-name">{{ p.name }}</span>
-                  <span class="product-result-code">{{ p.code }}<ng-container *ngIf="p.sku"> · {{ p.sku }}</ng-container></span>
+            <div class="pc__results" *ngIf="showProductResults">
+              <button class="pc__result" type="button" *ngFor="let p of productSearchResults" (mousedown)="$event.preventDefault()" (click)="selectProduct(p)">
+                <span class="pc__result-main">
+                  <strong>{{ p.name }}</strong>
+                  <small class="ui-num">{{ p.code }}<ng-container *ngIf="p.sku"> · {{ p.sku }}</ng-container></small>
                 </span>
-                <span class="product-result-cost">${{ formatCurrency(p.costPrice ?? 0) }}</span>
-                <span class="product-result-add">Agregar</span>
+                <span class="pc__result-cost ui-num">{{ (p.costPrice ?? 0) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+                <span class="pc__result-add">Agregar</span>
               </button>
             </div>
           </div>
 
-          <div class="detail-empty" *ngIf="details.length === 0">
-            Busca o selecciona un producto para empezar la compra.
-          </div>
+          <ui-empty *ngIf="details.length === 0" icon="box" heading="Todavía no agregaste productos" text="Tocá el buscador para ver los productos o escribí para filtrar."></ui-empty>
 
-          <div class="detail-table-wrap" *ngIf="details.length > 0">
-            <table class="detail-table">
+          <div class="ui-table-wrap" *ngIf="details.length > 0">
+            <table class="ui-table pc__table">
               <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th class="col-num">Cantidad</th>
-                  <th class="col-num">Costo unit.</th>
-                  <th class="col-num">Total</th>
-                  <th></th>
-                </tr>
+                <tr><th>Producto</th><th class="is-num">Cantidad</th><th class="is-num">Costo unitario</th><th class="is-num">Total</th><th><span class="ui-sr-only">Quitar</span></th></tr>
               </thead>
               <tbody>
                 <tr *ngFor="let d of details; let i = index">
-                  <td class="cell-product">{{ d.productName }}</td>
-                  <td class="col-num">
-                    <input
-                      class="num-input"
-                      type="number"
-                      min="1"
-                      [(ngModel)]="d.quantity"
-                      [ngModelOptions]="{ standalone: true }" />
-                  </td>
-                  <td class="col-num">
-                    <input
-                      class="num-input"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      [(ngModel)]="d.unitCost"
-                      [ngModelOptions]="{ standalone: true }" />
-                  </td>
-                  <td class="col-num cell-total">${{ formatCurrency(d.quantity * d.unitCost) }}</td>
-                  <td class="col-remove">
-                    <button class="btn-remove" type="button" (click)="removeDetail(i)" title="Quitar">x</button>
-                  </td>
+                  <td><strong>{{ d.productName }}</strong></td>
+                  <td class="is-num"><input class="ui-input ui-num pc__num pc__num--sm" type="number" min="1" aria-label="Cantidad" [(ngModel)]="d.quantity" [ngModelOptions]="{ standalone: true }" /></td>
+                  <td class="is-num"><input class="ui-input ui-num pc__num" type="number" min="0" step="0.01" aria-label="Costo unitario" [(ngModel)]="d.unitCost" [ngModelOptions]="{ standalone: true }" /></td>
+                  <td class="is-num ui-num">{{ (d.quantity * d.unitCost) | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                  <td class="pc__remove"><button uiBtn="ghost" size="sm" type="button" (click)="removeDetail(i)">Quitar</button></td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
-
-        <div class="section-card">
-          <p class="section-subcopy">Los pagos se registran desde la cuenta del proveedor, no en el alta de la compra.</p>
-        </div>
+        </section>
       </div>
 
-      <div class="summary-card">
-        <div class="summary-kicker">Resumen</div>
-        <div class="summary-row">
-          <span class="summary-label">Total compra</span>
-          <span class="summary-value">${{ formatCurrency(totalAmount) }}</span>
-        </div>
-        <div class="summary-row summary-row--tax" *ngIf="ivaAmount !== null">
-          <span class="summary-label">IVA {{ headerForm.get('ivaPct')?.value }}%</span>
-          <span class="summary-value summary-value--tax">${{ formatCurrency(ivaAmount!) }}</span>
-        </div>
-        <div class="summary-row summary-row--tax" *ngIf="iibbAmount !== null">
-          <span class="summary-label">IIBB {{ headerForm.get('ingresosBrutosPct')?.value }}%</span>
-          <span class="summary-value summary-value--tax">${{ formatCurrency(iibbAmount!) }}</span>
-        </div>
-        <div class="summary-row summary-row--credit" *ngIf="selectedSupplierCredit > 0">
-          <span class="summary-label">Saldo a favor</span>
-          <span class="summary-value summary-value--paid">${{ formatCurrency(selectedSupplierCredit) }}</span>
-        </div>
-        <p class="summary-credit-note" *ngIf="selectedSupplierCredit > 0">Se aplicará automáticamente a esta compra.</p>
+      <aside class="pc__aside" aria-label="Resumen de la compra">
+        <ui-ticket class="ui-ticket--compact" label="Total compra" [figure]="(totalAmount | currency:'ARS':'symbol-narrow':'1.2-2')">
+          <span class="ui-ticket__sub">{{ details.length }} {{ details.length === 1 ? 'producto' : 'productos' }}</span>
+        </ui-ticket>
 
-        <div class="form-actions">
-          <button class="btn-ghost" type="button" routerLink="/purchases">Cancelar</button>
-          <button class="btn-primary" type="submit" [disabled]="submitting || details.length === 0">
-            {{ submitting ? 'Registrando...' : 'Registrar compra' }}
-          </button>
-        </div>
-      </div>
+        <dl class="pc__sums" *ngIf="ivaAmount !== null || iibbAmount !== null || selectedSupplierCredit > 0">
+          <div *ngIf="ivaAmount !== null"><dt>IVA {{ headerForm.get('ivaPct')?.value }}%</dt><dd class="ui-num">{{ ivaAmount! | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd></div>
+          <div *ngIf="iibbAmount !== null"><dt>IIBB {{ headerForm.get('ingresosBrutosPct')?.value }}%</dt><dd class="ui-num">{{ iibbAmount! | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd></div>
+          <div *ngIf="selectedSupplierCredit > 0" class="pc__credit"><dt>Saldo a favor (se aplica solo)</dt><dd class="ui-num">{{ selectedSupplierCredit | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd></div>
+        </dl>
+
+        <button uiBtn="primary" size="lg" type="submit" class="pc__submit" [disabled]="submitting || details.length === 0">
+          {{ submitting ? 'Registrando...' : 'Registrar compra' }}
+        </button>
+        <a uiBtn="ghost" routerLink="/purchases">Cancelar</a>
+      </aside>
     </div>
   </form>
-</div>
+</main>

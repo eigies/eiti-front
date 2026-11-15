@@ -63,10 +63,12 @@ interface QuotePrefill {
   details: QuotePrefillDetail[];
 }
 
+import { UiAvatarComponent, UiButtonComponent, UiEmptyComponent, UiTicketComponent } from '../../../shared/ui';
+
 @Component({
   selector: 'app-sales-cc',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent, ProductPickerModalComponent, QuickCustomerModalComponent, InvoicingControlComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, SearchableSelectComponent, ProductPickerModalComponent, QuickCustomerModalComponent, InvoicingControlComponent, UiAvatarComponent, UiButtonComponent, UiEmptyComponent, UiTicketComponent],
   templateUrl: './sales-cc.component.html',
   styleUrls: ['./sales-cc.component.css']
 })
