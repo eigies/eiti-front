@@ -171,9 +171,8 @@
     display: block;
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
+    letter-spacing: 0;
     color: var(--text-dim);
-    text-transform: uppercase;
     margin-bottom: 0.4rem;
 }
 

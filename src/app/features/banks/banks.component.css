@@ -24,6 +24,19 @@
   background: transparent;
   box-shadow: none;
 }
+.panel__header,
+.inline-form,
+.bank-row,
+.bank-row__info,
+.bank-row__actions,
+.edit-form,
+.edit-form__actions,
+.plan-row,
+.plan-field {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+}
 
 .hero {
   margin-bottom: 1.6rem;
@@ -118,8 +131,7 @@
   justify-content: space-between;
   color: var(--text-dim);
   font-size: 13px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   margin-bottom: 1rem;
   padding-bottom: .85rem;
   border-bottom: 1px solid var(--border);
@@ -439,8 +451,7 @@
   font-size: 13px;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .bank-row__actions {
@@ -532,8 +543,7 @@
 .plan-row__state {
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   color: var(--text-dim);
 }
 

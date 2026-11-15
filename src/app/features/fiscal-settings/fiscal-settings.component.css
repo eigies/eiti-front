@@ -34,8 +34,7 @@
     color: var(--amber);
     font-family: var(--font-sans);
     font-size: 11px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .fiscal__env--prod {

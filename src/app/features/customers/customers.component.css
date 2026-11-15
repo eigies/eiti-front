@@ -544,8 +544,7 @@
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 13px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .form-section__head p {

@@ -66,8 +66,7 @@
 
 .overview-card__label {
     color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
     font-family: var(--font-sans);
     font-size: 12px;
 }
@@ -121,8 +120,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 13px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
     margin-bottom: .78rem;
     padding-bottom: .72rem;
     border-bottom: 1px solid var(--border);
@@ -311,8 +309,7 @@
     background: color-mix(in srgb, var(--amber) 12%, var(--bg));
     color: color-mix(in srgb, var(--amber) 82%, var(--text) 18%);
     font-size: 11px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .vehicle-card__model {
@@ -392,8 +389,7 @@
     border-bottom: 1px solid var(--border);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .table td {
@@ -423,8 +419,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .data-card__row strong {
@@ -554,8 +549,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 13px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
     margin-bottom: .95rem;
     padding-bottom: .65rem;
     border-bottom: 1px solid var(--border);
@@ -600,8 +594,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .edit-modal__actions {

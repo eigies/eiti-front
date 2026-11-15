@@ -619,8 +619,7 @@ h2 {
 
 .modal-products-table th {
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
     color: var(--text-dim);
     background: color-mix(in srgb, var(--bg) 74%, transparent);
 }

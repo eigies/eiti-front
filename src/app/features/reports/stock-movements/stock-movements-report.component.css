@@ -169,8 +169,7 @@
   background: color-mix(in srgb, var(--success) 7%, transparent);
   font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .transfer-card__status i {
@@ -265,8 +264,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .transfer-stop strong {
@@ -391,8 +389,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .transfer-product-list {
@@ -467,8 +464,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .transfer-product__quantity strong {
@@ -506,8 +502,7 @@
   font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   cursor: pointer;
   transition: transform .16s ease, border-color .16s ease, background .16s ease;
 }
@@ -565,9 +560,8 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
+  letter-spacing: 0;
   text-align: center;
-  text-transform: uppercase;
 }
 
 @keyframes transfer-backdrop-in {

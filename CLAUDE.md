@@ -72,7 +72,8 @@ src/app/
 ## Layout Architecture
 
 - **`NavbarComponent` lives in `app.component.html`**, not in individual feature pages. It is rendered once at the root level above a `<div class="app-content">` wrapper that holds `<router-outlet>`.
-- **Sidebar push effect:** `NavbarComponent` toggles `document.body.classList` with `sidebar-open`. Global `styles.css` applies `margin-left: 260px` to `.app-content` on that class. The sidebar itself is `position: fixed; top: 64px; left: 0`.
+- **Menú lateral (EITI 2):** fijo a la izquierda en escritorio (248 px, se achica a riel de 72 px y se guarda en `localStorage` `eiti_nav_rail`); en ≤1024 px es un cajón con barra superior. Las entradas, grupos y permisos están en `shared/components/navbar/nav.config.ts`. `NavbarComponent` pone en `<body>` las clases `nav-shell`, `nav-rail` y `sidebar-open`; `styles.css` corre `.app-content` según esas clases.
+- **Páginas nuevas:** envolver en `<main class="ui-page">` y usar las piezas `ui-*` de `src/styles/ui.css`.
 - **No icon library** — icons are inline SVG with `stroke`-based paths (Lucide-style, 24×24 viewBox).
 
 ## Key Conventions

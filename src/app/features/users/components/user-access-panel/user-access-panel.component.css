@@ -185,8 +185,7 @@
 .access-panel__field > label {
   color: color-mix(in srgb, var(--text-dim) 88%, var(--text));
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .access-panel__field input {
@@ -314,8 +313,7 @@
   justify-content: space-between;
   gap: 0.7rem;
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .access-panel__module-heading span {
@@ -478,7 +476,6 @@
   color: color-mix(in srgb, var(--amber) 72%, var(--text));
   font-size: 12px;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .access-panel__footer {

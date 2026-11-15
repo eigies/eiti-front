@@ -141,8 +141,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .summary-value {
@@ -300,8 +299,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .field__input {
@@ -365,8 +363,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   font-weight: 400;
 }
 
@@ -731,11 +728,11 @@
   background: color-mix(in srgb, var(--bg) 92%, transparent);
   font-family: var(--font-sans);
 }
-.pcancel-paid span { color: var(--text-dim); font-size: 13px; letter-spacing: .06em; text-transform: uppercase;}
+.pcancel-paid span { color: var(--text-dim); font-size: 13px; letter-spacing: 0;}
 .pcancel-paid strong { color: var(--text); font-size: 1.05rem;}
 
 .pcancel-options { display: grid; gap: .6rem; border: none; padding: 0; margin: 0;}
-.pcancel-options legend { padding: 0; margin-bottom: .3rem; color: var(--text-dim); font-family: var(--font-sans); font-size: 13px; letter-spacing: .06em; text-transform: uppercase;}
+.pcancel-options legend { padding: 0; margin-bottom: .3rem; color: var(--text-dim); font-family: var(--font-sans); font-size: 13px; letter-spacing: 0;}
 
 .pcancel-opt {
   display: flex;
@@ -760,8 +757,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 .pcancel-tag--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent);}
 

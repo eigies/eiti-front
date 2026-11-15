@@ -71,8 +71,7 @@
 
 .quote-conversion-banner strong {
     color: var(--amber);
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
 }
 
 .quote-conversion-banner span {
@@ -92,8 +91,7 @@
 
 .quote-stock-disclaimer strong {
     color: var(--danger);
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
 }
 
 .quote-stock-disclaimer ul {
@@ -159,8 +157,7 @@ h1 {
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .search-content {
@@ -370,8 +367,7 @@ h1 {
     color: var(--text-subtle);
     font-family: var(--font-sans);
     font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
     text-align: left;
 }
 
@@ -438,8 +434,7 @@ h1 {
 
 .modal-panel__head strong {
     font-size: 14px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
     color: var(--text-dim);
 }
 
@@ -492,8 +487,7 @@ h1 {
 
 .modal-products-table th {
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
     color: var(--text-dim);
     background: color-mix(in srgb, var(--bg) 72%, transparent);
 }

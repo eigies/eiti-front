@@ -187,8 +187,7 @@
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
 }
 
 .quick-sale-card__head p {
@@ -272,8 +271,7 @@
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
 }
 
 .quick-sale-stage__head p {
@@ -306,8 +304,7 @@
     margin-bottom: .9rem;
     font-family: var(--font-sans);
     font-size: 13px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
     color: var(--text-dim);
 }
 
@@ -442,8 +439,7 @@
     font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 500;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .filters__more-copy small {
@@ -460,8 +456,7 @@
     background: color-mix(in srgb, var(--amber) 6%, transparent);
     font-family: var(--font-sans);
     font-size: 11px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .filters__more-chevron {
@@ -505,8 +500,7 @@
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 13px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .field__optional {
@@ -967,8 +961,7 @@
 .metric-card span {
     color: var(--text-dim);
     font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
 }
 
 .metric-card strong,
@@ -1054,8 +1047,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .chip {
@@ -1325,8 +1317,7 @@
     color: color-mix(in srgb, var(--amber) 70%, var(--text));
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .field__required {
@@ -1565,8 +1556,7 @@
 .modal-products-table th {
     font-size: 12px;
     color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
 }
 
 .modal-products-table td {
@@ -1773,8 +1763,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .transport-summary-card strong,
@@ -1851,8 +1840,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .info-row strong {
@@ -2063,8 +2051,7 @@
         color: var(--text-dim);
         font-family: var(--font-sans);
         font-size: 12px;
-        letter-spacing: .06em;
-        text-transform: uppercase;}
+        letter-spacing: 0;}
 
     .table--details td:nth-child(1)::before { content: 'Producto';}
     .table--details td:nth-child(2)::before { content: 'Cantidad';}
@@ -2296,8 +2283,7 @@
         color: var(--text-dim);
         font-family: var(--font-sans);
         font-size: 11px;
-        letter-spacing: .06em;
-        text-transform: uppercase;
+        letter-spacing: 0;
         line-height: 1.35;}
 
     .table--draft td > *,
@@ -2574,8 +2560,7 @@
     font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .sales-stack {

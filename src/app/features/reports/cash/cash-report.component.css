@@ -23,8 +23,7 @@ button.cash-head:focus-visible { outline: 2px solid color-mix(in srgb, var(--amb
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 14px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 .cash-head__count { color: var(--text-soft); font-family: var(--font-sans); font-size: 12px;}
 .cash-head__right { display: flex; align-items: center; gap: .8rem;}

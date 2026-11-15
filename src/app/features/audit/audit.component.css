@@ -103,8 +103,7 @@
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 13px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .panel__header p {
@@ -137,8 +136,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .control {
@@ -346,8 +344,7 @@
   background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   text-align: left;
 }
 
@@ -444,8 +441,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .audit-change-table {
@@ -469,8 +465,7 @@
   background: color-mix(in srgb, var(--bg-panel) 82%, transparent);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .audit-change-table__row {
@@ -489,7 +484,6 @@
 
 .audit-change-table__label {
   color: var(--text-dim);
-  text-transform: uppercase;
 }
 
 .audit-snapshots {
@@ -526,8 +520,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .audit-detail__value {
@@ -600,8 +593,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .pager__size-btn {

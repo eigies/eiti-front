@@ -22,6 +22,17 @@
   background: transparent;
   box-shadow: none;
 }
+.panel__header,
+.inline-form,
+.concept-row,
+.concept-row__info,
+.concept-row__actions,
+.edit-form,
+.edit-form__actions {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+}
 
 .hero {
   margin-bottom: 1.6rem;
@@ -114,8 +125,7 @@
   justify-content: space-between;
   color: var(--text-dim);
   font-size: 13px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   margin-bottom: 1rem;
   padding-bottom: .85rem;
   border-bottom: 1px solid var(--border);
@@ -332,8 +342,7 @@
   font-size: 13px;
   color: var(--text-dim);
   font-family: var(--font-sans);
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .concept-row__actions {

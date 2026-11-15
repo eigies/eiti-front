@@ -4,14 +4,14 @@
 
   <header class="hero">
     <div class="hero__copy">
-      <h1>Control operativo de cheques</h1>
-      <p>Seguimiento de cartera, depositos y vencimientos desde una sola vista.</p>
+      <h1>Cheques</h1>
+      <p>Cartera, depósitos y vencimientos en una sola vista.</p>
     </div>
 
     <div class="hero__metrics">
       <article class="metric-card metric-card--total">
         <span class="metric-card__label">Monto visible</span>
-        <strong>${{ totalAmount | number:'1.2-2' }}</strong>
+        <strong>{{ totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
         <small>{{ cheques.length }} registros en pantalla</small>
       </article>
       <article class="metric-card">
@@ -22,12 +22,12 @@
       <article class="metric-card">
         <span class="metric-card__label">Depositados</span>
         <strong>{{ depositedCount }}</strong>
-        <small>Esperando acreditacion</small>
+        <small>Esperando acreditación</small>
       </article>
       <article class="metric-card metric-card--warning">
         <span class="metric-card__label">Urgentes</span>
         <strong>{{ urgentCount }}</strong>
-        <small>Vencen en {{ soonWindowDays }} dias o menos</small>
+        <small>Vencen en {{ soonWindowDays }} días o menos</small>
       </article>
     </div>
   </header>
@@ -36,7 +36,7 @@
     <div class="panel__header panel__header--filters">
       <div>
         <span>Filtros</span>
-        <p>Refina por origen, estado, banco emisor, numero o rango de vencimiento.</p>
+        <p>Origen, estado, banco emisor, número o rango de vencimiento.</p>
       </div>
       <span class="panel__counter">{{ activeFilterCount }} activos</span>
     </div>

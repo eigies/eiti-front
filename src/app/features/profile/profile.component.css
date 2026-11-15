@@ -183,8 +183,7 @@
   color: var(--text-mute);
   font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .profile-metrics {
@@ -333,6 +332,10 @@
   border: 0;
   background: transparent;
   box-shadow: none;}
+.profile-overview,
+.profile-card__head--audit {
+    grid-template-columns: 1fr;
+    display: grid;}
 
   .profile-hero__status-grid,
   .profile-metrics {

@@ -67,8 +67,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 13px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
     margin-bottom: .95rem;
     padding-bottom: .85rem;
     border-bottom: 1px solid var(--border);
@@ -226,8 +225,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: 0;
 }
 
 .branch-card__tags {
@@ -278,8 +276,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .branch-metric strong {
@@ -315,8 +312,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .branch-detail strong {
@@ -486,8 +482,7 @@
     color: color-mix(in srgb, var(--success) 72%, var(--text));
     font-family: var(--font-sans);
     font-size: 11px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .transfer-header__status i,
@@ -557,8 +552,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 12px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .transfer-stop__meta {
@@ -709,8 +703,7 @@
     color: var(--text-dim);
     font-family: var(--font-sans);
     font-size: 11px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .transfer-line__index {
@@ -905,8 +898,7 @@
         color: var(--text-dim);
         font-family: var(--font-sans);
         font-size: 11px;
-        letter-spacing: .06em;
-        text-transform: uppercase;}
+        letter-spacing: 0;}
 
     .transfer-line__stock {
         align-self: end;

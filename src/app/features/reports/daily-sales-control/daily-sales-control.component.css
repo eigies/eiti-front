@@ -38,8 +38,7 @@
 
 .daily-metric span {
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .daily-metric strong {

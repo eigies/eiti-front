@@ -267,8 +267,7 @@ textarea.field__input {
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .detail-empty,
@@ -305,8 +304,7 @@ textarea.field__input {
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   font-weight: 400;
 }
 
@@ -587,8 +585,7 @@ textarea.field__input {
 .supplier-credit-hint__label {
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   color: var(--success);
 }
 

@@ -83,8 +83,7 @@
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 13px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .panel__header p {
@@ -173,8 +172,7 @@
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .advanced-filters__head p {
@@ -208,8 +206,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .control {
@@ -355,8 +352,7 @@
   background: color-mix(in srgb, var(--bg-panel) 96%, var(--bg));
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   text-align: left;
   white-space: nowrap;
 }

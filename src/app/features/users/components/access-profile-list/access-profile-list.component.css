@@ -190,8 +190,7 @@ button {
   background: color-mix(in srgb, var(--bg) 76%, var(--bg-panel));
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .profile-list__row {

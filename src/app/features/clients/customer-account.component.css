@@ -120,8 +120,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .summary-value {
@@ -158,8 +157,7 @@
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .field__input {
@@ -584,9 +582,8 @@
 
 .detalle-section__title {
   font-family: var(--font-sans);
-  text-transform: uppercase;
   font-size: 13px;
-  letter-spacing: .06em;
+  letter-spacing: 0;
   color: var(--text-dim);
   margin-bottom: .5rem;
 }
@@ -613,8 +610,7 @@
   font-weight: 500;
   color: var(--text-dim);
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing: 0;
   background: color-mix(in srgb, var(--bg) 74%, transparent);
 }
 

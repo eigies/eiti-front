@@ -491,8 +491,7 @@ button {
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .assistant-copy {
@@ -676,8 +675,7 @@ button {
   font-size: 12px;
   font-weight: 500;
   font-style: normal;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 /* Van DEBAJO de la respuesta: puntuar o copiar es algo que se decide despues de leerla,
@@ -913,8 +911,7 @@ button {
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .assistant-streaming > span {
@@ -1371,8 +1368,7 @@ button {
   color: var(--text-dim);
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .assistant-slip__figures dd {

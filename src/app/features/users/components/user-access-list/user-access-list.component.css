@@ -258,8 +258,7 @@ a:focus-visible {
   background: color-mix(in srgb, var(--bg) 76%, var(--bg-panel));
   font-family: var(--font-sans);
   font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .user-list__head > span:not(:first-child),
@@ -390,7 +389,6 @@ a:focus-visible {
   font-family: var(--font-sans);
   font-size: 11px;
   letter-spacing: .05em;
-  text-transform: uppercase;
 }
 
 .user-list__status::before {
