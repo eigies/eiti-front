@@ -150,7 +150,7 @@ export const routes: Routes = [
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.salesAccess },
         loadComponent: () =>
-            import('./features/sales/sales-full.component').then(m => m.SalesFullComponent)
+            import('./features/sales/guided/pages/guided-sale-page.component').then(m => m.GuidedSalePageComponent)
     },
     {
         path: 'sales-cc',

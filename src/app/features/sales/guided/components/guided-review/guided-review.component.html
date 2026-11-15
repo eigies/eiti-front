@@ -1,0 +1,31 @@
+<div class="gr">
+  <section class="gr__block">
+    <header><h3>Cliente</h3><button type="button" class="gr__edit" (click)="edit.emit('customer')">Cambiar</button></header>
+    <strong>{{ customerName }}</strong>
+    <span>{{ document }}</span>
+    <span>{{ email }}</span>
+  </section>
+  <section class="gr__block">
+    <header><h3>Domicilio</h3><button type="button" class="gr__edit" (click)="edit.emit('address')">Cambiar</button></header>
+    <strong>{{ addressLine }}</strong>
+    <span>{{ addressLocation }}</span>
+  </section>
+  <section class="gr__block">
+    <header><h3>Venta</h3><button type="button" class="gr__edit" (click)="edit.emit('sale')">Cambiar</button></header>
+    <strong><span class="ui-badge" [class.ui-badge--success]="paid" [class.ui-badge--warning]="!paid">{{ paid ? 'Pagada' : 'En espera' }}</span></strong>
+    <span>{{ branchName }} · {{ delivery }}</span>
+    <span>{{ itemCount }} {{ itemCount === 1 ? 'producto' : 'productos' }}</span>
+  </section>
+  <section class="gr__block">
+    <header><h3>Cobro</h3><button type="button" class="gr__edit" (click)="edit.emit('sale')">Cambiar</button></header>
+    <strong>{{ paymentPreview }}</strong>
+    <span><span class="ui-num">{{ paymentCoverage | currency:'ARS':'symbol-narrow':'1.2-2' }}</span> cobrados</span>
+    <span>{{ drawerName }}</span>
+  </section>
+  <section class="gr__block" *ngIf="requiresDelivery">
+    <header><h3>Envío</h3><button type="button" class="gr__edit" (click)="edit.emit('transport')">Cambiar</button></header>
+    <strong>{{ driverName }}</strong>
+    <span>{{ vehicleName }}</span>
+    <span>{{ transportNotes || 'Sin notas' }}</span>
+  </section>
+</div>

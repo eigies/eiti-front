@@ -3,24 +3,26 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { SalesFullComponent } from './sales-full.component';
-import { AuthService } from '../../core/services/auth.service';
-import { ProductService } from '../../core/services/product.service';
-import { SaleService } from '../../core/services/sale.service';
-import { CompanyService } from '../../core/services/company.service';
-import { CustomerService } from '../../core/services/customer.service';
-import { BranchService } from '../../core/services/branch.service';
-import { CashService } from '../../core/services/cash.service';
-import { StockService } from '../../core/services/stock.service';
-import { EmployeeService } from '../../core/services/employee.service';
-import { VehicleService } from '../../core/services/vehicle.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
-import { PermissionCodes } from '../../core/models/permission.models';
+import { GuidedSaleFacade } from '../data-access/guided-sale.facade';
+import { GuidedSalePageComponent } from './guided-sale-page.component';
+import { AuthService } from '../../../../core/services/auth.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { SaleService } from '../../../../core/services/sale.service';
+import { CompanyService } from '../../../../core/services/company.service';
+import { CustomerService } from '../../../../core/services/customer.service';
+import { BranchService } from '../../../../core/services/branch.service';
+import { CashService } from '../../../../core/services/cash.service';
+import { StockService } from '../../../../core/services/stock.service';
+import { EmployeeService } from '../../../../core/services/employee.service';
+import { VehicleService } from '../../../../core/services/vehicle.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { PendingTradeInService } from '../../../../shared/services/pending-trade-in.service';
+import { PermissionCodes } from '../../../../core/models/permission.models';
 import { of } from 'rxjs';
 
-describe('SalesFullComponent (price override)', () => {
-    let component: SalesFullComponent;
+describe('GuidedSalePage (price override)', () => {
+    // El estado y las reglas viven en la facade; la página solo conecta.
+  let component: GuidedSaleFacade;
     let authSpy: jasmine.SpyObj<AuthService>;
     let pendingTradeInSpy: jasmine.SpyObj<PendingTradeInService>;
 
@@ -49,7 +51,7 @@ describe('SalesFullComponent (price override)', () => {
         pendingTradeInSpy.confirmDiscard.and.resolveTo(true);
 
         TestBed.configureTestingModule({
-            imports: [SalesFullComponent, ReactiveFormsModule, RouterTestingModule],
+            imports: [GuidedSalePageComponent, ReactiveFormsModule, RouterTestingModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -68,8 +70,8 @@ describe('SalesFullComponent (price override)', () => {
             ]
         });
 
-        const fixture = TestBed.createComponent(SalesFullComponent);
-        component = fixture.componentInstance;
+        const fixture = TestBed.createComponent(GuidedSalePageComponent);
+        component = fixture.debugElement.injector.get(GuidedSaleFacade);
     });
 
     it('canOverridePrice should be true when user has permission', () => {

@@ -1,37 +1,34 @@
-import { Component, OnInit } from '@angular/core';
-import { extractApiError } from '../../shared/utils/api-error.util';
-import { CommonModule } from '@angular/common';
+import { Injectable } from '@angular/core';
+import { extractApiError } from '../../../../shared/utils/api-error.util';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
-import { CustomerService } from '../../core/services/customer.service';
-import { ProductService } from '../../core/services/product.service';
-import { BranchService } from '../../core/services/branch.service';
-import { CashService } from '../../core/services/cash.service';
-import { StockService } from '../../core/services/stock.service';
-import { SaleService } from '../../core/services/sale.service';
-import { CompanyService } from '../../core/services/company.service';
-import { EmployeeService } from '../../core/services/employee.service';
-import { VehicleService } from '../../core/services/vehicle.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { PendingTradeInService } from '../../shared/services/pending-trade-in.service';
-import { CustomerSearchItem } from '../../core/models/customer.models';
-import { ProductResponse, productPublicPrice } from '../../core/models/product.models';
-import { BranchResponse } from '../../core/models/branch.models';
-import { CashDrawerResponse } from '../../core/models/cash.models';
-import { DriverResponse } from '../../core/models/employee.models';
-import { VehicleResponse } from '../../core/models/vehicle.models';
-import { BranchProductStockResponse } from '../../core/models/stock.models';
-import { AuthService } from '../../core/services/auth.service';
-import { PermissionCodes } from '../../core/models/permission.models';
-import { SalePaymentInlineComponent } from '../../shared/components/sale-payment-inline/sale-payment-inline.component';
-import { BankService } from '../../core/services/bank.service';
-import { BankResponse } from '../../core/models/bank.models';
-import { SALE_SOURCE_CHANNELS, SaleSourceChannel } from '../../core/models/sale.models';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
-import { ProductPickerModalComponent } from '../../shared/components/product-picker-modal/product-picker-modal.component';
-import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../shared/components/product-picker-modal/product-picker-modal.models';
+import { CustomerService } from '../../../../core/services/customer.service';
+import { ProductService } from '../../../../core/services/product.service';
+import { BranchService } from '../../../../core/services/branch.service';
+import { CashService } from '../../../../core/services/cash.service';
+import { StockService } from '../../../../core/services/stock.service';
+import { SaleService } from '../../../../core/services/sale.service';
+import { CompanyService } from '../../../../core/services/company.service';
+import { EmployeeService } from '../../../../core/services/employee.service';
+import { VehicleService } from '../../../../core/services/vehicle.service';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { PendingTradeInService } from '../../../../shared/services/pending-trade-in.service';
+import { CustomerSearchItem } from '../../../../core/models/customer.models';
+import { ProductResponse, productPublicPrice } from '../../../../core/models/product.models';
+import { BranchResponse } from '../../../../core/models/branch.models';
+import { CashDrawerResponse } from '../../../../core/models/cash.models';
+import { DriverResponse } from '../../../../core/models/employee.models';
+import { VehicleResponse } from '../../../../core/models/vehicle.models';
+import { BranchProductStockResponse } from '../../../../core/models/stock.models';
+import { AuthService } from '../../../../core/services/auth.service';
+import { PermissionCodes } from '../../../../core/models/permission.models';
+import { BankService } from '../../../../core/services/bank.service';
+import { BankResponse } from '../../../../core/models/bank.models';
+import { SALE_SOURCE_CHANNELS, SaleSourceChannel } from '../../../../core/models/sale.models';
+import { SearchableSelectOption } from '../../../../shared/components/searchable-select/searchable-select.component';
+import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../../../shared/components/product-picker-modal/product-picker-modal.models';
 import {
   SalePaymentDraftState,
   createEmptySalePaymentDraftState,
@@ -44,16 +41,13 @@ import {
   paymentMethodSummary,
   roundMoney,
   salePaymentCoverage
-} from '../../core/models/sale-payment.models';
+} from '../../../../core/models/sale-payment.models';
 
-@Component({
-  selector: 'app-sales-full',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, SalePaymentInlineComponent, SearchableSelectComponent, ProductPickerModalComponent],
-  templateUrl: './sales-full.component.html',
-  styleUrls: ['./sales-full.component.css']
-})
-export class SalesFullComponent implements OnInit {
+/**
+ * Estado y reglas de la Venta guiada (/sales/full): pasos, cliente, domicilio, venta, envío y alta. Movido tal cual desde SalesFullComponent.
+ */
+@Injectable()
+export class GuidedSaleFacade {
   readonly permissionCodes = PermissionCodes;
   step = 1;
   saving = false;
@@ -85,7 +79,7 @@ export class SalesFullComponent implements OnInit {
 
   constructor(private readonly fb: FormBuilder, private readonly customerService: CustomerService, private readonly productService: ProductService, private readonly branchService: BranchService, private readonly cashService: CashService, private readonly stockService: StockService, private readonly saleService: SaleService, private readonly companyService: CompanyService, private readonly employeeService: EmployeeService, private readonly vehicleService: VehicleService, private readonly toast: ToastService, private readonly pendingTradeIn: PendingTradeInService, private readonly router: Router, private readonly bankService: BankService, public readonly auth: AuthService) { }
 
-  ngOnInit(): void {
+  init(): void {
     this.productService.listProducts().subscribe({ next: products => this.products = [...products].sort((left, right) => this.productLabel(left).localeCompare(this.productLabel(right))) });
     this.branchService.listBranches().subscribe({
       next: branches => {
@@ -492,4 +486,4 @@ export class SalesFullComponent implements OnInit {
   private productLabel(product: ProductResponse): string { return `${product.code} · ${product.brand} / ${product.name}`; }
 }
 
-interface DraftItem { product: ProductResponse; quantity: number; total: number; unitPriceOverride?: number; }
+export interface DraftItem { product: ProductResponse; quantity: number; total: number; unitPriceOverride?: number; }
