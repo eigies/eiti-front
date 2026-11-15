@@ -118,3 +118,6 @@ body:not(.theme-light) {
   --font-sans: Figtree, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 }
+/* Controles nativos (casillas, fechas, barras) con el esquema del tema. */
+:root, [data-theme="light"] { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }

@@ -1,0 +1,9 @@
+<ng-container [ngSwitch]="icon">
+  <svg *ngSwitchCase="'search'" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  <svg *ngSwitchCase="'list'" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+  <svg *ngSwitchCase="'clock'" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+  <svg *ngSwitchDefault viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>
+</ng-container>
+<strong *ngIf="heading">{{ heading }}</strong>
+<span *ngIf="text">{{ text }}</span>
+<ng-content></ng-content>

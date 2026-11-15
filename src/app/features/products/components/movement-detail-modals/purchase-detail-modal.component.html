@@ -1,0 +1,21 @@
+<ui-modal eyebrow="Detalle de compra" [heading]="purchase?.code || (loading ? 'Cargando compra...' : '—')" (closed)="closed.emit()">
+  <div class="mdm" *ngIf="!loading && purchase as p; else loadingTpl">
+    <div class="mdm__meta">
+      <div><span class="ui-stat__label">Fecha</span><strong>{{ p.createdAt | date:'dd/MM/yy HH:mm' }}</strong></div>
+      <div><span class="ui-stat__label">Proveedor</span><strong>{{ p.supplierName || 'Sin proveedor' }}</strong></div>
+      <div *ngIf="p.invoiceNumber"><span class="ui-stat__label">Factura</span><strong class="ui-num">{{ p.invoiceNumber }}</strong></div>
+    </div>
+    <div><span class="ui-badge" [class.ui-badge--success]="p.pendingAmount <= 0" [class.ui-badge--warning]="p.pendingAmount > 0">{{ p.statusName }}</span></div>
+    <ui-receipt>
+      <div class="mdm__line mdm__line--head"><span>Producto</span><span>Cant</span><span>Importe</span></div>
+      <div class="mdm__line" *ngFor="let d of p.details">
+        <span>{{ d.productName }}</span>
+        <span class="ui-num">{{ d.quantity }}</span>
+        <span class="ui-num">{{ d.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+      </div>
+      <div class="ui-receipt__total"><span>Total</span><span>{{ p.grandTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      <div class="ui-receipt__row" *ngIf="p.pendingAmount > 0"><span>Pendiente</span><span class="mdm__due">{{ p.pendingAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+    </ui-receipt>
+  </div>
+  <ng-template #loadingTpl><div class="mdm__loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div></ng-template>
+</ui-modal>

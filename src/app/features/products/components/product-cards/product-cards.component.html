@@ -1,0 +1,49 @@
+<div class="pc">
+  <article class="pc__card" *ngFor="let product of products; trackBy: trackById" [class.is-selected]="selectedIds.has(product.id)" (click)="cardClick.emit(product)">
+    <header class="pc__head">
+      <label class="pc__check" (click)="$event.stopPropagation()">
+        <input class="ui-check" type="checkbox" [attr.aria-label]="'Seleccionar ' + product.name" [checked]="selectedIds.has(product.id)" (change)="toggleProduct.emit({ product: product, checked: $any($event.target).checked })" />
+      </label>
+      <span class="ui-num pc__code">{{ product.code || 'Sin código' }}</span>
+      <span class="ui-badge" [class.ui-badge--success]="product.totalAvailableQuantity > 0" [class.ui-badge--warning]="product.totalOnHandQuantity > 0 && product.totalAvailableQuantity <= 0" [class.ui-badge--danger]="product.totalOnHandQuantity <= 0">
+        {{ product.totalAvailableQuantity > 0 ? 'Disponible' : product.totalOnHandQuantity > 0 ? 'Reservado' : 'Sin stock' }}
+      </span>
+    </header>
+
+    <div class="pc__identity">
+      <span class="pc__brand">{{ product.brand || 'Sin marca' }}</span>
+      <h3 class="pc__name">{{ product.name }}</h3>
+      <p class="pc__desc">{{ product.description || 'Sin descripción cargada.' }}</p>
+    </div>
+
+    <div class="pc__tags">
+      <span class="ui-badge">{{ product.categoryName || 'Sin categoría' }}</span>
+      <span class="ui-badge" [class.ui-badge--brand]="allowsManual(product)">{{ allowsManual(product) ? 'Valor en venta' : 'Producto común' }}</span>
+    </div>
+
+    <dl class="pc__metrics" [class.pc__metrics--cost]="canViewCostPrice">
+      <div>
+        <dt>Precio público</dt>
+        <dd class="ui-num">{{ allowsManual(product) ? 'En venta' : (price(product) | currency:'ARS':'symbol-narrow':'1.2-2') }}</dd>
+        <small *ngIf="costContext.branchId && price(product) !== visiblePrice(product)">Precio específico de sucursal</small>
+      </div>
+      <div>
+        <dt>Disponible</dt>
+        <dd class="ui-num" [class.pc__ok]="product.totalAvailableQuantity > 0">{{ product.totalAvailableQuantity }}</dd>
+      </div>
+      <div *ngIf="canViewCostPrice">
+        <dt>Costo</dt>
+        <dd class="ui-num">{{ cost(product) | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd>
+        <small *ngIf="costContext.branchId && cost(product) !== (product.costPrice ?? 0)">Override activo</small>
+      </div>
+    </dl>
+
+    <footer class="pc__foot">
+      <span>SKU <b class="ui-num">{{ product.sku || '—' }}</b></span>
+      <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button" (click)="open.emit(product); $event.stopPropagation()">
+        Ver detalle
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
+    </footer>
+  </article>
+</div>

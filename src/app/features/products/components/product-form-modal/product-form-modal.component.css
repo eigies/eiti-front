@@ -1,0 +1,19 @@
+.pfm { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--space-6); }
+.pfm__main { display: grid; gap: var(--space-5); }
+.pfm__section { display: grid; gap: var(--space-3); }
+.pfm__section + .pfm__section { padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.pfm__title { margin: 0; font: 600 16px/22px var(--font-sans); }
+.pfm__row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.pfm__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.pfm__grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pfm__narrow { max-width: 320px; }
+.pfm__ticket { align-self: start; gap: 10px; padding: 28px 20px 32px; }
+.pfm__ticket ::ng-deep .ui-ticket__figure { font-size: 36px; line-height: 40px; }
+.pfm__ticket-meta { display: grid; gap: 4px; color: var(--text-2); font: 500 14px/20px var(--font-sans); }
+.pfm__ticket-meta b { color: var(--text); font-weight: 600; }
+.pfm__ticket-meta .pfm__margin { color: var(--success); }
+.ui-input--code { font-family: var(--font-mono); }
+@media (max-width: 900px) {
+  .pfm { grid-template-columns: 1fr; }
+  .pfm__grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

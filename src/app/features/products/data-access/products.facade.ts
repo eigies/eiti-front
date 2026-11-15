@@ -1,105 +1,53 @@
-import { Component, DestroyRef, ElementRef, HostListener, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ProductService } from '../../core/services/product.service';
-import { ImportProductRowRequest, ImportProductsResponse, ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../core/models/product.models';
-import { ToastService } from '../../shared/services/toast.service';
-import { BranchService } from '../../core/services/branch.service';
-import { BranchResponse } from '../../core/models/branch.models';
-import { ProductCategoryService } from '../../core/services/product-category.service';
-import { ProductCategoryResponse } from '../../core/models/product-category.models';
-import { StockService } from '../../core/services/stock.service';
-import { BranchProductStockResponse, ImportBranchPricingResponse, ImportBranchPricingRowRequest, ProductReservationsResponse, StockMovementResponse, TransferDetailResponse } from '../../core/models/stock.models';
-import { SaleService } from '../../core/services/sale.service';
-import { SaleByIdResponse } from '../../core/models/sale.models';
-import { PurchaseService } from '../../core/services/purchase.service';
-import { PurchaseDetailResponse } from '../../core/models/purchase.models';
-import { OnboardingService } from '../../core/services/onboarding.service';
-import { OnboardingStatusResponse } from '../../core/models/onboarding.models';
-import { OnboardingBannerComponent } from '../../shared/components/onboarding-banner/onboarding-banner.component';
-import { AuthService } from '../../core/services/auth.service';
-import { PermissionCodes } from '../../core/models/permission.models';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { StockTransferPdfService } from '../../shared/services/stock-transfer-pdf.service';
-import { extractApiError } from '../../shared/utils/api-error.util';
-import { forkJoin, Subscription } from 'rxjs';
-import * as XLSX from 'xlsx';
-import * as ExcelJS from 'exceljs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { forkJoin, Subject, Subscription } from 'rxjs';
+import { ProductService } from '../../../core/services/product.service';
+import { ImportProductRowRequest, ImportProductsResponse, ProductResponse, productAllowsManualSaleValue, productPublicPrice } from '../../../core/models/product.models';
+import { ToastService } from '../../../shared/services/toast.service';
+import { BranchService } from '../../../core/services/branch.service';
+import { BranchResponse } from '../../../core/models/branch.models';
+import { ProductCategoryService } from '../../../core/services/product-category.service';
+import { ProductCategoryResponse } from '../../../core/models/product-category.models';
+import { StockService } from '../../../core/services/stock.service';
+import { BranchProductStockResponse, ImportBranchPricingResponse, ImportBranchPricingRowRequest, ProductReservationsResponse, StockMovementResponse, TransferDetailResponse } from '../../../core/models/stock.models';
+import { SaleService } from '../../../core/services/sale.service';
+import { SaleByIdResponse } from '../../../core/models/sale.models';
+import { PurchaseService } from '../../../core/services/purchase.service';
+import { PurchaseDetailResponse } from '../../../core/models/purchase.models';
+import { OnboardingService } from '../../../core/services/onboarding.service';
+import { OnboardingStatusResponse } from '../../../core/models/onboarding.models';
+import { AuthService } from '../../../core/services/auth.service';
+import { PermissionCodes } from '../../../core/models/permission.models';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { StockTransferPdfService } from '../../../shared/services/stock-transfer-pdf.service';
+import { extractApiError } from '../../../shared/utils/api-error.util';
+import { PricingImportRow, ProductImportRow, ProductImportService } from './product-import.service';
+import {
+  ProductRequest,
+  areBulkRequestsEqual,
+  buildProductForm,
+  calculateMarginPercent,
+  normalizeBulkRequest,
+  productFormValue,
+  syncPriceMode,
+  toProductRequest,
+  updatePriceValidators
+} from '../models/product-form';
+import { CostBranchContext, bulkFieldChanged, displayCost, displayPublicPrice, isClickableMovement } from '../models/product-view';
 
-type ProductsViewMode = 'list' | 'create' | 'detail';
-type ProductCatalogLayout = 'table' | 'cards';
-type ProductImportColumn =
-  | 'code'
-  | 'sku'
-  | 'brand'
-  | 'name'
-  | 'categoryName'
-  | 'description'
-  | 'publicPrice'
-  | 'costPrice'
-  | 'unitPrice'
-  | 'allowsManualValueInSale'
-  | 'noDeliverySurcharge'
-  | 'branchName'
-  | 'initialStock';
+export type ProductsViewMode = 'list' | 'create' | 'detail';
+export type ProductCatalogLayout = 'table' | 'cards';
 
-type ProductImportRow = Record<ProductImportColumn, string | number | boolean | null>;
+/**
+ * Estado y reglas de la pantalla de Productos (catálogo, alta y administrador).
+ * La lógica se movió tal cual desde ProductsComponent: mismas llamadas, validaciones y mensajes.
+ * El estado sigue en el servicio (sin NgRx); la página solo conecta.
+ */
+@Injectable()
+export class ProductsFacade implements OnDestroy {
 
-const PRODUCT_IMPORT_HEADERS: ProductImportColumn[] = [
-  'code',
-  'sku',
-  'brand',
-  'name',
-  'categoryName',
-  'description',
-  'publicPrice',
-  'costPrice',
-  'unitPrice',
-  'allowsManualValueInSale',
-  'noDeliverySurcharge',
-  'branchName',
-  'initialStock'
-];
-
-// Hoja de precios/costo por sucursal del template. Solo code/branchName/costOverride/salePriceOverride
-// se importan; name y los globales son informativos para guiar la edición.
-type PricingImportColumn =
-  | 'code'
-  | 'name'
-  | 'branchName'
-  | 'costOverride'
-  | 'salePriceOverride'
-  | 'costoGlobal'
-  | 'precioGlobal';
-
-type PricingImportRow = Record<PricingImportColumn, string | number | null>;
-
-const PRICING_SHEET_NAME = 'PreciosSucursal';
-
-const PRICING_IMPORT_HEADERS: PricingImportColumn[] = [
-  'code',
-  'name',
-  'branchName',
-  'costOverride',
-  'salePriceOverride',
-  'costoGlobal',
-  'precioGlobal'
-];
-
-@Component({
-  selector: 'app-products',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, OnboardingBannerComponent, SearchableSelectComponent],
-  templateUrl: './products.component.html',
-  styleUrls: ['./products.component.css']
-})
-export class ProductsComponent implements OnInit, OnDestroy {
-  @ViewChild('importFileInput') importFileInput?: ElementRef<HTMLInputElement>;
-
-  private readonly destroyRef = inject(DestroyRef);
   // Subscripciones de valueChanges de la edición masiva: se liberan al salir/re-entrar (evita leak amplificado).
   private bulkEditSubs = new Subscription();
 
@@ -109,7 +57,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   editForm: FormGroup;
   stockForm: FormGroup;
   bulkEditForms: Record<string, FormGroup> = {};
-  bulkEditSnapshots: Record<string, ReturnType<ProductsComponent['toProductRequest']>> = {};
+  bulkEditSnapshots: Record<string, ProductRequest> = {};
   modifiedBulkProductIds = new Set<string>();
   selectedBulkProductIds = new Set<string>();
   products: ProductResponse[] = [];
@@ -174,17 +122,17 @@ export class ProductsComponent implements OnInit, OnDestroy {
     private stockService: StockService,
     private toast: ToastService,
     private onboardingService: OnboardingService,
-    private route: ActivatedRoute,
     private router: Router,
     private saleService: SaleService,
     private purchaseService: PurchaseService,
     public auth: AuthService,
     private confirmation: ConfirmationService,
     private productCategoryService: ProductCategoryService,
-    private stockTransferPdf: StockTransferPdfService
+    private stockTransferPdf: StockTransferPdfService,
+    private importer: ProductImportService
   ) {
-    this.createForm = this.buildForm();
-    this.editForm = this.buildForm();
+    this.createForm = buildProductForm(this.fb);
+    this.editForm = buildProductForm(this.fb);
     this.stockForm = this.fb.group({
       type: [1, Validators.required],
       quantity: [1, Validators.required],
@@ -192,22 +140,39 @@ export class ProductsComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void {
+  /** La página resetea el input de archivo cuando la importación termina o falla. */
+  readonly importInputReset$ = new Subject<void>();
+
+  private filteredCache: { key: unknown[]; value: ProductResponse[] } | null = null;
+  private sortedCache: { key: unknown[]; value: ProductResponse[] } | null = null;
+
+  /** Arranque de la pantalla (antes en ngOnInit). */
+  init(): void {
     this.restoreCatalogLayout();
-    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      this.routeProductId = params.get('id') ?? '';
-      this.viewMode = this.router.url.endsWith('/new') ? 'create' : this.routeProductId ? 'detail' : 'list';
-      this.deleteConfirmOpen = false;
-      if (this.viewMode === 'detail') {
-        this.selectProductFromRoute();
-      } else {
-        this.selectedProduct = null;
-      }
-    });
     this.refreshOnboarding();
     this.loadBranches();
     this.loadProducts();
     this.loadCategories();
+  }
+
+  /** Lo que antes hacía la suscripción a paramMap del componente. */
+  applyRoute(productId: string, isNew: boolean): void {
+    this.routeProductId = productId;
+    this.viewMode = isNew ? 'create' : this.routeProductId ? 'detail' : 'list';
+    this.deleteConfirmOpen = false;
+    if (this.viewMode === 'detail') {
+      this.selectProductFromRoute();
+    } else {
+      this.selectedProduct = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.bulkEditSubs.unsubscribe();
+  }
+
+  get hasPendingChanges(): boolean {
+    return this.hasPendingBulkChanges();
   }
 
   private loadCategories(): void {
@@ -252,19 +217,23 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   // Costo a mostrar en la grilla: override de la sucursal en contexto si existe, si no el global.
   displayCost(product: ProductResponse): number {
-    if (this.costBranchId) {
-      return this.branchCostMap.get(product.id) ?? product.costPrice ?? 0;
-    }
-    return product.costPrice ?? 0;
+    return displayCost(product, this.costContext);
   }
 
   // Precio público a mostrar en la grilla: override de la sucursal en contexto si existe, si no el global.
   displayPublicPrice(product: ProductResponse): number {
-    if (this.costBranchId) {
-      return this.branchPriceMap.get(product.id) ?? this.visiblePrice(product);
-    }
-    return this.visiblePrice(product);
+    return displayPublicPrice(product, this.costContext);
   }
+
+  /** Contexto de sucursal para los bloques del catálogo. Se rearma solo cuando cambia. */
+  get costContext(): CostBranchContext {
+    if (!this.costContextCache || this.costContextCache.branchId !== this.costBranchId
+      || this.costContextCache.costs !== this.branchCostMap || this.costContextCache.prices !== this.branchPriceMap) {
+      this.costContextCache = { branchId: this.costBranchId, costs: this.branchCostMap, prices: this.branchPriceMap };
+    }
+    return this.costContextCache;
+  }
+  private costContextCache: CostBranchContext | null = null;
 
   // Default: la sucursal del usuario; quien puede ver todas arranca en "Global".
   private initCostBranchContext(): void {
@@ -421,47 +390,29 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return productAllowsManualSaleValue(product);
   }
 
-  publicPricePreview(form: FormGroup): number {
-    return Number(form.get('publicPrice')?.value ?? form.get('price')?.value ?? 0);
-  }
-
-  costPricePreview(form: FormGroup): number {
-    return Number(form.get('costPrice')?.value ?? 0);
-  }
-
-  marginPreview(form: FormGroup): number {
-    const publicPrice = this.publicPricePreview(form);
-    const costPrice = this.costPricePreview(form);
-    if (costPrice <= 0 || publicPrice < 0) {
-      return 0;
-    }
-
-    return ((publicPrice - costPrice) / costPrice) * 100;
-  }
-
   setCreatePriceMode(mode: 'public' | 'margin'): void {
     if (this.createForm.get('allowsManualSaleValue')?.value) {
       this.createPriceMode = 'public';
-      this.syncPriceMode(this.createForm, this.createPriceMode);
+      syncPriceMode(this.createForm, this.createPriceMode);
       return;
     }
     this.createPriceMode = this.canViewCostPrice ? mode : 'public';
-    this.syncPriceMode(this.createForm, this.createPriceMode);
+    syncPriceMode(this.createForm, this.createPriceMode);
   }
 
   setEditPriceMode(mode: 'public' | 'margin'): void {
     if (this.editForm.get('allowsManualSaleValue')?.value) {
       this.editPriceMode = 'public';
-      this.syncPriceMode(this.editForm, this.editPriceMode);
+      syncPriceMode(this.editForm, this.editPriceMode);
       return;
     }
     this.editPriceMode = this.canViewCostPrice ? mode : 'public';
-    this.syncPriceMode(this.editForm, this.editPriceMode);
+    syncPriceMode(this.editForm, this.editPriceMode);
   }
 
   toggleManualSaleValue(form: FormGroup, mode: 'public' | 'margin', checked: boolean, context: 'create' | 'edit' | 'bulk'): void {
     form.patchValue({ allowsManualSaleValue: checked }, { emitEvent: false });
-    this.updatePriceValidators(form);
+    updatePriceValidators(form);
 
     if (checked) {
       form.patchValue({ publicPrice: 0, price: 0, marginPercent: 0 }, { emitEvent: false });
@@ -476,22 +427,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
     } else {
       const fallbackPrice = Number(form.get('publicPrice')?.value ?? form.get('price')?.value ?? 0);
       form.patchValue({ publicPrice: fallbackPrice > 0 ? fallbackPrice : 0.01, price: fallbackPrice > 0 ? fallbackPrice : 0.01 }, { emitEvent: false });
-      this.syncPriceMode(form, mode);
+      syncPriceMode(form, mode);
     }
 
     form.get('publicPrice')?.markAsTouched();
     form.get('publicPrice')?.updateValueAndValidity({ emitEvent: false });
-  }
-
-  syncPriceFromMargin(form: FormGroup, mode: 'public' | 'margin'): void {
-    if (mode !== 'margin') {
-      return;
-    }
-
-    const costPrice = Number(form.get('costPrice')?.value ?? 0);
-    const marginPercent = Number(form.get('marginPercent')?.value ?? 0);
-    const publicPrice = costPrice > 0 ? costPrice * (1 + (marginPercent / 100)) : 0;
-    form.patchValue({ publicPrice, price: publicPrice }, { emitEvent: false });
   }
 
   create(): void {
@@ -507,11 +447,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
     }
 
     this.creating = true;
-    this.productService.createProduct(this.toProductRequest(this.createForm)).subscribe({
+    this.productService.createProduct(toProductRequest(this.createForm, this.canViewCostPrice)).subscribe({
       next: (product) => {
         this.createForm.reset({ code: '', sku: '', brand: '', name: '', description: '', publicPrice: 0, price: 0, costPrice: 0, unitPrice: null, marginPercent: 0, noDeliverySurcharge: null, category: null });
         this.createForm.patchValue({ allowsManualSaleValue: false }, { emitEvent: false });
-        this.updatePriceValidators(this.createForm);
+        updatePriceValidators(this.createForm);
         this.createPriceMode = 'public';
         this.toast.success(`Producto "${product.name}" creado correctamente`);
         this.creating = false;
@@ -525,13 +465,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
         this.creating = false;
       }
     });
-  }
-
-  async openEditor(product: ProductResponse): Promise<void> {
-    if (!(await this.canLeaveBulkEdit())) {
-      return;
-    }
-    this.router.navigate(['/products', product.id]);
   }
 
   async openDelete(product: ProductResponse): Promise<void> {
@@ -571,20 +504,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
     }
   }
 
-  async goToList(): Promise<void> {
-    if (!(await this.canLeaveBulkEdit())) {
-      return;
-    }
-    this.router.navigate(['/products']);
-  }
-
-  async goToCreate(): Promise<void> {
-    if (!(await this.canLeaveBulkEdit())) {
-      return;
-    }
-    this.router.navigate(['/products/new']);
-  }
-
   downloadImportTemplate(): void {
     const branchNames = this.branches.map(b => b.name);
     const categoryNames = this.productCategories.map(c => c.name);
@@ -617,7 +536,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
     // Grilla producto×sucursal para la hoja de precios. Si no hay sucursales no tiene sentido pedirla.
     if (this.branches.length === 0) {
-      this.buildAndDownloadTemplate(dataRows, branchNames, categoryNames, []);
+      this.importer.downloadTemplate(dataRows, branchNames, categoryNames, []);
       return;
     }
 
@@ -641,140 +560,14 @@ export class ProductsComponent implements OnInit, OnDestroy {
               precioGlobal: s.price ?? null
             }));
         });
-        this.buildAndDownloadTemplate(dataRows, branchNames, categoryNames, pricingRows);
+        this.importer.downloadTemplate(dataRows, branchNames, categoryNames, pricingRows);
       },
       error: () => {
         // Si falla la carga de la grilla, igual entregamos el template sin precarga de precios.
         this.toast.error('No se pudo precargar precios por sucursal; se descarga el template sin esa precarga.');
-        this.buildAndDownloadTemplate(dataRows, branchNames, categoryNames, []);
+        this.importer.downloadTemplate(dataRows, branchNames, categoryNames, []);
       }
     });
-  }
-
-  private buildAndDownloadTemplate(
-    dataRows: ProductImportRow[],
-    branchNames: string[],
-    categoryNames: string[],
-    pricingRows: PricingImportRow[]
-  ): void {
-    const wb = new ExcelJS.Workbook();
-
-    // Hidden helper sheet with branch names for the dropdown formula
-    const branchSheet = wb.addWorksheet('_Sucursales', { state: 'veryHidden' });
-    branchNames.forEach((name, i) => { branchSheet.getCell(i + 1, 1).value = name; });
-    const categorySheet = wb.addWorksheet('_Categorias', { state: 'veryHidden' });
-    categoryNames.forEach((name, i) => { categorySheet.getCell(i + 1, 1).value = name; });
-
-    const ws = wb.addWorksheet('Productos');
-
-    // Header row
-    ws.addRow(PRODUCT_IMPORT_HEADERS);
-    ws.getRow(1).font = { bold: true };
-    ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8E8E8' } };
-
-    // Column widths
-    const widths: Record<string, number> = {
-      code: 14, sku: 14, brand: 18, name: 28, categoryName: 22, description: 30,
-      publicPrice: 14, costPrice: 12, unitPrice: 12,
-      allowsManualValueInSale: 22, noDeliverySurcharge: 20,
-      branchName: 22, initialStock: 14
-    };
-    PRODUCT_IMPORT_HEADERS.forEach((h, i) => {
-      ws.getColumn(i + 1).width = widths[h] ?? 16;
-    });
-
-    // Data rows
-    dataRows.forEach(row => {
-      ws.addRow(PRODUCT_IMPORT_HEADERS.map(h => row[h]));
-    });
-
-    // Data validation: branchName column (col index = position of 'branchName' + 1)
-    const branchColIdx = PRODUCT_IMPORT_HEADERS.indexOf('branchName') + 1;
-    if (branchNames.length > 0) {
-      for (let r = 2; r <= dataRows.length + 1; r++) {
-        ws.getCell(r, branchColIdx).dataValidation = {
-          type: 'list',
-          allowBlank: true,
-          formulae: [`_Sucursales!$A$1:$A$${branchNames.length}`],
-          showErrorMessage: true,
-          errorTitle: 'Sucursal inválida',
-          error: 'Seleccioná una sucursal de la lista.'
-        };
-      }
-    }
-
-    const categoryColIdx = PRODUCT_IMPORT_HEADERS.indexOf('categoryName') + 1;
-    if (categoryNames.length > 0) {
-      for (let r = 2; r <= dataRows.length + 1; r++) {
-        ws.getCell(r, categoryColIdx).dataValidation = {
-          type: 'list',
-          allowBlank: true,
-          formulae: [`_Categorias!$A$1:$A$${categoryNames.length}`],
-          showErrorMessage: true,
-          errorTitle: 'Categoría inválida',
-          error: 'Seleccioná una categoría de la lista.'
-        };
-      }
-    }
-
-    // Hoja "PreciosSucursal": override de costo/precio de venta por sucursal.
-    const ps = wb.addWorksheet(PRICING_SHEET_NAME);
-    ps.addRow(PRICING_IMPORT_HEADERS);
-    ps.getRow(1).font = { bold: true };
-    ps.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8E8E8' } };
-
-    const pricingWidths: Record<string, number> = {
-      code: 14, name: 28, branchName: 22,
-      costOverride: 16, salePriceOverride: 18, costoGlobal: 14, precioGlobal: 14
-    };
-    PRICING_IMPORT_HEADERS.forEach((h, i) => {
-      ps.getColumn(i + 1).width = pricingWidths[h] ?? 16;
-    });
-
-    pricingRows.forEach(row => {
-      ps.addRow(PRICING_IMPORT_HEADERS.map(h => row[h]));
-    });
-
-    // Columnas globales informativas (no se importan): atenuadas para no confundir.
-    const globalCostIdx = PRICING_IMPORT_HEADERS.indexOf('costoGlobal') + 1;
-    const globalPriceIdx = PRICING_IMPORT_HEADERS.indexOf('precioGlobal') + 1;
-    for (let r = 2; r <= pricingRows.length + 1; r++) {
-      ps.getCell(r, globalCostIdx).font = { color: { argb: 'FF999999' } };
-      ps.getCell(r, globalPriceIdx).font = { color: { argb: 'FF999999' } };
-    }
-
-    // Dropdown de sucursal también en la hoja de precios.
-    const psBranchColIdx = PRICING_IMPORT_HEADERS.indexOf('branchName') + 1;
-    if (branchNames.length > 0) {
-      for (let r = 2; r <= pricingRows.length + 1; r++) {
-        ps.getCell(r, psBranchColIdx).dataValidation = {
-          type: 'list',
-          allowBlank: false,
-          formulae: [`_Sucursales!$A$1:$A$${branchNames.length}`],
-          showErrorMessage: true,
-          errorTitle: 'Sucursal inválida',
-          error: 'Seleccioná una sucursal de la lista.'
-        };
-      }
-    }
-
-    wb.xlsx.writeBuffer().then((buffer: ArrayBuffer) => {
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'template-productos.xlsx';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-  }
-
-  async openImportPicker(): Promise<void> {
-    if (this.importInProgress || !(await this.canLeaveBulkEdit())) {
-      return;
-    }
-
-    this.importFileInput?.nativeElement.click();
   }
 
   closeImportReport(): void {
@@ -805,11 +598,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
     reader.onload = () => {
       let parsed: { products: ImportProductRowRequest[]; pricing: ImportBranchPricingRowRequest[] };
       try {
-        parsed = this.parseWorkbook(reader.result);
+        parsed = this.importer.parseWorkbook(reader.result);
       } catch (error) {
         this.importInProgress = false;
         this.toast.error(error instanceof Error ? error.message : 'El archivo no tiene un formato valido.');
-        this.resetImportInput();
+        this.importInputReset$.next();
         return;
       }
       this.runImport(parsed.products, parsed.pricing);
@@ -818,7 +611,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     reader.onerror = () => {
       this.importInProgress = false;
       this.toast.error('No se pudo leer el archivo seleccionado.');
-      this.resetImportInput();
+      this.importInputReset$.next();
     };
 
     reader.readAsArrayBuffer(file);
@@ -828,7 +621,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   private runImport(products: ImportProductRowRequest[], pricing: ImportBranchPricingRowRequest[]): void {
     const finish = () => {
       this.importInProgress = false;
-      this.resetImportInput();
+      this.importInputReset$.next();
       this.currentPage = 1;
       this.loadProducts();
       const parts: string[] = [];
@@ -854,7 +647,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
         error: err => {
           this.importInProgress = false;
           this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudieron importar los precios por sucursal');
-          this.resetImportInput();
+          this.importInputReset$.next();
           if (this.importReport) {
             this.currentPage = 1;
             this.loadProducts();
@@ -876,16 +669,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
       error: err => {
         this.importInProgress = false;
         this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo importar el archivo');
-        this.resetImportInput();
+        this.importInputReset$.next();
       }
     });
-  }
-
-  async goToProduct(product: ProductResponse): Promise<void> {
-    if (this.bulkEditMode || !(await this.canLeaveBulkEdit())) {
-      return;
-    }
-    this.router.navigate(['/products', product.id]);
   }
 
   async setFilter(field: 'brand' | 'code' | 'sku' | 'product' | 'category', value: string): Promise<void> {
@@ -898,7 +684,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     if (field === 'product') this.filterProduct = value;
     if (field === 'category') this.filterCategory = value;
     this.currentPage = 1;
-    this.selectedBulkProductIds.clear();
+    this.selectedBulkProductIds = new Set<string>();
   }
 
   async clearFilters(): Promise<void> {
@@ -912,7 +698,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.filterCategory = '';
     this.filterNoCost = false;
     this.currentPage = 1;
-    this.selectedBulkProductIds.clear();
+    this.selectedBulkProductIds = new Set<string>();
   }
 
   changeStockBranch(branchId: string): void {
@@ -1019,7 +805,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     }
 
     this.updating = true;
-    this.productService.updateProduct(this.selectedProduct.id, this.toProductRequest(this.editForm)).subscribe({
+    this.productService.updateProduct(this.selectedProduct.id, toProductRequest(this.editForm, this.canViewCostPrice)).subscribe({
       next: (updated) => {
         this.products = this.products.map(product => product.id === updated.id ? updated : product);
         this.toast.success(`Producto "${updated.name}" actualizado`);
@@ -1106,11 +892,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.bulkEditSubs = new Subscription();
 
     for (const product of this.products.filter(product => this.selectedBulkProductIds.has(product.id))) {
-      const form = this.buildForm();
-      form.reset(this.bulkProductFormValue(product));
-      this.updatePriceValidators(form);
+      const form = buildProductForm(this.fb);
+      form.reset(productFormValue(product));
+      updatePriceValidators(form);
       this.bulkEditForms[product.id] = form;
-      this.bulkEditSnapshots[product.id] = this.toProductRequest(form);
+      this.bulkEditSnapshots[product.id] = toProductRequest(form, this.canViewCostPrice);
       this.bulkEditSubs.add(form.valueChanges.subscribe(() => this.refreshBulkProductState(product.id)));
     }
   }
@@ -1128,13 +914,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.bulkEditForms = {};
     this.bulkEditSnapshots = {};
     this.modifiedBulkProductIds = new Set<string>();
-    this.selectedBulkProductIds.clear();
+    this.selectedBulkProductIds = new Set<string>();
     this.bulkEditSubs.unsubscribe();
     this.bulkEditSubs = new Subscription();
-  }
-
-  ngOnDestroy(): void {
-    this.bulkEditSubs.unsubscribe();
   }
 
   saveBulkChanges(): void {
@@ -1161,7 +943,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
     this.bulkEditSaving = true;
     const requests = modifiedProducts.map(product =>
-      this.productService.updateProduct(product.id, this.toProductRequest(this.bulkEditForms[product.id]))
+      this.productService.updateProduct(product.id, toProductRequest(this.bulkEditForms[product.id], this.canViewCostPrice))
     );
 
     forkJoin(requests).subscribe({
@@ -1202,11 +984,13 @@ export class ProductsComponent implements OnInit, OnDestroy {
     }
 
     if (checked) {
-      this.selectedBulkProductIds.add(product.id);
+      this.selectedBulkProductIds = new Set(this.selectedBulkProductIds).add(product.id);
       return;
     }
 
-    this.selectedBulkProductIds.delete(product.id);
+    const next = new Set(this.selectedBulkProductIds);
+    next.delete(product.id);
+    this.selectedBulkProductIds = next;
   }
 
   get allFilteredSelected(): boolean {
@@ -1227,11 +1011,15 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
     const filtered = this.filteredProducts;
     if (checked) {
-      filtered.forEach(product => this.selectedBulkProductIds.add(product.id));
+      const next = new Set(this.selectedBulkProductIds);
+      filtered.forEach(product => next.add(product.id));
+      this.selectedBulkProductIds = next;
       return;
     }
 
-    filtered.forEach(product => this.selectedBulkProductIds.delete(product.id));
+    const next = new Set(this.selectedBulkProductIds);
+    filtered.forEach(product => next.delete(product.id));
+    this.selectedBulkProductIds = next;
   }
 
   isBulkFieldChanged(productId: string, field: string): boolean {
@@ -1245,15 +1033,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    const current = this.normalizeBulkRequest(this.toProductRequest(form)) as Record<string, unknown>;
-    const base = this.normalizeBulkRequest(snapshot) as Record<string, unknown>;
-    if (field === 'allowsManualSaleValue') {
-      return current['allowsManualSaleValue'] !== base['allowsManualSaleValue'];
-    }
-    if (field === 'category') {
-      return current['categoryId'] !== base['categoryId'];
-    }
-    return current[field] !== base[field];
+    return bulkFieldChanged(form, snapshot, field, this.canViewCostPrice);
   }
 
   isBulkFieldInvalid(productId: string, field: string): boolean {
@@ -1265,36 +1045,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return !!control && control.invalid && (control.dirty || control.touched);
   }
 
-  @HostListener('window:beforeunload', ['$event'])
-  handleBeforeUnload(event: BeforeUnloadEvent): void {
-    if (!this.hasPendingBulkChanges()) {
-      return;
-    }
-
-    event.preventDefault();
-    event.returnValue = true;
-  }
-
-  stockMovementLabel(type: number): string {
-    switch (type) {
-      case 1: return 'Ingreso manual';
-      case 2: return 'Ajuste manual';
-      case 3: return 'Reserva';
-      case 4: return 'Liberacion';
-      case 5: return 'Salida';
-      case 6: return 'Canje (ingreso)';
-      case 7: return 'Devolucion de venta';
-      case 8: return 'Ingreso por compra';
-      case 9: return 'Devolucion de compra';
-      case 10: return 'Transferencia (salida)';
-      case 11: return 'Transferencia (entrada)';
-      default: return 'Movimiento';
-    }
-  }
-
   isClickableMovement(movement: StockMovementResponse): boolean {
-    return !!movement.referenceId &&
-      (movement.referenceType === 'Sale' || movement.referenceType === 'Purchase' || movement.referenceType === 'Transfer');
+    return isClickableMovement(movement);
   }
 
   openMovement(movement: StockMovementResponse): void {
@@ -1382,6 +1134,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   get sortedProducts(): ProductResponse[] {
     const filtered = this.filteredProducts;
+    const key = [filtered, this.sortColumn, this.sortDir, this.currentPage, this.pageSize];
+    if (this.sortedCache && sameKey(this.sortedCache.key, key)) {
+      return this.sortedCache.value;
+    }
     const sorted = !this.sortColumn ? filtered : [...filtered].sort((a, b) => {
       const col = this.sortColumn as string;
       const dir = this.sortDir === 'desc' ? -1 : 1;
@@ -1400,10 +1156,21 @@ export class ProductsComponent implements OnInit, OnDestroy {
     }
 
     const start = (this.currentPage - 1) * this.pageSize;
-    return sorted.slice(start, start + this.pageSize);
+    const value = sorted.slice(start, start + this.pageSize);
+    this.sortedCache = { key: [filtered, this.sortColumn, this.sortDir, this.currentPage, this.pageSize], value };
+    return value;
   }
 
   get filteredProducts(): ProductResponse[] {
+    const key = [this.products, this.filterBrand, this.filterCode, this.filterSku, this.filterProduct, this.filterCategory, this.filterNoCost];
+    if (this.filteredCache && sameKey(this.filteredCache.key, key)) {
+      return this.filteredCache.value;
+    }
+    this.filteredCache = { key, value: this.computeFilteredProducts() };
+    return this.filteredCache.value;
+  }
+
+  private computeFilteredProducts(): ProductResponse[] {
     const brand = this.filterBrand.trim().toLowerCase();
     const code = this.filterCode.trim().toLowerCase();
     const sku = this.filterSku.trim().toLowerCase();
@@ -1484,12 +1251,12 @@ export class ProductsComponent implements OnInit, OnDestroy {
       price: product.publicPrice ?? product.price,
       costPrice: product.costPrice ?? 0,
       unitPrice: product.unitPrice ?? null,
-      marginPercent: this.calculateMarginPercent(product.publicPrice ?? product.price, product.costPrice ?? 0),
+      marginPercent: calculateMarginPercent(product.publicPrice ?? product.price, product.costPrice ?? 0),
       allowsManualSaleValue: productAllowsManualSaleValue(product),
       noDeliverySurcharge: product.noDeliverySurcharge ?? null,
       category: product.categoryId ?? null
     });
-    this.updatePriceValidators(this.editForm);
+    updatePriceValidators(this.editForm);
   }
 
   private selectProductFromRoute(): void {
@@ -1511,29 +1278,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
     }
   }
 
-  private bulkProductFormValue(product: ProductResponse) {
-    return {
-      code: product.code,
-      sku: product.sku,
-      brand: product.brand,
-      name: product.name,
-      description: product.description ?? '',
-      publicPrice: product.publicPrice ?? product.price,
-      price: product.publicPrice ?? product.price,
-      costPrice: product.costPrice ?? 0,
-      unitPrice: product.unitPrice ?? null,
-      marginPercent: this.calculateMarginPercent(product.publicPrice ?? product.price, product.costPrice ?? 0),
-      allowsManualSaleValue: productAllowsManualSaleValue(product),
-      noDeliverySurcharge: product.noDeliverySurcharge ?? null,
-      category: product.categoryId ?? null
-    };
-  }
-
   private hasPendingBulkChanges(): boolean {
     return this.bulkEditMode && this.modifiedBulkProductIds.size > 0;
   }
 
-  private async canLeaveBulkEdit(): Promise<boolean> {
+  async canLeaveBulkEdit(): Promise<boolean> {
     if (!this.bulkEditMode) {
       return true;
     }
@@ -1570,354 +1319,23 @@ export class ProductsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const current = this.normalizeBulkRequest(this.toProductRequest(form));
-    const base = this.normalizeBulkRequest(snapshot);
+    const current = normalizeBulkRequest(toProductRequest(form, this.canViewCostPrice));
+    const base = normalizeBulkRequest(snapshot);
 
-    if (this.areBulkRequestsEqual(current, base)) {
-      this.modifiedBulkProductIds.delete(productId);
-      return;
-    }
-
-    this.modifiedBulkProductIds.add(productId);
-  }
-
-  private normalizeBulkRequest(request: ReturnType<ProductsComponent['toProductRequest']>) {
-    return {
-      code: request.code.trim(),
-      sku: request.sku.trim(),
-      brand: request.brand.trim(),
-      name: request.name.trim(),
-      description: request.description ?? null,
-      publicPrice: Number(request.publicPrice ?? 0),
-      price: Number(request.price ?? 0),
-      costPrice: Number(request.costPrice ?? 0),
-      unitPrice: request.unitPrice == null ? null : Number(request.unitPrice),
-      allowsManualValueInSale: Boolean(request.allowsManualValueInSale),
-      noDeliverySurcharge: request.noDeliverySurcharge == null ? null : Number(request.noDeliverySurcharge),
-      categoryId: request.categoryId ?? null
-    };
-  }
-
-  private areBulkRequestsEqual(
-    left: ReturnType<ProductsComponent['toProductRequest']>,
-    right: ReturnType<ProductsComponent['toProductRequest']>
-  ): boolean {
-    return left.code === right.code
-      && left.sku === right.sku
-      && left.brand === right.brand
-      && left.name === right.name
-      && left.description === right.description
-      && left.publicPrice === right.publicPrice
-      && left.price === right.price
-      && left.costPrice === right.costPrice
-      && left.unitPrice === right.unitPrice
-      && left.allowsManualValueInSale === right.allowsManualValueInSale
-      && left.noDeliverySurcharge === right.noDeliverySurcharge
-      && left.categoryId === right.categoryId;
-  }
-
-  private parseWorkbook(source: string | ArrayBuffer | null): {
-    products: ImportProductRowRequest[];
-    pricing: ImportBranchPricingRowRequest[];
-  } {
-    if (!source) {
-      throw new Error('El archivo seleccionado esta vacio.');
-    }
-
-    const workbook = XLSX.read(source, { type: 'array' });
-    const products = this.parseProductsSheet(workbook);
-    const pricing = this.parsePricingSheet(workbook);
-
-    if (products.length === 0 && pricing.length === 0) {
-      throw new Error('El archivo no contiene filas para importar (ni productos ni precios por sucursal).');
-    }
-
-    return { products, pricing };
-  }
-
-  private parseProductsSheet(workbook: XLSX.WorkBook): ImportProductRowRequest[] {
-    const worksheet = workbook.Sheets['Productos'];
-    if (!worksheet) {
-      return [];
-    }
-
-    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
-      defval: null,
-      raw: false
-    });
-    if (rawRows.length === 0) {
-      return [];
-    }
-
-    const headerRows = XLSX.utils.sheet_to_json<(string | null)[]>(worksheet, {
-      header: 1,
-      blankrows: false,
-      defval: null
-    });
-    const normalizedHeaders = (headerRows[0] ?? []).map(header => String(header ?? '').trim());
-    const missingHeaders = PRODUCT_IMPORT_HEADERS.filter(
-      header => header !== 'categoryName' && !normalizedHeaders.includes(header)
-    );
-    if (missingHeaders.length > 0) {
-      throw new Error(`Faltan columnas obligatorias en la hoja Productos: ${missingHeaders.join(', ')}.`);
-    }
-
-    return rawRows.map((row, index) => this.mapImportRow(row, index + 2));
-  }
-
-  private parsePricingSheet(workbook: XLSX.WorkBook): ImportBranchPricingRowRequest[] {
-    const worksheet = workbook.Sheets[PRICING_SHEET_NAME];
-    if (!worksheet) {
-      return [];
-    }
-
-    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
-      defval: null,
-      raw: false
-    });
-    if (rawRows.length === 0) {
-      return [];
-    }
-
-    const headerRows = XLSX.utils.sheet_to_json<(string | null)[]>(worksheet, {
-      header: 1,
-      blankrows: false,
-      defval: null
-    });
-    const normalizedHeaders = (headerRows[0] ?? []).map(header => String(header ?? '').trim());
-    const missing = (['code', 'branchName'] as PricingImportColumn[]).filter(h => !normalizedHeaders.includes(h));
-    if (missing.length > 0) {
-      throw new Error(`Faltan columnas obligatorias en la hoja ${PRICING_SHEET_NAME}: ${missing.join(', ')}.`);
-    }
-
-    const result: ImportBranchPricingRowRequest[] = [];
-    rawRows.forEach((row, index) => {
-      const rowNumber = index + 2;
-      const costOverride = this.readPricingNumber(row, 'costOverride', rowNumber);
-      const salePriceOverride = this.readPricingNumber(row, 'salePriceOverride', rowNumber);
-
-      // Sin overrides => nada para actualizar; se omite (semántica "dejar como está").
-      if (costOverride == null && salePriceOverride == null) {
-        return;
+    if (areBulkRequestsEqual(current, base)) {
+      if (this.modifiedBulkProductIds.has(productId)) {
+        const next = new Set(this.modifiedBulkProductIds);
+        next.delete(productId);
+        this.modifiedBulkProductIds = next;
       }
-
-      const code = String(row['code'] ?? '').trim();
-      const branchName = String(row['branchName'] ?? '').trim();
-      if (!code) {
-        throw new Error(`Hoja ${PRICING_SHEET_NAME}, fila ${rowNumber}: code es obligatorio.`);
-      }
-      if (!branchName) {
-        throw new Error(`Hoja ${PRICING_SHEET_NAME}, fila ${rowNumber}: branchName es obligatorio.`);
-      }
-
-      result.push({ code, branchName, costOverride, salePriceOverride });
-    });
-
-    return result;
-  }
-
-  private readPricingNumber(row: Record<string, unknown>, key: PricingImportColumn, rowNumber: number): number | null {
-    const rawValue = row[key];
-    if (rawValue == null || String(rawValue).trim() === '') {
-      return null;
-    }
-
-    const normalizedValue = Number(String(rawValue).replace(',', '.'));
-    if (!Number.isFinite(normalizedValue)) {
-      throw new Error(`Hoja ${PRICING_SHEET_NAME}, fila ${rowNumber}: ${key} debe ser numérico.`);
-    }
-    if (normalizedValue < 0) {
-      throw new Error(`Hoja ${PRICING_SHEET_NAME}, fila ${rowNumber}: ${key} no puede ser negativo.`);
-    }
-
-    return normalizedValue;
-  }
-
-  private mapImportRow(row: Record<string, unknown>, rowNumber: number): ImportProductRowRequest {
-    const code = this.readRequiredImportText(row, 'code', rowNumber);
-    const sku = this.readRequiredImportText(row, 'sku', rowNumber);
-    const brand = this.readRequiredImportText(row, 'brand', rowNumber);
-    const name = this.readRequiredImportText(row, 'name', rowNumber);
-    const costPrice = this.readRequiredImportNumber(row, 'costPrice', rowNumber);
-    const allowsManualValueInSale = this.readRequiredImportBoolean(row, 'allowsManualValueInSale', rowNumber);
-    const publicPrice = this.readOptionalImportNumber(row, 'publicPrice', rowNumber);
-
-    if (!allowsManualValueInSale && publicPrice == null) {
-      throw new Error(`Fila ${rowNumber}: publicPrice es obligatorio cuando allowsManualValueInSale es false.`);
-    }
-
-    return {
-      code,
-      sku,
-      brand,
-      name,
-      categoryName: this.readOptionalImportText(row, 'categoryName'),
-      description: this.readOptionalImportText(row, 'description'),
-      publicPrice,
-      costPrice,
-      unitPrice: this.readOptionalImportNumber(row, 'unitPrice', rowNumber),
-      allowsManualValueInSale,
-      noDeliverySurcharge: this.readOptionalImportNumber(row, 'noDeliverySurcharge', rowNumber),
-      branchName: this.readOptionalImportText(row, 'branchName'),
-      initialStock: this.readOptionalImportNumber(row, 'initialStock', rowNumber)
-    };
-  }
-
-  private readRequiredImportText(row: Record<string, unknown>, key: ProductImportColumn, rowNumber: number): string {
-    const value = this.readOptionalImportText(row, key);
-    if (!value) {
-      throw new Error(`Fila ${rowNumber}: ${key} es obligatorio.`);
-    }
-
-    return value;
-  }
-
-  private readOptionalImportText(row: Record<string, unknown>, key: ProductImportColumn): string | null {
-    const value = row[key];
-    const normalized = String(value ?? '').trim();
-    return normalized.length > 0 ? normalized : null;
-  }
-
-  private readRequiredImportNumber(row: Record<string, unknown>, key: ProductImportColumn, rowNumber: number): number {
-    const value = this.readOptionalImportNumber(row, key, rowNumber);
-    if (value == null) {
-      throw new Error(`Fila ${rowNumber}: ${key} es obligatorio.`);
-    }
-
-    return value;
-  }
-
-  private readOptionalImportNumber(row: Record<string, unknown>, key: ProductImportColumn, rowNumber: number): number | null {
-    const rawValue = row[key];
-    if (rawValue == null || String(rawValue).trim() === '') {
-      return null;
-    }
-
-    const normalizedValue = Number(String(rawValue).replace(',', '.'));
-    if (!Number.isFinite(normalizedValue)) {
-      throw new Error(`Fila ${rowNumber}: ${key} debe ser numerico.`);
-    }
-
-    return normalizedValue;
-  }
-
-  private readRequiredImportBoolean(row: Record<string, unknown>, key: ProductImportColumn, rowNumber: number): boolean {
-    const rawValue = row[key];
-    if (typeof rawValue === 'boolean') {
-      return rawValue;
-    }
-
-    const normalizedValue = String(rawValue ?? '').trim().toLowerCase();
-    if (!normalizedValue) {
-      throw new Error(`Fila ${rowNumber}: ${key} es obligatorio.`);
-    }
-
-    if (['true', '1', 'si', 'sí', 'yes', 'y'].includes(normalizedValue)) {
-      return true;
-    }
-
-    if (['false', '0', 'no', 'n'].includes(normalizedValue)) {
-      return false;
-    }
-
-    throw new Error(`Fila ${rowNumber}: ${key} debe ser true o false.`);
-  }
-
-  private resetImportInput(): void {
-    if (this.importFileInput?.nativeElement) {
-      this.importFileInput.nativeElement.value = '';
-    }
-  }
-
-  private buildForm(): FormGroup {
-    const form = this.fb.group({
-      code: ['', [Validators.required, Validators.maxLength(50)]],
-      sku: ['', [Validators.required, Validators.maxLength(80)]],
-      brand: ['', [Validators.required, Validators.maxLength(100)]],
-      name: ['', [Validators.required, Validators.maxLength(150)]],
-      description: ['', [Validators.maxLength(1000)]],
-      publicPrice: [0, [Validators.required, Validators.min(0)]],
-      price: [0],
-      costPrice: [0, [Validators.required, Validators.min(0)]],
-      unitPrice: [null, [Validators.min(0)]],
-      marginPercent: [0],
-      allowsManualSaleValue: [false],
-      noDeliverySurcharge: [null, [Validators.min(0)]],
-      category: [null]
-    });
-
-    this.updatePriceValidators(form);
-    return form;
-  }
-
-  private syncPriceMode(form: FormGroup, mode: 'public' | 'margin'): void {
-    if (form.get('allowsManualSaleValue')?.value) {
-      form.patchValue({ publicPrice: 0, price: 0, marginPercent: 0 }, { emitEvent: false });
       return;
     }
 
-    if (mode === 'margin') {
-      form.patchValue({
-        marginPercent: this.calculateMarginPercent(
-          Number(form.get('publicPrice')?.value ?? form.get('price')?.value ?? 0),
-          Number(form.get('costPrice')?.value ?? 0)
-        )
-      }, { emitEvent: false });
-      this.syncPriceFromMargin(form, mode);
-      return;
+    if (!this.modifiedBulkProductIds.has(productId)) {
+      this.modifiedBulkProductIds = new Set(this.modifiedBulkProductIds).add(productId);
     }
-
-    const publicPrice = Number(form.get('publicPrice')?.value ?? form.get('price')?.value ?? 0);
-    form.patchValue({ publicPrice, price: publicPrice }, { emitEvent: false });
   }
 
-  private calculateMarginPercent(publicPrice: number, costPrice: number): number {
-    if (costPrice <= 0 || publicPrice < 0) {
-      return 0;
-    }
-
-    return ((publicPrice - costPrice) / costPrice) * 100;
-  }
-
-  private toProductRequest(form: FormGroup) {
-    const raw = form.getRawValue();
-    const allowsManualSaleValue = Boolean(raw.allowsManualSaleValue);
-    const publicPrice = allowsManualSaleValue ? 0 : Number(raw.publicPrice ?? raw.price ?? 0);
-
-    return {
-      code: String(raw.code || ''),
-      sku: String(raw.sku || ''),
-      brand: String(raw.brand || ''),
-      name: String(raw.name || ''),
-      description: raw.description?.trim() ? raw.description.trim() : null,
-      publicPrice,
-      price: publicPrice,
-      // Sin products.view_cost el costo que muestra la API viene enmascarado (null), asi que
-      // el formulario tiene un 0 que no representa nada: se manda null para que el back lo
-      // preserve. Mandar ese 0 fue lo que borro los costos de MOURA el 21/09/2026.
-      costPrice: this.canViewCostPrice ? Number(raw.costPrice ?? 0) : null,
-      unitPrice: raw.unitPrice === null || raw.unitPrice === '' ? null : Number(raw.unitPrice),
-      allowsManualValueInSale: allowsManualSaleValue,
-      noDeliverySurcharge: raw.noDeliverySurcharge === null || raw.noDeliverySurcharge === '' ? null : Number(raw.noDeliverySurcharge),
-      categoryId: raw.category ? String(raw.category) : null
-    };
-  }
-
-  private updatePriceValidators(form: FormGroup): void {
-    const allowsManualSaleValue = Boolean(form.get('allowsManualSaleValue')?.value);
-    const publicPriceControl = form.get('publicPrice');
-
-    if (!publicPriceControl) {
-      return;
-    }
-
-    publicPriceControl.setValidators([
-      Validators.required,
-      Validators.min(allowsManualSaleValue ? 0 : 0.01)
-    ]);
-
-    publicPriceControl.updateValueAndValidity({ emitEvent: false });
-  }
 
   private refreshOnboarding(force = false): void {
     this.onboardingService.fetchStatus(force).subscribe({
@@ -1943,4 +1361,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     if (this.showStockOnboarding) return 'Stock';
     return null;
   }
+}
+
+function sameKey(left: unknown[], right: unknown[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }

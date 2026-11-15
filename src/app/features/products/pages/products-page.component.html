@@ -1,0 +1,176 @@
+<main class="ui-page products" [class.page--guided-lock]="facade.isOnboardingFocusLocked" *ngIf="facade as f">
+  <app-onboarding-banner
+    *ngIf="f.showProductOnboarding"
+    [step]="4" [total]="5" [focused]="f.isOnboardingFocusLocked"
+    title="Paso 4. Crea tu primer producto"
+    text="Necesitas al menos un producto para registrar una venta. Lee este paso y presiona Entendido para habilitar el formulario."
+    [actionLabel]="f.isOnboardingFocusLocked ? 'Entendido' : ''"
+    (action)="f.acceptOnboardingStep()">
+  </app-onboarding-banner>
+  <app-onboarding-banner
+    *ngIf="f.showStockOnboarding"
+    [step]="5" [total]="5" [focused]="f.isOnboardingFocusLocked"
+    title="Paso 5. Carga stock inicial"
+    text="Con el producto creado, carga al menos una unidad de stock real desde Stock para dejar la venta operativa."
+    [actionLabel]="f.isOnboardingFocusLocked ? 'Entendido' : ''"
+    (action)="f.acceptOnboardingStep()">
+  </app-onboarding-banner>
+
+  <header class="ui-page-head">
+    <div>
+      <h1>{{ f.viewMode === 'detail' ? 'Administrador de productos' : 'Catálogo activo' }}</h1>
+      <p *ngIf="f.viewMode !== 'detail'">Catálogo operativo con vista de lista o tarjetas y edición masiva sobre productos seleccionados.</p>
+      <p *ngIf="f.viewMode === 'detail'">Desde esta pantalla podés ver datos, editar, ajustar stock y eliminar el producto.</p>
+    </div>
+    <div class="products__actions">
+      <button *ngIf="f.viewMode === 'detail'" uiBtn="secondary" type="button" (click)="goToList()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Volver al listado
+      </button>
+      <ng-container *ngIf="f.viewMode !== 'detail'">
+        <button *ngIf="f.canViewCostPrice" uiBtn="ghost" type="button" (click)="f.downloadImportTemplate()">Descargar template</button>
+        <button uiBtn="secondary" type="button" [disabled]="f.importInProgress" (click)="openImportPicker()">{{ f.importInProgress ? 'Importando...' : 'Importar Excel' }}</button>
+        <button uiBtn="primary" type="button" (click)="goToCreate()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo producto
+        </button>
+      </ng-container>
+    </div>
+  </header>
+
+  <input #importFileInput type="file" accept=".xlsx,.xls" hidden (change)="f.importProductsFromFile($event)" />
+
+  <ui-card *ngIf="f.viewMode !== 'detail'" class="products__catalog" heading="Catálogo" [count]="f.totalProducts > 0 ? f.totalProducts : null" [flush]="true">
+    <div uiCardActions class="ui-segmented" role="group" aria-label="Vista del catálogo">
+      <label><input type="radio" name="catalogLayout" [checked]="f.catalogLayout === 'table' || f.bulkEditMode" (change)="f.setCatalogLayout('table')" />
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/></svg>Lista</span></label>
+      <label><input type="radio" name="catalogLayout" [checked]="f.catalogLayout === 'cards' && !f.bulkEditMode" [disabled]="f.bulkEditMode" (change)="f.setCatalogLayout('cards')" />
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><rect x="14" y="14" width="6.5" height="6.5" rx="1"/></svg>Tarjetas</span></label>
+    </div>
+
+    <div class="products__tools">
+      <app-product-filters
+        [brand]="f.filterBrand" [code]="f.filterCode" [sku]="f.filterSku" [product]="f.filterProduct" [category]="f.filterCategory"
+        [brandOptions]="f.brandSelectOptions" [categoryOptions]="f.categorySelectOptions"
+        [noCostActive]="f.filterNoCost" [noCostCount]="f.noCostProductCount"
+        (filterChange)="f.setFilter($event.field, $event.value)" (clear)="f.clearFilters()" (toggleNoCost)="f.toggleNoCostFilter()">
+      </app-product-filters>
+
+      <div class="ui-banner ui-banner--warning products__alert" *ngIf="f.showCostPriceAlert" role="alert">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/></svg>
+        <div class="products__grow"><strong><span class="ui-num">{{ f.noCostProductCount }}</span> {{ f.noCostProductCount === 1 ? 'producto' : 'productos' }} sin precio de costo</strong>Completá los precios para calcular márgenes correctamente.</div>
+        <button uiBtn="secondary" size="sm" type="button" (click)="f.activateNoCostFilter()">Ver productos<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        <button uiBtn="ghost" size="sm" [iconOnly]="true" type="button" aria-label="Cerrar alerta" (click)="f.dismissCostPriceAlert()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+
+      <app-product-import-report *ngIf="f.importReport || f.importPricingReport" [report]="f.importReport" [pricing]="f.importPricingReport" (closed)="f.closeImportReport()"></app-product-import-report>
+
+      <ng-container *ngIf="!f.loading && f.totalProducts > 0">
+        <div class="ui-strip" *ngIf="f.canViewCostPrice && f.branches.length > 0">
+          <div class="ui-strip__copy"><strong>Costo y precio según sucursal</strong><span>Elegí el contexto que querés comparar en el catálogo.</span></div>
+          <select class="ui-select products__context" aria-label="Contexto de costo y precio" [ngModel]="f.costBranchId" (ngModelChange)="f.setCostBranch($event)">
+            <option *ngFor="let option of f.costBranchOptions" [ngValue]="option.value">{{ option.label }}</option>
+          </select>
+          <span class="products__status"><span class="products__dot" [class.products__dot--branch]="f.costBranchId" aria-hidden="true"></span>
+            <ng-container *ngIf="!f.costBranchId">Mostrando costo y precio global de la empresa</ng-container>
+            <ng-container *ngIf="f.costBranchId">Precio de <strong>{{ f.costBranchLabel }}</strong>; usa el global si no existe.</ng-container>
+          </span>
+        </div>
+
+        <div class="ui-strip ui-strip--outline" [class.ui-strip--active]="f.bulkEditMode">
+          <div class="ui-strip__copy">
+            <strong>{{ f.bulkEditMode ? 'Edición masiva activa' : 'Selección múltiple' }}</strong>
+            <span *ngIf="!f.bulkEditMode">{{ f.selectedBulkProductsCount }} {{ f.selectedBulkProductsCount === 1 ? 'producto seleccionado' : 'productos seleccionados' }}. Seleccioná desde cada producto y luego habilitá la edición.</span>
+            <span *ngIf="f.bulkEditMode">{{ f.modifiedProductsCount }} {{ f.modifiedProductsCount === 1 ? 'cambio' : 'cambios' }}<ng-container *ngIf="f.invalidBulkRowsCount > 0"> · {{ f.invalidBulkRowsCount }} con errores</ng-container></span>
+          </div>
+          <span class="products__strip-actions">
+            <ng-container *ngIf="!f.bulkEditMode">
+              <button *ngIf="f.catalogLayout === 'table'" uiBtn="ghost" size="sm" type="button" (click)="f.toggleCompactMode()">{{ f.compactMode ? 'Ver todas las columnas' : 'Compacto' }}</button>
+              <button uiBtn="secondary" size="sm" type="button" [disabled]="f.selectedBulkProductsCount === 0" (click)="f.enterBulkEditMode()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Editar seleccionados</button>
+            </ng-container>
+            <ng-container *ngIf="f.bulkEditMode">
+              <button uiBtn="ghost" size="sm" type="button" (click)="f.cancelBulkEdit()">Cancelar</button>
+              <button uiBtn="primary" size="sm" type="button" [disabled]="f.bulkEditSaving || f.modifiedProductsCount === 0 || f.invalidBulkRowsCount > 0" (click)="f.saveBulkChanges()">{{ f.bulkEditSaving ? 'Guardando...' : 'Confirmar cambios' }}</button>
+            </ng-container>
+          </span>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="products__state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="products__state" *ngIf="!f.loading && f.totalProducts === 0">
+      <ui-empty icon="search" heading="No hay productos para los filtros aplicados" text="Probá con otros filtros o cargá un producto nuevo."></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.totalProducts > 0">
+      <app-product-cards *ngIf="f.catalogLayout === 'cards' && !f.bulkEditMode"
+        [products]="f.sortedProducts" [selectedIds]="f.selectedBulkProductIds" [canViewCostPrice]="f.canViewCostPrice" [costContext]="f.costContext"
+        (toggleProduct)="f.toggleBulkProduct($event.product, $event.checked)" (cardClick)="goToProduct($event)" (open)="openEditor($event)">
+      </app-product-cards>
+
+      <app-product-table *ngIf="f.catalogLayout === 'table' || f.bulkEditMode"
+        [products]="f.sortedProducts" [fallbackForm]="f.editForm"
+        [bulkEditMode]="f.bulkEditMode" [bulkForms]="f.bulkEditForms" [bulkSnapshots]="f.bulkEditSnapshots"
+        [selectedIds]="f.selectedBulkProductIds" [modifiedIds]="f.modifiedBulkProductIds"
+        [allSelected]="f.allFilteredSelected" [someSelected]="f.someFilteredSelected" [selectAllDisabled]="f.bulkEditMode || f.filteredProducts.length === 0"
+        [showHiddenColumns]="f.showHiddenColumns" [canViewCostPrice]="f.canViewCostPrice" [costContext]="f.costContext"
+        [sortColumn]="f.sortColumn" [sortDir]="f.sortDir" [categoryOptions]="f.categorySelectOptions"
+        (sort)="f.setSort($event)" (toggleAll)="f.toggleSelectAllFiltered($event)"
+        (toggleProduct)="f.toggleBulkProduct($event.product, $event.checked)"
+        (rowClick)="goToProduct($event)" (open)="openEditor($event)"
+        (manualToggle)="f.toggleManualSaleValue(f.bulkForm($event.productId), 'public', $event.checked, 'bulk')">
+      </app-product-table>
+
+      <footer class="ui-pager">
+        <label class="ui-pager__size">Por página
+          <select class="ui-select" [ngModel]="f.pageSize" (ngModelChange)="setPageSize($event)">
+            <option *ngFor="let size of f.pageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select>
+        </label>
+        <span class="ui-pager__info"><span class="ui-num">{{ f.pageStart }}–{{ f.pageEnd }}</span> de <span class="ui-num">{{ f.totalProducts }}</span></span>
+        <span class="ui-pager__nav">
+          <button uiBtn="secondary" size="sm" type="button" [disabled]="f.currentPage <= 1" (click)="f.goToPage(f.currentPage - 1)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Anterior</button>
+          <span class="ui-num ui-pager__info">{{ f.currentPage }} / {{ f.totalPages }}</span>
+          <button uiBtn="secondary" size="sm" type="button" [disabled]="f.currentPage >= f.totalPages" (click)="f.goToPage(f.currentPage + 1)">Siguiente<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        </span>
+      </footer>
+    </ng-container>
+  </ui-card>
+
+  <ng-container *ngIf="f.viewMode === 'detail' && f.selectedProduct as product">
+    <app-product-detail-card [product]="product" (openReservations)="f.openReservations(undefined, 'Todas las sucursales')"></app-product-detail-card>
+
+    <app-product-edit-card
+      [form]="f.editForm" [priceMode]="f.editPriceMode" [canViewCostPrice]="f.canViewCostPrice" [categoryOptions]="f.categorySelectOptions" [saving]="f.updating"
+      (priceModeChange)="f.setEditPriceMode($event)" (manualSaleValueChange)="f.toggleManualSaleValue(f.editForm, f.editPriceMode, $event, 'edit')" (submitted)="f.update()">
+    </app-product-edit-card>
+
+    <app-product-stock-card
+      [branchOptions]="f.branchSelectOptions" [branchId]="f.selectedStockBranchId" [branchName]="f.selectedStockBranchName" [stock]="f.selectedBranchStock"
+      [canManageStock]="f.canManageStock" [canViewCostPrice]="f.canViewCostPrice"
+      [pricingPrice]="f.pricingPriceInput" [pricingCost]="f.pricingCostInput" [pricingSaving]="f.pricingSaving"
+      [stockForm]="f.stockForm" [movementOptions]="f.stockMovementOptions" [saving]="f.stockSaving" [loading]="f.stockLoading" [movements]="f.stockMovements"
+      (branchChange)="f.changeStockBranch($event)" (pricingPriceChange)="f.pricingPriceInput = $event" (pricingCostChange)="f.pricingCostInput = $event"
+      (savePricing)="f.saveBranchPricing()" (submitStock)="f.submitStock()" (openMovement)="f.openMovement($event)"
+      (openReservations)="f.openReservations(f.selectedStockBranchId, f.selectedStockBranchName)">
+    </app-product-stock-card>
+
+    <section class="ui-card products__danger">
+      <div><h2 class="ui-card__title">Eliminar producto</h2><p class="ui-card__sub">{{ f.canDeleteProduct ? 'Lo quita del catálogo.' : 'No tenés permiso para eliminar productos.' }}</p></div>
+      <button uiBtn="danger-ghost" type="button" [disabled]="!f.canDeleteProduct" (click)="f.deleteConfirmOpen = true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>Eliminar producto
+      </button>
+    </section>
+
+    <app-delete-product-modal *ngIf="f.deleteConfirmOpen" [product]="product" [deleting]="f.deleting" (confirmed)="f.remove()" (closed)="f.deleteConfirmOpen = false"></app-delete-product-modal>
+  </ng-container>
+
+  <app-product-form-modal *ngIf="f.viewMode === 'create'"
+    [form]="f.createForm" [priceMode]="f.createPriceMode" [canViewCostPrice]="f.canViewCostPrice" [categoryOptions]="f.categorySelectOptions" [saving]="f.creating"
+    (priceModeChange)="f.setCreatePriceMode($event)" (manualSaleValueChange)="f.toggleManualSaleValue(f.createForm, f.createPriceMode, $event, 'create')"
+    (submitted)="f.create()" (closed)="goToList()">
+  </app-product-form-modal>
+
+  <app-sale-detail-modal *ngIf="f.salePopupLoading || f.salePopupSale" [sale]="f.salePopupSale" [loading]="f.salePopupLoading" (closed)="f.closeSalePopup()"></app-sale-detail-modal>
+  <app-purchase-detail-modal *ngIf="f.purchasePopupLoading || f.purchasePopup" [purchase]="f.purchasePopup" [loading]="f.purchasePopupLoading" (closed)="f.closePurchasePopup()"></app-purchase-detail-modal>
+  <app-transfer-detail-modal *ngIf="f.transferPopupLoading || f.transferPopup" [transfer]="f.transferPopup" [loading]="f.transferPopupLoading" (closed)="f.closeTransferPopup()" (downloadPdf)="f.downloadTransferPdf($event)"></app-transfer-detail-modal>
+  <app-reservations-modal *ngIf="f.reservationsPopupLoading || f.reservationsPopup" [reservations]="f.reservationsPopup" [loading]="f.reservationsPopupLoading" [scope]="f.reservationsPopupScope" (closed)="f.closeReservations()" (openSale)="f.openSaleFromReservation($event)"></app-reservations-modal>
+</main>

@@ -239,3 +239,58 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
 .ui-page { display: grid; gap: var(--space-6); width: 100%; max-width: 1320px; margin: 0 auto; padding: 28px 32px 48px; box-sizing: border-box; }
 @media (max-width: 720px) { .ui-page { padding: 20px 16px 40px; gap: var(--space-5); } }
 .ui-table th.is-num { font-family: var(--font-sans); font-weight: 600; }
+
+/* ── Rótulo chico de sección (único lugar con mayúsculas) ── */
+.ui-eyebrow { display: block; font: 600 12px/16px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); }
+
+/* ── Cifras chicas (stock, reservado, disponible…) ── */
+.ui-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.ui-stat { display: grid; gap: 2px; align-content: start; padding: 12px 14px; border: 0; border-radius: 10px; background: var(--surface-sunken); color: var(--text); text-align: left; font: inherit; }
+.ui-stat__label { font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.ui-stat__value { font: 600 24px/30px var(--font-mono); font-variant-numeric: tabular-nums; }
+.ui-stat__hint { font: 600 12px/16px var(--font-sans); color: var(--brand-text); }
+.ui-stat--success { background: var(--success-soft); }
+.ui-stat--success .ui-stat__value { color: var(--success); }
+button.ui-stat { cursor: pointer; }
+button.ui-stat:hover { background: var(--surface-hover); }
+button.ui-stat:disabled { cursor: default; }
+button.ui-stat:disabled:hover { background: var(--surface-sunken); }
+
+/* ── Filas clave / valor ── */
+.ui-kv { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: var(--space-3); padding: 8px 0; border-bottom: 1px solid var(--border); }
+.ui-kv__key { font: 600 13px/22px var(--font-sans); color: var(--text-2); }
+.ui-kv__val { min-width: 0; overflow-wrap: anywhere; }
+
+/* ── Franja (contexto, selección) ── */
+.ui-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 16px; border-radius: 10px; background: var(--surface-sunken); }
+.ui-strip--outline { background: transparent; border: 1px solid var(--border); padding: 12px 16px; }
+.ui-strip--active { border-color: var(--brand); background: var(--brand-soft); }
+.ui-strip__copy { display: grid; min-width: 0; }
+.ui-strip__copy strong { font: 600 15px/22px var(--font-sans); }
+.ui-strip__copy span { font: 400 14px/20px var(--font-sans); color: var(--text-2); }
+
+/* ── Paginador ── */
+.ui-pager { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; padding: 12px 16px; border-top: 1px solid var(--border); }
+.ui-pager__size { display: flex; align-items: center; gap: var(--space-2); font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.ui-pager__size .ui-select { width: 90px; min-height: 40px; padding-top: 6px; padding-bottom: 6px; }
+.ui-pager__info { color: var(--text-2); font-size: 14px; }
+.ui-pager__nav { margin-left: auto; display: flex; gap: var(--space-2); align-items: center; }
+
+/* ── Indicador de stock: punto + número ── */
+.ui-stock { display: inline-flex; align-items: center; gap: 6px; font: 600 15px/22px var(--font-mono); font-variant-numeric: tabular-nums; }
+.ui-stock::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex: none; }
+.ui-stock--out { color: var(--danger); }
+.ui-stock--out::before { background: var(--danger); }
+.ui-stock--reserved::before { background: var(--warning); }
+
+/* ── Controles chicos ── */
+.ui-check { width: 20px; height: 20px; accent-color: var(--brand); cursor: pointer; }
+.ui-input--sm, .ui-select--sm { min-height: 36px; padding-top: 6px; padding-bottom: 6px; font-size: 15px; }
+.ui-table tr.is-clickable { cursor: pointer; }
+.ui-table tr.is-selected td { background: var(--brand-soft); }
+.ui-table__sort { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; white-space: nowrap; }
+.ui-table__sort span { color: var(--text-3); }
+.ui-table__sort.is-active span { color: var(--brand-text); }
+.ui-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ui-mov--lg { padding: 5px 12px 5px 10px; font-size: 14px; line-height: 20px; }
+.ui-page > * { min-width: 0; }

@@ -1,0 +1,100 @@
+<ui-table-wrap>
+  <table class="ui-table pt" [class.pt--bulk]="bulkEditMode">
+    <thead>
+      <tr>
+        <th class="pt__check">
+          <input class="ui-check" type="checkbox" aria-label="Seleccionar todo" [checked]="allSelected" [indeterminate]="someSelected" [disabled]="selectAllDisabled" (change)="toggleAll.emit($any($event.target).checked)" />
+        </th>
+        <th><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'code'" (click)="sort.emit('code')">Código <span aria-hidden="true">{{ sortMark('code') }}</span></button></th>
+        <th><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'sku'" (click)="sort.emit('sku')">SKU <span aria-hidden="true">{{ sortMark('sku') }}</span></button></th>
+        <th>Tipo</th>
+        <th><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'brand'" (click)="sort.emit('brand')">Marca <span aria-hidden="true">{{ sortMark('brand') }}</span></button></th>
+        <th><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'name'" (click)="sort.emit('name')">Producto <span aria-hidden="true">{{ sortMark('name') }}</span></button></th>
+        <th><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'categoryName'" (click)="sort.emit('categoryName')">Categoría <span aria-hidden="true">{{ sortMark('categoryName') }}</span></button></th>
+        <th *ngIf="showHiddenColumns"><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'description'" (click)="sort.emit('description')">Descripción <span aria-hidden="true">{{ sortMark('description') }}</span></button></th>
+        <th class="is-num"><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'publicPrice'" (click)="sort.emit('publicPrice')">Precio pub. <span aria-hidden="true">{{ sortMark('publicPrice') }}</span></button></th>
+        <th class="is-num" *ngIf="canViewCostPrice"><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'costPrice'" (click)="sort.emit('costPrice')">Costo <span aria-hidden="true">{{ sortMark('costPrice') }}</span></button></th>
+        <th class="is-num" *ngIf="showHiddenColumns"><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'unitPrice'" (click)="sort.emit('unitPrice')">Unitario <span aria-hidden="true">{{ sortMark('unitPrice') }}</span></button></th>
+        <th class="is-num"><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'totalOnHandQuantity'" (click)="sort.emit('totalOnHandQuantity')">Stock <span aria-hidden="true">{{ sortMark('totalOnHandQuantity') }}</span></button></th>
+        <th class="is-num" *ngIf="showHiddenColumns"><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'totalReservedQuantity'" (click)="sort.emit('totalReservedQuantity')">Reservado <span aria-hidden="true">{{ sortMark('totalReservedQuantity') }}</span></button></th>
+        <th class="is-num"><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'totalAvailableQuantity'" (click)="sort.emit('totalAvailableQuantity')">Disponible <span aria-hidden="true">{{ sortMark('totalAvailableQuantity') }}</span></button></th>
+        <th *ngIf="showHiddenColumns"><button class="ui-table__sort" type="button" [class.is-active]="sortColumn === 'updatedAt'" (click)="sort.emit('updatedAt')">Actualizado <span aria-hidden="true">{{ sortMark('updatedAt') }}</span></button></th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let product of products; trackBy: trackById"
+          [formGroup]="form(product.id)"
+          [class.is-clickable]="!bulkEditMode"
+          [class.is-selected]="selectedIds.has(product.id) && !bulkEditMode"
+          [class.pt__row--edit]="editable(product.id)"
+          [class.pt__row--changed]="modified(product.id)"
+          [class.pt__row--invalid]="editable(product.id) && form(product.id).invalid"
+          (click)="rowClick.emit(product)">
+        <td class="pt__check" (click)="$event.stopPropagation()">
+          <input class="ui-check" type="checkbox" [attr.aria-label]="'Seleccionar ' + product.name" [checked]="selectedIds.has(product.id)" [disabled]="bulkEditMode" (change)="toggleProduct.emit({ product: product, checked: $any($event.target).checked })" />
+        </td>
+        <td class="ui-num pt__code" [class.pt__cell--changed]="changed(product.id, 'code')" [class.pt__cell--invalid]="invalid(product.id, 'code')">
+          <input *ngIf="editable(product.id); else readCode" class="ui-input ui-input--sm pt__in" type="text" formControlName="code" aria-label="Código" (click)="$event.stopPropagation()" />
+          <ng-template #readCode>{{ product.code }}</ng-template>
+        </td>
+        <td class="ui-num pt__code pt__muted" [class.pt__cell--changed]="changed(product.id, 'sku')" [class.pt__cell--invalid]="invalid(product.id, 'sku')">
+          <input *ngIf="editable(product.id); else readSku" class="ui-input ui-input--sm pt__in" type="text" formControlName="sku" aria-label="SKU" (click)="$event.stopPropagation()" />
+          <ng-template #readSku>{{ product.sku || '—' }}</ng-template>
+        </td>
+        <td [class.pt__cell--changed]="changed(product.id, 'allowsManualSaleValue')">
+          <label *ngIf="editable(product.id); else readType" class="ui-switch pt__switch" (click)="$event.stopPropagation()">
+            <input type="checkbox" formControlName="allowsManualSaleValue" (change)="manualToggle.emit({ productId: product.id, checked: $any($event.target).checked })" />
+            <span class="ui-switch__track"></span>{{ form(product.id).get('allowsManualSaleValue')?.value ? 'Canje' : 'Común' }}
+          </label>
+          <ng-template #readType><span class="ui-badge" [class.ui-badge--brand]="allowsManual(product)">{{ allowsManual(product) ? 'Valor en venta' : 'Común' }}</span></ng-template>
+        </td>
+        <td class="pt__brand" [class.pt__cell--changed]="changed(product.id, 'brand')" [class.pt__cell--invalid]="invalid(product.id, 'brand')">
+          <input *ngIf="editable(product.id); else readBrand" class="ui-input ui-input--sm pt__in" type="text" formControlName="brand" aria-label="Marca" (click)="$event.stopPropagation()" />
+          <ng-template #readBrand>{{ product.brand }}</ng-template>
+        </td>
+        <td class="pt__name" [class.pt__cell--changed]="changed(product.id, 'name')" [class.pt__cell--invalid]="invalid(product.id, 'name')">
+          <input *ngIf="editable(product.id); else readName" class="ui-input ui-input--sm pt__in pt__in--wide" type="text" formControlName="name" aria-label="Producto" (click)="$event.stopPropagation()" />
+          <ng-template #readName><span class="ui-table__main">{{ product.name }}</span></ng-template>
+        </td>
+        <td class="pt__muted" [class.pt__cell--changed]="changed(product.id, 'category')">
+          <app-searchable-select *ngIf="editable(product.id); else readCategory" formControlName="category" [options]="categoryOptions" [allowClear]="true" clearLabel="Sin categoría" [clearValue]="null" placeholder="Sin categoría" searchPlaceholder="Buscar categoría..." [compact]="true" (click)="$event.stopPropagation()"></app-searchable-select>
+          <ng-template #readCategory>{{ product.categoryName || 'Sin categoría' }}</ng-template>
+        </td>
+        <td *ngIf="showHiddenColumns" class="pt__desc" [class.pt__cell--changed]="changed(product.id, 'description')" [class.pt__cell--invalid]="invalid(product.id, 'description')">
+          <textarea *ngIf="editable(product.id); else readDesc" class="ui-textarea pt__in pt__in--wide" rows="2" formControlName="description" aria-label="Descripción" (click)="$event.stopPropagation()"></textarea>
+          <ng-template #readDesc>{{ product.description || '—' }}</ng-template>
+        </td>
+        <td class="is-num" [class.pt__cell--changed]="changed(product.id, 'publicPrice')" [class.pt__cell--invalid]="invalid(product.id, 'publicPrice')">
+          <input *ngIf="editable(product.id); else readPub" class="ui-input ui-input--sm ui-input--num pt__in" type="number" min="0" step="0.01" formControlName="publicPrice" aria-label="Precio público" (click)="$event.stopPropagation()" />
+          <ng-template #readPub>
+            <span *ngIf="!allowsManual(product)">{{ price(product) | currency:'ARS':'symbol-narrow':'1.2-2' }}<span *ngIf="costContext.branchId && price(product) !== visiblePrice(product)" class="pt__ovr" [title]="'Precio de sucursal · global: ' + (visiblePrice(product) | currency:'ARS':'symbol-narrow':'1.2-2')">•</span></span>
+            <span *ngIf="allowsManual(product)" class="ui-badge ui-badge--brand">En venta</span>
+          </ng-template>
+        </td>
+        <td class="is-num" *ngIf="canViewCostPrice" [class.pt__cell--changed]="changed(product.id, 'costPrice')" [class.pt__cell--invalid]="invalid(product.id, 'costPrice')">
+          <input *ngIf="editable(product.id); else readCost" class="ui-input ui-input--sm ui-input--num pt__in" type="number" min="0" step="0.01" formControlName="costPrice" aria-label="Costo" (click)="$event.stopPropagation()" />
+          <ng-template #readCost>
+            <span *ngIf="cost(product) > 0; else noCost">{{ cost(product) | currency:'ARS':'symbol-narrow':'1.2-2' }}<span *ngIf="costContext.branchId && cost(product) !== (product.costPrice ?? 0)" class="pt__ovr" [title]="'Costo de sucursal · global: ' + ((product.costPrice ?? 0) | currency:'ARS':'symbol-narrow':'1.2-2')">•</span></span>
+            <ng-template #noCost><span class="ui-badge ui-badge--warning"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/></svg>Sin costo</span></ng-template>
+          </ng-template>
+        </td>
+        <td *ngIf="showHiddenColumns" class="is-num pt__muted" [class.pt__cell--changed]="changed(product.id, 'unitPrice')" [class.pt__cell--invalid]="invalid(product.id, 'unitPrice')">
+          <input *ngIf="editable(product.id); else readUnit" class="ui-input ui-input--sm ui-input--num pt__in" type="number" min="0" step="0.01" formControlName="unitPrice" aria-label="Precio unitario" (click)="$event.stopPropagation()" />
+          <ng-template #readUnit>{{ product.unitPrice == null ? '—' : (product.unitPrice | currency:'ARS':'symbol-narrow':'1.2-2') }}</ng-template>
+        </td>
+        <td class="is-num">{{ product.totalOnHandQuantity }}</td>
+        <td *ngIf="showHiddenColumns" class="is-num pt__muted">{{ product.totalReservedQuantity }}</td>
+        <td class="is-num">
+          <span class="ui-stock" [class.ui-stock--out]="product.totalAvailableQuantity <= 0">{{ product.totalAvailableQuantity <= 0 ? 'Sin stock' : product.totalAvailableQuantity }}</span>
+        </td>
+        <td *ngIf="showHiddenColumns" class="ui-num pt__muted pt__date">{{ (product.updatedAt || product.createdAt) | date:'dd/MM/yy' }}</td>
+        <td (click)="$event.stopPropagation()">
+          <button *ngIf="!bulkEditMode" uiBtn="ghost" size="sm" type="button" (click)="open.emit(product)">Abrir</button>
+          <span class="ui-badge ui-badge--brand" *ngIf="bulkEditMode && modified(product.id)">Modificado</span>
+          <span class="ui-badge ui-badge--danger" *ngIf="bulkEditMode && !modified(product.id) && form(product.id).invalid">Revisar</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</ui-table-wrap>

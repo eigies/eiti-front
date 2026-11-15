@@ -1,0 +1,24 @@
+<ui-modal eyebrow="Detalle de traspaso" [heading]="heading" (closed)="closed.emit()">
+  <div class="mdm" *ngIf="!loading && transfer as t; else loadingTpl">
+    <div class="mdm__meta">
+      <div><span class="ui-stat__label">Origen</span><strong>{{ t.fromBranchName || '—' }}</strong></div>
+      <div><span class="ui-stat__label">Destino</span><strong>{{ t.toBranchName || '—' }}</strong></div>
+      <div><span class="ui-stat__label">Fecha</span><strong>{{ t.date | date:'dd/MM/yy HH:mm' }}</strong></div>
+    </div>
+    <div><span class="ui-badge ui-badge--info">Stock transferido</span></div>
+    <div class="mdm__list">
+      <div class="mdm__list-row mdm__list-row--head"><span>Producto</span><span>Cant</span></div>
+      <div class="mdm__list-row" *ngFor="let it of t.items">
+        <span><span class="ui-num mdm__code">{{ it.code }}</span> {{ it.brand }} {{ it.name }}</span>
+        <span class="ui-num mdm__qty">{{ it.quantity }}</span>
+      </div>
+    </div>
+  </div>
+  <ng-template #loadingTpl><div class="mdm__loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div></ng-template>
+  <footer uiModalFoot class="ui-modal__foot" *ngIf="!loading && transfer as t">
+    <button uiBtn="secondary" type="button" (click)="downloadPdf.emit(t)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      Descargar PDF
+    </button>
+  </footer>
+</ui-modal>

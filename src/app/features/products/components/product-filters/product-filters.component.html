@@ -1,0 +1,15 @@
+<div class="pf">
+  <label class="ui-field"><span class="ui-field__label">Marca</span><app-searchable-select [ngModel]="brand" (ngModelChange)="set('brand', $event)" [options]="brandOptions" [allowClear]="true" clearLabel="Todas" clearValue="" placeholder="Todas" searchPlaceholder="Buscar marca..."></app-searchable-select></label>
+  <label class="ui-field"><span class="ui-field__label">Código</span><input class="ui-input" type="search" [ngModel]="code" (ngModelChange)="set('code', $event)" /></label>
+  <label class="ui-field"><span class="ui-field__label">SKU</span><input class="ui-input" type="search" [ngModel]="sku" (ngModelChange)="set('sku', $event)" /></label>
+  <label class="ui-field"><span class="ui-field__label">Producto</span><input class="ui-input" type="search" [ngModel]="product" (ngModelChange)="set('product', $event)" /></label>
+  <label class="ui-field"><span class="ui-field__label">Categoría</span><app-searchable-select [ngModel]="category" (ngModelChange)="set('category', $event)" [options]="categoryOptions" [allowClear]="true" clearLabel="Todas" clearValue="" placeholder="Todas" searchPlaceholder="Buscar categoría..."></app-searchable-select></label>
+  <button uiBtn="ghost" type="button" (click)="clear.emit()">Limpiar</button>
+</div>
+<div class="pf__active" *ngIf="noCostActive">
+  <span class="ui-field__label">Filtro activo</span>
+  <button class="pf__tag" type="button" (click)="toggleNoCost.emit()" aria-label="Quitar filtro sin precio de costo">
+    Sin precio de costo <span class="ui-count">{{ noCostCount }}</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+</div>

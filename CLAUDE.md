@@ -76,6 +76,24 @@ src/app/
 - **Páginas nuevas:** envolver en `<main class="ui-page">` y usar las piezas `ui-*` de `src/styles/ui.css`.
 - **No icon library** — icons are inline SVG with `stroke`-based paths (Lucide-style, 24×24 viewBox).
 
+## Arquitectura por feature (EITI 2)
+
+Cada pantalla rehecha sigue esta forma (Productos es la primera):
+
+```
+features/<feature>/
+├── data-access/<feature>.facade.ts   # estado (campos / BehaviorSubject) y reglas; habla con core/services
+├── data-access/*.service.ts          # exportaciones / importaciones (Excel, PDF) con el mismo código de armado
+├── pages/<feature>-page.component.*  # contenedor de la ruta: inyecta la facade, maneja rutas y eventos
+├── components/*                      # presentación: @Input/@Output + OnPush, sin servicios
+└── models/*                          # funciones puras de la vista (formularios, cálculos de presentación)
+```
+
+- La facade se provee en la página (`providers: [XFacade]`), así cada visita arranca con estado limpio.
+- La lógica se mueve tal cual (mismos nombres, llamadas, validaciones y mensajes); solo cambia de lugar.
+- Plantillas y estilos siempre en `.html` / `.css` aparte, nunca dentro del `.ts`.
+- `shared/ui/` tiene las piezas standalone: `ui-modal` (popup con entrada/salida y sacudida en confirmaciones irreversibles), `ui-card`, `ui-ticket`, `ui-receipt`, `ui-empty`, `ui-mov-pill`, `button[uiBtn]`, `ui-table-wrap`. Se importan desde `shared/ui`.
+
 ## Key Conventions
 
 - **Services** return `Observable<T>` (never Promises). Use `HttpClient` directly with `environment.apiUrl` as base.
