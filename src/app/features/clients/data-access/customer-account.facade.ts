@@ -1,19 +1,16 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Injectable } from '@angular/core';
 import { forkJoin } from 'rxjs';
-import { formatMoney } from '../../shared/utils/money.util';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { CustomerAccountService } from '../../core/services/customer-account.service';
-import { CreateCreditNoteRequest } from '../../core/models/credit-note.models';
-import { BankService } from '../../core/services/bank.service';
-import { BranchService } from '../../core/services/branch.service';
-import { SaleService } from '../../core/services/sale.service';
-import { AuthService } from '../../core/services/auth.service';
-import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
-import { PaymentReceiptPdfService, PaymentReceiptData } from '../../shared/services/payment-receipt-pdf.service';
-import { SALE_PAYMENT_METHODS } from '../../core/models/sale-payment.models';
-import { CustomerAccount, CustomerAccountMovement } from '../../core/models/customer-account.models';
+import { formatMoney } from '../../../shared/utils/money.util';
+import { CustomerAccountService } from '../../../core/services/customer-account.service';
+import { CreateCreditNoteRequest } from '../../../core/models/credit-note.models';
+import { BankService } from '../../../core/services/bank.service';
+import { BranchService } from '../../../core/services/branch.service';
+import { SaleService } from '../../../core/services/sale.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { RemitoPdfService } from '../../../shared/services/remito-pdf.service';
+import { PaymentReceiptPdfService, PaymentReceiptData } from '../../../shared/services/payment-receipt-pdf.service';
+import { SALE_PAYMENT_METHODS } from '../../../core/models/sale-payment.models';
+import { CustomerAccount, CustomerAccountMovement } from '../../../core/models/customer-account.models';
 import {
   AccountLedger,
   CUSTOMER_LEDGER_LABELS,
@@ -21,32 +18,25 @@ import {
   LedgerQuery,
   LedgerRow,
   PendingDocument
-} from '../../core/models/account-ledger.models';
-import { BankResponse } from '../../core/models/bank.models';
-import { cancelInvoicingNotice, CancelInvoicingNotice, CcCancelRefundMode, SaleByIdResponse, SaleFiscalDocumentKind } from '../../core/models/sale.models';
-import { PermissionCodes } from '../../core/models/permission.models';
-import { ToastService } from '../../shared/services/toast.service';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
-import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
-import { CcCancelRefundOptionsComponent } from '../../shared/components/cc-cancel-refund-options/cc-cancel-refund-options.component';
-import { creditNoteReceiverConfirmation, isInvoiceReceiverChanged } from '../../shared/utils/fiscal-receivers.util';
-import { hasActiveLinkedCreditNotes, linkedCreditNotesConfirmation } from '../../shared/utils/linked-credit-notes.util';
-import { canDownloadSaleCreditNote, canDownloadSaleDebitNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
-import { AccountLedgerComponent } from '../../shared/components/account-ledger/account-ledger.component';
-import { GroupedPaymentModalComponent } from '../../shared/components/grouped-payment-modal/grouped-payment-modal.component';
-import { meansDetail } from '../../shared/utils/ledger-format.util';
+} from '../../../core/models/account-ledger.models';
+import { BankResponse } from '../../../core/models/bank.models';
+import { cancelInvoicingNotice, CancelInvoicingNotice, CcCancelRefundMode, SaleByIdResponse, SaleFiscalDocumentKind } from '../../../core/models/sale.models';
+import { PermissionCodes } from '../../../core/models/permission.models';
+import { ToastService } from '../../../shared/services/toast.service';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { SaleFiscalPdfService } from '../../../shared/services/sale-fiscal-pdf.service';
+import { creditNoteReceiverConfirmation, isInvoiceReceiverChanged } from '../../../shared/utils/fiscal-receivers.util';
+import { hasActiveLinkedCreditNotes, linkedCreditNotesConfirmation } from '../../../shared/utils/linked-credit-notes.util';
+import { canDownloadSaleCreditNote, canDownloadSaleDebitNote, canDownloadSaleInvoice } from '../../../shared/utils/sale-fiscal-documents.util';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { meansDetail } from '../../../shared/utils/ledger-format.util';
 
-@Component({
-  selector: 'app-customer-account',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent, AccountLedgerComponent, GroupedPaymentModalComponent, SaleNotesComponent, CcCancelRefundOptionsComponent],
-  templateUrl: './customer-account.component.html',
-  styleUrls: ['./customer-account.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class CustomerAccountComponent implements OnInit {
+/**
+ * Estado y reglas de la cuenta corriente de un cliente. Movido tal cual desde CustomerAccountComponent:
+ * mismas llamadas, validaciones y mensajes. La página solo conecta.
+ */
+@Injectable()
+export class CustomerAccountFacade {
   readonly permissionCodes = PermissionCodes;
   customerId = '';
   account: CustomerAccount | null = null;
@@ -91,14 +81,14 @@ export class CustomerAccountComponent implements OnInit {
     private readonly paymentReceiptPdf: PaymentReceiptPdfService,
     readonly auth: AuthService,
     private readonly toast: ToastService,
-    private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly confirmation: ConfirmationService,
     private readonly saleFiscalPdf: SaleFiscalPdfService
   ) {}
 
-  ngOnInit(): void {
-    this.customerId = this.route.snapshot.paramMap.get('customerId') ?? '';
+  /** Arranque (antes ngOnInit): la página pasa el cliente de la ruta. */
+  init(customerId: string): void {
+    this.customerId = customerId;
     this.bankService.listBanks(true, 'all').subscribe({
       next: banks => { this.banks = banks; this.banksLoading = false; this.cdr.markForCheck(); },
       // No bloquea: el cobro funciona sin datos de banco (las opciones de banco quedan vacías).
@@ -462,7 +452,6 @@ export class CustomerAccountComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  @HostListener('document:keydown.escape')
   closeActiveModal(): void {
     if (this.cancelModalOpen) {
       this.closeCancelModal();

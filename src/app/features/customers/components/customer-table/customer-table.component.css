@@ -1,14 +1,6 @@
 .ct th:first-child, .ct td:first-child { padding-left: var(--space-5); }
 .ct th:last-child, .ct td:last-child { padding-right: var(--space-5); }
 .ct__client { display: flex; align-items: center; gap: var(--space-3); min-width: 240px; }
-.ct__avatar { display: inline-grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 50%; font: 700 16px/1 var(--font-sans); }
-.ct__avatar--teal { background: var(--mov-teal-soft); color: var(--mov-teal); }
-.ct__avatar--indigo { background: var(--mov-indigo-soft); color: var(--mov-indigo); }
-.ct__avatar--orange { background: var(--mov-orange-soft); color: var(--mov-orange); }
-.ct__avatar--purple { background: var(--mov-purple-soft); color: var(--mov-purple); }
-.ct__avatar--cyan { background: var(--mov-cyan-soft); color: var(--mov-cyan); }
-.ct__avatar--pink { background: var(--mov-pink-soft); color: var(--mov-pink); }
-.ct__avatar--lime { background: var(--mov-lime-soft); color: var(--mov-lime); }
 .ct__who { min-width: 0; }
 .ct__name { text-decoration: none; }
 .ct__name:hover { text-decoration: underline; }

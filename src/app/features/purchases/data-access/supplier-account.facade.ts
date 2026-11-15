@@ -1,18 +1,16 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { formatMoney } from '../../shared/utils/money.util';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ChangeDetectorRef, Injectable } from '@angular/core';
+import { formatMoney } from '../../../shared/utils/money.util';
+import { Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { SupplierAccountService } from '../../core/services/supplier-account.service';
-import { AuthService } from '../../core/services/auth.service';
-import { BankService } from '../../core/services/bank.service';
-import { BankResponse } from '../../core/models/bank.models';
-import { PermissionCodes } from '../../core/models/permission.models';
-import { CreateCreditNoteRequest } from '../../core/models/credit-note.models';
-import { PurchaseService } from '../../core/services/purchase.service';
-import { SupplierAccount, SupplierAccountMovement } from '../../core/models/supplier-account.models';
+import { SupplierAccountService } from '../../../core/services/supplier-account.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { BankService } from '../../../core/services/bank.service';
+import { BankResponse } from '../../../core/models/bank.models';
+import { PermissionCodes } from '../../../core/models/permission.models';
+import { CreateCreditNoteRequest } from '../../../core/models/credit-note.models';
+import { PurchaseService } from '../../../core/services/purchase.service';
+import { SupplierAccount, SupplierAccountMovement } from '../../../core/models/supplier-account.models';
 import {
   AccountLedger,
   GroupedPaymentSubmit,
@@ -20,25 +18,20 @@ import {
   LedgerRow,
   PendingDocument,
   SUPPLIER_LEDGER_LABELS
-} from '../../core/models/account-ledger.models';
-import { CarteraChequeOption } from '../../core/models/cheque.models';
-import { ToastService } from '../../shared/services/toast.service';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { SearchableSelectComponent, SearchableSelectOption } from '../../shared/components/searchable-select/searchable-select.component';
-import { AccountLedgerComponent } from '../../shared/components/account-ledger/account-ledger.component';
-import { GroupedPaymentModalComponent } from '../../shared/components/grouped-payment-modal/grouped-payment-modal.component';
-import { PaymentReceiptPdfService } from '../../shared/services/payment-receipt-pdf.service';
-import { meansDetail } from '../../shared/utils/ledger-format.util';
+} from '../../../core/models/account-ledger.models';
+import { CarteraChequeOption } from '../../../core/models/cheque.models';
+import { ToastService } from '../../../shared/services/toast.service';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { SearchableSelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { PaymentReceiptPdfService } from '../../../shared/services/payment-receipt-pdf.service';
+import { meansDetail } from '../../../shared/utils/ledger-format.util';
 
-@Component({
-  selector: 'app-supplier-account',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent, AccountLedgerComponent, GroupedPaymentModalComponent],
-  templateUrl: './supplier-account.component.html',
-  styleUrls: ['./purchase-detail.component.css', './supplier-account.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class SupplierAccountComponent implements OnInit {
+/**
+ * Estado y reglas de la cuenta corriente de un proveedor. Movido tal cual desde SupplierAccountComponent:
+ * mismas llamadas, validaciones y mensajes. La página solo conecta.
+ */
+@Injectable()
+export class SupplierAccountFacade {
   supplierId = '';
   account: SupplierAccount | null = null;
   loading = true;
@@ -67,15 +60,15 @@ export class SupplierAccountComponent implements OnInit {
     private readonly purchaseService: PurchaseService,
     private readonly paymentReceiptPdf: PaymentReceiptPdfService,
     private readonly toast: ToastService,
-    private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
     private readonly confirmation: ConfirmationService,
     private readonly bankService: BankService
   ) {}
 
-  ngOnInit(): void {
-    this.supplierId = this.route.snapshot.paramMap.get('supplierId') ?? '';
+  /** Arranque (antes ngOnInit): la página pasa el proveedor de la ruta. */
+  init(supplierId: string): void {
+    this.supplierId = supplierId;
     this.load();
   }
 

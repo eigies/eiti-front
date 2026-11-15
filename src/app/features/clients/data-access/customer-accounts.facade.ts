@@ -1,21 +1,12 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { formatMoney } from '../../shared/utils/money.util';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
-import { CustomerAccountService } from '../../core/services/customer-account.service';
-import { CustomerAccountListItem } from '../../core/models/customer-account.models';
-import { ToastService } from '../../shared/services/toast.service';
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { CustomerAccountService } from '../../../core/services/customer-account.service';
+import { CustomerAccountListItem } from '../../../core/models/customer-account.models';
+import { ToastService } from '../../../shared/services/toast.service';
 
-@Component({
-  selector: 'app-customer-accounts',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './customer-accounts.component.html',
-  styleUrls: ['./customer-accounts.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class CustomerAccountsComponent implements OnInit {
+/** Estado del listado de cuentas corrientes. Movido tal cual desde CustomerAccountsComponent. */
+@Injectable()
+export class CustomerAccountsFacade {
   accounts: CustomerAccountListItem[] = [];
   loading = true;
   search = '';
@@ -23,13 +14,8 @@ export class CustomerAccountsComponent implements OnInit {
   constructor(
     private readonly customerAccountService: CustomerAccountService,
     private readonly toast: ToastService,
-    private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
+    private readonly router: Router
   ) {}
-
-  ngOnInit(): void {
-    this.load();
-  }
 
   load(): void {
     this.loading = true;
@@ -37,12 +23,10 @@ export class CustomerAccountsComponent implements OnInit {
       next: accounts => {
         this.accounts = accounts;
         this.loading = false;
-        this.cdr.markForCheck();
       },
       error: () => {
         this.toast.error('No se pudieron cargar las cuentas de clientes');
         this.loading = false;
-        this.cdr.markForCheck();
       }
     });
   }
@@ -72,9 +56,5 @@ export class CustomerAccountsComponent implements OnInit {
 
   openAccount(customerId: string): void {
     this.router.navigate(['/clients-cc/customer', customerId]);
-  }
-
-  formatCurrency(value: number): string {
-    return formatMoney(value);
   }
 }

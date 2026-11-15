@@ -29,16 +29,3 @@ export function formatAddress(customer: CustomerResponse): string {
   const country = address.country || '';
   return [street, locality, postal, country].filter(Boolean).join(' - ');
 }
-
-const AVATAR_TONES = ['teal', 'indigo', 'orange', 'purple', 'cyan', 'pink', 'lime'] as const;
-export type AvatarTone = typeof AVATAR_TONES[number];
-
-/** Color estable de la inicial: siempre el mismo para el mismo cliente. */
-export function avatarTone(customer: CustomerResponse): AvatarTone {
-  const key = customer.id || customer.name || '';
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-  }
-  return AVATAR_TONES[hash % AVATAR_TONES.length];
-}

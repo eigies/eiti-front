@@ -380,3 +380,62 @@
   .pend-grid.tfoot .p-imp { grid-area: imp; text-align: left;}
   .pend-grid.tfoot .p-sal { grid-area: sal;}
 }
+
+/* ── EITI 2: mismos bloques con los tokens y piezas ui-* ─────────────────── */
+:host {
+  --lg-panel-2: var(--surface-sunken);
+  --lg-line: var(--border);
+  --lg-amber-text: var(--brand-text);
+  --lg-amber-soft: var(--brand-soft);
+  --lg-amber-soft-2: var(--brand-soft);
+  --lg-amber-line: var(--brand);
+  --lg-open: var(--brand-soft);
+  --lg-text-2: var(--text-2);
+  --lg-green-soft: var(--success-soft);
+  --lg-green-line: var(--success);
+  --lg-blue: var(--info);
+  --lg-blue-soft: var(--info-soft);
+  --lg-blue-line: var(--info);
+  --lg-red-soft: var(--danger-soft);
+  --lg-red-line: var(--danger);
+}
+.ledger { border-radius: var(--radius-lg); background: var(--surface); }
+.ledger-bar { background: var(--surface); }
+.tabs.ui-tabs { padding: 0; border: 0; border-radius: 0; background: none; gap: var(--space-1); }
+.tabs.ui-tabs .tab { min-height: var(--control-md); padding: 0 var(--space-4); border-radius: 0; background: none; font: 600 15px/22px var(--font-sans); box-shadow: none; }
+.tabs.ui-tabs .ui-count { margin-left: var(--space-2); }
+.label { color: var(--text-2); font: 600 13px/18px var(--font-sans); }
+.cl { color: var(--text-3); font-size: 12px; }
+.input { min-height: 40px; border: 1px solid var(--border-control); border-radius: var(--radius-md); background: var(--surface); color: var(--text); font: 400 15px/22px var(--font-sans); }
+.input:focus { border-color: var(--focus); box-shadow: 0 0 0 1px var(--focus); }
+.ledger-switch { min-height: 40px; font-size: 14px; }
+.selbar__summary { font-size: 14px; color: var(--text-2); }
+.selbar__summary strong { color: var(--text); font-family: var(--font-mono); font-weight: 600; }
+.state { color: var(--text-2); font-size: 15px; }
+.thead { background: var(--surface-sunken); color: var(--text-2); font: 600 13px/18px var(--font-sans); }
+.row { min-height: 64px; }
+.row--void .num, .row--void .comp__code { color: var(--text-3); }
+.num { font-family: var(--font-mono); font-size: 15px; font-weight: 500; }
+.saldo { font-weight: 700; }
+.saldo--muted { color: var(--text-3); }
+.total-saldo { color: var(--brand-text); font-size: 17px; }
+.date { font-family: var(--font-mono); font-size: 14px; color: var(--text-2); }
+.comp__code { font: 700 15px/22px var(--font-mono); }
+.comp__sub { color: var(--text-3); font-size: 13px; line-height: 18px; }
+.det { color: var(--text-2); font-size: 14px; }
+.iconbtn { border-radius: var(--radius-md); color: var(--text-2); }
+.iconbtn:hover { border-color: var(--border-control); color: var(--text); background: var(--surface-hover); }
+.iconbtn--on { border-color: var(--border-control); color: var(--text); background: var(--surface-sunken); }
+.detail { background: var(--brand-soft); }
+.sub { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.sub__empty { color: var(--text-3); font-size: 14px; }
+.subrow { font-size: 14px; }
+.s-det { color: var(--text-2); }
+.i-doc { color: var(--text-3); font-size: 13px; }
+.subtotal { border-top: 1px dashed var(--border-control); font: 700 15px/22px var(--font-sans); }
+.subtotal span:last-child { font-family: var(--font-mono); }
+.subactions .ui-btn { min-height: 36px; }
+.tfoot { border-top: 2px solid var(--border-control); background: var(--surface-sunken); font-weight: 700; }
+.tfoot .c-tl { color: var(--text); }
+.p-fac { color: var(--text-2); font-size: 14px; }
+.p-sal { color: var(--danger); }

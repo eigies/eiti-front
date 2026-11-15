@@ -1,15 +1,15 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AuthService } from '../../core/services/auth.service';
-import { BankService } from '../../core/services/bank.service';
-import { PurchaseService } from '../../core/services/purchase.service';
-import { SupplierAccountService } from '../../core/services/supplier-account.service';
-import { PaymentReceiptPdfService } from '../../shared/services/payment-receipt-pdf.service';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { SupplierAccountComponent } from './supplier-account.component';
-import { AccountLedger, LedgerRow } from '../../core/models/account-ledger.models';
+import { AuthService } from '../../../core/services/auth.service';
+import { BankService } from '../../../core/services/bank.service';
+import { PurchaseService } from '../../../core/services/purchase.service';
+import { SupplierAccountService } from '../../../core/services/supplier-account.service';
+import { PaymentReceiptPdfService } from '../../../shared/services/payment-receipt-pdf.service';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { SupplierAccountFacade } from './supplier-account.facade';
+import { AccountLedger, LedgerRow } from '../../../core/models/account-ledger.models';
 
 const EMPTY_LEDGER: AccountLedger = {
   accountId: 'sup-1', accountName: 'Proveedor SA', dateFrom: null, dateTo: null,
@@ -24,7 +24,7 @@ function row(partial: Partial<LedgerRow>): LedgerRow {
   };
 }
 
-describe('SupplierAccountComponent · notas de crédito', () => {
+describe('SupplierAccountFacade · notas de crédito', () => {
   function setup() {
     const accountService = jasmine.createSpyObj<SupplierAccountService>(
       'SupplierAccountService',
@@ -62,10 +62,10 @@ describe('SupplierAccountComponent · notas de crédito', () => {
     const cdr = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
     const route = { snapshot: { paramMap: { get: () => 'sup-1' } } } as unknown as ActivatedRoute;
 
-    const component = new SupplierAccountComponent(
-      accountService, auth, purchases, receipt, toast, route, router, cdr, confirmation, banks
+    const component = new SupplierAccountFacade(
+      accountService, auth, purchases, receipt, toast, router, cdr, confirmation, banks
     );
-    component.ngOnInit();
+    component.init(route.snapshot.paramMap.get('supplierId') ?? '');
 
     return { component, accountService, toast, confirmation, purchases };
   }
@@ -146,7 +146,7 @@ describe('SupplierAccountComponent · notas de crédito', () => {
   });
 });
 
-describe('SupplierAccountComponent · extracto y orden de pago', () => {
+describe('SupplierAccountFacade · extracto y orden de pago', () => {
   function setup() {
     const accountService = jasmine.createSpyObj<SupplierAccountService>(
       'SupplierAccountService',
@@ -181,10 +181,10 @@ describe('SupplierAccountComponent · extracto y orden de pago', () => {
     const cdr = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
     const route = { snapshot: { paramMap: { get: () => 'sup-1' } } } as unknown as ActivatedRoute;
 
-    const component = new SupplierAccountComponent(
-      accountService, auth, purchases, receipt, toast, route, router, cdr, confirmation, banks
+    const component = new SupplierAccountFacade(
+      accountService, auth, purchases, receipt, toast, router, cdr, confirmation, banks
     );
-    component.ngOnInit();
+    component.init(route.snapshot.paramMap.get('supplierId') ?? '');
     return { component, accountService, toast, confirmation, purchases, receipt, banks };
   }
 

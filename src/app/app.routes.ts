@@ -95,14 +95,14 @@ export const routes: Routes = [
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.salesAccess },
         loadComponent: () =>
-            import('./features/clients/customer-accounts.component').then(m => m.CustomerAccountsComponent)
+            import('./features/clients/pages/customer-accounts-page.component').then(m => m.CustomerAccountsPageComponent)
     },
     {
         path: 'clients-cc/customer/:customerId',
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.salesAccess },
         loadComponent: () =>
-            import('./features/clients/customer-account.component').then(m => m.CustomerAccountComponent)
+            import('./features/clients/pages/customer-account-page.component').then(m => m.CustomerAccountPageComponent)
     },
     {
         path: 'cash',
@@ -341,7 +341,7 @@ export const routes: Routes = [
         canActivate: [authGuard, permissionGuard],
         data: { permission: PermissionCodes.purchasesAccess },
         loadComponent: () =>
-            import('./features/purchases/supplier-account.component').then(m => m.SupplierAccountComponent)
+            import('./features/purchases/pages/supplier-account-page.component').then(m => m.SupplierAccountPageComponent)
     },
     {
         path: 'purchases/:id',

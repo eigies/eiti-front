@@ -1,0 +1,7 @@
+.account__state { display: grid; gap: var(--space-3); }
+.account__back { display: inline-flex; align-items: center; gap: 4px; font: 600 14px/20px var(--font-sans); color: var(--brand-text); text-decoration: none; }
+.account__back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.account__head { margin-top: var(--space-2); }
+.account__who { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.account__meta { display: flex; gap: var(--space-4); flex-wrap: wrap; margin-top: 2px; font-size: 15px; color: var(--text-2); }
+.account__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }

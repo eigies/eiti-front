@@ -7,7 +7,7 @@
       <tr *ngFor="let c of customers; trackBy: trackById">
         <td>
           <div class="ct__client">
-            <span class="ct__avatar" [ngClass]="'ct__avatar--' + tone(c)" aria-hidden="true">{{ initial(c) }}</span>
+            <ui-avatar [name]="initial(c)" [key]="c.id"></ui-avatar>
             <div class="ct__who">
               <a class="ui-table__main ct__name" [routerLink]="['/customers', c.id]">{{ c.fullName || c.name }}</a>
               <span class="ct__contact"><span [class.ct__none]="!c.email">{{ c.email || 'Sin email' }}</span> · <span [class.ct__none]="!c.phone">{{ c.phone || 'Sin teléfono' }}</span></span>

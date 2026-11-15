@@ -1,20 +1,20 @@
-import { SaleByIdResponse, SaleFiscalReceiversResponse, SaleInvoicingStatus } from '../../core/models/sale.models';
-import { PermissionCodes } from '../../core/models/permission.models';
+import { SaleByIdResponse, SaleFiscalReceiversResponse, SaleInvoicingStatus } from '../../../core/models/sale.models';
+import { PermissionCodes } from '../../../core/models/permission.models';
 import { ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AuthService } from '../../core/services/auth.service';
-import { BankService } from '../../core/services/bank.service';
-import { BranchService } from '../../core/services/branch.service';
-import { CustomerAccountService } from '../../core/services/customer-account.service';
-import { SaleService } from '../../core/services/sale.service';
-import { PaymentReceiptPdfService } from '../../shared/services/payment-receipt-pdf.service';
-import { RemitoPdfService } from '../../shared/services/remito-pdf.service';
-import { ConfirmationService } from '../../shared/services/confirmation.service';
-import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
-import { ToastService } from '../../shared/services/toast.service';
-import { CustomerAccountComponent } from './customer-account.component';
-import { AccountLedger, LedgerRow } from '../../core/models/account-ledger.models';
+import { AuthService } from '../../../core/services/auth.service';
+import { BankService } from '../../../core/services/bank.service';
+import { BranchService } from '../../../core/services/branch.service';
+import { CustomerAccountService } from '../../../core/services/customer-account.service';
+import { SaleService } from '../../../core/services/sale.service';
+import { PaymentReceiptPdfService } from '../../../shared/services/payment-receipt-pdf.service';
+import { RemitoPdfService } from '../../../shared/services/remito-pdf.service';
+import { ConfirmationService } from '../../../shared/services/confirmation.service';
+import { SaleFiscalPdfService } from '../../../shared/services/sale-fiscal-pdf.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { CustomerAccountFacade } from './customer-account.facade';
+import { AccountLedger, LedgerRow } from '../../../core/models/account-ledger.models';
 
 const EMPTY_LEDGER: AccountLedger = {
   accountId: 'cust-1', accountName: 'Juan Perez', dateFrom: null, dateTo: null,
@@ -29,7 +29,7 @@ function row(partial: Partial<LedgerRow>): LedgerRow {
   };
 }
 
-describe('CustomerAccountComponent · notas de crédito', () => {
+describe('CustomerAccountFacade · notas de crédito', () => {
   function setup() {
     const accountService = jasmine.createSpyObj<CustomerAccountService>(
       'CustomerAccountService',
@@ -77,11 +77,11 @@ describe('CustomerAccountComponent · notas de crédito', () => {
     const route = { snapshot: { paramMap: { get: () => 'cust-1' } } } as unknown as ActivatedRoute;
     const fiscalPdf = jasmine.createSpyObj<SaleFiscalPdfService>('SaleFiscalPdfService', ['download']);
 
-    const component = new CustomerAccountComponent(
+    const component = new CustomerAccountFacade(
       accountService, banks, branches, sales, remito, receipt,
-      auth, toast, route, cdr, confirmation, fiscalPdf
+      auth, toast, cdr, confirmation, fiscalPdf
     );
-    component.ngOnInit();
+    component.init(route.snapshot.paramMap.get('customerId') ?? '');
 
     return { component, accountService, toast, confirmation, auth, banks, sales, fiscalPdf };
   }
@@ -323,7 +323,7 @@ describe('CustomerAccountComponent · notas de crédito', () => {
       return { id: 'sale-1', details: [], invoicingStatus, debitNoteStatus } as unknown as SaleByIdResponse;
     }
 
-    function offered(component: CustomerAccountComponent): boolean[] {
+    function offered(component: CustomerAccountFacade): boolean[] {
       return [component.canDownloadDetalleInvoice, component.canDownloadDetalleCreditNote, component.canDownloadDetalleDebitNote];
     }
 

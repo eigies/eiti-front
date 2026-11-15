@@ -6,3 +6,4 @@ export * from './mov-pill/ui-mov-pill.component';
 export * from './receipt/ui-receipt.component';
 export * from './table/ui-table.component';
 export * from './ticket/ui-ticket.component';
+export * from './avatar/ui-avatar.component';
