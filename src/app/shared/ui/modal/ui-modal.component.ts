@@ -17,6 +17,8 @@ export type UiModalSize = 'sm' | 'md' | 'lg';
 export type UiModalTone = 'default' | 'danger';
 
 let nextModalId = 0;
+/** Popups abiertos (para saber cuál está arriba al apretar Escape). */
+const openModals: UiModalComponent[] = [];
 
 /**
  * Popup EITI 2: fondo que se oscurece y ventana que sube (entra 180 ms, sale 120 ms).
@@ -54,9 +56,13 @@ export class UiModalComponent implements AfterViewInit, OnDestroy {
 
   private previouslyFocused: HTMLElement | null = null;
 
-  constructor(private readonly cdr: ChangeDetectorRef) {}
+  constructor(
+    private readonly cdr: ChangeDetectorRef,
+    private readonly host: ElementRef<HTMLElement>
+  ) {}
 
   ngAfterViewInit(): void {
+    openModals.push(this);
     this.previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setTimeout(() => {
       const root = this.dialog.nativeElement;
@@ -68,11 +74,17 @@ export class UiModalComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    const index = openModals.indexOf(this);
+    if (index >= 0) {
+      openModals.splice(index, 1);
+    }
     this.previouslyFocused?.focus?.();
   }
 
   onBackdrop(): void {
-    if (this.irreversible) {
+    // Si ahora no se puede cerrar (está guardando), sacude igual que una confirmación irreversible: cerrar acá
+    // dejaba la ventana en "saliendo" mientras el padre la mantenía abierta, invisible y tapando la pantalla.
+    if (this.irreversible || !this.closable) {
       this.shaking = false;
       this.cdr.markForCheck();
       requestAnimationFrame(() => {
@@ -95,8 +107,19 @@ export class UiModalComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    if (this.closable) {
+    // Con un popup abierto sobre otro (cambiar caja sobre editar venta), Escape cierra solo el de arriba.
+    if (this.closable && this.isTopmost()) {
       this.close();
     }
+  }
+
+  /**
+   * Todos los popups usan el mismo z-index, así que se pinta arriba el que va después en el DOM. El orden en que
+   * se abrieron no sirve: un popup dentro de un *ngIf puede inicializarse antes que otro que ya estaba.
+   */
+  private isTopmost(): boolean {
+    const element = this.host.nativeElement;
+    return openModals.every(other =>
+      other === this || !(element.compareDocumentPosition(other.host.nativeElement) & Node.DOCUMENT_POSITION_FOLLOWING));
   }
 }
