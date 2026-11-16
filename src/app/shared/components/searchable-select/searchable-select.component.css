@@ -55,6 +55,9 @@
   right: 0;
   z-index: 40;
   display: grid;
+  /* Sin esto la columna toma el ancho de la opción más larga (las etiquetas son nowrap): las filas quedaban más
+     anchas que el panel, con scroll horizontal, y el recorte con "…" de .search-select__label no actuaba. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   max-height: min(22rem, calc(100vh - 10rem));
   overflow-y: auto;
