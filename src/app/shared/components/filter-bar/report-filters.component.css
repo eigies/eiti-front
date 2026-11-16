@@ -3,6 +3,11 @@
 .rep-filters__main { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 .rep-filters__main ::ng-deep > .ui-field { flex: 0 1 170px; min-width: 140px; }
 .rep-filters__main ::ng-deep > .ui-field.rep-field--grow { flex: 1 1 220px; }
+/* Todos los controles de la fila miden --control-md, como los selectores y los botones. Con la fecha en 48 px
+   y la búsqueda en 46, align-items:flex-end dejaba cada etiqueta a una altura distinta. */
+.rep-filters__main ::ng-deep > .ui-field .ui-input { height: var(--control-md); min-height: var(--control-md); padding-top: 0; padding-bottom: 0; }
+/* El input de fecha nativo no se achica por debajo de su contenido: sin esto pinta encima del campo vecino. */
+.rep-filters__main ::ng-deep > .ui-field input[type="date"] { min-width: 0; }
 .rep-filters__spacer { flex: 1 1 0; }
 .rep-filters__actions { display: flex; gap: 8px; }
 .rep-filters__count { background: var(--brand); color: var(--on-brand); }

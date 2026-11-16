@@ -3503,9 +3503,6 @@ button.pos-chip, .pos-chip .ch-sel__trigger { cursor: pointer; }
 .sale-edit__total { display: grid; margin-right: auto; }
 .sale-edit__total span { font-size: 13px; color: var(--text-3); }
 .sale-edit__total strong { font: 600 20px/26px var(--font-mono); color: var(--text); }
-.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--search { flex: 1 1 180px; min-width: 170px; }
-.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--date { flex: 0 1 152px; min-width: 140px; }
-.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--status { flex: 0 1 150px; min-width: 130px; }
 .sales-list .sales-stack .sale-card[aria-expanded="true"] {
     margin: 0;
     border: 0;
@@ -3516,9 +3513,10 @@ button.pos-chip, .pos-chip .ch-sel__trigger { cursor: pointer; }
 .sales-list .sale-card__details thead th { text-transform: none; letter-spacing: 0; font: 600 13px/18px var(--font-sans); color: var(--text-2); }
 .sales-list .sale-card__details td:nth-child(n+2), .sales-list .sale-card__details th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
 .sales-list .invoicing-bar { border-top-color: var(--border); }
-.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--date { flex: 0 1 146px; min-width: 132px; }
-.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--status { flex: 0 1 140px; min-width: 120px; }
 .sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--search { flex: 1 1 170px; min-width: 150px; }
+/* 168 px es lo que ocupa el input de fecha nativo (dd/mm/aaaa + calendario): con menos se pisaba con el campo de al lado. */
+.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--date { flex: 0 0 168px; }
+.sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--status { flex: 0 1 140px; min-width: 120px; }
 .sales-list .sale-card__actions { justify-self: end; }
 .sales-list .sale-card__actions { padding-left: 8px; }
 .sale-edit .control,
