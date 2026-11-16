@@ -242,7 +242,7 @@ export class SalesPageComponent implements OnInit {
     readonly transportStatusOptions: SearchableSelectOption[] = [
         { value: 'pending', label: 'Pendiente' },
         { value: '1', label: 'Asignado' },
-        { value: '2', label: 'En transito' },
+        { value: '2', label: 'En tránsito' },
         { value: '3', label: 'Entregado' },
         { value: '4', label: 'Cancelado' }
     ];
@@ -1365,7 +1365,7 @@ private cancelSale(
             this.cancelingSaleId = null;
             this.cancelSaleModal = null;
             this.fiscalReceiversBySaleId.delete(sale.id);
-            this.toast.success('Venta cancelada');
+            this.toast.success('Venta anulada');
             this.loadSales();
         },
         error: async err => {
@@ -1373,7 +1373,7 @@ private cancelSale(
             if (!cancelLinkedCreditNotes && hasActiveLinkedCreditNotes(err)) {
                 this.cancelSaleModal = null;
                 const confirmed = await this.confirmation.confirm(
-                    linkedCreditNotesConfirmation(err, 'Cancelar la venta y sus notas de crédito'));
+                    linkedCreditNotesConfirmation(err, 'Anular la venta y sus notas de crédito'));
                 if (confirmed) this.cancelSale(sale, refundMode, confirmInvoiceReceiver, true);
                 return;
             }
@@ -1389,7 +1389,7 @@ private cancelSale(
                 this.loadCancelSaleCcPaid(sale);
                 return;
             }
-            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cancelar la venta');
+            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo anular la venta');
         }
     });
 }
@@ -1494,7 +1494,7 @@ this.saleService.deleteTransport(this.transportingSale.id).subscribe({
     next: () => {
         this.currentTransport = null;
         this.transportForm.reset({ driverEmployeeId: '', vehicleId: '', notes: '' });
-        this.toast.success('Transporte desvinculado');
+        this.toast.success('Transporte quitado');
         this.loadSales();
     },
     error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo quitar el transporte')
@@ -1725,7 +1725,7 @@ transportStatusLabel(status ?: number | null, fallback ?: string | null): string
         case 1:
             return 'Asignado';
         case 2:
-            return 'En transito';
+            return 'En tránsito';
         case 3:
             return 'Entregado';
         case 4:

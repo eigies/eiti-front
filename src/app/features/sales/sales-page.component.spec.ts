@@ -450,7 +450,7 @@ describe('SalesPageComponent (price override)', () => {
             await new Promise(resolve => setTimeout(resolve));
 
             expect(confirm.calls.first().args[0].message).toBe(detail);
-            expect(confirm.calls.first().args[0].confirmLabel).toBe('Cancelar la venta y sus notas de crédito');
+            expect(confirm.calls.first().args[0].confirmLabel).toBe('Anular la venta y sus notas de crédito');
             expect((saleSpy as any).cancelSale.calls.allArgs()).toEqual([
                 ['sale-1', undefined, false, false],
                 ['sale-1', undefined, false, true],
@@ -506,9 +506,9 @@ describe('SalesPageComponent (price override)', () => {
             debitNote: null
         };
         const confirmButton = (): HTMLButtonElement =>
-            fixture.nativeElement.querySelector('.modal-panel__card--confirm .btn--danger-solid');
+            fixture.nativeElement.querySelector('.ui-modal--danger .ui-modal__foot .ui-btn--danger');
         const refundOptions = (): HTMLInputElement[] =>
-            Array.from(fixture.nativeElement.querySelectorAll('.modal-panel__card--confirm app-cc-cancel-refund-options input[type="radio"]'));
+            Array.from(fixture.nativeElement.querySelectorAll('.ui-modal--danger app-cc-cancel-refund-options input[type="radio"]'));
 
         it('consulta lo cobrado al abrir y no deja confirmar mientras tanto', () => {
             const pending = new Subject<SaleByIdResponse>();

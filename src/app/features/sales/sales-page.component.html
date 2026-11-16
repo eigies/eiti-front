@@ -767,100 +767,67 @@
   (cancel)="closeCreateProductModal()">
 </app-product-picker-modal>
 
-<div class="modal-backdrop" *ngIf="transportingSale" (click)="closeTransport()"></div>
-<section class="modal-panel" *ngIf="transportingSale">
-  <div class="modal-panel__card modal-panel__card--transport" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head">
-      <strong>Gestion de transporte</strong>
-      <button class="modal-panel__close" type="button" (click)="closeTransport()">x</button>
-    </div>
-
-    <div class="transport-modal__summary">
-      <div class="transport-summary-card">
-        <span class="transport-summary-card__label">Venta</span>
-        <strong>{{ transportingSale.code || 'Sin código' }}</strong>
-      </div>
-      <div class="transport-summary-card">
-        <span class="transport-summary-card__label">Sucursal</span>
-        <strong>{{ branchName(transportingSale.branchId) }}</strong>
-      </div>
-      <div class="transport-summary-card">
-        <span class="transport-summary-card__label">Entrega</span>
-        <strong>{{ transportingSale.hasDelivery ? 'Con envio' : 'Retiro' }}</strong>
-      </div>
-    </div>
-
-    <form class="transport-modal__form" [formGroup]="transportForm">
-      <label class="field">
-        <span class="field__label">Conductor</span>
+<ui-modal *ngIf="transportingSale" eyebrow="Envío"
+          [heading]="'Transporte de ' + (transportingSale.code || 'la venta')"
+          [sub]="branchName(transportingSale.branchId) + ' · ' + (transportingSale.hasDelivery ? 'Con envío' : 'Retira el cliente')"
+          (closed)="closeTransport()">
+  <div class="sale-transport">
+    <form class="sale-transport__form" [formGroup]="transportForm">
+      <label class="ui-field">
+        <span class="ui-field__label">Conductor</span>
         <app-searchable-select
           formControlName="driverEmployeeId"
           [options]="driverOptions"
-          placeholder="Seleccionar conductor"
+          placeholder="Elegí el conductor"
           searchPlaceholder="Buscar conductor...">
         </app-searchable-select>
       </label>
-      <label class="field">
-        <span class="field__label">Vehiculo</span>
+      <label class="ui-field">
+        <span class="ui-field__label">Vehículo</span>
         <app-searchable-select
           formControlName="vehicleId"
           [options]="vehicleOptions"
-          placeholder="Seleccionar vehiculo"
-          searchPlaceholder="Buscar vehiculo...">
+          placeholder="Elegí el vehículo"
+          searchPlaceholder="Buscar vehículo...">
         </app-searchable-select>
       </label>
-      <label class="field field--full">
-        <span class="field__label">Notas de envio</span>
-        <textarea class="control control--textarea" rows="3" formControlName="notes" placeholder="Notas de envio, referencias o aclaraciones"></textarea>
+      <label class="ui-field sale-transport__full">
+        <span class="ui-field__label">Notas de envío <em>(opcional)</em></span>
+        <textarea class="ui-textarea" rows="3" formControlName="notes" placeholder="Referencias o aclaraciones para el reparto"></textarea>
       </label>
     </form>
 
-    <div class="transport-state-card" *ngIf="currentTransport">
-      <div class="transport-state-card__top">
-        <span class="chip">{{ currentTransport.statusName }}</span>
-        <span class="transport-state-card__muted">Asignacion activa</span>
+    <section class="sale-transport__state" *ngIf="currentTransport" aria-label="Envío asignado">
+      <div class="sale-transport__state-head">
+        <span class="ui-badge"
+              [class.ui-badge--brand]="currentTransport.status === 1"
+              [class.ui-badge--info]="currentTransport.status === 2"
+              [class.ui-badge--success]="currentTransport.status === 3"
+              [class.ui-badge--danger]="currentTransport.status === 4">{{ transportStatusLabel(currentTransport.status, currentTransport.statusName) }}</span>
+        <span class="sale-transport__muted">Asignado el {{ currentTransport.assignedAt | date:'short' }}</span>
       </div>
-      <div class="transport-state-card__grid">
-        <div class="transport-state-card__item">
-          <span>Asignado</span>
-          <strong>{{ currentTransport.assignedAt | date:'short' }}</strong>
-        </div>
-        <div class="transport-state-card__item" *ngIf="currentTransport.dispatchedAt">
-          <span>Salida</span>
-          <strong>{{ currentTransport.dispatchedAt | date:'short' }}</strong>
-        </div>
-        <div class="transport-state-card__item" *ngIf="currentTransport.deliveredAt">
-          <span>Entrega</span>
-          <strong>{{ currentTransport.deliveredAt | date:'short' }}</strong>
-        </div>
-        <div class="transport-state-card__item">
-          <span>Conductor</span>
-          <strong>{{ currentTransport.driverFullName }}</strong>
-        </div>
-        <div class="transport-state-card__item">
-          <span>Vehiculo</span>
-          <strong>{{ currentTransport.vehiclePlate }}</strong>
+      <dl class="sale-transport__kv">
+        <div class="ui-kv"><dt class="ui-kv__key">Conductor</dt><dd class="ui-kv__val">{{ currentTransport.driverFullName }}</dd></div>
+        <div class="ui-kv"><dt class="ui-kv__key">Vehículo</dt><dd class="ui-kv__val">{{ currentTransport.vehiclePlate }}</dd></div>
+        <div class="ui-kv" *ngIf="currentTransport.dispatchedAt"><dt class="ui-kv__key">Salida</dt><dd class="ui-kv__val">{{ currentTransport.dispatchedAt | date:'short' }}</dd></div>
+        <div class="ui-kv" *ngIf="currentTransport.deliveredAt"><dt class="ui-kv__key">Entrega</dt><dd class="ui-kv__val">{{ currentTransport.deliveredAt | date:'short' }}</dd></div>
+      </dl>
+      <div class="sale-transport__status">
+        <span class="ui-field__label">Cambiar estado</span>
+        <div class="sale-transport__status-row">
+          <button uiBtn="secondary" size="sm" type="button" [disabled]="currentTransport.status === 1" (click)="setTransportStatus(1)">Asignado</button>
+          <button uiBtn="secondary" size="sm" type="button" [disabled]="currentTransport.status === 2" (click)="setTransportStatus(2)">En tránsito</button>
+          <button uiBtn="secondary" size="sm" type="button" [disabled]="currentTransport.status === 3" (click)="setTransportStatus(3)">Entregado</button>
+          <button uiBtn="danger-ghost" size="sm" type="button" (click)="removeTransport()">Quitar transporte</button>
         </div>
       </div>
-    </div>
-
-    <div class="modal-panel__actions modal-panel__actions--split modal-panel__actions--transport">
-      <div class="transport-actions" *ngIf="currentTransport">
-        <span class="field__label">Estados</span>
-        <div class="transport-actions__row">
-          <button class="btn btn--ghost btn--sm btn--status-assigned" type="button" (click)="setTransportStatus(1)">Asignado</button>
-          <button class="btn btn--ghost btn--sm btn--status-transit" type="button" (click)="setTransportStatus(2)">En transito</button>
-          <button class="btn btn--ghost btn--sm btn--status-delivered" type="button" (click)="setTransportStatus(3)">Entregado</button>
-          <button class="btn btn--ghost btn--sm btn--danger" type="button" (click)="removeTransport()">Quitar</button>
-        </div>
-      </div>
-      <div class="transport-actions transport-actions--footer">
-        <button class="btn btn--ghost" type="button" (click)="closeTransport()">Cerrar</button>
-        <button class="btn" type="button" (click)="saveTransport()">{{ currentTransport ? 'Actualizar transporte' : 'Guardar transporte' }}</button>
-      </div>
-    </div>
+    </section>
   </div>
-</section>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closeTransport()">Cerrar</button>
+    <button uiBtn="primary" type="button" (click)="saveTransport()">{{ currentTransport ? 'Actualizar transporte' : 'Guardar transporte' }}</button>
+  </footer>
+</ui-modal>
 
 <div class="modal-backdrop" *ngIf="invoiceModalSale" (click)="closeInvoiceModal()"></div>
 <section class="modal-panel" *ngIf="invoiceModalSale as sale">
@@ -927,33 +894,35 @@
   </div>
 </section>
 
-<div class="modal-backdrop" *ngIf="cancelSaleModal" (click)="closeCancelSaleModal()"></div>
-<section class="modal-panel" *ngIf="cancelSaleModal">
-  <div class="modal-panel__card modal-panel__card--confirm" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head">
-      <strong>Cancelar venta</strong>
-      <button class="modal-panel__close" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">x</button>
+<ui-modal *ngIf="cancelSaleModal" tone="danger" eyebrow="Acción irreversible" heading="Anular venta"
+          [sub]="cancelSaleModal.code || 'Venta sin número'"
+          [irreversible]="true" [closable]="cancelingSaleId !== cancelSaleModal.id" [showClose]="false"
+          (closed)="closeCancelSaleModal()">
+  <div class="sale-cancel" [attr.aria-busy]="cancelingSaleId === cancelSaleModal.id">
+    <div class="ui-banner ui-banner--danger">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/></svg>
+      <div><strong>La venta quedará anulada</strong>Queda como Cancelada y los productos vuelven al stock de la sucursal.</div>
     </div>
-    <p class="confirm-copy">Vas a cancelar la venta <strong>{{ cancelSaleModal.code || 'seleccionada' }}</strong>. Esta accion cambia el estado a <strong>Cancelada</strong>.</p>
-    <div class="confirm-meta">
-      <span><strong>Cliente:</strong> {{ cancelSaleModal.customerFullName || 'Sin cliente' }}</span>
-      <span><strong>Total:</strong> {{ cancelSaleModal.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+    <dl class="sale-cancel__kv">
+      <div class="ui-kv"><dt class="ui-kv__key">Cliente</dt><dd class="ui-kv__val">{{ cancelSaleModal.customerFullName || 'Consumidor final' }}</dd></div>
+      <div class="ui-kv"><dt class="ui-kv__key">Total</dt><dd class="ui-kv__val ui-num">{{ cancelSaleModal.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</dd></div>
+    </dl>
+    <div class="ui-banner" [class.ui-banner--warning]="notice.tone === 'warning'" *ngIf="cancelSaleInvoicingNotice as notice">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+      <div>{{ notice.text }}</div>
     </div>
-    <p class="confirm-fiscal" *ngIf="cancelSaleInvoicingNotice as notice"
-       [class.confirm-fiscal--warning]="notice.tone === 'warning'">{{ notice.text }}</p>
-    <p class="confirm-checking" *ngIf="cancelSaleCheckingCobros" role="status">Consultando lo cobrado de la venta…</p>
+    <p class="sale-cancel__hint" *ngIf="cancelSaleCheckingCobros" role="status">Consultando lo cobrado de la venta…</p>
     <app-cc-cancel-refund-options
-      class="confirm-refund"
       *ngIf="cancelSaleHasCobros"
       [paidTotal]="cancelSaleCcPaid ?? 0"
       [(mode)]="cancelRefundMode">
     </app-cc-cancel-refund-options>
-    <div class="modal-panel__actions">
-      <button class="btn btn--ghost" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">Volver</button>
-      <button class="btn btn--danger-solid" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id || cancelSaleCheckingCobros" (click)="confirmCancelSale()">{{ cancelingSaleId === cancelSaleModal.id ? 'Cancelando...' : 'Confirmar cancelacion' }}</button>
-    </div>
   </div>
-</section>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id" (click)="closeCancelSaleModal()">Volver</button>
+    <button uiBtn="danger" type="button" [disabled]="cancelingSaleId === cancelSaleModal.id || cancelSaleCheckingCobros" (click)="confirmCancelSale()">{{ cancelingSaleId === cancelSaleModal.id ? 'Anulando venta…' : 'Confirmar anulación' }}</button>
+  </footer>
+</ui-modal>
 
 <div class="modal-backdrop" *ngIf="infoModal" (click)="closeInfoModal()"></div>
 <section class="modal-panel" *ngIf="infoModal">
@@ -1095,59 +1064,25 @@
   </div>
 </section>
 
-<div class="modal-backdrop" *ngIf="showStaleCashSessionModal" (click)="showStaleCashSessionModal = false"></div>
-<section class="modal-panel" *ngIf="showStaleCashSessionModal">
-  <div class="modal-panel__card modal-panel__card--confirm modal-panel__card--stale-session" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head modal-panel__head--stale-session">
-      <div class="stale-session__headcopy">
-        <span class="stale-session__eyebrow">Caja</span>
-        <strong>Sesion del dia anterior</strong>
-      </div>
-      <button class="modal-panel__close" type="button" (click)="showStaleCashSessionModal = false">x</button>
-    </div>
-    <div class="stale-session">
-      <div class="stale-session__alert">
-        <span class="stale-session__icon" aria-hidden="true">!</span>
-        <div class="stale-session__alertcopy">
-          <span class="stale-session__badge">Venta bloqueada</span>
-          <p class="stale-session__copy">La caja seleccionada tiene una sesion abierta del dia anterior. Cerra esa sesion y abri una nueva para poder registrar ventas de hoy.</p>
-        </div>
-      </div>
-      <div class="stale-session__note">
-        <span>Necesitas una sesion nueva del dia actual antes de cargar la venta.</span>
-      </div>
-    </div>
-    <div class="modal-panel__actions modal-panel__actions--stale-session">
-      <button class="btn" type="button" (click)="showStaleCashSessionModal = false">Entendido</button>
-    </div>
+<ui-modal *ngIf="showStaleCashSessionModal" size="sm" eyebrow="Caja" heading="Sesión de caja de un día anterior"
+          (closed)="showStaleCashSessionModal = false">
+  <div class="ui-banner ui-banner--warning">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/></svg>
+    <div><strong>Venta bloqueada</strong>La caja elegida tiene abierta una sesión de un día anterior. Cerrala y abrí una nueva desde Caja para registrar las ventas de hoy.</div>
   </div>
-</section>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="primary" type="button" (click)="showStaleCashSessionModal = false">Entendido</button>
+  </footer>
+</ui-modal>
 
-<div class="modal-backdrop" *ngIf="showNoCashSessionModal" (click)="showNoCashSessionModal = false"></div>
-<section class="modal-panel" *ngIf="showNoCashSessionModal">
-  <div class="modal-panel__card modal-panel__card--confirm modal-panel__card--stale-session" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head modal-panel__head--stale-session">
-      <div class="stale-session__headcopy">
-        <span class="stale-session__eyebrow">Caja</span>
-        <strong>Sin caja disponible</strong>
-      </div>
-      <button class="modal-panel__close" type="button" (click)="showNoCashSessionModal = false">x</button>
-    </div>
-    <div class="stale-session">
-      <div class="stale-session__alert">
-        <span class="stale-session__icon" aria-hidden="true">!</span>
-        <div class="stale-session__alertcopy">
-          <span class="stale-session__badge">Cobro bloqueado</span>
-          <p class="stale-session__copy">No tenes una caja con sesion abierta para registrar el cobro. Pedi que te asignen una caja o abri una sesion antes de cobrar.</p>
-        </div>
-      </div>
-      <div class="stale-session__note">
-        <span>Necesitas una caja abierta para cobrar por efectivo, transferencia o tarjeta.</span>
-      </div>
-    </div>
-    <div class="modal-panel__actions modal-panel__actions--stale-session">
-      <button class="btn" type="button" (click)="showNoCashSessionModal = false">Entendido</button>
-    </div>
+<ui-modal *ngIf="showNoCashSessionModal" size="sm" eyebrow="Caja" heading="Sin caja disponible"
+          (closed)="showNoCashSessionModal = false">
+  <div class="ui-banner ui-banner--warning">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/></svg>
+    <div><strong>Cobro bloqueado</strong>No tenés una caja con sesión abierta para registrar el cobro en efectivo, transferencia o tarjeta. Pedí que te asignen una caja o abrí una sesión antes de cobrar.</div>
   </div>
-</section>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="primary" type="button" (click)="showNoCashSessionModal = false">Entendido</button>
+  </footer>
+</ui-modal>
 

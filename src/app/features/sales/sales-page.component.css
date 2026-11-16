@@ -805,49 +805,7 @@
     box-shadow: none;
 }
 
-.btn--status-assigned {
-    background: color-mix(in srgb, #f0be73 12%, transparent);
-    color: color-mix(in srgb, #d79b37 74%, var(--text) 26%);
-    border: 1px solid color-mix(in srgb, #f0be73 34%, var(--border-2));
-}
 
-.btn--status-assigned:hover:not(:disabled) {
-    background: color-mix(in srgb, #f0be73 18%, transparent);
-    color: color-mix(in srgb, #d79b37 84%, var(--text) 16%);
-}
-
-.btn--status-transit {
-    background: color-mix(in srgb, #8dc7d8 12%, transparent);
-    color: color-mix(in srgb, #79bbcf 74%, var(--text) 26%);
-    border: 1px solid color-mix(in srgb, #8dc7d8 34%, var(--border-2));
-}
-
-.btn--status-transit:hover:not(:disabled) {
-    background: color-mix(in srgb, #8dc7d8 18%, transparent);
-    color: color-mix(in srgb, #79bbcf 84%, var(--text) 16%);
-}
-
-.btn--status-delivered {
-    background: color-mix(in srgb, #8fd3a8 12%, transparent);
-    color: color-mix(in srgb, #7bc88f 74%, var(--text) 26%);
-    border: 1px solid color-mix(in srgb, #8fd3a8 34%, var(--border-2));
-}
-
-.btn--status-delivered:hover:not(:disabled) {
-    background: color-mix(in srgb, #8fd3a8 18%, transparent);
-    color: color-mix(in srgb, #7bc88f 84%, var(--text) 16%);
-}
-
-.transport-actions .btn--danger {
-    background: color-mix(in srgb, #e28c8c 12%, transparent);
-    color: color-mix(in srgb, #e08b8b 72%, var(--text) 28%);
-    border: 1px solid color-mix(in srgb, #e28c8c 34%, var(--border-2));
-}
-
-.transport-actions .btn--danger:hover:not(:disabled) {
-    background: color-mix(in srgb, #e28c8c 18%, transparent);
-    color: color-mix(in srgb, #e08b8b 84%, var(--text) 16%);
-}
 
 .toggle-check {
     position: relative;
@@ -1231,9 +1189,6 @@
     padding: 1.15rem;
 }
 
-.modal-panel__card--transport {
-    width: min(100%, 760px);
-}
 
 .modal-panel__card--wide {
     width: min(100%, 900px);
@@ -1564,10 +1519,6 @@
     color: var(--text);
 }
 
-.modal-panel__actions--split {
-    align-items: flex-start;
-    gap: 1rem;
-}
 
 .modal-panel__actions--info {
     margin-top: 1rem;
@@ -1625,200 +1576,7 @@
     color: var(--text-soft);
 }
 
-.modal-panel__card--stale-session {
-    width: min(100%, 600px);
-    padding: 1.35rem;
-    border-radius: var(--radius-md);
-    background:
-        var(--surface);
-    box-shadow:
-        var(--shadow-3);
-}
 
-.modal-panel__head--stale-session {
-    align-items: flex-start;
-    margin-bottom: 1.1rem;
-    padding-bottom: 1rem;
-}
-
-.stale-session__headcopy {
-    display: grid;
-    gap: .32rem;
-}
-
-.stale-session__eyebrow {
-    color: var(--text-dim);
-    font-family: var(--font-sans);
-    font-size: 13px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-}
-
-.modal-panel__head--stale-session strong {
-    color: var(--text);
-    font-size: 1.48rem;
-    line-height: 1.05;
-    letter-spacing: -.02em;
-}
-
-.stale-session {
-    display: grid;
-    gap: 1rem;
-}
-
-.stale-session__alert {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: .95rem;
-    align-items: start;
-    padding: 1rem 1.05rem;
-    border: 1px solid color-mix(in srgb, var(--amber) 22%, var(--border-2));
-    border-radius: var(--radius-md);
-    background: var(--surface);
-}
-
-.stale-session__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.4rem;
-    height: 2.4rem;
-    border-radius: 50%;
-    border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--border-2));
-    background: color-mix(in srgb, var(--amber) 14%, transparent);
-    color: var(--amber);
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-.stale-session__alertcopy {
-    display: grid;
-    gap: .45rem;
-}
-
-.stale-session__badge {
-    display: inline-flex;
-    width: fit-content;
-    align-items: center;
-    padding: .28rem .62rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--bg) 56%, transparent);
-    border: 1px solid color-mix(in srgb, var(--amber) 22%, var(--border-2));
-    color: var(--text-dim);
-    font-family: var(--font-sans);
-    font-size: 12px;
-    letter-spacing: .01em;
-}
-
-.stale-session__copy {
-    margin: 0;
-    color: var(--text);
-    font-size: 1rem;
-    line-height: 1.62;
-}
-
-.stale-session__note {
-    padding: .92rem 1rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-2);
-    background: color-mix(in srgb, var(--bg) 72%, var(--bg-panel));
-    color: var(--text-soft);
-    font-size: 14px;
-    line-height: 1.55;
-}
-
-.modal-panel__actions--stale-session {
-    justify-content: flex-end;
-    margin-top: 1.15rem;
-}
-
-.modal-panel__actions--stale-session .btn {
-    min-width: 11rem;
-}
-
-.transport-modal__summary {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: .75rem;
-    margin-bottom: 1rem;
-}
-
-.transport-summary-card,
-.transport-state-card {
-    border: 1px solid var(--border-2);
-    border-radius: 3px;
-    background: var(--bg);
-}
-
-.transport-summary-card {
-    display: grid;
-    gap: .3rem;
-    padding: .9rem 1rem;
-}
-
-.transport-summary-card__label,
-.transport-state-card__item span,
-.transport-state-card__muted {
-    color: var(--text-dim);
-    font-family: var(--font-sans);
-    font-size: 12px;
-    letter-spacing: 0;
-}
-
-.transport-summary-card strong,
-.transport-state-card__item strong {
-    color: var(--text);
-}
-
-.transport-modal__form {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.transport-state-card {
-    display: grid;
-    gap: .9rem;
-    padding: 1rem;
-    margin-bottom: 1rem;
-}
-
-.transport-state-card__top {
-    display: flex;
-    justify-content: space-between;
-    gap: .75rem;
-    align-items: center;
-}
-
-.transport-state-card__grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .75rem;
-}
-
-.transport-state-card__item {
-    display: grid;
-    gap: .25rem;
-    padding: .75rem .85rem;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    background: color-mix(in srgb, var(--bg-panel) 82%, var(--bg) 18%);
-}
-
-.transport-actions {
-    display: grid;
-    gap: .45rem;
-}
-
-.transport-actions__row,
-.transport-actions--footer {
-    display: flex;
-    gap: .65rem;
-    flex-wrap: wrap;
-    align-items: center;
-}
 
 .info-list {
     display: grid;
@@ -1861,8 +1619,7 @@
     .hero,
     .summary-row,
     .list-meta,
-    .modal-panel__actions,
-    .modal-panel__actions--split {
+    .modal-panel__actions {
         flex-direction: column;
         align-items: stretch;}
 
@@ -1878,10 +1635,6 @@
     .toolbar__actions {
         margin-left: 0;}
 
-    .transport-modal__summary,
-    .transport-modal__form,
-    .transport-state-card__grid {
-        grid-template-columns: 1fr;}
 
     .page-size {
         margin-left: 0;}
@@ -2010,11 +1763,6 @@
     .info-row {
         flex-direction: column;}
 
-    .transport-actions__row,
-    .transport-actions--footer,
-    .transport-state-card__top {
-        flex-direction: column;
-        align-items: stretch;}
 
     .table--details {
         min-width: 0;
@@ -2102,7 +1850,6 @@
     .quick-sale-card,
     .sale-card,
     .modal-panel__card,
-    .modal-panel__card--transport,
     .modal-panel__card--wide,
     .modal-panel__card--confirm,
     .modal-panel__card--channel,
@@ -2133,16 +1880,12 @@
     .pagination,
     .list-meta,
     .summary-row,
-    .modal-panel__actions,
-    .modal-panel__actions--split {
+    .modal-panel__actions {
         display: grid;
         grid-template-columns: 1fr;}
 
     .panel__header-meta,
-    .transport-actions__row,
-    .transport-actions--footer,
-    .modal-panel__head,
-    .transport-state-card__top {
+    .modal-panel__head {
         width: 100%;
         flex-wrap: wrap;}
 
@@ -2155,7 +1898,6 @@
     .toolbar .btn,
     .toolbar--create .btn,
     .modal-panel__actions .btn,
-    .transport-actions .btn,
     .pagination .btn {
         width: 100%;
         max-width: none;
@@ -2175,7 +1917,6 @@
         place-items: stretch;}
 
     .modal-panel__card,
-    .modal-panel__card--transport,
     .modal-panel__card--wide,
     .modal-panel__card--confirm,
     .modal-panel__card--info,
@@ -2200,7 +1941,6 @@
         margin-inline: -0.9rem;
         padding: 0.15rem 0.9rem 0.85rem;}
 
-    .modal-panel__actions--transport,
     .modal-panel__actions--info {
         position: sticky;
         bottom: 0;
@@ -2212,10 +1952,6 @@
         margin-inline: -0.9rem;
         padding-inline: 0.9rem;}
 
-    .transport-actions,
-    .transport-actions__row,
-    .transport-actions--footer {
-        width: 100%;}
 
     .product-picker {
         flex-basis: 100%;}
@@ -3145,35 +2881,7 @@
     color: color-mix(in srgb, var(--amber) 82%, var(--text));
 }
 
-/* Aviso fiscal al cancelar: info si la NC se emite sola, advertencia si la factura sigue en tramite. */
-.confirm-fiscal {
-    /* Arriba ya separa el margin-bottom de .confirm-meta; abajo, aire antes de los botones. */
-    margin: 0 0 1.25rem;
-    padding: .7rem .85rem;
-    border-left: 3px solid color-mix(in srgb, #8e7cc3 70%, var(--border-2));
-    border-radius: 4px;
-    background: color-mix(in srgb, #8e7cc3 9%, transparent);
-    color: var(--text);
-    font-size: 14px;
-    line-height: 1.45;
-}
 
-.confirm-fiscal--warning {
-    border-left-color: color-mix(in srgb, var(--amber) 80%, var(--border-2));
-    background: color-mix(in srgb, var(--amber) 10%, transparent);
-}
-
-/* Anular una venta CC con cobros: mientras se consulta lo cobrado, y la eleccion de que hacer con eso. Mismo aire
-   antes de los botones que el aviso fiscal. */
-.confirm-checking {
-    margin: 0 0 1.25rem;
-    color: var(--text-dim);
-    font-size: 14px;
-}
-
-.confirm-refund {
-    margin-bottom: 1.25rem;
-}
 
 /* Popup de facturar: la letra al lado de su etiqueta y aire antes de los botones. */
 .invoice-modal__letter {
@@ -3527,6 +3235,25 @@ button.pos-chip, .pos-chip .ch-sel__trigger { cursor: pointer; }
 .sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--status { flex: 0 1 140px; min-width: 120px; }
 .sales-list .sale-card__actions { justify-self: end; }
 .sales-list .sale-card__actions { padding-left: 8px; }
+
+/* Popups EITI 2 de la gestión: transporte y anular venta (los avisos de caja usan solo ui-banner). */
+.sale-transport { display: grid; gap: var(--space-5); }
+.sale-transport__form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.sale-transport__full { grid-column: 1 / -1; }
+.sale-transport__state { display: grid; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.sale-transport__state-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.sale-transport__muted { font-size: 13px; line-height: 18px; color: var(--text-3); }
+.sale-transport__kv,
+.sale-cancel__kv { margin: 0; }
+.sale-transport__status { display: grid; gap: var(--space-2); }
+.sale-transport__status-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sale-transport__status-row > :last-child { margin-left: auto; }
+.sale-cancel { display: grid; gap: var(--space-3); }
+.sale-cancel__hint { margin: 0; font-size: 14px; color: var(--text-2); }
+@media (max-width: 600px) {
+    .sale-transport__form { grid-template-columns: 1fr; }
+    .sale-transport__status-row > :last-child { margin-left: 0; }
+}
 .sale-edit .control,
 .sale-edit .ch-sel__trigger {
     min-height: 46px;
