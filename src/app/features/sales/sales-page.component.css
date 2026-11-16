@@ -3182,6 +3182,8 @@ button.pos-chip, .pos-chip .ch-sel__trigger { cursor: pointer; }
     cursor: default;
 }
 .sales-list .sale-card__details .table-wrap { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+/* app-sale-notes es inline por defecto: sin bloque ni margen, "Observaciones / Agregar" quedaba pegado a la tabla. */
+.sales-list .sale-card__notes { display: block; margin-top: var(--space-4); }
 
 .sales-list .sales-skeleton { padding: 12px 20px; }
 
