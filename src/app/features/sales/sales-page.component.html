@@ -829,29 +829,22 @@
   </footer>
 </ui-modal>
 
-<div class="modal-backdrop" *ngIf="invoiceModalSale" (click)="closeInvoiceModal()"></div>
-<section class="modal-panel" *ngIf="invoiceModalSale as sale">
-  <div class="modal-panel__card modal-panel__card--confirm" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head">
-      <strong>Facturar venta</strong>
-      <button class="modal-panel__close" type="button" [disabled]="invoicingSaleId === sale.id" (click)="closeInvoiceModal()">x</button>
-    </div>
-    <p class="confirm-copy">Vas a emitir la factura de la venta <strong>{{ sale.code || 'seleccionada' }}</strong> por <strong>{{ sale.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>.</p>
-
-    <div class="confirm-meta">
-      <span *ngIf="invoiceModalLoading">Leyendo los datos del cliente...</span>
-      <ng-container *ngIf="!invoiceModalLoading">
-        <span><strong>Cliente:</strong> {{ invoiceModalCustomer?.fullName || invoiceModalCustomer?.name || 'Consumidor final (sin cliente)' }}</span>
-        <ng-container *ngIf="!invoiceModalCustomer">
-          <span><strong>Condición IVA:</strong> Consumidor Final</span>
-        </ng-container>
-      </ng-container>
-    </div>
+<ui-modal *ngIf="invoiceModalSale as sale" eyebrow="Facturación electrónica" heading="Facturar venta"
+          [sub]="(sale.code || 'Venta sin número') + ' · ' + (sale.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2')"
+          [closable]="!invoiceModalSavingCustomer && invoicingSaleId !== sale.id"
+          [showClose]="!invoiceModalSavingCustomer && invoicingSaleId !== sale.id"
+          (closed)="closeInvoiceModal()">
+  <div class="sale-invoice">
+    <p class="sale-invoice__hint" *ngIf="invoiceModalLoading" role="status">Leyendo los datos del cliente…</p>
+    <dl class="sale-invoice__kv" *ngIf="!invoiceModalLoading">
+      <div class="ui-kv"><dt class="ui-kv__key">Cliente</dt><dd class="ui-kv__val">{{ invoiceModalCustomer?.fullName || invoiceModalCustomer?.name || 'Consumidor final (sin cliente)' }}</dd></div>
+      <div class="ui-kv" *ngIf="!invoiceModalCustomer"><dt class="ui-kv__key">Condición IVA</dt><dd class="ui-kv__val">Consumidor Final</dd></div>
+    </dl>
 
     <!-- Datos fiscales del cliente, editables: si falta el CUIT o la condicion, se completan aca. -->
-    <div class="invoice-modal__fiscal" *ngIf="!invoiceModalLoading && invoiceModalCustomer">
-      <div class="field">
-        <span class="field__label">Condición frente al IVA</span>
+    <div class="sale-invoice__fiscal" *ngIf="!invoiceModalLoading && invoiceModalCustomer">
+      <div class="ui-field">
+        <span class="ui-field__label">Condición frente al IVA</span>
         <app-searchable-select
           [ngModel]="invoiceModalIvaCondition"
           (ngModelChange)="setInvoiceModalIvaCondition($event)"
@@ -861,38 +854,37 @@
           placeholder="Condición frente al IVA"
           searchPlaceholder="Buscar condición..."></app-searchable-select>
       </div>
-      <label class="field">
-        <span class="field__label">CUIT</span>
-        <input class="control" type="text" inputmode="numeric" autocomplete="off" placeholder="20-30111222-9"
+      <label class="ui-field">
+        <span class="ui-field__label">CUIT</span>
+        <input class="ui-input" type="text" inputmode="numeric" autocomplete="off" placeholder="20-30111222-9"
                [ngModel]="invoiceModalTaxId" (ngModelChange)="setInvoiceModalTaxId($event)"
                [ngModelOptions]="{ standalone: true }"
                [disabled]="invoiceModalSavingCustomer || invoicingSaleId === sale.id" />
       </label>
-      <span class="invoice-modal__note" *ngIf="invoiceModalCustomerChanged">Los cambios se guardan en la ficha del cliente al emitir.</span>
+      <span class="ui-field__hint sale-invoice__note" *ngIf="invoiceModalCustomerChanged">Los cambios se guardan en la ficha del cliente al emitir.</span>
     </div>
 
-    <div class="invoice-modal__letter">
-      <span class="field__label">Tipo de factura</span>
+    <div class="sale-invoice__letter">
+      <span class="ui-field__label">Tipo de factura</span>
       <app-invoice-letter-switch
         [letter]="invoiceModalLetter"
         [disabled]="invoiceModalLoading || invoiceModalSavingCustomer || invoicingSaleId === sale.id"
         (letterChange)="setInvoiceModalLetter($event)"></app-invoice-letter-switch>
     </div>
 
-    <p class="field__error invoice-modal__issue" role="alert" *ngIf="!invoiceModalLoading && (invoiceModalError || invoiceModalIssue) as issue">{{ issue }}</p>
-
-    <div class="modal-panel__actions">
-      <button class="btn btn--ghost" type="button" [disabled]="invoiceModalSavingCustomer || invoicingSaleId === sale.id" (click)="closeInvoiceModal()">Volver</button>
-      <button class="btn" type="button"
-              [disabled]="invoiceModalLoading || !!invoiceModalIssue || invoiceModalSavingCustomer || invoicingSaleId === sale.id"
-              (click)="confirmInvoiceModal()">
-        {{ invoiceModalSavingCustomer ? 'Guardando cliente...'
-           : invoicingSaleId === sale.id ? 'Emitiendo...'
-           : (invoiceModalCustomerChanged ? 'Guardar y emitir Factura ' : 'Emitir Factura ') + (invoiceModalLetter === 1 ? 'A' : 'B') }}
-      </button>
-    </div>
+    <p class="ui-field__error sale-invoice__issue" role="alert" *ngIf="!invoiceModalLoading && (invoiceModalError || invoiceModalIssue) as issue">{{ issue }}</p>
   </div>
-</section>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" [disabled]="invoiceModalSavingCustomer || invoicingSaleId === sale.id" (click)="closeInvoiceModal()">Volver</button>
+    <button uiBtn="primary" type="button"
+            [disabled]="invoiceModalLoading || !!invoiceModalIssue || invoiceModalSavingCustomer || invoicingSaleId === sale.id"
+            (click)="confirmInvoiceModal()">
+      {{ invoiceModalSavingCustomer ? 'Guardando cliente…'
+         : invoicingSaleId === sale.id ? 'Emitiendo…'
+         : (invoiceModalCustomerChanged ? 'Guardar y emitir Factura ' : 'Emitir Factura ') + (invoiceModalLetter === 1 ? 'A' : 'B') }}
+    </button>
+  </footer>
+</ui-modal>
 
 <ui-modal *ngIf="cancelSaleModal" tone="danger" eyebrow="Acción irreversible" heading="Anular venta"
           [sub]="cancelSaleModal.code || 'Venta sin número'"
@@ -924,145 +916,106 @@
   </footer>
 </ui-modal>
 
-<div class="modal-backdrop" *ngIf="infoModal" (click)="closeInfoModal()"></div>
-<section class="modal-panel" *ngIf="infoModal">
-  <div class="modal-panel__card modal-panel__card--info" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head">
-      <strong>{{ infoModal.title }}</strong>
-      <button class="modal-panel__close" type="button" (click)="closeInfoModal()">x</button>
-    </div>
+<ui-modal *ngIf="infoModal" [heading]="infoModal.title" (closed)="closeInfoModal()">
+  <dl class="sale-info">
+    <div class="ui-kv" *ngFor="let row of infoModal.rows"><dt class="ui-kv__key">{{ row.label }}</dt><dd class="ui-kv__val">{{ row.value }}</dd></div>
+  </dl>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="secondary" type="button" (click)="closeInfoModal()">Cerrar</button>
+  </footer>
+</ui-modal>
 
-    <div class="info-list">
-      <div class="info-row" *ngFor="let row of infoModal?.rows">
-        <span>{{ row.label }}</span>
-        <strong>{{ row.value }}</strong>
-      </div>
-    </div>
-
-    <div class="modal-panel__actions modal-panel__actions--info">
-      <button class="btn btn--ghost" type="button" (click)="closeInfoModal()">Cerrar</button>
-    </div>
+<ui-modal *ngIf="channelPopupSale" [eyebrow]="channelPopupSale.code || 'Venta'" heading="Canal de origen"
+          sub="Elegí por qué canal llegó el cliente para esta venta."
+          [closable]="!savingChannel" [showClose]="!savingChannel" (closed)="closeChannelPopup()">
+  <div class="channel-popup__grid" role="group" aria-label="Canales de origen">
+    <button
+      *ngFor="let ch of saleSourceChannels"
+      type="button"
+      class="channel-popup__opt"
+      [class.channel-popup__opt--on]="channelPopupValue === ch.value"
+      [attr.aria-pressed]="channelPopupValue === ch.value"
+      [disabled]="savingChannel"
+      (click)="selectChannelInPopup(ch.value)">
+      <img class="channel-popup__ico" [src]="'assets/channels/' + ch.assetPath" alt="" />
+      <span>{{ ch.label }}</span>
+    </button>
+    <button
+      type="button"
+      class="channel-popup__opt"
+      [class.channel-popup__opt--on]="channelPopupValue === null"
+      [attr.aria-pressed]="channelPopupValue === null"
+      [disabled]="savingChannel"
+      (click)="selectChannelInPopup(null)">
+      <span class="channel-popup__ico channel-popup__ico--blank" aria-hidden="true">—</span>
+      <span>Sin canal</span>
+    </button>
   </div>
-</section>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" [disabled]="savingChannel" (click)="closeChannelPopup()">Cancelar</button>
+    <button uiBtn="primary" type="button" [disabled]="savingChannel" (click)="saveChannelPopup()">
+      {{ savingChannel ? 'Guardando…' : 'Guardar canal' }}
+    </button>
+  </footer>
+</ui-modal>
 
-<div class="modal-backdrop" *ngIf="channelPopupSale" (click)="closeChannelPopup()"></div>
-<section class="modal-panel" *ngIf="channelPopupSale">
-  <div class="modal-panel__card modal-panel__card--channel" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head">
-      <strong>Canal de origen</strong>
-      <button class="modal-panel__close" type="button" [disabled]="savingChannel" (click)="closeChannelPopup()">x</button>
-    </div>
+<ui-modal *ngIf="quickCreateCustomerOpen" size="sm" eyebrow="Alta rápida" heading="Nuevo cliente"
+          [closable]="!quickCreateCustomerSaving" [showClose]="!quickCreateCustomerSaving" (closed)="closeQuickCreateCustomer()">
+  <div class="quick-customer-form">
+    <label class="ui-field">
+      <span class="ui-field__label">{{ quickCreateShowsBilling ? 'Nombre o razón social' : 'Nombre' }}</span>
+      <input class="ui-input" type="text" [(ngModel)]="quickCreateCustomerName" placeholder="Nombre completo" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
+    </label>
+    <label class="ui-field">
+      <span class="ui-field__label">Teléfono <em>(opcional)</em></span>
+      <input class="ui-input" type="tel" [(ngModel)]="quickCreateCustomerPhone" placeholder="Ej: +54 9 11 1234-5678" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
+    </label>
 
-    <p class="channel-popup__hint">Seleccioná por qué canal llegó el cliente para esta venta.</p>
+    <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm quick-customer-billing__toggle" *ngIf="!quickCreateShowsBilling"
+            [disabled]="quickCreateCustomerSaving" (click)="quickCreateBillingOpen = true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Datos de facturación
+    </button>
 
-    <div class="channel-popup__grid">
-      <button
-        *ngFor="let ch of saleSourceChannels"
-        type="button"
-        class="channel-popup__opt"
-        [class.channel-popup__opt--on]="channelPopupValue === ch.value"
-        [disabled]="savingChannel"
-        (click)="selectChannelInPopup(ch.value)">
-        <img class="channel-popup__ico" [src]="'assets/channels/' + ch.assetPath" [alt]="ch.label" />
-        <span>{{ ch.label }}</span>
-      </button>
-      <button
-        type="button"
-        class="channel-popup__opt channel-popup__opt--none"
-        [class.channel-popup__opt--on]="channelPopupValue === null"
-        [disabled]="savingChannel"
-        (click)="selectChannelInPopup(null)">
-        <span class="channel-popup__ico channel-popup__ico--blank">—</span>
-        <span>Sin canal</span>
-      </button>
-    </div>
-
-    <div class="modal-panel__actions">
-      <button class="btn btn--ghost" type="button" [disabled]="savingChannel" (click)="closeChannelPopup()">Cancelar</button>
-      <button class="btn" type="button" [disabled]="savingChannel" (click)="saveChannelPopup()">
-        {{ savingChannel ? 'Guardando...' : 'Guardar canal' }}
-      </button>
-    </div>
-  </div>
-</section>
-
-<!-- Drawer override confirmation modal -->
-<div class="modal-backdrop" *ngIf="quickCreateCustomerOpen" (click)="closeQuickCreateCustomer()"></div>
-<section class="modal-panel" *ngIf="quickCreateCustomerOpen">
-  <div class="modal-panel__card modal-panel__card--quick-customer" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head modal-panel__head--quick-customer">
-      <div class="quick-customer-modal__headcopy">
-        <span class="quick-customer-modal__eyebrow">Alta rapida</span>
-        <strong>Nuevo cliente</strong>
+    <div class="quick-customer-billing" *ngIf="quickCreateShowsBilling">
+      <div class="quick-customer-billing__head">
+        <span class="ui-eyebrow">Datos de facturación</span>
+        <span class="ui-badge ui-badge--brand" *ngIf="createWillInvoice">Factura {{ createInvoiceLetter === 1 ? 'A' : 'B' }}</span>
+        <span class="ui-field__hint" *ngIf="!createWillInvoice">Para facturar esta venta después</span>
       </div>
-      <button class="modal-panel__close modal-panel__close--quick-customer" type="button" [disabled]="quickCreateCustomerSaving" (click)="closeQuickCreateCustomer()" aria-label="Cerrar modal">×</button>
-    </div>
-    <div class="quick-customer-form">
-      <label class="field">
-        <span class="field__label">{{ quickCreateShowsBilling ? 'Nombre o razón social' : 'Nombre' }} <span class="field__required">*</span></span>
-        <input class="control" type="text" [(ngModel)]="quickCreateCustomerName" placeholder="Nombre completo" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
+      <div class="ui-field">
+        <span class="ui-field__label">Condición frente al IVA</span>
+        <app-searchable-select
+          [(ngModel)]="quickCreateCustomerIvaCondition"
+          [options]="quickCustomerIvaConditionOptions"
+          [disabled]="quickCreateCustomerSaving"
+          placeholder="Condición frente al IVA"
+          searchPlaceholder="Buscar condición..."></app-searchable-select>
+      </div>
+      <label class="ui-field">
+        <span class="ui-field__label">CUIT <em *ngIf="!createWillInvoice || createInvoiceLetter !== 1">(opcional)</em></span>
+        <input class="ui-input" type="text" inputmode="numeric" [(ngModel)]="quickCreateCustomerTaxId" placeholder="20-30111222-9" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
       </label>
-      <label class="field">
-        <span class="field__label">Teléfono <span class="field__optional">(opcional)</span></span>
-        <input class="control" type="tel" [(ngModel)]="quickCreateCustomerPhone" placeholder="Ej: +54 9 11 1234-5678" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
-      </label>
-
-      <button type="button" class="quick-customer-billing__toggle" *ngIf="!quickCreateShowsBilling"
-              [disabled]="quickCreateCustomerSaving" (click)="quickCreateBillingOpen = true">
-        + Datos de facturación
-      </button>
-
-      <div class="quick-customer-billing" *ngIf="quickCreateShowsBilling">
-        <div class="quick-customer-billing__head">
-          <span class="quick-customer-modal__eyebrow">Datos de facturación</span>
-          <span class="quick-customer-billing__letter" *ngIf="createWillInvoice">Factura {{ createInvoiceLetter === 1 ? 'A' : 'B' }}</span>
-          <span class="field__optional" *ngIf="!createWillInvoice">Para facturar esta venta después</span>
-        </div>
-        <div class="field">
-          <span class="field__label">Condición frente al IVA</span>
-          <app-searchable-select
-            [(ngModel)]="quickCreateCustomerIvaCondition"
-            [options]="quickCustomerIvaConditionOptions"
-            [disabled]="quickCreateCustomerSaving"
-            placeholder="Condición frente al IVA"
-            searchPlaceholder="Buscar condición..."></app-searchable-select>
-        </div>
-        <label class="field">
-          <span class="field__label">CUIT <span class="field__optional" *ngIf="!createWillInvoice || createInvoiceLetter !== 1">(opcional)</span></span>
-          <input class="control" type="text" inputmode="numeric" [(ngModel)]="quickCreateCustomerTaxId" placeholder="20-30111222-9" autocomplete="off" [disabled]="quickCreateCustomerSaving" />
-        </label>
-        <span class="field__error" role="alert" *ngIf="quickCreateBillingIssue as issue">{{ issue }}</span>
-      </div>
-    </div>
-    <div class="modal-panel__actions">
-      <button class="btn btn--ghost" type="button" [disabled]="quickCreateCustomerSaving" (click)="closeQuickCreateCustomer()">Cancelar</button>
-      <button class="btn" type="button" [disabled]="quickCreateCustomerSaving || !quickCreateCustomerName.trim() || quickCreateBillingIssue" (click)="submitQuickCreateCustomer()">
-        {{ quickCreateCustomerSaving ? 'Creando...' : 'Crear cliente' }}
-      </button>
+      <span class="ui-field__error" role="alert" *ngIf="quickCreateBillingIssue as issue">{{ issue }}</span>
     </div>
   </div>
-</section>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" [disabled]="quickCreateCustomerSaving" (click)="closeQuickCreateCustomer()">Cancelar</button>
+    <button uiBtn="primary" type="button" [disabled]="quickCreateCustomerSaving || !quickCreateCustomerName.trim() || !!quickCreateBillingIssue" (click)="submitQuickCreateCustomer()">
+      {{ quickCreateCustomerSaving ? 'Creando…' : 'Crear cliente' }}
+    </button>
+  </footer>
+</ui-modal>
 
-<div class="modal-backdrop" *ngIf="showDrawerOverrideConfirm" (click)="cancelDrawerOverride()"></div>
-<section class="modal-panel" *ngIf="showDrawerOverrideConfirm">
-  <div class="modal-panel__card modal-panel__card--confirm" (click)="$event.stopPropagation()">
-    <div class="modal-panel__head">
-      <strong>Cambiar caja</strong>
-      <button class="modal-panel__close" type="button" (click)="cancelDrawerOverride()">x</button>
-    </div>
-    <div class="confirm-warning">
-      <span class="confirm-warning__badge">Advertencia</span>
-      <p class="confirm-copy">Esta caja no es la que tenes asignada. ¿Queres continuar de todas formas?</p>
-      <div class="confirm-meta confirm-meta--warning">
-        <span>Si continuas, la venta se registrara con una caja distinta a la configurada para tu usuario.</span>
-      </div>
-    </div>
-    <div class="modal-panel__actions">
-      <button class="btn btn--ghost" type="button" (click)="cancelDrawerOverride()">Cancelar</button>
-      <button class="btn" type="button" (click)="confirmDrawerOverride()">Continuar</button>
-    </div>
+<ui-modal *ngIf="showDrawerOverrideConfirm" size="sm" eyebrow="Caja" heading="Cambiar caja" (closed)="cancelDrawerOverride()">
+  <div class="ui-banner ui-banner--warning">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/></svg>
+    <div><strong>No es tu caja asignada</strong>Si continuás, la venta se registra en una caja distinta a la configurada para tu usuario.</div>
   </div>
-</section>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="cancelDrawerOverride()">Cancelar</button>
+    <button uiBtn="primary" type="button" (click)="confirmDrawerOverride()">Usar esta caja</button>
+  </footer>
+</ui-modal>
 
 <ui-modal *ngIf="showStaleCashSessionModal" size="sm" eyebrow="Caja" heading="Sesión de caja de un día anterior"
           (closed)="showStaleCashSessionModal = false">
