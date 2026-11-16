@@ -12,7 +12,9 @@
 .user-list__row,
 .user-list__skeleton {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 104px minmax(0, .8fr) 88px 188px;
+  /* Perfil es flexible: los nombres de perfil son largos ("CRISTIAN GAMBINO - ENCARGADO LOCAL") y en 104 px fijos
+     la pastilla se montaba sobre Sucursales. */
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, .9fr) 88px 188px;
   gap: var(--space-3);
   align-items: center;
   padding: 10px var(--space-4);
@@ -34,6 +36,8 @@
 .user-list__employee { font-size: 14px; color: var(--text); min-width: 0; overflow-wrap: anywhere; }
 .user-list__employee--none { color: var(--text-3); }
 .user-list__profile, .user-list__access { font-size: 14px; min-width: 0; }
+/* Si el nombre no entra, la pastilla baja de renglón en vez de desbordarse: no se esconde nada del perfil. */
+.user-list__profile .ui-badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .user-list__state { display: flex; }
 .user-list__status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .user-list__status--inactive { color: var(--text-2); }
