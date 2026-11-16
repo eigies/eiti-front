@@ -110,7 +110,8 @@
   animation: modal-in .18s ease both;
 }
 .line--head { padding: .25rem 0 .5rem; border-bottom: 1px solid var(--border-2); animation: none;}
-/* El cheque recibido pide seis datos: no entran en la columna de detalle, van en un renglón propio. */
+/* El cheque recibido pide seis datos; la tarjeta, banco + cuotas; la transferencia, banco + referencia.
+   No entran en la columna de detalle: van en un renglón propio. */
 @media (min-width: 1101px) {
   .line--fields { grid-template-areas: "idx med med amt rm" ". det det det ."; row-gap: .6rem;}
 }
@@ -134,7 +135,8 @@
 }
 .rm:hover { border-color: color-mix(in srgb, var(--danger) 45%, var(--border-2)); color: var(--danger);}
 
-.pair { display: grid; grid-template-columns: 1.3fr 1fr; gap: .5rem;}
+/* minmax(0, …): sin esto el par no se achica por debajo de su contenido y se monta sobre el importe. */
+.pair { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: .5rem;}
 .pair--single { grid-template-columns: 1fr;}
 .mini { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem;}
 .mini .label { font-size: 11px;}

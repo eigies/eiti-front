@@ -40,7 +40,7 @@
 
       <ng-container formArrayName="lines">
         <div class="line" *ngFor="let line of lines.controls; let i = index; trackBy: trackLine" [formGroupName]="i"
-             [class.line--fields]="isReceivedCheque(line) || isOwnCheque(line)" [class.line--invalid]="!!lineError(line)">
+             [class.line--fields]="detailOnOwnRow(line)" [class.line--invalid]="!!lineError(line)">
           <span class="l-idx">{{ i + 1 }}</span>
 
           <div class="l-med">
