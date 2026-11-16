@@ -3386,7 +3386,9 @@ button.pos-chip, .pos-chip .ch-sel__trigger { cursor: pointer; }
    ================================================================ */
 .sales-manage { display: grid; gap: 16px; }
 
-.sales-list { padding: 0; overflow: hidden; }
+/* Sin overflow:hidden: recortaba el menú "…" de las últimas filas y dejaba "Anular venta" fuera de alcance.
+   Las esquinas de abajo las redondea el último hijo (lista, paginador o vacío). */
+.sales-list { padding: 0; }
 .sales-list__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; }
 .sales-list__head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font: 600 18px/24px var(--font-sans); color: var(--text); }
 .sales-list__size { display: inline-flex; align-items: center; gap: 8px; font: 500 14px/20px var(--font-sans); color: var(--text-2); }
@@ -3513,6 +3515,12 @@ button.pos-chip, .pos-chip .ch-sel__trigger { cursor: pointer; }
 .sales-list .sale-card__details thead th { text-transform: none; letter-spacing: 0; font: 600 13px/18px var(--font-sans); color: var(--text-2); }
 .sales-list .sale-card__details td:nth-child(n+2), .sales-list .sale-card__details th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
 .sales-list .invoicing-bar { border-top-color: var(--border); }
+.sales-list > :last-child,
+.sales-list > .sales-stack:last-child > .sale-card:last-child,
+.sales-list > .sales-stack:last-child > .sale-card:last-child .sale-card__details {
+    border-bottom-left-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
+}
 .sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--search { flex: 1 1 170px; min-width: 150px; }
 /* 168 px es lo que ocupa el input de fecha nativo (dd/mm/aaaa + calendario): con menos se pisaba con el campo de al lado. */
 .sales-manage ::ng-deep .rep-filters__main > .ui-field.sales-f--date { flex: 0 0 168px; }
