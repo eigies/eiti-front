@@ -176,10 +176,10 @@ export function cancelInvoicingNotice(sale: {
     const invoice = `${fiscalDocumentLabel(sale.fiscalDocumentType)}${number ? ' ' + number : ''}`;
     switch (sale.invoicingStatus) {
         case 3:
-            return { text: `Esta venta tiene la ${invoice}. Al cancelarla se emite automáticamente la nota de crédito que la anula.`, tone: 'info' };
+            return { text: `Esta venta tiene la ${invoice}. Al anularla se emite automáticamente la nota de crédito que la anula.`, tone: 'info' };
         case 2:
             // Anular solo emite NC sobre una factura autorizada: si la que esta en tramite se autoriza despues, queda viva.
-            return { text: 'La factura de esta venta todavía está en trámite: la nota de crédito no se emite sola. Esperá a que se autorice antes de cancelar.', tone: 'warning' };
+            return { text: 'La factura de esta venta todavía está en trámite: la nota de crédito no se emite sola. Esperá a que se autorice antes de anularla.', tone: 'warning' };
         default:
             return null;
     }

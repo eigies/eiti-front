@@ -270,11 +270,11 @@ export class CashComponent implements OnInit {
 
         const confirmed = await this.confirmation.confirm({
             title: 'Abrir caja',
-            message: `Vas a abrir la caja con un monto inicial de $ ${this.formatCurrency(amount)}.`,
+            message: `Vas a abrir la caja con un monto inicial de ${this.formatCurrency(amount)}.`,
             detail: mismatch
-                ? `Atencion: el cierre anterior de esta caja fue de $ ${this.formatCurrency(suggested!)}. Si el monto inicial no coincide, revisalo antes de continuar.`
+                ? `Atención: el cierre anterior de esta caja fue de ${this.formatCurrency(suggested!)}. Si el monto inicial no coincide, revisalo antes de continuar.`
                 : this.loadingSuggestedOpening
-                    ? 'Todavia se esta consultando el cierre anterior. Confirma solo si el monto es el correcto.'
+                    ? 'Todavía se está consultando el cierre anterior. Confirmá solo si el monto es el correcto.'
                     : undefined,
             confirmLabel: 'Abrir caja',
             tone: mismatch || this.loadingSuggestedOpening ? 'warning' : 'neutral'
