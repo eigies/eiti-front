@@ -286,7 +286,7 @@ export class BranchesFacade {
     const confirmed = await this.confirmation.confirm({
       eyebrow: 'Traspaso realizado',
       title: 'Descargar constancia',
-      message: 'Queres descargar un PDF dejando constancia de este traspaso de stock?',
+      message: '¿Querés descargar un PDF que deje constancia de este traspaso de stock?',
       confirmLabel: 'Descargar PDF',
       cancelLabel: 'No, gracias',
       tone: 'neutral'

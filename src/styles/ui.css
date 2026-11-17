@@ -36,7 +36,8 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
 .ui-kbd { font: 500 12px/16px var(--font-mono); padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid currentColor; opacity: .7; }
 
 /* ── Field ────────────────────────────────────────── */
-.ui-field { display: grid; gap: 6px; min-width: 0; }
+/* align-content:start: si la fila es más alta (el campo de al lado muestra un error), el input no se estira. */
+.ui-field { display: grid; gap: 6px; min-width: 0; align-content: start; }
 .ui-field__label { font: 600 13px/18px var(--font-sans); color: var(--text-2); }
 .ui-field__label em { font-style: normal; font-weight: 500; color: var(--text-3); }
 .ui-field__hint { font: 500 12px/16px var(--font-sans); color: var(--text-3); }
