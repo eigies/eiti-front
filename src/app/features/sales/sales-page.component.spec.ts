@@ -19,7 +19,7 @@ import { OnboardingService } from '../../core/services/onboarding.service';
 import { PermissionCodes } from '../../core/models/permission.models';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.service';
-import { CcCancelRefundMode, CreateSaleRequest, SaleByIdResponse, SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
+import { CcCancelRefundMode, CreateSaleRequest, CreateSaleResponse, SaleByIdResponse, SaleFiscalReceiversResponse, SaleResponse } from '../../core/models/sale.models';
 import { ProductResponse } from '../../core/models/product.models';
 import { of, Subject, throwError } from 'rxjs';
 
@@ -903,6 +903,31 @@ describe('SalesPageComponent (price override)', () => {
 
                 expect(saleSpy.createSale).not.toHaveBeenCalled();
                 expect(toast.error).toHaveBeenCalledWith('Una venta en espera puede ser parcial, pero no superar el total.');
+            });
+
+            // MAT-4194/4195: el mismo alta llegó dos veces al back. Con el id de intento, el back devuelve la venta
+            // que ya creó; para eso un reintento de la MISMA venta tiene que repetir el id.
+            it('reintentar la misma venta después de un error repite el id de intento', async () => {
+                saleSpy.createSale.and.returnValues(throwError(() => ({ status: 0 })), of({} as CreateSaleResponse));
+
+                await component.createSale();
+                await component.createSale();
+
+                const [first, retry] = saleSpy.createSale.calls.allArgs().map(([request]: [CreateSaleRequest]) => request.clientRequestId);
+                expect(first).toEqual(jasmine.any(String));
+                expect(retry).toBe(first);
+            });
+
+            it('una venta creada libera el id: la siguiente lleva otro', async () => {
+                await component.createSale();
+                component.lineForm.patchValue({ branchId: 'branch-1', sourceChannel: 1 });
+                component.draftItems = [{ product: moura, quantity: 1, total: 100000 }];
+
+                await component.createSale();
+
+                const [first, next] = saleSpy.createSale.calls.allArgs().map(([request]: [CreateSaleRequest]) => request.clientRequestId);
+                expect(next).toEqual(jasmine.any(String));
+                expect(next).not.toBe(first);
             });
         });
 

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { extractApiError } from '../../../shared/utils/api-error.util';
+import { RequestAttempt } from '../../../shared/utils/request-attempt.util';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -80,6 +81,8 @@ export class SalesCcComponent implements OnInit {
 
   draftItems: DraftItem[] = [];
   saving = false;
+  /** Id del intento de alta CC: el mismo si se reintenta la misma venta, nuevo cuando se crea o cambia. */
+  private readonly createAttempt = new RequestAttempt();
 
   generalDiscountPercent = 0;
   manualOverridePrice: number | null = null;
@@ -633,10 +636,11 @@ export class SalesCcComponent implements OnInit {
 
     const request$ = this.convertingQuoteId
       ? this.quoteService.convertQuote(this.convertingQuoteId, { ...payload, withVat: this.convertWithVat })
-      : this.saleService.createCcSale(payload);
+      : this.saleService.createCcSale({ ...payload, clientRequestId: this.createAttempt.idFor(payload) });
 
     request$.subscribe({
       next: (res) => {
+        this.createAttempt.complete();
         this.saving = false;
         if (this.convertingQuoteId) {
           this.toast.success('Presupuesto convertido a venta CC exitosamente');
