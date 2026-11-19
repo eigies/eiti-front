@@ -16,7 +16,7 @@ import { EmployeeService } from '../../../../core/services/employee.service';
 import { VehicleService } from '../../../../core/services/vehicle.service';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { PendingTradeInService } from '../../../../shared/services/pending-trade-in.service';
-import { CustomerSearchItem } from '../../../../core/models/customer.models';
+import { CreateCustomerRequest, CustomerSearchItem } from '../../../../core/models/customer.models';
 import { ProductResponse, productPublicPrice } from '../../../../core/models/product.models';
 import { BranchResponse } from '../../../../core/models/branch.models';
 import { CashDrawerResponse } from '../../../../core/models/cash.models';
@@ -57,6 +57,12 @@ export class GuidedSaleFacade {
    * envio, confirmar de nuevo devuelve la misma venta en vez de crear otra.
    */
   private readonly createAttempt = new RequestAttempt();
+  /**
+   * Cliente nuevo que este alta ya creó. Si después fallan la venta o el envío y se vuelve a confirmar, se actualiza
+   * ese cliente en vez de crear otro: crearlo de nuevo chocaba con "Ya existe un cliente con ese email" y el reintento
+   * nunca llegaba a la venta (ni a su id de intento).
+   */
+  private createdCustomerId: string | null = null;
   customerMode: 'existing' | 'new' = 'existing';
   searchResults: CustomerSearchItem[] = [];
   selectedExistingCustomer: CustomerSearchItem | null = null;
@@ -142,7 +148,12 @@ export class GuidedSaleFacade {
   get selectedDrawerName(): string { return this.cashDrawers.find(drawer => drawer.id === this.saleForm.get('cashDrawerId')?.value)?.name || (this.cashDrawers.length > 0 ? 'Caja pendiente' : 'Sin caja abierta'); }
   get paymentMethodPreview(): string { return paymentMethodSummary(normalizeSalePayments(this.paymentState), normalizeSaleTradeIns(this.paymentState)); }
 
-  setCustomerMode(mode: 'existing' | 'new'): void { this.customerMode = mode; if (mode === 'new') { this.selectedExistingCustomer = null; } }
+  setCustomerMode(mode: 'existing' | 'new'): void {
+    // Cambiar de modo puede ser cargar a otra persona: el cliente ya creado no se reusa para no pisarle los datos.
+    if (mode !== this.customerMode) { this.createdCustomerId = null; }
+    this.customerMode = mode;
+    if (mode === 'new') { this.selectedExistingCustomer = null; }
+  }
   searchCustomers(): void {
     this.customerService.searchCustomers(this.searchForm.get('query')?.value || '').subscribe({
       next: customers => this.searchResults = customers,
@@ -275,7 +286,39 @@ export class GuidedSaleFacade {
     if (!await this.validateCurrentStep()) { return; }
     this.saving = true;
     if (this.customerMode === 'existing') { this.updateExistingCustomerAndCreateSale(); return; }
-    this.customerService.createCustomer({ firstName: String(this.customerForm.get('firstName')?.value || ''), lastName: String(this.customerForm.get('lastName')?.value || ''), email: String(this.customerForm.get('email')?.value || ''), phone: String(this.customerForm.get('phone')?.value || ''), documentType: Number(this.customerForm.get('documentType')?.value), documentNumber: String(this.customerForm.get('documentNumber')?.value || ''), taxId: this.nullIfEmpty(this.customerForm.get('taxId')?.value), address: { street: String(this.addressForm.get('street')?.value || ''), streetNumber: String(this.addressForm.get('streetNumber')?.value || ''), postalCode: String(this.addressForm.get('postalCode')?.value || ''), city: String(this.addressForm.get('city')?.value || ''), stateOrProvince: String(this.addressForm.get('stateOrProvince')?.value || ''), country: String(this.addressForm.get('country')?.value || ''), floor: this.nullIfEmpty(this.addressForm.get('floor')?.value), apartment: this.nullIfEmpty(this.addressForm.get('apartment')?.value), reference: this.nullIfEmpty(this.addressForm.get('reference')?.value) } }).subscribe({ next: customer => this.createSale(customer.id), error: err => { this.saving = false; this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el cliente'); } });
+    // Reintento de un alta que ya creó al cliente: se actualiza ese mismo (con lo que se haya corregido).
+    if (this.createdCustomerId) { this.updateCustomerAndCreateSale(this.createdCustomerId); return; }
+    this.customerService.createCustomer(this.customerRequest()).subscribe({
+      next: customer => {
+        this.createdCustomerId = customer.id;
+        this.createSale(customer.id);
+      },
+      error: err => { this.saving = false; this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo crear el cliente'); }
+    });
+  }
+
+  /** Datos del cliente tal como están en los pasos Datos y Domicilio (los mismos para el alta y la modificación). */
+  private customerRequest(): CreateCustomerRequest {
+    return {
+      firstName: String(this.customerForm.get('firstName')?.value || ''),
+      lastName: String(this.customerForm.get('lastName')?.value || ''),
+      email: String(this.customerForm.get('email')?.value || ''),
+      phone: String(this.customerForm.get('phone')?.value || ''),
+      documentType: Number(this.customerForm.get('documentType')?.value),
+      documentNumber: String(this.customerForm.get('documentNumber')?.value || ''),
+      taxId: this.nullIfEmpty(this.customerForm.get('taxId')?.value),
+      address: {
+        street: String(this.addressForm.get('street')?.value || ''),
+        streetNumber: String(this.addressForm.get('streetNumber')?.value || ''),
+        postalCode: String(this.addressForm.get('postalCode')?.value || ''),
+        city: String(this.addressForm.get('city')?.value || ''),
+        stateOrProvince: String(this.addressForm.get('stateOrProvince')?.value || ''),
+        country: String(this.addressForm.get('country')?.value || ''),
+        floor: this.nullIfEmpty(this.addressForm.get('floor')?.value),
+        apartment: this.nullIfEmpty(this.addressForm.get('apartment')?.value),
+        reference: this.nullIfEmpty(this.addressForm.get('reference')?.value)
+      }
+    };
   }
 
   private createSale(customerId: string | null): void {
@@ -311,27 +354,11 @@ export class GuidedSaleFacade {
       return;
     }
 
-    this.customerService.updateCustomer({
-      id: this.selectedExistingCustomer.id,
-      firstName: String(this.customerForm.get('firstName')?.value || ''),
-      lastName: String(this.customerForm.get('lastName')?.value || ''),
-      email: String(this.customerForm.get('email')?.value || ''),
-      phone: String(this.customerForm.get('phone')?.value || ''),
-      documentType: Number(this.customerForm.get('documentType')?.value),
-      documentNumber: String(this.customerForm.get('documentNumber')?.value || ''),
-      taxId: this.nullIfEmpty(this.customerForm.get('taxId')?.value),
-      address: {
-        street: String(this.addressForm.get('street')?.value || ''),
-        streetNumber: String(this.addressForm.get('streetNumber')?.value || ''),
-        postalCode: String(this.addressForm.get('postalCode')?.value || ''),
-        city: String(this.addressForm.get('city')?.value || ''),
-        stateOrProvince: String(this.addressForm.get('stateOrProvince')?.value || ''),
-        country: String(this.addressForm.get('country')?.value || ''),
-        floor: this.nullIfEmpty(this.addressForm.get('floor')?.value),
-        apartment: this.nullIfEmpty(this.addressForm.get('apartment')?.value),
-        reference: this.nullIfEmpty(this.addressForm.get('reference')?.value)
-      }
-    }).subscribe({
+    this.updateCustomerAndCreateSale(this.selectedExistingCustomer.id);
+  }
+
+  private updateCustomerAndCreateSale(customerId: string): void {
+    this.customerService.updateCustomer({ id: customerId, ...this.customerRequest() }).subscribe({
       next: updatedCustomer => this.createSale(updatedCustomer.id),
       error: err => {
         this.saving = false;
@@ -342,6 +369,7 @@ export class GuidedSaleFacade {
 
   private finish(): void {
     this.createAttempt.complete();
+    this.createdCustomerId = null;
     this.saving = false;
     const shouldSuggestWhatsApp = this.isPaid && this.whatsAppEnabled && this.customerHasPhone();
     this.toast.success(shouldSuggestWhatsApp ? 'Venta completa creada. El WhatsApp queda disponible para envio manual en Ventas.' : 'Venta completa creada');

@@ -18,13 +18,15 @@ import { VehicleService } from '../../../../core/services/vehicle.service';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { PendingTradeInService } from '../../../../shared/services/pending-trade-in.service';
 import { PermissionCodes } from '../../../../core/models/permission.models';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 describe('GuidedSalePage (price override)', () => {
     // El estado y las reglas viven en la facade; la página solo conecta.
   let component: GuidedSaleFacade;
     let authSpy: jasmine.SpyObj<AuthService>;
     let pendingTradeInSpy: jasmine.SpyObj<PendingTradeInService>;
+    let saleSpy: jasmine.SpyObj<SaleService>;
+    let customerSpy: jasmine.SpyObj<CustomerService>;
 
     function createMockService<T>(methods: string[]): jasmine.SpyObj<T> {
         return jasmine.createSpyObj(methods) as jasmine.SpyObj<T>;
@@ -34,10 +36,10 @@ describe('GuidedSalePage (price override)', () => {
         authSpy = jasmine.createSpyObj('AuthService', ['hasPermission', 'getToken', 'isAuthenticated'], { currentUser$: of(null), currentUser: null });
         const productSpy = createMockService<ProductService>(['listProducts']);
         (productSpy as any).listProducts.and.returnValue(of([]));
-        const saleSpy = createMockService<SaleService>(['createSale', 'createTransport']);
+        saleSpy = createMockService<SaleService>(['createSale', 'createTransport']);
         const companySpy = createMockService<CompanyService>(['getCurrentCompany']);
         (companySpy as any).getCurrentCompany.and.returnValue(of({}));
-        const customerSpy = createMockService<CustomerService>(['searchCustomers', 'createCustomer', 'getCustomerById', 'updateCustomer']);
+        customerSpy = createMockService<CustomerService>(['searchCustomers', 'createCustomer', 'getCustomerById', 'updateCustomer']);
         const branchSpy = createMockService<BranchService>(['listBranches']);
         (branchSpy as any).listBranches.and.returnValue(of([]));
         const cashSpy = createMockService<CashService>(['listCashDrawers']);
@@ -177,6 +179,40 @@ describe('GuidedSalePage (price override)', () => {
             ];
 
             await expectAsync((component as any).validatePaymentState()).toBeResolvedTo(false);
+        });
+    });
+
+    // Con cliente nuevo, confirmar de nuevo tras un error no crea otro cliente: actualiza el que ya creó y llega
+    // a la venta con el mismo id de intento (si la venta se había creado, el back devuelve esa).
+    describe('reintento de una venta con cliente nuevo', () => {
+        beforeEach(() => {
+            component.setCustomerMode('new');
+            spyOn(component as any, 'validateCurrentStep').and.resolveTo(true);
+            spyOn(component as any, 'buildSaleRequest').and.callFake((customerId: string | null) => ({ customerId, details: [] }));
+            customerSpy.createCustomer.and.returnValue(of({ id: 'c1' } as any));
+            customerSpy.updateCustomer.and.returnValue(of({ id: 'c1' } as any));
+            saleSpy.createSale.and.returnValue(throwError(() => ({ status: 0 })));
+        });
+
+        it('no vuelve a crear el cliente y manda el mismo id de intento', async () => {
+            await component.submit();
+            await component.submit();
+
+            expect(customerSpy.createCustomer).toHaveBeenCalledTimes(1);
+            expect(customerSpy.updateCustomer).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'c1' }));
+            const [first, second] = saleSpy.createSale.calls.allArgs().map(([request]) => request);
+            expect(second.customerId).toBe('c1');
+            expect(second.clientRequestId).toBe(first.clientRequestId);
+        });
+
+        it('si se cambia de modo, el cliente ya creado no se reusa', async () => {
+            await component.submit();
+            component.setCustomerMode('existing');
+            component.setCustomerMode('new');
+            await component.submit();
+
+            expect(customerSpy.createCustomer).toHaveBeenCalledTimes(2);
+            expect(customerSpy.updateCustomer).not.toHaveBeenCalled();
         });
     });
 });
