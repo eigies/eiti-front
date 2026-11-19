@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { extractApiError } from '../../../../shared/utils/api-error.util';
+import { RequestAttempt } from '../../../../shared/utils/request-attempt.util';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -51,6 +52,11 @@ export class GuidedSaleFacade {
   readonly permissionCodes = PermissionCodes;
   step = 1;
   saving = false;
+  /**
+   * Id del intento de alta. Se completa recien al terminar todo (venta + envio): si la venta se creo y fallo el
+   * envio, confirmar de nuevo devuelve la misma venta en vez de crear otra.
+   */
+  private readonly createAttempt = new RequestAttempt();
   customerMode: 'existing' | 'new' = 'existing';
   searchResults: CustomerSearchItem[] = [];
   selectedExistingCustomer: CustomerSearchItem | null = null;
@@ -280,7 +286,7 @@ export class GuidedSaleFacade {
       return;
     }
 
-    this.saleService.createSale(request).subscribe({
+    this.saleService.createSale({ ...request, clientRequestId: this.createAttempt.idFor(request) }).subscribe({
       next: sale => {
         if (!this.requiresDelivery) { this.finish(); return; }
         const transport = this.transportForm.getRawValue();
@@ -335,6 +341,7 @@ export class GuidedSaleFacade {
   }
 
   private finish(): void {
+    this.createAttempt.complete();
     this.saving = false;
     const shouldSuggestWhatsApp = this.isPaid && this.whatsAppEnabled && this.customerHasPhone();
     this.toast.success(shouldSuggestWhatsApp ? 'Venta completa creada. El WhatsApp queda disponible para envio manual en Ventas.' : 'Venta completa creada');

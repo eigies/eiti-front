@@ -302,6 +302,11 @@ export interface CreateSaleRequest {
     requestInvoicing?: boolean;
     /** Letra elegida por el vendedor; el back frena la venta si no coincide con el cliente. */
     invoiceLetter?: InvoiceLetter | null;
+    /**
+     * Id del intento de alta (ver RequestAttempt). Si el mismo pedido llega dos veces, el back devuelve la venta
+     * que creo el primero en vez de crear otra.
+     */
+    clientRequestId?: string | null;
 }
 
 export interface CreateSaleDetailRequest {
@@ -435,6 +440,8 @@ export interface CreateCcSaleRequest {
     requestInvoicing?: boolean;
     invoiceLetter?: InvoiceLetter | null;
     notes?: string | null;
+    /** Igual que en mostrador: id del intento de alta, para que un pedido repetido no cree otra venta. */
+    clientRequestId?: string | null;
 }
 
 export interface SaleTradeInDetail {

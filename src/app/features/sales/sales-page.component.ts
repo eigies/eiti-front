@@ -34,6 +34,7 @@ import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.serv
 import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
 import { CcCancelRefundOptionsComponent } from '../../shared/components/cc-cancel-refund-options/cc-cancel-refund-options.component';
 import { extractApiError } from '../../shared/utils/api-error.util';
+import { RequestAttempt } from '../../shared/utils/request-attempt.util';
 import { canDownloadSaleCreditNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import {
@@ -151,6 +152,8 @@ export class SalesPageComponent implements OnInit {
     loadingProducts = false;
     loadingSales = false;
     saving = false;
+    /** Id del intento de alta: el mismo si se reintenta la misma venta, nuevo cuando se crea o cambia. */
+    private readonly createAttempt = new RequestAttempt();
     savingEdit = false;
     showStaleCashSessionModal = false;
     showNoCashSessionModal = false;
@@ -953,8 +956,10 @@ if (invoicingIssue) {
 }
 
 this.saving = true;
-this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId, this.createAutoSurcharge)).subscribe({
+const request = this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId, this.createAutoSurcharge);
+this.saleService.createSale({ ...request, clientRequestId: this.createAttempt.idFor(request) }).subscribe({
     next: (response) => {
+        this.createAttempt.complete();
         this.notifySaleCreated(response);
         if ((response?.changeAmount ?? 0) > 0) {
             this.toast.show(`Vuelto a entregar: $${response.changeAmount!.toFixed(2)}`, 'info');
