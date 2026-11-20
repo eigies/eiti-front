@@ -1,0 +1,20 @@
+:host { display: grid; gap: 12px; }
+.rep-filters { display: grid; padding: 16px 20px; }
+.rep-filters__main { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.rep-filters__main ::ng-deep > .ui-field { flex: 0 1 170px; min-width: 140px; }
+.rep-filters__main ::ng-deep > .ui-field.rep-field--grow { flex: 1 1 220px; }
+/* Todos los controles de la fila miden --control-md, como los selectores y los botones. Con la fecha en 48 px
+   y la búsqueda en 46, align-items:flex-end dejaba cada etiqueta a una altura distinta. */
+.rep-filters__main ::ng-deep > .ui-field .ui-input { height: var(--control-md); min-height: var(--control-md); padding-top: 0; padding-bottom: 0; }
+/* El input de fecha nativo no se achica por debajo de su contenido: sin esto pinta encima del campo vecino. */
+.rep-filters__main ::ng-deep > .ui-field input[type="date"] { min-width: 0; }
+.rep-filters__spacer { flex: 1 1 0; }
+.rep-filters__actions { display: flex; gap: 8px; }
+.rep-filters__count { background: var(--brand); color: var(--on-brand); }
+.rep-filters__more { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px 16px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.rep-filters__more[hidden] { display: none; }
+.rep-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.rep-chips__label { font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.rep-chip { border: 0; cursor: pointer; min-height: 28px; }
+.rep-chip svg { width: 12px; height: 12px; stroke-width: 2.5; }
+.rep-chip:hover { filter: brightness(.96); }

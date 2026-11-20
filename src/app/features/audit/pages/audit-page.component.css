@@ -1,0 +1,7 @@
+.audit__filters { display: flex; align-items: flex-end; gap: 12px; padding: 16px 20px; flex-wrap: wrap; }
+.audit__user { flex: 1 1 220px; min-width: 0; }
+.audit__date { flex: 0 1 160px; }
+.audit__hint { flex-basis: 100%; }
+.audit__card { overflow: hidden; }
+.audit__export { display: flex; gap: 6px; }
+.audit__state { display: grid; gap: 12px; padding: 0 20px 20px; }

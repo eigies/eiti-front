@@ -1,0 +1,47 @@
+<ui-modal size="lg" eyebrow="Movimiento entre sucursales" heading="Traspaso de stock" [closable]="!saving" (closed)="closed.emit()">
+  <form id="stock-transfer-form" class="st" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <div class="st__route">
+      <label class="ui-field">
+        <span class="ui-field__label">Sale de</span>
+        <app-searchable-select formControlName="sourceBranchId" [options]="sourceOptions" placeholder="Sucursal de origen" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <span class="st__arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <label class="ui-field">
+        <span class="ui-field__label">Llega a</span>
+        <app-searchable-select formControlName="destinationBranchId" [options]="destinationOptions" placeholder="Sucursal de destino" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+    </div>
+
+    <label class="ui-field">
+      <span class="ui-field__label">Referencia <em>(opcional)</em></span>
+      <input class="ui-input" type="text" formControlName="description" placeholder="Motivo, responsable o número interno" />
+    </label>
+
+    <div class="st__lines" formArrayName="items">
+      <div class="st__line st__line--head" aria-hidden="true">
+        <span></span><span>Producto</span><span class="st__r">Cantidad</span><span class="st__r">Disponible</span><span></span>
+      </div>
+      <div class="st__line" *ngFor="let item of items.controls; let i = index" [formGroupName]="i">
+        <span class="st__idx">{{ i + 1 }}</span>
+        <app-searchable-select formControlName="productId" [options]="productOptionsFor(i)" placeholder="Seleccionar producto" searchPlaceholder="Buscar producto..." [ariaLabel]="'Producto ' + (i + 1)"></app-searchable-select>
+        <input class="ui-input ui-input--num" type="number" min="1" formControlName="quantity" [attr.aria-label]="'Cantidad del producto ' + (i + 1)" />
+        <span class="st__avail ui-num" [class.st__avail--over]="isOver(item)">
+          {{ stockLoading ? '...' : (availableFor(item.get('productId')?.value) === null ? '—' : availableFor(item.get('productId')?.value) + ' u') }}
+        </span>
+        <button class="ui-btn ui-btn--ghost ui-btn--icon ui-btn--sm" type="button" (click)="removeItem.emit(i)" [disabled]="items.length <= 1" title="Quitar producto" aria-label="Quitar producto">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <button class="ui-btn ui-btn--ghost ui-btn--sm st__add" type="button" (click)="addItem.emit()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Agregar producto
+      </button>
+    </div>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot st__foot">
+    <span class="st__summary">{{ items.length }} producto{{ items.length === 1 ? '' : 's' }} · {{ unitCount }} unidad{{ unitCount === 1 ? '' : 'es' }}</span>
+    <span class="st__actions">
+      <button uiBtn="ghost" type="button" [disabled]="saving" (click)="closed.emit()">Cancelar</button>
+      <button uiBtn="primary" type="submit" form="stock-transfer-form" [disabled]="saving">{{ saving ? 'Transfiriendo...' : 'Confirmar traspaso' }}</button>
+    </span>
+  </footer>
+</ui-modal>

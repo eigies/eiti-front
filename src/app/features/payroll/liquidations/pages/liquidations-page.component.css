@@ -1,0 +1,6 @@
+.liquidations__filters { display: flex; align-items: flex-end; gap: 12px; padding: 16px 20px; flex-wrap: wrap; }
+.liquidations__employee { flex: 1 1 220px; min-width: 0; }
+.liquidations__period { flex: 0 1 150px; }
+.liquidations__status { flex: 0 1 170px; }
+.liquidations__card { overflow: hidden; }
+.liquidations__state { display: grid; gap: 12px; padding: 20px; }

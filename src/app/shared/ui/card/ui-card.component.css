@@ -1,0 +1,4 @@
+:host { display: block; }
+.ui-card__titles { min-width: 0; }
+.ui-card__title { display: flex; align-items: center; gap: 10px; }
+.ui-card__body:first-child { padding-top: var(--space-5); }

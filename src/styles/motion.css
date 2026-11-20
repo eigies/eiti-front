@@ -1,0 +1,32 @@
+/*
+ * EITI 2 · movimiento. Rápido y con propósito; respeta "reducir movimiento".
+ * Popups: entran 180 ms subiendo 8 px, salen 120 ms. Mensajes: suben 220 ms.
+ * Sin animaciones de entrada de pantallas.
+ */
+:root {
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --dur-in: 180ms;
+  --dur-out: 120ms;
+}
+
+@keyframes ui-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-pop-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes ui-pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.98); } }
+@keyframes ui-toast-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes ui-toast-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(24px); } }
+@keyframes ui-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes ui-print { from { transform: translateY(-100%); } to { transform: none; } }
+@keyframes ui-row-in { from { opacity: 0; transform: translateY(-6px); background: var(--brand-soft); } 40% { opacity: 1; transform: none; background: var(--brand-soft); } to { background: transparent; } }
+
+.ui-overlay { animation: ui-backdrop-in var(--dur-in) ease-out; }
+.ui-modal { animation: ui-pop-in var(--dur-in) var(--ease-out); }
+.ui-modal.is-leaving { animation: ui-pop-out var(--dur-out) ease-in forwards; }
+.ui-modal.is-shaking { animation: ui-shake 300ms ease-in-out; }
+.ui-toast { animation: ui-toast-in 220ms var(--ease-out); }
+.ui-toast.is-leaving { animation: ui-toast-out var(--dur-out) ease-in forwards; }
+.ui-receipt.is-printing { animation: ui-print 600ms steps(18, end); }
+.ui-row-new { animation: ui-row-in 1.2s var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+}

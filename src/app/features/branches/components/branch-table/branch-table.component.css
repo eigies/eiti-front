@@ -1,0 +1,12 @@
+:host { display: block; }
+.br-scroll { overflow-x: auto; }
+.br-table { min-width: 720px; }
+.br-table th:first-child, .br-table th:last-child { border-radius: 0; }
+.br-table tbody tr:last-child td { border-bottom: 0; }
+.br-sub { display: block; font: 400 13px/18px var(--font-sans); color: var(--text-3); }
+.br-code { font: 500 14px/20px var(--font-mono); }
+.br-inv .br-sub { margin-top: 2px; }
+.br-actions { white-space: nowrap; text-align: right; }
+.br-actions .ui-btn { min-height: 40px; }
+.br-actions .ui-btn--icon { width: 40px; }
+.br-actions .ui-btn svg { width: 16px; height: 16px; }

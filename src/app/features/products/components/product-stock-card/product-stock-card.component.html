@@ -1,0 +1,85 @@
+<ui-card heading="Stock por sucursal">
+  <div class="psc">
+    <div class="psc__main">
+      <label class="ui-field psc__branch">
+        <span class="ui-field__label">Sucursal</span>
+        <app-searchable-select [ngModel]="branchId" (ngModelChange)="branchChange.emit($event)" [options]="branchOptions" placeholder="Seleccionar sucursal" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+
+      <div class="ui-banner" *ngIf="!branchId">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+        <div><strong>Seleccioná una sucursal para continuar</strong>Elegí la sucursal donde querés consultar o cargar stock.</div>
+      </div>
+
+      <div class="ui-stats" *ngIf="stock">
+        <div class="ui-stat"><span class="ui-stat__label">Stock</span><strong class="ui-stat__value">{{ stock.onHandQuantity }}</strong></div>
+        <button class="ui-stat" type="button" [disabled]="stock.reservedQuantity <= 0" (click)="openReservations.emit()">
+          <span class="ui-stat__label">Reservado</span>
+          <strong class="ui-stat__value">{{ stock.reservedQuantity }}</strong>
+          <span class="ui-stat__hint" *ngIf="stock.reservedQuantity > 0">Ver detalle</span>
+        </button>
+        <div class="ui-stat ui-stat--success"><span class="ui-stat__label">Disponible</span><strong class="ui-stat__value">{{ stock.availableQuantity }}</strong></div>
+      </div>
+
+      <div class="psc__pricing" *ngIf="stock && canManageStock">
+        <span class="ui-field__label">Precio / costo de esta sucursal <em>(vacío = usa el valor global del producto)</em></span>
+        <div class="psc__pricing-grid">
+          <label class="ui-field">
+            <span class="ui-field__label">Precio venta (sucursal)</span>
+            <input class="ui-input ui-input--num" type="number" [ngModel]="pricingPrice" (ngModelChange)="pricingPriceChange.emit($event)" [placeholder]="'Global: ' + (stock.price | number:'1.2-2')" />
+          </label>
+          <label class="ui-field" *ngIf="canViewCostPrice">
+            <span class="ui-field__label">Costo (sucursal)</span>
+            <input class="ui-input ui-input--num" type="number" [ngModel]="pricingCost" (ngModelChange)="pricingCostChange.emit($event)" [placeholder]="'Global: ' + ((stock.costPrice || 0) | number:'1.2-2')" />
+          </label>
+        </div>
+        <button uiBtn="secondary" size="sm" type="button" class="psc__start" [disabled]="pricingSaving" (click)="savePricing.emit()">{{ pricingSaving ? 'Guardando...' : 'Guardar precio/costo' }}</button>
+      </div>
+
+      <div class="ui-banner ui-banner--warning" *ngIf="!canManageStock">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <div><strong>No tenés permiso para cargar stock</strong>Solo podés consultar el stock. Pedile a un administrador el permiso de carga de stock.</div>
+      </div>
+
+      <fieldset class="psc__fs" [disabled]="!branchId || !canManageStock">
+        <form class="psc__move" [formGroup]="stockForm" (ngSubmit)="submitStock.emit()" novalidate>
+          <label class="ui-field"><span class="ui-field__label">Movimiento</span><app-searchable-select formControlName="type" [options]="movementOptions" placeholder="Movimiento" searchPlaceholder="Buscar movimiento..."></app-searchable-select></label>
+          <label class="ui-field"><span class="ui-field__label">Cantidad</span><input class="ui-input ui-input--num" type="number" formControlName="quantity" /></label>
+          <label class="ui-field"><span class="ui-field__label">Descripción <em>(opcional)</em></span><input class="ui-input" type="text" formControlName="description" /></label>
+          <button uiBtn="primary" type="submit" class="psc__start" [disabled]="saving || !branchId">{{ saving ? 'Guardando...' : 'Guardar stock' }}</button>
+        </form>
+      </fieldset>
+    </div>
+
+    <div class="psc__history">
+      <span class="ui-field__label">Movimientos</span>
+      <ng-container *ngIf="movements.length > 0; else noMovements">
+        <ng-container *ngFor="let movement of movements; trackBy: trackById">
+          <button *ngIf="clickable(movement); else plainRow" class="psc__mov psc__mov--link" type="button" [attr.aria-label]="label(movement.type) + ' · ' + hint(movement)" (click)="openMovement.emit(movement)">
+            <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: movement }"></ng-container>
+            <svg class="psc__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+          <ng-template #plainRow>
+            <div class="psc__mov">
+              <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: movement }"></ng-container>
+              <span class="psc__chev"></span>
+            </div>
+          </ng-template>
+        </ng-container>
+      </ng-container>
+      <ng-template #noMovements>
+        <ui-empty *ngIf="branchId && !loading" icon="clock" text="Sin movimientos para esta sucursal."></ui-empty>
+        <ui-empty *ngIf="!branchId" icon="clock" text="Elegí una sucursal para ver sus movimientos."></ui-empty>
+      </ng-template>
+    </div>
+  </div>
+</ui-card>
+
+<ng-template #rowBody let-movement>
+  <ui-mov-pill [kind]="kind(movement.type)" [label]="label(movement.type)"></ui-mov-pill>
+  <span class="psc__mov-copy">
+    <span>{{ movement.description || 'Sin descripción' }}</span>
+    <span class="ui-num psc__mov-meta"><ng-container *ngIf="movement.referenceCode">{{ movement.referenceCode }} · </ng-container>{{ movement.createdAt | date:'dd/MM/yy HH:mm' }}</span>
+  </span>
+  <strong class="ui-num psc__qty" [class.psc__qty--pos]="tone(movement) === 'pos'" [class.psc__qty--neg]="tone(movement) === 'neg'" [class.psc__qty--res]="tone(movement) === 'reserved'">{{ sign(movement) }}{{ movement.quantity }}</strong>
+</ng-template>

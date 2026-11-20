@@ -6,10 +6,12 @@ import { SupplierListItem, UpdateSupplierRequest } from '../../core/models/suppl
 import { ToastService } from '../../shared/services/toast.service';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 
+import { UiAvatarComponent, UiButtonComponent, UiEmptyComponent, UiModalComponent } from '../../shared/ui';
+
 @Component({
   selector: 'app-suppliers',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, UiAvatarComponent, UiButtonComponent, UiEmptyComponent, UiModalComponent],
   templateUrl: './suppliers.component.html',
   styleUrls: ['./suppliers.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

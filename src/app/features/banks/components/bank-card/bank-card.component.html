@@ -1,0 +1,31 @@
+<article class="bc ui-card" [class.bc--off]="!active">
+  <header class="bc__head">
+    <div class="bc__who">
+      <strong class="bc__name">{{ bank.name }}</strong>
+      <div class="bc__uses">
+        <span class="ui-mov ui-mov--transfer-out" *ngIf="bank.useForCard">Tarjetas</span>
+        <span class="ui-mov ui-mov--transfer-in" *ngIf="bank.useForTransfer">Transferencias</span>
+        <span class="ui-mov ui-mov--supplier" *ngIf="bank.useForCheque">Cheques</span>
+        <span class="bc__none" *ngIf="!bank.useForCard && !bank.useForTransfer && !bank.useForCheque">Sin usos</span>
+      </div>
+    </div>
+    <div class="bc__actions">
+      <label class="ui-switch"><input type="checkbox" [checked]="active" (change)="toggleActive.emit()" /><span class="ui-switch__track"></span>{{ active ? 'Activo' : 'Inactivo' }}</label>
+      <button uiBtn="ghost" size="sm" [iconOnly]="true" type="button" [attr.aria-label]="'Editar ' + bank.name" (click)="edit.emit()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
+      <button *ngIf="bank.useForCard" uiBtn="secondary" size="sm" type="button" [attr.aria-expanded]="expanded" (click)="toggleExpand.emit()">
+        Planes de cuotas<svg class="bc__chev" [class.bc__chev--open]="expanded" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="bc__plans" *ngIf="expanded && planForm && bank.useForCard" [formGroup]="planForm">
+    <div class="bc__plan" *ngFor="let n of cuotas" [class.bc__plan--on]="planActive(n)">
+      <div class="bc__plan-head">
+        <strong><span class="ui-num">{{ n }}</span> {{ n === 1 ? 'cuota' : 'cuotas' }}</strong>
+        <label class="ui-switch bc__plan-switch"><input type="checkbox" [formControl]="control('active_' + n)" /><span class="ui-switch__track"></span><span class="ui-sr-only">Plan activo</span></label>
+      </div>
+      <label class="ui-field"><span class="ui-field__label">Recargo %</span><input class="ui-input ui-input--sm ui-input--num" type="number" min="0" max="100" step="0.01" [formControl]="control('pct_' + n)" /></label>
+      <button uiBtn="ghost" size="sm" type="button" [disabled]="savingPlan" (click)="savePlan.emit(n)">Guardar</button>
+    </div>
+  </div>
+</article>

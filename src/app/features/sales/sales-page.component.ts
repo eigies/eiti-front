@@ -34,6 +34,7 @@ import { SaleFiscalPdfService } from '../../shared/services/sale-fiscal-pdf.serv
 import { SaleNotesComponent } from '../../shared/components/sale-notes/sale-notes.component';
 import { CcCancelRefundOptionsComponent } from '../../shared/components/cc-cancel-refund-options/cc-cancel-refund-options.component';
 import { extractApiError } from '../../shared/utils/api-error.util';
+import { RequestAttempt } from '../../shared/utils/request-attempt.util';
 import { canDownloadSaleCreditNote, canDownloadSaleInvoice } from '../../shared/utils/sale-fiscal-documents.util';
 import { ConfirmationService } from '../../shared/services/confirmation.service';
 import {
@@ -77,6 +78,8 @@ import {
 } from '../../core/models/sale-payment.models';
 import { emptySaleDiscountDraft, QuickSaleStage, SaleDiscountDraft, SalesPageMode, SaleUiAction } from './sales-page-ui.models';
 import { ProductPickerModalComponent } from '../../shared/components/product-picker-modal/product-picker-modal.component';
+import { ReportChip, ReportChipDef, ReportFiltersComponent, clearReportFilter, reportChips } from '../../shared/components/filter-bar';
+import { UiButtonComponent, UiEmptyComponent, UiModalComponent } from '../../shared/ui';
 import { ProductPickerRow, ProductPickerSelection, toProductPickerRow } from '../../shared/components/product-picker-modal/product-picker-modal.models';
 
 /** El back pide elegir que hacer con lo cobrado de una venta CC antes de anularla. */
@@ -110,7 +113,11 @@ function localDateString(date = new Date()): string {
         SalesManagementComponent,
         SaleListItemComponent,
         SaleDiscountControlComponent,
-        ProductPickerModalComponent
+        ProductPickerModalComponent,
+        ReportFiltersComponent,
+        UiButtonComponent,
+        UiEmptyComponent,
+        UiModalComponent
     ],
     templateUrl: './sales-page.component.html',
     styleUrls: ['./sales-page.component.css']
@@ -145,6 +152,8 @@ export class SalesPageComponent implements OnInit {
     loadingProducts = false;
     loadingSales = false;
     saving = false;
+    /** Id del intento de alta: el mismo si se reintenta la misma venta, nuevo cuando se crea o cambia. */
+    private readonly createAttempt = new RequestAttempt();
     savingEdit = false;
     showStaleCashSessionModal = false;
     showNoCashSessionModal = false;
@@ -191,6 +200,8 @@ export class SalesPageComponent implements OnInit {
     editOriginalDiscountPercent = 0;
     activeMode: SalesPageMode = 'sell';
     activeCreateStage: QuickSaleStage = 'config';
+    /** Muestra contacto y observaciones aunque la venta sea con retiro. */
+    showCreateContact = false;
     showOnboardingCompleteNotice = false;
     infoModal: { title: string; rows: Array<{ label: string; value: string }> } | null = null;
     cancelSaleModal: SaleResponse | null = null;
@@ -234,7 +245,7 @@ export class SalesPageComponent implements OnInit {
     readonly transportStatusOptions: SearchableSelectOption[] = [
         { value: 'pending', label: 'Pendiente' },
         { value: '1', label: 'Asignado' },
-        { value: '2', label: 'En transito' },
+        { value: '2', label: 'En tránsito' },
         { value: '3', label: 'Entregado' },
         { value: '4', label: 'Cancelado' }
     ];
@@ -945,8 +956,10 @@ if (invoicingIssue) {
 }
 
 this.saving = true;
-this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId, this.createAutoSurcharge)).subscribe({
+const request = this.buildRequest(this.lineForm, this.draftItems, this.createPaymentState, this.createCustomerId, this.createAutoSurcharge);
+this.saleService.createSale({ ...request, clientRequestId: this.createAttempt.idFor(request) }).subscribe({
     next: (response) => {
+        this.createAttempt.complete();
         this.notifySaleCreated(response);
         if ((response?.changeAmount ?? 0) > 0) {
             this.toast.show(`Vuelto a entregar: $${response.changeAmount!.toFixed(2)}`, 'info');
@@ -965,6 +978,7 @@ this.saleService.createSale(this.buildRequest(this.lineForm, this.draftItems, th
         this.createCustomerSuggestions = [];
         this.showCreateCustomerResults = false;
         this.activeCreateStage = 'config';
+        this.showCreateContact = false;
         this.saving = false;
         this.currentSalesPage = 1;
         this.loadDrawers(branchId, true);
@@ -1356,7 +1370,7 @@ private cancelSale(
             this.cancelingSaleId = null;
             this.cancelSaleModal = null;
             this.fiscalReceiversBySaleId.delete(sale.id);
-            this.toast.success('Venta cancelada');
+            this.toast.success('Venta anulada');
             this.loadSales();
         },
         error: async err => {
@@ -1364,7 +1378,7 @@ private cancelSale(
             if (!cancelLinkedCreditNotes && hasActiveLinkedCreditNotes(err)) {
                 this.cancelSaleModal = null;
                 const confirmed = await this.confirmation.confirm(
-                    linkedCreditNotesConfirmation(err, 'Cancelar la venta y sus notas de crédito'));
+                    linkedCreditNotesConfirmation(err, 'Anular la venta y sus notas de crédito'));
                 if (confirmed) this.cancelSale(sale, refundMode, confirmInvoiceReceiver, true);
                 return;
             }
@@ -1380,7 +1394,7 @@ private cancelSale(
                 this.loadCancelSaleCcPaid(sale);
                 return;
             }
-            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo cancelar la venta');
+            this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo anular la venta');
         }
     });
 }
@@ -1485,7 +1499,7 @@ this.saleService.deleteTransport(this.transportingSale.id).subscribe({
     next: () => {
         this.currentTransport = null;
         this.transportForm.reset({ driverEmployeeId: '', vehicleId: '', notes: '' });
-        this.toast.success('Transporte desvinculado');
+        this.toast.success('Transporte quitado');
         this.loadSales();
     },
     error: err => this.toast.error(err?.error?.detail || err?.error?.message || 'No se pudo quitar el transporte')
@@ -1716,7 +1730,7 @@ transportStatusLabel(status ?: number | null, fallback ?: string | null): string
         case 1:
             return 'Asignado';
         case 2:
-            return 'En transito';
+            return 'En tránsito';
         case 3:
             return 'Entregado';
         case 4:
@@ -1841,6 +1855,29 @@ trackBySale(_: number, sale: SaleResponse): string {
     return sale.id;
 }
 
+/** Barra de filtros (presentación): "Más filtros" abierto o cerrado. */
+salesMoreFiltersOpen = false;
+
+private get saleChipDefs(): ReportChipDef[] {
+    return [
+        { key: 'invoicingStatus', label: 'Facturación', options: this.invoicingFilterOptions, empty: '' },
+        { key: 'productId', label: 'Producto', options: this.productFilterOptions, empty: '' },
+        { key: 'transportStatus', label: 'Transporte', options: this.transportStatusOptions, empty: '' },
+        { key: 'phone', label: 'Teléfono', empty: '' },
+        { key: 'deliveryAddress', label: 'Dirección', empty: '' }
+    ];
+}
+
+/** Etiquetas de los filtros de "Más filtros" que están activos. */
+get saleFilterChips(): ReportChip[] {
+    return reportChips(this.filterForm, this.saleChipDefs);
+}
+
+removeSaleFilterChip(key: string): void {
+    clearReportFilter(this.filterForm, this.saleChipDefs, key);
+    this.applySaleFilters();
+}
+
 applySaleFilters(): void {
     this.currentSalesPage = 1;
     this.loadSales();
@@ -1871,6 +1908,23 @@ changeSalesPageSize(rawPageSize: string): void {
 this.salesPageSize = parsedPageSize;
 this.currentSalesPage = 1;
     }
+
+/** Atajos del mostrador: F2 busca producto, F9 confirma la venta. */
+@HostListener('document:keydown', ['$event'])
+handleSellShortcuts(event: KeyboardEvent): void {
+    if (this.activeMode !== 'sell' || event.defaultPrevented) return;
+    if (event.key === 'F2') {
+        if (this.createProductModalOpen || !this.auth.hasPermission(this.permissionCodes.salesCreate)) return;
+        event.preventDefault();
+        this.openCreateProductModal();
+        return;
+    }
+    if (event.key === 'F9') {
+        if (this.createProductModalOpen || this.saving || this.draftItems.length === 0) return;
+        event.preventDefault();
+        this.createSale();
+    }
+}
 
 @HostListener('document:click', ['$event'])
 handleDocumentClick(event: MouseEvent): void {

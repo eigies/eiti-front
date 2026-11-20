@@ -1,0 +1,27 @@
+<main class="ui-page accounts" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Cuentas corrientes</h1>
+      <p>Lo que te deben y lo que tienen a favor tus clientes.</p>
+    </div>
+  </header>
+
+  <div class="accounts__search">
+    <label class="ui-search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="ui-input" type="search" aria-label="Buscar cliente" placeholder="Buscar cliente…" [(ngModel)]="f.search" (keyup.enter)="f.applySearch()" />
+    </label>
+    <button uiBtn="secondary" type="button" (click)="f.applySearch()">Filtrar</button>
+    <button uiBtn="ghost" type="button" (click)="f.clearSearch()">Limpiar</button>
+  </div>
+
+  <ui-card [flush]="true" class="accounts__card">
+    <div class="accounts__state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <ng-container *ngIf="!f.loading">
+      <div class="accounts__state" *ngIf="f.filteredAccounts.length === 0">
+        <ui-empty icon="search" text="No hay clientes para los filtros seleccionados."></ui-empty>
+      </div>
+      <app-account-list-table *ngIf="f.filteredAccounts.length > 0" [accounts]="f.filteredAccounts" [withDebt]="f.conDeuda" (open)="f.openAccount($event)"></app-account-list-table>
+    </ng-container>
+  </ui-card>
+</main>

@@ -1,12 +1,18 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
-import { PermissionCodes } from '../../../core/models/permission.models';
 import { CompanyService } from '../../../core/services/company.service';
+import { NAV_GROUPS, NavChild, NavGroup, NavItem } from './nav.config';
 
+const RAIL_KEY = 'eiti_nav_rail';
+
+/**
+ * Menú lateral EITI 2: fijo a la izquierda en escritorio (se puede achicar a riel),
+ * cajón deslizable en tablet y celular. Las rutas y los permisos son los de siempre.
+ */
 @Component({
   selector: 'app-navbar',
   standalone: true,
@@ -16,20 +22,13 @@ import { CompanyService } from '../../../core/services/company.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  readonly permissionCodes = PermissionCodes;
   companyName = 'Sin compania';
   sidebarOpen = false;
-  salesMenuOpen = false;
-  clientsMenuOpen = false;
-  cashMenuOpen = false;
-  purchasesMenuOpen = false;
-  payrollMenuOpen = false;
-  reportsSalesMenuOpen = false;
-  reportsStockMenuOpen = false;
-  reportsFinanceMenuOpen = false;
-  reportsAuditMenuOpen = false;
+  rail = false;
+  url = '';
 
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
     public auth: AuthService,
@@ -39,47 +38,61 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.salesMenuOpen = this.router.url.startsWith('/sales');
-    this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
-    this.cashMenuOpen = this.router.url.startsWith('/cash');
-    this.purchasesMenuOpen = this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
-    this.payrollMenuOpen = this.router.url.startsWith('/payroll') || this.router.url.startsWith('/employees');
-    this.syncReportSubmenus(this.router.url);
+    this.url = this.router.url;
+    this.rail = this.readRail();
+    this.syncBodyClasses();
 
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
       if (event instanceof NavigationEnd) {
+        this.url = event.urlAfterRedirects || event.url;
         this.closeSidebar();
-        if (event.url.startsWith('/sales')) {
-          this.salesMenuOpen = true;
-        }
-        if (event.url.startsWith('/customers') || event.url.startsWith('/clients')) {
-          this.clientsMenuOpen = true;
-        }
-        if (event.url.startsWith('/cash')) {
-          this.cashMenuOpen = true;
-        }
-        if (event.url.startsWith('/purchases') || event.url.startsWith('/suppliers')) {
-          this.purchasesMenuOpen = true;
-        }
-        if (event.url.startsWith('/payroll') || event.url.startsWith('/employees')) {
-          this.payrollMenuOpen = true;
-        }
-        this.syncReportSubmenus(event.url);
+        this.cdr.markForCheck();
       }
     });
 
     this.companyService.getCurrentCompany().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: company => {
-        this.companyName = company.name;
-      },
-      error: () => {
-        this.companyName = 'Sin compania';
-      }
+      next: company => { this.companyName = company.name; this.cdr.markForCheck(); },
+      error: () => { this.companyName = 'Sin compania'; this.cdr.markForCheck(); }
     });
   }
 
   ngOnDestroy(): void {
-    document.body.classList.remove('sidebar-open');
+    document.body.classList.remove('sidebar-open', 'nav-shell', 'nav-rail');
+  }
+
+  get groups(): NavGroup[] {
+    const can = (code: string) => this.auth.hasPermission(code);
+    return NAV_GROUPS
+      .map(group => ({
+        ...group,
+        items: group.items
+          .filter(item => !item.visible || item.visible(can))
+          .map(item => ({ ...item, children: item.children?.filter(child => !child.visible || child.visible(can)) }))
+          .filter(item => !!item.link || (item.children?.length ?? 0) > 0)
+      }))
+      .filter(group => group.items.length > 0);
+  }
+
+  linkOf(item: NavItem): string {
+    return item.link ?? item.children?.[0]?.link ?? '/dashboard';
+  }
+
+  isActive(item: NavItem): boolean {
+    const path = this.url.split('?')[0];
+    return item.match.some(prefix => path === prefix || path.startsWith(prefix + '/'));
+  }
+
+  isChildActive(child: NavChild): boolean {
+    const path = this.url.split('?')[0];
+    return child.exact ? path === child.link : path === child.link || path.startsWith(child.link + '/');
+  }
+
+  get brandIcon(): string {
+    return this.theme.isDarkTheme ? 'assets/brand/eiti-icon-dark.svg' : 'assets/brand/eiti-icon-light.svg';
+  }
+
+  trackByLabel(_: number, entry: { label: string | null }): string | null {
+    return entry.label;
   }
 
   logout(): void {
@@ -90,155 +103,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleSidebar(): void {
     this.sidebarOpen = !this.sidebarOpen;
-    if (this.sidebarOpen) {
-      this.salesMenuOpen = this.router.url.startsWith('/sales');
-      this.clientsMenuOpen = this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
-      this.purchasesMenuOpen = this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
-      this.payrollMenuOpen = this.router.url.startsWith('/payroll') || this.router.url.startsWith('/employees');
-    }
-    document.body.classList.toggle('sidebar-open', this.sidebarOpen);
+    this.syncBodyClasses();
   }
 
   closeSidebar(): void {
     this.sidebarOpen = false;
-    document.body.classList.remove('sidebar-open');
+    this.syncBodyClasses();
   }
 
-  toggleSalesMenu(): void {
-    this.salesMenuOpen = !this.salesMenuOpen;
-  }
-
-  toggleClientsMenu(): void {
-    this.clientsMenuOpen = !this.clientsMenuOpen;
-  }
-
-  toggleCashMenu(): void {
-    this.cashMenuOpen = !this.cashMenuOpen;
-  }
-
-  togglePurchasesMenu(): void {
-    this.purchasesMenuOpen = !this.purchasesMenuOpen;
-  }
-
-  togglePayrollMenu(): void {
-    this.payrollMenuOpen = !this.payrollMenuOpen;
-  }
-
-  toggleReportsSalesMenu(): void {
-    this.reportsSalesMenuOpen = !this.reportsSalesMenuOpen;
-  }
-
-  toggleReportsStockMenu(): void {
-    this.reportsStockMenuOpen = !this.reportsStockMenuOpen;
-  }
-
-  toggleReportsFinanceMenu(): void {
-    this.reportsFinanceMenuOpen = !this.reportsFinanceMenuOpen;
-  }
-
-  toggleReportsAuditMenu(): void {
-    this.reportsAuditMenuOpen = !this.reportsAuditMenuOpen;
-  }
-
-  get isReportsSalesRouteActive(): boolean {
-    const url = this.router.url;
-    return url.startsWith('/reportes/ventas') || url.startsWith('/reportes/comparativo');
-  }
-
-  get isReportsStockRouteActive(): boolean {
-    const url = this.router.url;
-    return url.startsWith('/reportes/stock') || url.startsWith('/reportes/movimientos-stock');
-  }
-
-  get isReportsFinanceRouteActive(): boolean {
-    const url = this.router.url;
-    return url.startsWith('/reportes/deudores') || url.startsWith('/reportes/caja') || url.startsWith('/reportes/medios-pago');
-  }
-
-  get isReportsAuditRouteActive(): boolean {
-    return this.router.url.startsWith('/auditoria');
-  }
-
-  get hasAnyReportsSalesPermission(): boolean {
-    const p = this.permissionCodes;
-    return [
-      p.reportsSalesDailyControl, p.reportsSalesModel, p.reportsSalesBrand, p.reportsSalesChannel,
-      p.reportsSalesChannelBrand, p.reportsSalesTransport, p.reportsSalesRanking, p.reportsSalesComparison,
-      p.reportsWholesaleByCustomer, p.reportsSalesTradeIns, p.reportsSalesDiscounts
-    ].some(code => this.auth.hasPermission(code));
-  }
-
-  get hasAnyReportsStockPermission(): boolean {
-    return this.auth.hasPermission(this.permissionCodes.reportsStock);
-  }
-
-  get hasAnyReportsFinancePermission(): boolean {
-    const p = this.permissionCodes;
-    return [p.reportsDebtors, p.reportsCash, p.reportsPayments].some(code => this.auth.hasPermission(code));
-  }
-
-  get hasReportsAuditPermission(): boolean {
-    return this.auth.hasPermission(this.permissionCodes.reportsAudit);
-  }
-
-  /** Abre el subgrupo de reportería que contiene la ruta activa (mantiene los demás como estén). */
-  private syncReportSubmenus(url: string): void {
-    if (url.startsWith('/reportes/ventas') || url.startsWith('/reportes/comparativo')) {
-      this.reportsSalesMenuOpen = true;
-    }
-    if (url.startsWith('/reportes/stock') || url.startsWith('/reportes/movimientos-stock')) {
-      this.reportsStockMenuOpen = true;
-    }
-    if (url.startsWith('/reportes/deudores') || url.startsWith('/reportes/caja') || url.startsWith('/reportes/medios-pago')) {
-      this.reportsFinanceMenuOpen = true;
-    }
-    if (url.startsWith('/auditoria')) {
-      this.reportsAuditMenuOpen = true;
-    }
-  }
-
-  get isCashRouteActive(): boolean {
-    return this.router.url.startsWith('/cash');
-  }
-
-  get isSalesRouteActive(): boolean {
-    return this.router.url.startsWith('/sales');
-  }
-
-  get isClientsRouteActive(): boolean {
-    return this.router.url.startsWith('/customers') || this.router.url.startsWith('/clients');
-  }
-
-  get isPurchasesRouteActive(): boolean {
-    return this.router.url.startsWith('/purchases') || this.router.url.startsWith('/suppliers');
-  }
-
-  get isPayrollRouteActive(): boolean {
-    return this.router.url.startsWith('/payroll') || this.router.url.startsWith('/employees');
-  }
-
-  get hasAnyPayrollPermission(): boolean {
-    const p = this.permissionCodes;
-    return [
-      p.payrollManage,
-      p.payrollAdvancesManage,
-      p.payrollLiquidationsGenerate,
-      p.payrollLiquidationsPay
-    ].some(code => this.auth.hasPermission(code));
-  }
-
-  get hasAnyReportsPermission(): boolean {
-    const p = this.permissionCodes;
-    return [
-      p.reportsAudit, p.reportsSalesModel, p.reportsSalesComparison, p.reportsSalesTransport,
-      p.reportsSalesChannel, p.reportsSalesChannelBrand, p.reportsSalesBrand, p.reportsSalesRanking,
-      p.reportsSalesDailyControl, p.reportsDebtors, p.reportsCash, p.reportsStock, p.reportsPayments,
-      p.reportsWholesaleByCustomer, p.reportsSalesTradeIns, p.reportsSalesDiscounts
-    ].some(code => this.auth.hasPermission(code));
+  toggleRail(): void {
+    this.rail = !this.rail;
+    try { localStorage.setItem(RAIL_KEY, this.rail ? '1' : '0'); } catch { /* sin almacenamiento */ }
+    this.syncBodyClasses();
   }
 
   @HostListener('document:keydown.escape')
   handleEscape(): void {
     this.closeSidebar();
+  }
+
+  private readRail(): boolean {
+    try { return localStorage.getItem(RAIL_KEY) === '1'; } catch { return false; }
+  }
+
+  private syncBodyClasses(): void {
+    const body = document.body.classList;
+    body.add('nav-shell');
+    body.toggle('nav-rail', this.rail);
+    body.toggle('sidebar-open', this.sidebarOpen);
   }
 }

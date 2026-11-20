@@ -1,0 +1,4 @@
+.accounts__search { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.accounts__search .ui-search { flex: 1; min-width: 240px; }
+.accounts__card { overflow: hidden; }
+.accounts__state { display: grid; gap: var(--space-3); padding: var(--space-5); }

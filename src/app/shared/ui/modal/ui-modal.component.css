@@ -1,0 +1,20 @@
+:host { position: fixed; inset: 0; z-index: 1200; }
+.ui-overlay { position: absolute; inset: 0; padding: 0; }
+.ui-overlay.is-leaving { animation: ui-backdrop-out var(--dur-out) ease-in forwards; }
+.ui-modal-shell { position: absolute; inset: 0; display: grid; place-items: start center; padding: 72px var(--space-6) var(--space-6); overflow: auto; }
+/* La ventana no tiene alto máximo (el que scrollea es el shell), así que el overflow de la ventana y del cuerpo
+   nunca scrolleaba: solo recortaba. Y recortaba la lista de los combos (app-searchable-select, position:absolute)
+   en traspaso de stock, transporte y cualquier popup con un combo cerca del final. */
+.ui-modal { position: relative; max-height: none; outline: none; overflow: visible; }
+.ui-modal__body { overflow: visible; }
+/* Sin el recorte, las esquinas de abajo las redondea el pie, que tiene fondo propio. */
+.ui-modal > ::ng-deep .ui-modal__foot { border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+.ui-modal--sm { width: min(100%, 480px); }
+.ui-modal__heading { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
+.ui-modal__eyebrow { display: block; margin-bottom: 2px; font: 600 12px/16px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--brand-text); }
+.ui-modal__icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: var(--radius-lg); background: var(--danger-soft); color: var(--danger); }
+.ui-modal__icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ui-modal__head .ui-btn--icon svg { width: 18px; height: 18px; }
+.ui-modal--danger .ui-modal__body:empty { display: none; }
+@keyframes ui-backdrop-out { to { opacity: 0; } }
+@media (max-width: 720px) { .ui-modal-shell { padding: var(--space-4); } }

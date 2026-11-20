@@ -1,0 +1,9 @@
+:host { display: inline-flex; flex: none; }
+.ui-avatar { display: inline-grid; place-items: center; border-radius: 50%; font-family: var(--font-sans); font-weight: 700; line-height: 1; }
+.ui-avatar--teal { background: var(--mov-teal-soft); color: var(--mov-teal); }
+.ui-avatar--indigo { background: var(--mov-indigo-soft); color: var(--mov-indigo); }
+.ui-avatar--orange { background: var(--mov-orange-soft); color: var(--mov-orange); }
+.ui-avatar--purple { background: var(--mov-purple-soft); color: var(--mov-purple); }
+.ui-avatar--cyan { background: var(--mov-cyan-soft); color: var(--mov-cyan); }
+.ui-avatar--pink { background: var(--mov-pink-soft); color: var(--mov-pink); }
+.ui-avatar--lime { background: var(--mov-lime-soft); color: var(--mov-lime); }

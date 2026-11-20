@@ -1,0 +1,15 @@
+<ui-modal [eyebrow]="editing ? 'Edición de vehículo' : 'Alta de vehículo'" [heading]="editing ? 'Editar vehículo' : 'Nuevo vehículo'" (closed)="closed.emit()">
+  <form id="vehicle-form" class="tm" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <label class="ui-field"><span class="ui-field__label">Patente</span><input class="ui-input ui-num" type="text" formControlName="plate" placeholder="AB 123 CD" /></label>
+    <label class="ui-field"><span class="ui-field__label">Modelo</span><input class="ui-input" type="text" formControlName="model" /></label>
+    <label class="ui-field"><span class="ui-field__label">Marca <em>(opcional)</em></span><input class="ui-input" type="text" formControlName="brand" /></label>
+    <label class="ui-field"><span class="ui-field__label">Año <em>(opcional)</em></span><input class="ui-input ui-input--num" type="number" formControlName="year" /></label>
+    <label class="ui-field"><span class="ui-field__label">Combustible</span><app-searchable-select formControlName="fuelType" [options]="fuelOptions" placeholder="Combustible" searchPlaceholder="Buscar..."></app-searchable-select></label>
+    <label class="ui-field"><span class="ui-field__label">Conductor <em>(opcional)</em></span><app-searchable-select formControlName="assignedDriverEmployeeId" [options]="driverOptions" [allowClear]="true" clearLabel="Sin conductor" clearValue="" placeholder="Sin conductor" searchPlaceholder="Buscar conductor..."></app-searchable-select>
+      <span class="ui-field__hint">Solo aparecen conductores activos con licencia vigente.</span></label>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="vehicle-form" [disabled]="saving">{{ saving ? 'Guardando...' : (editing ? 'Guardar cambios' : 'Crear vehículo') }}</button>
+  </footer>
+</ui-modal>

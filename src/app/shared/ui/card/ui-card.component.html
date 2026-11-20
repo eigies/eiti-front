@@ -1,0 +1,11 @@
+<header class="ui-card__head" *ngIf="heading">
+  <div class="ui-card__titles">
+    <h2 class="ui-card__title">{{ heading }}<span class="ui-count" *ngIf="count !== null">{{ count }}</span></h2>
+    <p class="ui-card__sub" *ngIf="sub">{{ sub }}</p>
+  </div>
+  <ng-content select="[uiCardActions]"></ng-content>
+</header>
+<div [class.ui-card__body]="!flush">
+  <ng-content></ng-content>
+</div>
+<ng-content select="[uiCardFoot]"></ng-content>

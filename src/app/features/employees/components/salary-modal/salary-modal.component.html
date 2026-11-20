@@ -1,0 +1,23 @@
+<ui-modal size="sm" eyebrow="Empleados" heading="Sueldo" [closable]="!saving" (closed)="closed.emit()">
+  <form id="salary-form" class="sal" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <div class="sal__who">
+      <ui-avatar [name]="employee.fullName" [key]="employee.id" [size]="44"></ui-avatar>
+      <div><strong>{{ employee.fullName }}</strong><span>{{ employee.employeeRoleName }}</span></div>
+    </div>
+    <div class="sal__grid">
+      <label class="ui-field">
+        <span class="ui-field__label">Sueldo base</span>
+        <input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="baseSalary" />
+      </label>
+      <label class="ui-field">
+        <span class="ui-field__label">Periodicidad</span>
+        <app-searchable-select formControlName="payrollPeriodicity" [options]="periodicities" [allowClear]="true" clearLabel="Sin periodicidad" [clearValue]="null" placeholder="Sin periodicidad" searchPlaceholder="Buscar periodicidad..."></app-searchable-select>
+      </label>
+    </div>
+    <span class="ui-field__error" *ngIf="form.errors?.['payrollPeriodicityRequired'] && form.touched">Elegí la periodicidad para el sueldo base.</span>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="salary-form" [disabled]="form.invalid || saving">{{ saving ? 'Guardando...' : 'Guardar' }}</button>
+  </footer>
+</ui-modal>

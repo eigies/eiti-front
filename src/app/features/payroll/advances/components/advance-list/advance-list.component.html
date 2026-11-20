@@ -1,0 +1,25 @@
+<div class="ui-table-scroll">
+  <table class="ui-table advance-table">
+    <thead>
+      <tr><th>Empleado</th><th>Fecha</th><th class="is-num">Monto</th><th>Pago</th><th>Notas</th><th>Estado</th><th><span class="ui-sr-only">Acciones</span></th></tr>
+    </thead>
+    <tbody>
+      <tr class="advance-item" *ngFor="let advance of advances; trackBy: trackById">
+        <td>
+          <div class="advance-who">
+            <ui-avatar [name]="nameOf(advance.employeeId)" [key]="advance.employeeId" [size]="32"></ui-avatar>
+            <span class="ui-table__main advance-row__name">{{ nameOf(advance.employeeId) }}</span>
+          </div>
+        </td>
+        <td class="advance-date ui-num">{{ advance.date | date:'dd/MM/yyyy' }}</td>
+        <td class="is-num advance-amount">{{ advance.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+        <td class="advance-pay">{{ payOf(advance) }}</td>
+        <td class="advance-notes">{{ advance.notes || 'Sin notas' }}</td>
+        <td><span [class]="badgeOf(advance.status)">{{ statusOf(advance.status) }}</span></td>
+        <td class="advance-actions">
+          <button *ngIf="canManage && advance.status === 1" class="ui-btn ui-btn--danger-ghost ui-btn--sm" type="button" [disabled]="cancellingId === advance.id" (click)="cancel.emit(advance)">Cancelar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

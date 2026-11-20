@@ -18,7 +18,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccessProfileResponse } from '../../../../core/models/access-profile.models';
 import { PermissionCatalog as DefaultPermissionCatalog } from '../../../../core/models/permission.models';
-import { AccessPanelMode, AccessProfileDraft } from '../../users-ui.models';
+import { AccessPanelMode, AccessProfileDraft, buildPermissionModules } from '../../users-ui.models';
 import { PermissionMatrixComponent } from '../permission-matrix/permission-matrix.component';
 
 type PermissionCatalogEntry = Readonly<{
@@ -75,6 +75,13 @@ export class AccessProfilePanelComponent implements OnChanges, AfterViewInit, On
   get actionLabel(): string {
     if (this.saving) return 'Guardando…';
     return this.mode === 'create' ? 'Crear perfil' : 'Guardar perfil';
+  }
+
+  /** Cuántos módulos tienen al menos un permiso elegido (resumen de la izquierda). */
+  get selectedModuleCount(): number {
+    const selected = new Set(this.selectedCodes);
+    return buildPermissionModules(this.permissionCatalog, this.selectedCodes, '', true)
+      .filter(module => module.codes.some(code => selected.has(code))).length;
   }
 
   get permissionsDirty(): boolean {

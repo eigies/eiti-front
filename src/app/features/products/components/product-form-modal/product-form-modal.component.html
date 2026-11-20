@@ -1,0 +1,60 @@
+<ui-modal eyebrow="Alta de producto" heading="Nuevo producto" size="lg" width="960px" (closed)="closed.emit()">
+  <form id="product-create-form" class="pfm" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <div class="pfm__main">
+      <section class="pfm__section">
+        <h3 class="pfm__title">Identidad</h3>
+        <div class="pfm__grid">
+          <label class="ui-field" [class.ui-field--error]="invalid('code')"><span class="ui-field__label">Código</span><input class="ui-input ui-input--code" type="text" formControlName="code" /></label>
+          <label class="ui-field" [class.ui-field--error]="invalid('sku')"><span class="ui-field__label">SKU</span><input class="ui-input ui-input--code" type="text" formControlName="sku" /></label>
+          <label class="ui-field" [class.ui-field--error]="invalid('brand')"><span class="ui-field__label">Marca</span><input class="ui-input" type="text" formControlName="brand" /></label>
+          <label class="ui-field" [class.ui-field--error]="invalid('name')"><span class="ui-field__label">Nombre</span><input class="ui-input" type="text" formControlName="name" /></label>
+          <label class="ui-field"><span class="ui-field__label">Categoría</span><app-searchable-select formControlName="category" [options]="categoryOptions" [allowClear]="true" clearLabel="Sin categoría" [clearValue]="null" placeholder="Sin categoría" searchPlaceholder="Buscar categoría..."></app-searchable-select></label>
+          <label class="ui-field" [class.ui-field--error]="invalid('description')"><span class="ui-field__label">Descripción <em>(opcional)</em></span><input class="ui-input" type="text" formControlName="description" /></label>
+        </div>
+      </section>
+
+      <section class="pfm__section">
+        <div class="pfm__row">
+          <h3 class="pfm__title">Precios</h3>
+          <div class="ui-segmented" role="radiogroup" aria-label="Modo de precio">
+            <label><input type="radio" name="createPriceMode" [checked]="priceMode === 'public'" (change)="priceModeChange.emit('public')" /><span>Precio público</span></label>
+            <label *ngIf="canViewCostPrice"><input type="radio" name="createPriceMode" [checked]="priceMode === 'margin'" [disabled]="manual" (change)="priceModeChange.emit('margin')" /><span>Margen</span></label>
+          </div>
+        </div>
+        <div class="pfm__grid pfm__grid--3">
+          <label class="ui-field" *ngIf="priceMode === 'public'" [class.ui-field--error]="invalid('publicPrice')"><span class="ui-field__label">Precio público</span><input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="publicPrice" /></label>
+          <label class="ui-field" *ngIf="canViewCostPrice" [class.ui-field--error]="invalid('costPrice')"><span class="ui-field__label">Precio costo</span><input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="costPrice" (input)="syncFromMargin()" /></label>
+          <label class="ui-field" *ngIf="priceMode === 'margin'"><span class="ui-field__label">Margen %</span><input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="marginPercent" (input)="syncFromMargin()" /></label>
+          <label class="ui-field" [class.ui-field--error]="invalid('unitPrice')"><span class="ui-field__label">Precio unitario <em>(opcional)</em></span><input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="unitPrice" /></label>
+        </div>
+        <span class="ui-field__error" *ngIf="priceMode === 'margin' && invalid('publicPrice')">Ingresá el precio de costo para calcular el precio público.</span>
+      </section>
+
+      <section class="pfm__section">
+        <h3 class="pfm__title">Configuración de venta</h3>
+        <label class="ui-switch">
+          <input type="checkbox" formControlName="allowsManualSaleValue" (change)="manualSaleValueChange.emit($any($event.target).checked)" />
+          <span class="ui-switch__track"></span>Parte de pago / canje
+        </label>
+        <span class="ui-field__hint" *ngIf="manual">Se guarda con precio 0. El valor se define al momento de la venta.</span>
+        <label class="ui-field pfm__narrow" [class.ui-field--error]="invalid('noDeliverySurcharge')">
+          <span class="ui-field__label">Cargo si no entrega en canje <em>(opcional)</em></span>
+          <input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="noDeliverySurcharge" />
+          <span class="ui-field__hint">Vacío = usa el valor global. Un monto = sobreescribe el cargo global para este producto.</span>
+        </label>
+      </section>
+    </div>
+
+    <ui-ticket class="pfm__ticket" label="Radar comercial" [figure]="manual ? 'En venta' : (price | currency:'ARS':'symbol-narrow':'1.2-2')">
+      <span class="pfm__ticket-meta" *ngIf="canViewCostPrice">
+        <span>Costo <b class="ui-num">{{ cost | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></span>
+        <span>Margen <b class="ui-num pfm__margin">{{ margin | number:'1.0-0' }}%</b></span>
+      </span>
+    </ui-ticket>
+  </form>
+
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="product-create-form" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar producto' }}</button>
+  </footer>
+</ui-modal>

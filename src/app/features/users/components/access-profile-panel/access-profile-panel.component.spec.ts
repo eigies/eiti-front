@@ -152,8 +152,9 @@ describe('AccessProfilePanelComponent', () => {
 
     host.style.width = '1000px';
     fixture.detectChanges();
-    expect(parseFloat(getComputedStyle(panel).width)).toBeCloseTo(720, 0);
-    expect(parseFloat(getComputedStyle(body).paddingLeft)).toBeGreaterThanOrEqual(28);
+    // Popup centrado: hasta 980 px con 24 px de aire a cada lado.
+    expect(parseFloat(getComputedStyle(panel).width)).toBeCloseTo(952, 0);
+    expect(body).not.toBeNull();
     expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
   });
 });

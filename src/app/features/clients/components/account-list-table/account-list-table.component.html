@@ -1,0 +1,21 @@
+<ui-table-wrap>
+  <table class="ui-table alt">
+    <thead>
+      <tr><th>Cliente</th><th>Teléfono</th><th class="is-num">Saldo a favor</th><th class="is-num">Saldo pendiente</th><th><span class="ui-sr-only">Abrir</span></th></tr>
+    </thead>
+    <tbody>
+      <tr class="is-clickable" *ngFor="let a of accounts; trackBy: trackById" (click)="open.emit(a.customerId)">
+        <td><div class="alt__client"><ui-avatar [name]="a.name" [key]="a.customerId" [size]="36"></ui-avatar><span class="ui-table__main">{{ a.name }}</span></div></td>
+        <td class="ui-num alt__phone">{{ a.phone || '—' }}</td>
+        <td class="is-num"><span [class.alt__favor]="a.saldoAFavor > 0" [class.alt__zero]="a.saldoAFavor <= 0">{{ a.saldoAFavor | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></td>
+        <td class="is-num"><span [class.alt__due]="a.saldoPendiente > 0" [class.alt__zero]="a.saldoPendiente <= 0">{{ a.saldoPendiente | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></td>
+        <td class="alt__open"><button uiBtn="ghost" size="sm" type="button" (click)="open.emit(a.customerId); $event.stopPropagation()">Abrir<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></td>
+      </tr>
+    </tbody>
+  </table>
+</ui-table-wrap>
+<footer class="alt__foot">
+  <span><strong class="ui-num">{{ accounts.length }}</strong> {{ accounts.length === 1 ? 'cliente' : 'clientes' }}</span>
+  <span aria-hidden="true">·</span>
+  <span class="ui-badge" [class.ui-badge--danger]="withDebt > 0">{{ withDebt }} con saldo pendiente</span>
+</footer>

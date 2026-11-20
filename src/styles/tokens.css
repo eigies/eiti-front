@@ -1,0 +1,123 @@
+/* EITI 2 · tokens de diseño (fuente: sistema de diseño EITI 2). Claro por defecto; oscuro grafito con [data-theme="dark"]. */
+:root, [data-theme="light"] {
+  --bg: #f7f5f1;
+  --surface: #ffffff;
+  --surface-sunken: #efece6;
+  --surface-hover: #f3f0ea;
+  --text: #1f1b16;
+  --text-2: #574f44;
+  --text-3: #6b6357;
+  --border: #e3ded5;
+  --border-control: #8f877a;
+  --brand: #f59e0b;
+  --brand-hover: #e08e00;
+  --brand-soft: #fdf0d5;
+  --on-brand: #1f1b16;
+  --brand-text: #8f5500;
+  --success: #1e7a3c;
+  --success-soft: #e3f3e7;
+  --danger: #c42b1c;
+  --danger-soft: #fbe6e3;
+  --on-danger: #ffffff;
+  --warning: #a34a00;
+  --warning-soft: #fcecdc;
+  --info: #1d5fbf;
+  --info-soft: #e3edfb;
+  --focus: #b86e00;
+  --overlay: rgba(31, 27, 22, 0.40);
+  --mov-indigo: #4338ca;
+  --mov-indigo-soft: #e0e7ff;
+  --mov-cyan: #0e7490;
+  --mov-cyan-soft: #cffafe;
+  --mov-teal: #0f766e;
+  --mov-teal-soft: #ccfbf1;
+  --mov-orange: #c2410c;
+  --mov-orange-soft: #ffedd5;
+  --mov-purple: #7e22ce;
+  --mov-purple-soft: #f3e8ff;
+  --mov-fuchsia: #a21caf;
+  --mov-fuchsia-soft: #fae8ff;
+  --mov-pink: #be185d;
+  --mov-pink-soft: #fce7f3;
+  --mov-lime: #4d7c0f;
+  --mov-lime-soft: #ecfccb;
+  --mov-slate: #475569;
+  --mov-slate-soft: #e2e8f0;
+  --shadow-1: 0 1px 2px rgba(31, 27, 22, 0.06), 0 1px 3px rgba(31, 27, 22, 0.08);
+  --shadow-2: 0 6px 16px rgba(31, 27, 22, 0.12);
+  --shadow-3: 0 20px 48px rgba(31, 27, 22, 0.20);
+}
+/* body sin .theme-light = oscuro, para que los estilos viejos (que miran la clase del body) y los tokens coincidan siempre. */
+[data-theme="dark"],
+body:not(.theme-light) {
+  --bg: #1d1f23;
+  --surface: #26292e;
+  --surface-sunken: #17191c;
+  --surface-hover: #2f3238;
+  --text: #eceef1;
+  --text-2: #b8bdc6;
+  --text-3: #9aa0aa;
+  --border: #363a41;
+  --border-control: #6b717b;
+  --brand: #f5a524;
+  --brand-hover: #ffb43d;
+  --brand-soft: #3a2f1a;
+  --on-brand: #1d1f23;
+  --brand-text: #f5a524;
+  --success: #4ade80;
+  --success-soft: #16301f;
+  --danger: #ff6b5e;
+  --danger-soft: #3a1a17;
+  --on-danger: #1d1f23;
+  --warning: #ffb15c;
+  --warning-soft: #3a2611;
+  --info: #6ca8ff;
+  --info-soft: #15233a;
+  --focus: #f5a524;
+  --overlay: rgba(0, 0, 0, 0.60);
+  --mov-indigo: #a5b4fc;
+  --mov-indigo-soft: #23264a;
+  --mov-cyan: #67e8f9;
+  --mov-cyan-soft: #0f3038;
+  --mov-teal: #5eead4;
+  --mov-teal-soft: #0f302c;
+  --mov-orange: #fdba74;
+  --mov-orange-soft: #3a2210;
+  --mov-purple: #d8b4fe;
+  --mov-purple-soft: #2e1b42;
+  --mov-fuchsia: #f0abfc;
+  --mov-fuchsia-soft: #3a1a3d;
+  --mov-pink: #f9a8d4;
+  --mov-pink-soft: #3d1a2b;
+  --mov-lime: #bef264;
+  --mov-lime-soft: #26300f;
+  --mov-slate: #cbd5e1;
+  --mov-slate-soft: #262b33;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 20px rgba(0, 0, 0, 0.5);
+  --shadow-3: 0 24px 56px rgba(0, 0, 0, 0.6);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+  --control-md: 44px;
+  --control-lg: 56px;
+  --row-cart: 52px;
+  --font-sans: Figtree, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+/* Controles nativos (casillas, fechas, barras) con el esquema del tema. */
+:root, [data-theme="light"] { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }

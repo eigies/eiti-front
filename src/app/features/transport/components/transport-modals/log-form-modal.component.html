@@ -1,0 +1,14 @@
+<ui-modal eyebrow="Registro de flota" heading="Nuevo registro" [sub]="'Vehículo ' + plate" (closed)="closed.emit()">
+  <form id="log-form" class="tm" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <label class="ui-field"><span class="ui-field__label">Tipo</span><app-searchable-select formControlName="type" [options]="typeOptions" placeholder="Tipo" searchPlaceholder="Buscar tipo..."></app-searchable-select></label>
+    <label class="ui-field"><span class="ui-field__label">Fecha y hora</span><input class="ui-input" type="datetime-local" formControlName="occurredAt" /></label>
+    <label class="ui-field"><span class="ui-field__label">Odómetro <em>(opcional)</em></span><input class="ui-input ui-input--num" type="number" formControlName="odometer" /></label>
+    <label class="ui-field"><span class="ui-field__label">Litros <em>(opcional)</em></span><input class="ui-input ui-input--num" type="number" formControlName="fuelLiters" /></label>
+    <label class="ui-field"><span class="ui-field__label">Costo <em>(opcional)</em></span><input class="ui-input ui-input--num" type="number" formControlName="fuelCost" /></label>
+    <label class="ui-field tm__wide"><span class="ui-field__label">Descripción</span><input class="ui-input" type="text" formControlName="description" /></label>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="log-form">Guardar registro</button>
+  </footer>
+</ui-modal>

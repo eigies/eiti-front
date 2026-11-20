@@ -1,0 +1,78 @@
+<main class="ui-page cash-report" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Finanzas</span>
+      <h1>Movimientos de caja por motivo</h1>
+      <p>Ingresos manuales, salidas, pases entre cajas y gastos registrados en el período.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.search()" novalidate>
+    <app-report-filters [canApply]="!f.filterForm.invalid" [showClear]="false" [chips]="chips" (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateFrom')"><span class="ui-field__label">Desde</span><input class="ui-input" type="date" formControlName="dateFrom" /></label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateTo')"><span class="ui-field__label">Hasta</span><input class="ui-input" type="date" formControlName="dateTo" /></label>
+      <label reportMain class="ui-field rep-field--grow" *ngIf="f.branches.length > 1"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="!f.loading && f.data">
+    <ui-ticket class="ui-ticket--compact" label="Total de movimientos" [figure]="f.data.totalGeneral | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="ui-ticket__sub">{{ movementCount }} {{ movementCount === 1 ? 'movimiento' : 'movimientos' }} en el período</span>
+    </ui-ticket>
+    <div class="rep-stat"><span class="rep-stat__label">Motivos</span><strong class="rep-stat__value">{{ f.data.categories.length }}</strong><span class="rep-stat__hint">Abrí cada uno para ver el detalle</span></div>
+  </div>
+
+  <ui-card heading="Por motivo" [count]="f.data ? f.data.categories.length : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="!f.data"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+    </div>
+
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.hasSearched && f.data && f.data.categories.length === 0">
+      <ui-empty icon="search" heading="No hay movimientos en el período"></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.data && f.data.categories.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table cash-rep">
+          <thead><tr><th>Motivo</th><th class="is-num">Movimientos</th><th class="is-num">Total</th><th><span class="ui-sr-only">Detalle</span></th></tr></thead>
+          <tbody>
+            <ng-container *ngFor="let cat of f.data.categories">
+              <tr class="is-clickable" [class.cash-rep__open]="f.expanded[cat.typeCode]" (click)="f.toggle(cat.typeCode)">
+                <td class="rep-main">{{ cat.motivo }}</td>
+                <td class="is-num">{{ cat.count }}</td>
+                <td class="is-num rep-main">{{ cat.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                <td class="cash-rep__toggle">
+                  <button class="ui-btn ui-btn--ghost ui-btn--icon ui-btn--sm" type="button" [attr.aria-expanded]="!!f.expanded[cat.typeCode]" [attr.aria-label]="(f.expanded[cat.typeCode] ? 'Ocultar ' : 'Ver ') + cat.motivo" (click)="$event.stopPropagation(); f.toggle(cat.typeCode)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                </td>
+              </tr>
+              <tr class="cash-rep__open" *ngIf="f.expanded[cat.typeCode]">
+                <td colspan="4" class="cash-rep__detail">
+                  <table class="ui-table cash-rep__items" *ngIf="cat.items.length > 0">
+                    <thead><tr><th>Fecha</th><th>Descripción</th><th>Usuario</th><th class="is-num">Monto</th></tr></thead>
+                    <tbody>
+                      <tr *ngFor="let it of cat.items">
+                        <td class="rep-date">{{ f.formatDate(it.date) }}</td>
+                        <td>{{ it.description }}</td>
+                        <td class="rep-dim">{{ it.userName || 'Sistema' }}</td>
+                        <td class="is-num rep-main">{{ it.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p class="cash-rep__none" *ngIf="cat.items.length === 0">Sin movimientos en este motivo para el período.</p>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+          <tfoot>
+            <tr><td>Total</td><td class="is-num">{{ movementCount }}</td><td class="is-num">{{ f.data.totalGeneral | currency:'ARS':'symbol-narrow':'1.2-2' }}</td><td></td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </ng-container>
+  </ui-card>
+</main>

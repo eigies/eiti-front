@@ -1,0 +1,39 @@
+<ui-modal size="md" eyebrow="Movimiento interno" [heading]="loading ? 'Cargando traspaso' : 'Traspaso de stock'" (closed)="closed.emit()">
+  <div class="td-loading" *ngIf="loading" aria-live="polite">
+    <span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span>
+    <p>Cargando datos del movimiento…</p>
+  </div>
+
+  <ng-container *ngIf="!loading && transfer as t">
+    <div class="td-route" aria-label="Ruta del traspaso">
+      <div class="td-stop"><span class="td-stop__label">Origen</span><strong>{{ t.fromBranchName || 'Sucursal de origen' }}</strong></div>
+      <svg class="td-route__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg>
+      <div class="td-stop"><span class="td-stop__label">Destino</span><strong>{{ t.toBranchName || 'Sucursal de destino' }}</strong></div>
+    </div>
+
+    <dl class="td-facts">
+      <div><dt>Fecha y hora</dt><dd>{{ date }}</dd></div>
+      <div><dt>Productos</dt><dd class="ui-num">{{ t.items.length }}</dd></div>
+      <div><dt>Unidades</dt><dd class="ui-num">{{ totalQuantity }}</dd></div>
+    </dl>
+
+    <div class="td-note" *ngIf="t.description"><span>Nota del movimiento</span><p>{{ t.description }}</p></div>
+
+    <div class="ui-table-wrap td-items">
+      <table class="ui-table">
+        <thead><tr><th>Producto</th><th class="is-num">Cantidad</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let it of t.items">
+            <td><strong>{{ it.brand }} {{ it.name }}</strong><span class="td-code ui-num">{{ it.code }}</span></td>
+            <td class="is-num ui-num">{{ qty(it.quantity) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+
+  <footer uiModalFoot class="ui-modal__foot td-foot">
+    <span *ngIf="!loading && transfer">Stock actualizado en ambas sucursales</span>
+    <button uiBtn="secondary" type="button" (click)="closed.emit()">Cerrar</button>
+  </footer>
+</ui-modal>

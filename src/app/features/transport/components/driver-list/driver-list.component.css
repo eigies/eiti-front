@@ -1,0 +1,6 @@
+.dl th:first-child, .dl td:first-child { padding-left: var(--space-5); }
+.dl th:last-child, .dl td:last-child { padding-right: var(--space-5); }
+.dl__who { display: flex; align-items: center; gap: var(--space-3); }
+.dl__expired { color: var(--danger); font-weight: 600; }
+.dl__note { display: block; margin-top: 4px; font-size: 13px; color: var(--danger); }
+.dl__actions { display: flex; justify-content: flex-end; gap: var(--space-1); }

@@ -1,0 +1,53 @@
+<ui-modal eyebrow="Detalle de venta" [heading]="heading" size="lg" width="720px" [closable]="escapeCloses" (closed)="closed.emit()">
+  <div class="sdm__loading" *ngIf="loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+
+  <div class="sdm" *ngIf="!loading && sale as s">
+    <div class="sdm__meta">
+      <span class="ui-badge" [ngClass]="badge">{{ statusLabel }}</span>
+      <span class="ui-num">{{ s.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+
+    <div class="sdm__downloads">
+      <button *ngIf="flags.canDownloadPriced" uiBtn="secondary" size="sm" type="button" (click)="downloadPriced.emit()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Comprobante con precios</button>
+      <button uiBtn="secondary" size="sm" type="button" (click)="downloadRemito.emit()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Remito sin precios</button>
+      <button *ngIf="flags.canDownloadInvoice" uiBtn="secondary" size="sm" type="button" title="Descargar la factura en PDF" (click)="downloadFiscal.emit('invoice')">Factura</button>
+      <button *ngIf="flags.canDownloadCreditNote" uiBtn="secondary" size="sm" type="button" title="Descargar la nota de crédito en PDF" (click)="downloadFiscal.emit('creditNote')">Nota de crédito</button>
+      <button *ngIf="flags.canDownloadDebitNote" uiBtn="secondary" size="sm" type="button" title="Descargar la nota de débito en PDF" (click)="downloadFiscal.emit('debitNote')">Nota de débito</button>
+      <button *ngIf="(s.ccPayments?.length ?? 0) > 0" uiBtn="secondary" size="sm" type="button" (click)="downloadReceipts.emit()">Recibos de pago</button>
+    </div>
+
+    <app-sale-notes [saleId]="s.id" [notes]="s.notes" [canEdit]="flags.canEditNotes" (saved)="notesSaved.emit($event)"></app-sale-notes>
+
+    <ui-receipt>
+      <div class="sdm__line sdm__line--head" [class.sdm__line--disc]="flags.hasDiscount"><span>Producto</span><span>Cant.</span><span>Unitario</span><span *ngIf="flags.hasDiscount">Desc.</span><span>Subtotal</span></div>
+      <div class="sdm__line" [class.sdm__line--disc]="flags.hasDiscount" *ngFor="let d of s.details">
+        <span>{{ d.productBrand }} / {{ d.productName }}</span>
+        <span class="ui-num">{{ d.quantity }}</span>
+        <span class="ui-num">{{ d.unitPrice | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+        <span class="ui-num" *ngIf="flags.hasDiscount"><ng-container *ngIf="d.discountPercent > 0">{{ d.discountPercent }}%</ng-container></span>
+        <span class="ui-num">{{ d.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+      </div>
+
+      <ng-container *ngIf="s.tradeIns?.length">
+        <span class="ui-stat__label sdm__sub">Canje recibido</span>
+        <div class="ui-receipt__row" *ngFor="let t of s.tradeIns">
+          <span>{{ t.productBrand }} / {{ t.productName }} × {{ t.quantity }}</span><span>-{{ t.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="s.generalDiscountPercent && s.generalDiscountPercent > 0">
+        <div class="ui-receipt__row"><span>Subtotal</span><span>{{ s.originalTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__row"><span>Descuento general ({{ s.generalDiscountPercent }}%)</span><span>-{{ ((s.originalTotal ?? s.totalAmount) - s.totalAmount) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      </ng-container>
+      <div class="ui-receipt__total"><span>Total</span><span>{{ s.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      <ng-container *ngIf="s.tradeInAmount > 0">
+        <div class="ui-receipt__row"><span>Canje</span><span>-{{ s.tradeInAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__row sdm__debt"><span>Deuda a cuenta</span><span>{{ (s.totalAmount - s.tradeInAmount) | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      </ng-container>
+    </ui-receipt>
+  </div>
+
+  <footer uiModalFoot class="ui-modal__foot" *ngIf="!loading && sale && flags.canCancel">
+    <button uiBtn="danger-ghost" type="button" [disabled]="canceling" (click)="cancelSale.emit()">Anular venta</button>
+  </footer>
+</ui-modal>

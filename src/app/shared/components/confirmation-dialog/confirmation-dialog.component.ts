@@ -1,5 +1,5 @@
 import { AsyncPipe, NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ConfirmationService } from '../../services/confirmation.service';
 import { TextSegment, diffSegments } from '../../utils/text-diff.util';
@@ -17,10 +17,13 @@ export class ConfirmationDialogComponent implements AfterViewInit, OnDestroy {
 
   readonly state$ = this.confirmation.state$;
 
+  /** Se sacude cuando se toca afuera de una confirmación irreversible, en vez de cerrarse. */
+  shaking = false;
+
   private subscription?: Subscription;
   private previouslyFocused: HTMLElement | null = null;
 
-  constructor(readonly confirmation: ConfirmationService) {}
+  constructor(readonly confirmation: ConfirmationService, private readonly cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
     this.subscription = this.state$.subscribe(dialog => {
@@ -45,6 +48,17 @@ export class ConfirmationDialogComponent implements AfterViewInit, OnDestroy {
   /** El documento de un receptor partido en tramos iguales / distintos al del otro. */
   segments(text: string, other: string | null): TextSegment[] {
     return diffSegments(text, other);
+  }
+
+  /** Tocar afuera cancela, salvo en las irreversibles (tono danger): ahí la ventana se sacude. */
+  onBackdrop(tone: string): void {
+    if (tone === 'danger') {
+      this.shaking = false;
+      this.cdr.markForCheck();
+      requestAnimationFrame(() => { this.shaking = true; this.cdr.markForCheck(); });
+      return;
+    }
+    this.confirmation.cancel();
   }
 
   @HostListener('document:keydown.escape')

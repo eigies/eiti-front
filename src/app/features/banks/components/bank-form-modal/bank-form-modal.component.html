@@ -1,0 +1,16 @@
+<ui-modal [eyebrow]="editing ? 'Edición de banco' : 'Alta de banco'" [heading]="editing ? 'Editar banco' : 'Nuevo banco'" (closed)="closed.emit()">
+  <form id="bank-form" class="bfm" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <label class="ui-field"><span class="ui-field__label">Nombre</span><input class="ui-input" type="text" formControlName="name" placeholder="Banco Nación" /></label>
+    <fieldset class="bfm__uses">
+      <legend class="ui-field__label">Usos</legend>
+      <label class="ui-switch"><input type="checkbox" formControlName="useForCard" /><span class="ui-switch__track"></span><span class="ui-mov ui-mov--transfer-out">Tarjetas</span></label>
+      <label class="ui-switch"><input type="checkbox" formControlName="useForTransfer" /><span class="ui-switch__track"></span><span class="ui-mov ui-mov--transfer-in">Transferencias</span></label>
+      <label class="ui-switch"><input type="checkbox" formControlName="useForCheque" /><span class="ui-switch__track"></span><span class="ui-mov ui-mov--supplier">Cheques</span></label>
+    </fieldset>
+    <label class="ui-switch" *ngIf="editing"><input type="checkbox" formControlName="active" /><span class="ui-switch__track"></span>Activo</label>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="bank-form" [disabled]="form.invalid || saving">{{ saving ? 'Guardando...' : (editing ? 'Guardar cambios' : 'Crear banco') }}</button>
+  </footer>
+</ui-modal>

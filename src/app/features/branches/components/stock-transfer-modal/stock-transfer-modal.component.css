@@ -1,0 +1,22 @@
+.st { display: grid; gap: 16px; }
+.st__route { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: end; }
+.st__arrow { padding-bottom: 12px; color: var(--text-3); }
+.st__arrow svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.st__lines { display: grid; }
+.st__line { display: grid; grid-template-columns: 28px minmax(0, 1fr) 110px 100px 40px; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+.st__line--head { padding: 0 0 6px; border-top: 0; font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.st__r { text-align: right; }
+.st__idx { display: grid; place-items: center; height: 44px; font: 600 14px/1 var(--font-mono); color: var(--text-3); }
+.st__avail { text-align: right; color: var(--text-2); }
+.st__avail--over { color: var(--danger); font-weight: 700; }
+.st__add { justify-self: start; margin-top: 8px; }
+.st__foot { justify-content: space-between; align-items: center; }
+.st__summary { font-size: 14px; color: var(--text-2); }
+.st__actions { display: flex; gap: 8px; }
+@media (max-width: 640px) {
+  .st__route { grid-template-columns: minmax(0, 1fr); }
+  .st__arrow { display: none; }
+  .st__line { grid-template-columns: 24px minmax(0, 1fr) 90px 40px; }
+  .st__line--head { display: none; }
+  .st__avail { grid-column: 2 / 3; text-align: left; }
+}

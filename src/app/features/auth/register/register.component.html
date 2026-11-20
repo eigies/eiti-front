@@ -1,18 +1,26 @@
 <div class="auth-layout">
     <section class="auth-panel auth-panel--deco" aria-hidden="true">
-        <div class="deco-grid">
-            <div class="deco-cell" *ngFor="let i of cells"></div>
+        <div class="deco-brand">
+            <img src="assets/brand/eiti-icon-light.svg" alt="" width="40" height="40">
+            <span class="deco-label">EITI</span>
+        </div>
+
+        <div class="mosaic">
+            <span class="mosaic__b mosaic__b--brand"></span>
+            <span class="mosaic__b mosaic__b--ink"></span>
+            <span class="mosaic__b mosaic__b--soft"></span>
+            <span class="mosaic__b mosaic__b--line"></span>
+            <span class="mosaic__b mosaic__b--soft"></span>
+            <span class="mosaic__b mosaic__b--brand mosaic__b--tall"></span>
+            <span class="mosaic__b mosaic__b--teal"></span>
+            <span class="mosaic__b mosaic__b--ink"></span>
         </div>
 
         <div class="deco-content">
-            <div class="deco-brand">
-                <span class="deco-label">EITI</span>
-                <span class="deco-kicker">Alta inicial</span>
-            </div>
-
+            <span class="deco-kicker">Alta inicial</span>
             <div class="deco-copy">
-                <h2>Empieza con una base clara desde el primer acceso.</h2>
-                <p>Crea la cuenta principal y define la identidad operativa del espacio antes de abrir ventas, caja y usuarios.</p>
+                <h2>Empezá con una base clara.</h2>
+                <p>Creá la cuenta principal y la identidad de tu empresa antes de abrir ventas, caja y usuarios.</p>
             </div>
         </div>
     </section>
@@ -26,16 +34,15 @@
 
             <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <header class="auth-form__header">
-                    <div class="auth-form__tag">_ REGISTRO</div>
                     <h1 class="auth-form__title">Nueva cuenta</h1>
-                    <p class="auth-form__subtitle">Configura el acceso principal y el nombre de la compania para iniciar el espacio de trabajo.</p>
+                    <p class="auth-form__subtitle">Configurá el acceso principal y el nombre de tu empresa.</p>
                 </header>
 
                 <div class="field" [class.field--error]="isInvalid('username')">
                     <label class="field__label">Nombre de usuario</label>
                     <input class="field__input" type="text" formControlName="username" placeholder="tu_usuario"
                         autocomplete="username" />
-                    <span class="field__error" *ngIf="isInvalid('username')">Minimo 3 caracteres</span>
+                    <span class="field__error" *ngIf="isInvalid('username')">Mínimo 3 caracteres</span>
                 </div>
 
                 <div class="field" [class.field--error]="isInvalid('firstName')">
@@ -60,26 +67,26 @@
                 </div>
 
                 <div class="field" [class.field--error]="isInvalid('companyName')">
-                    <label class="field__label">Compania</label>
+                    <label class="field__label">Empresa</label>
                     <input class="field__input" type="text" formControlName="companyName" placeholder="Nombre de tu empresa"
                         autocomplete="organization" />
                     <span class="field__error" *ngIf="isInvalid('companyName')">Requerido</span>
                 </div>
 
                 <div class="field" [class.field--error]="isInvalid('password')">
-                    <label class="field__label">Contrasena</label>
+                    <label class="field__label">Contraseña</label>
                     <div class="field__input-wrap">
                         <input class="field__input field__input--with-toggle" [type]="showPass ? 'text' : 'password'" formControlName="password"
-                            placeholder="Minimo 6 caracteres" autocomplete="new-password" />
-                        <button type="button" class="field__toggle" (click)="showPass = !showPass" [attr.aria-label]="showPass ? 'Ocultar contrasena' : 'Mostrar contrasena'">
-                            <span aria-hidden="true">{{ showPass ? '◐' : '◌' }}</span>
+                            placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+                        <button type="button" class="field__toggle" (click)="showPass = !showPass" [attr.aria-label]="showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                            <svg *ngIf="!showPass" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg *ngIf="showPass" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.7 6.7C3.8 8.5 2 12 2 12s3.5 7 10 7c1.8 0 3.4-.5 4.7-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
                         </button>
                     </div>
                     <div class="password-strength" *ngIf="form.get('password')?.value">
                         <div class="strength-bar" [class]="strengthClass"></div>
                         <span class="strength-label">{{ strengthLabel }}</span>
                     </div>
-                    <span class="field__error" *ngIf="isInvalid('password')">Minimo 6 caracteres</span>
+                    <span class="field__error" *ngIf="isInvalid('password')">Mínimo 6 caracteres</span>
                 </div>
 
                 <button class="btn-primary" type="submit" [disabled]="loading">
@@ -89,7 +96,7 @@
 
                 <div class="auth-form__footer">
                     <p class="auth-form__link">
-                        Ya tenes cuenta? <a routerLink="/login">Inicia sesion</a>
+                        ¿Ya tenés cuenta? <a routerLink="/login">Iniciá sesión</a>
                     </p>
                 </div>
             </form>

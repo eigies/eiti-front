@@ -1,11 +1,11 @@
 <section class="ledger" aria-label="Cuenta corriente">
   <div class="ledger-bar">
-    <div class="tabs" role="tablist" aria-label="Vista de la cuenta">
+    <div class="tabs ui-tabs" role="tablist" aria-label="Vista de la cuenta">
       <button type="button" role="tab" class="tab" [class.tab--on]="tab === 'ledger'"
               [attr.aria-selected]="tab === 'ledger'" (click)="setTab('ledger')">Extracto</button>
       <button type="button" role="tab" class="tab" [class.tab--on]="tab === 'pending'"
               [attr.aria-selected]="tab === 'pending'" (click)="setTab('pending')">
-        Pendientes<span class="tab__count">{{ ledger?.pending?.length ?? 0 }}</span>
+        Pendientes<span class="ui-count">{{ ledger?.pending?.length ?? 0 }}</span>
       </button>
     </div>
 
@@ -20,13 +20,12 @@
         <input class="input" type="date" [value]="query.dateTo ?? ''" [min]="query.dateFrom ?? ''"
                (change)="onDateChange('dateTo', $event)" />
       </label>
-      <label class="ledger-toggle toggle-check" [class.ledger-toggle--active]="query.includeCancelled">
+      <label class="ui-switch ledger-switch">
         <input type="checkbox" [checked]="query.includeCancelled" (change)="onIncludeCancelledChange($event)" />
-        <span class="toggle-check__track"></span>
-        <span class="toggle-check__text">{{ query.includeCancelled ? 'Con anulados' : 'Mostrar anulados' }}</span>
+        <span class="ui-switch__track"></span>Mostrar anulados
       </label>
-      <button type="button" class="btn btn--ghost" [disabled]="!ledger" (click)="exportExcel()">Excel</button>
-      <button type="button" class="btn btn--ghost" [disabled]="!ledger || exporting" (click)="exportPdf()">
+      <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" [disabled]="!ledger" (click)="exportExcel()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+      <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" [disabled]="!ledger || exporting" (click)="exportPdf()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
         {{ exporting ? 'PDF…' : 'PDF' }}
       </button>
     </div>
@@ -36,7 +35,7 @@
         {{ selectedDocs.length }} seleccionada{{ selectedDocs.length === 1 ? '' : 's' }} ·
         <strong>$ {{ money(selectedTotal) }}</strong>
       </span>
-      <button type="button" class="btn btn--primary" [disabled]="selectedDocs.length === 0" (click)="paySelectedDocs()">
+      <button type="button" class="ui-btn ui-btn--primary" [disabled]="selectedDocs.length === 0" (click)="paySelectedDocs()">
         {{ labels.payPending }}
       </button>
     </div>
@@ -83,8 +82,8 @@
           <div class="c-comp" role="cell">
             <div class="comp">
               <span class="comp__code">{{ title(row) }}</span>
-              <span class="tag" [ngClass]="'tag--' + row.kind">{{ tagLabel(row) }}</span>
-              <span class="tag tag--void" *ngIf="row.isCancelled">Anulado</span>
+              <span class="ui-mov ui-mov--lg" [ngClass]="'ui-mov--' + movKind(row)">{{ tagLabel(row) }}</span>
+              <span class="ui-badge ui-badge--danger" *ngIf="row.isCancelled">Anulado</span>
             </div>
             <div class="comp__sub">{{ subtitle(row) }}</div>
           </div>
@@ -116,7 +115,7 @@
           <div class="sub" *ngIf="row.means.length > 0">
             <div class="label sub__title">Medios {{ row.kind === 'payment' ? 'del ' + labels.payment.toLowerCase() : '' }}</div>
             <div class="subrow" *ngFor="let m of row.means">
-              <span class="m s-tipo" [ngClass]="'m--' + m.method">{{ m.methodLabel }}</span>
+              <span class="ui-mov s-tipo" [ngClass]="'ui-mov--' + meansKind(m.method)">{{ m.methodLabel }}</span>
               <span class="s-det">{{ meansDetail(m) }}</span>
               <span class="num s-monto">{{ money(m.amount) }}</span>
             </div>
@@ -134,7 +133,7 @@
                 <span class="i-doc" *ngIf="i.document"> Fact. {{ i.document }}</span>
               </span>
               <span class="num i-monto">{{ money(i.amount) }}</span>
-              <span class="status i-stat" [class.status--ok]="isSettled(i.documentId)" [class.status--part]="!isSettled(i.documentId)">
+              <span class="ui-badge i-stat" [class.ui-badge--success]="isSettled(i.documentId)" [class.ui-badge--warning]="!isSettled(i.documentId)">
                 {{ isSettled(i.documentId) ? 'Saldada' : 'Con saldo' }}
               </span>
             </div>
@@ -142,10 +141,10 @@
               {{ row.isCancelled ? 'Anulado: no quedó imputado.' : 'No se imputó a ' + labels.documents + ': quedó como saldo a favor.' }}
             </div>
             <div class="subactions" *ngIf="canPrintRow(row) || canCancelRow(row)">
-              <button *ngIf="canPrintRow(row)" type="button" class="btn btn--ghost" (click)="printRow.emit(row)">
+              <button *ngIf="canPrintRow(row)" type="button" class="ui-btn ui-btn--ghost ui-btn--sm" (click)="printRow.emit(row)">
                 {{ row.code ? labels.printGroup : 'Imprimir recibo' }}
               </button>
-              <button *ngIf="canCancelRow(row)" type="button" class="btn btn--danger"
+              <button *ngIf="canCancelRow(row)" type="button" class="ui-btn ui-btn--danger-ghost ui-btn--sm"
                       [disabled]="busyRowId === row.id" (click)="cancelRow.emit(row)">
                 {{ busyRowId === row.id ? 'Anulando…' : cancelLabel(row) }}
               </button>
@@ -173,7 +172,7 @@
     <div class="table" role="table" [attr.aria-label]="'Pendientes'" *ngIf="ledger.pending.length > 0">
       <div class="pend-grid thead" role="row">
         <span role="columnheader">
-          <input *ngIf="canPay" type="checkbox" class="chk" [checked]="allSelected" (change)="toggleAll()" aria-label="Seleccionar todas" />
+          <input *ngIf="canPay" type="checkbox" class="ui-check" [checked]="allSelected" (change)="toggleAll()" aria-label="Seleccionar todas" />
         </span>
         <span role="columnheader">Fecha</span>
         <span role="columnheader">Comprobante</span>
@@ -186,7 +185,7 @@
 
       <div class="pend-grid row entry" role="row" *ngFor="let doc of ledger.pending; trackBy: trackPending">
         <span class="p-chk" role="cell">
-          <input *ngIf="canPay" type="checkbox" class="chk" [checked]="isSelected(doc)" (change)="toggleSelected(doc)"
+          <input *ngIf="canPay" type="checkbox" class="ui-check" [checked]="isSelected(doc)" (change)="toggleSelected(doc)"
                  [attr.aria-label]="'Seleccionar ' + doc.code" />
         </span>
         <span class="date p-date" role="cell">{{ shortDate(doc.date) }}</span>
@@ -196,7 +195,7 @@
         <span class="num haber p-imp" role="cell"><span class="cl">Imputado</span>{{ money(doc.imputed) }}</span>
         <span class="num saldo p-sal" role="cell"><span class="cl">Saldo</span>{{ money(doc.pending) }}</span>
         <span class="p-age r" role="cell">
-          <span class="pill" [class.pill--old]="doc.ageDays >= 15">{{ doc.ageDays }} día{{ doc.ageDays === 1 ? '' : 's' }}</span>
+          <span class="ui-badge" [class.ui-badge--warning]="doc.ageDays >= 15">{{ doc.ageDays }} día{{ doc.ageDays === 1 ? '' : 's' }}</span>
         </span>
       </div>
 

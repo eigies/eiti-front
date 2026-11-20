@@ -1,124 +1,82 @@
-<div class="page">
+<main class="ui-page db">
   <header class="db-header">
     <div class="db-header__copy">
-      <p class="eyebrow">_ PANEL COMERCIAL</p>
-      <h1 class="db-title">Operación viva para <span>{{ username }}</span></h1>
-      <p class="db-subtitle">El mes en una mirada, con el detalle operativo listo para actuar.</p>
-    </div>
-
-    <div class="db-header__side">
       <div class="db-header__meta">
         <span class="db-date">{{ todayLabel }}</span>
-        <span class="db-live"><span class="db-live__dot"></span>EN VIVO</span>
+        <span class="db-live"><span class="db-live__dot"></span>En vivo</span>
       </div>
-
+      <h1 class="db-title">Inicio</h1>
     </div>
-  </header>
 
   <section class="db-filters" aria-label="Filtros del panel">
-    <div class="db-filters__row" *ngIf="branches.length > 1">
-      <span class="db-filters__label" id="db-filter-branch">Sucursal</span>
-      <div class="branch-chips" role="group" aria-labelledby="db-filter-branch">
-        <button
-          *ngIf="canViewAllBranches"
-          type="button"
-          class="branch-chip"
-          [class.is-active]="branchId === null"
-          [attr.aria-pressed]="branchId === null"
-          (click)="setBranch(null)">Todas</button>
-        <button
-          *ngFor="let branch of branches"
-          type="button"
-          class="branch-chip"
-          [class.is-active]="branchId === branch.id"
-          [attr.aria-pressed]="branchId === branch.id"
-          (click)="setBranch(branch.id)">{{ branch.name }}</button>
+      <div class="db-filters__row" *ngIf="branches.length > 1">
+        <span class="db-filters__label" id="db-filter-branch">Sucursal</span>
+        <div class="branch-chips" role="group" aria-labelledby="db-filter-branch">
+          <button
+            *ngIf="canViewAllBranches"
+            type="button"
+            class="branch-chip"
+            [class.is-active]="branchId === null"
+            [attr.aria-pressed]="branchId === null"
+            (click)="setBranch(null)">Todas</button>
+          <button
+            *ngFor="let branch of branches"
+            type="button"
+            class="branch-chip"
+            [class.is-active]="branchId === branch.id"
+            [attr.aria-pressed]="branchId === branch.id"
+            (click)="setBranch(branch.id)">{{ branch.name }}</button>
+        </div>
       </div>
-    </div>
 
-    <div class="db-filters__row" *ngIf="categories.length > 0">
-      <span class="db-filters__label" id="db-filter-category">Categorías</span>
-      <div class="category-picker">
-        <button
-          type="button"
-          class="category-picker__toggle"
-          [class.is-active]="hasCategoryFilter"
-          [attr.aria-expanded]="categoryPanelOpen"
-          aria-controls="db-category-panel"
-          (click)="toggleCategoryPanel()">
-          <span>{{ categoryFilterLabel }}</span>
-          <span class="category-picker__chevron" aria-hidden="true"></span>
-        </button>
+      <div class="db-filters__row" *ngIf="categories.length > 0">
+        <span class="db-filters__label" id="db-filter-category">Categorías</span>
+        <div class="category-picker">
+          <button
+            type="button"
+            class="category-picker__toggle"
+            [class.is-active]="hasCategoryFilter"
+            [attr.aria-expanded]="categoryPanelOpen"
+            aria-controls="db-category-panel"
+            (click)="toggleCategoryPanel()">
+            <span>{{ categoryFilterLabel }}</span>
+            <span class="category-picker__chevron" aria-hidden="true"></span>
+          </button>
 
-        <div class="category-picker__panel" id="db-category-panel" *ngIf="categoryPanelOpen">
-          <label class="category-option" *ngFor="let category of categories">
-            <input
-              type="checkbox"
-              [checked]="isCategorySelected(category.id)"
-              (change)="toggleCategory(category.id)" />
-            <span>{{ category.name }}</span>
-          </label>
+          <div class="category-picker__panel" id="db-category-panel" *ngIf="categoryPanelOpen">
+            <label class="category-option" *ngFor="let category of categories">
+              <input
+                type="checkbox"
+                [checked]="isCategorySelected(category.id)"
+                (change)="toggleCategory(category.id)" />
+              <span>{{ category.name }}</span>
+            </label>
 
-          <div class="category-picker__actions">
-            <button type="button" class="category-picker__clear"
-                    [disabled]="!hasCategoryFilter"
-                    (click)="clearCategories()">Contar todo el catálogo</button>
-            <button type="button" class="category-picker__done"
-                    (click)="toggleCategoryPanel()">Listo</button>
+            <div class="category-picker__actions">
+              <button type="button" class="category-picker__clear"
+                      [disabled]="!hasCategoryFilter"
+                      (click)="clearCategories()">Contar todo el catálogo</button>
+              <button type="button" class="category-picker__done"
+                      (click)="toggleCategoryPanel()">Listo</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+  </header>
+
+  <section class="loading-grid" *ngIf="loading" aria-label="Cargando el inicio">
+    <div class="ui-skeleton skeleton skeleton--ticket"></div>
+    <div class="ui-skeleton skeleton"></div>
+    <div class="ui-skeleton skeleton"></div>
   </section>
 
-  <section class="data-panel digest-panel" *ngIf="canUseAssistant" aria-live="polite">
-    <div class="data-panel__head">
-      <div class="data-panel__title-group">
-        <span class="data-panel__eyebrow">EITISITO</span>
-        <h2>{{ digestTitle }}</h2>
-        <p>Lo que pasó ayer, resumido por el asistente.</p>
-      </div>
-      <button type="button" class="digest-ask" (click)="askEitisito()">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3v2.6"></path>
-          <circle cx="12" cy="2.15" r="1.15" fill="currentColor" stroke="none"></circle>
-          <rect x="5.2" y="6.3" width="13.6" height="11.4" rx="4.2" fill="none"></rect>
-          <circle cx="9.35" cy="11.7" r="1.3" fill="currentColor" stroke="none"></circle>
-          <circle cx="14.65" cy="11.7" r="1.3" fill="currentColor" stroke="none"></circle>
-          <path d="M9.7 15q2.3 1.35 4.6 0"></path>
-        </svg>
-        Preguntarle a Eitisito
-      </button>
-    </div>
-
-    <div class="digest-loading" *ngIf="digestLoading">
-      <div class="skeleton digest-skeleton"></div>
-      <div class="skeleton digest-skeleton digest-skeleton--short"></div>
-      <div class="skeleton digest-skeleton"></div>
-      <span>Preparando las novedades…</span>
-    </div>
-
-    <p class="digest-error" *ngIf="!digestLoading && digestFailed">
-      No pude preparar las novedades.
-      <button type="button" (click)="loadDigest()">Reintentar</button>
-    </p>
-
-    <div class="digest-content" *ngIf="!digestLoading && !digestFailed && digest" [innerHTML]="digest.content | markdownLite"></div>
-  </section>
-
-  <section class="loading-grid" *ngIf="loading" aria-label="Cargando dashboard">
-    <div class="skeleton skeleton--wide"></div>
-    <div class="skeleton"></div>
-    <div class="skeleton skeleton--tall"></div>
-  </section>
-
-  <section class="load-error" *ngIf="!loading && loadFailed">
-    <span class="load-error__mark">!</span>
+  <section class="ui-banner ui-banner--danger load-error" *ngIf="!loading && loadFailed">
     <div>
-      <strong>No pudimos leer el tablero</strong>
-      <p>La operación sigue disponible. Reintentá cargar el resumen.</p>
+      <strong>No pudimos leer el resumen</strong>
+      <p>La operación sigue disponible. Probá cargarlo de nuevo.</p>
     </div>
-    <button type="button" (click)="loadSummary()">Reintentar</button>
+    <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm" (click)="loadSummary()">Reintentar</button>
   </section>
 
   <ng-container *ngIf="!loading && !loadFailed && summary as data">
@@ -132,63 +90,112 @@
       </span>
     </div>
 
-    <section class="data-panel month-panel">
-      <div class="data-panel__head">
-        <div class="data-panel__title-group">
-          <span class="data-panel__eyebrow">PRIMER PLANO</span>
-          <h2>Lectura del mes en curso</h2>
-          <p>Minorista y cuenta corriente, comparados contra el pulso de hoy.</p>
+    <div class="db-top">
+      <section class="ui-ticket db-ticket" aria-label="Vendido hoy">
+        <span class="ui-ticket__label">Vendido hoy</span>
+        <strong class="ui-ticket__figure" *ngIf="canViewFinancials">{{ data.today.total.amount | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+        <strong class="ui-ticket__figure" *ngIf="!canViewFinancials">{{ data.today.total.units }} u</strong>
+        <span class="db-ticket__sub">{{ data.today.total.count }} {{ data.today.total.count === 1 ? 'venta' : 'ventas' }} · {{ data.today.total.units }} unidades</span>
+        <div class="db-ticket__split">
+          <span>
+            <i class="legend-dot legend-dot--retail"></i>Minorista
+            <strong *ngIf="canViewFinancials">{{ data.today.retail.amount | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+            <strong *ngIf="!canViewFinancials">{{ data.today.retail.units }} u</strong>
+            <small>{{ data.today.retail.count }} vta</small>
+          </span>
+          <span>
+            <i class="legend-dot legend-dot--cc"></i>Cta. corriente
+            <strong *ngIf="canViewFinancials">{{ data.today.currentAccount.amount | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+            <strong *ngIf="!canViewFinancials">{{ data.today.currentAccount.units }} u</strong>
+            <small>{{ data.today.currentAccount.count }} vta</small>
+          </span>
         </div>
-        <div class="period-badge">MES ACTUAL</div>
-      </div>
+      </section>
 
-      <div class="month-table-wrap">
-        <table class="month-table">
-          <thead>
-            <tr>
-              <th>Segmento</th>
-              <th class="month-table__month">Mes · unid. y ventas</th>
-              <th class="month-table__month" *ngIf="canViewFinancials">Mes · importe</th>
-              <th class="month-table__today">Hoy · unid. y ventas</th>
-              <th class="month-table__today" *ngIf="canViewFinancials">Hoy · importe</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="month-table__total">
-              <th><span class="segment-mark segment-mark--total"></span>Total</th>
-              <td class="month-table__month" data-label="Mes · unid. y ventas"><strong class="units">{{ data.month.total.units }} u</strong><span class="sales-count">{{ data.month.total.count }} vta</span></td>
-              <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td class="month-table__today" data-label="Hoy · unid. y ventas"><strong class="units">{{ data.today.total.units }} u</strong><span class="sales-count">{{ data.today.total.count }} vta</span></td>
-              <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.total.amount | currency:'ARS':'code':'1.0-0' }}</td>
-            </tr>
-            <tr>
-              <th><span class="segment-mark segment-mark--retail"></span>Minorista</th>
-              <td class="month-table__month" data-label="Mes · unid. y ventas"><strong class="units">{{ data.month.retail.units }} u</strong><span class="sales-count">{{ data.month.retail.count }} vta</span></td>
-              <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td class="month-table__today" data-label="Hoy · unid. y ventas"><strong class="units">{{ data.today.retail.units }} u</strong><span class="sales-count">{{ data.today.retail.count }} vta</span></td>
-              <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.retail.amount | currency:'ARS':'code':'1.0-0' }}</td>
-            </tr>
-            <tr>
-              <th><span class="segment-mark segment-mark--cc"></span>Cta. corriente</th>
-              <td class="month-table__month" data-label="Mes · unid. y ventas"><strong class="units">{{ data.month.currentAccount.units }} u</strong><span class="sales-count">{{ data.month.currentAccount.count }} vta</span></td>
-              <td class="month-table__month" data-label="Mes · importe" *ngIf="canViewFinancials">{{ data.month.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
-              <td class="month-table__today" data-label="Hoy · unid. y ventas"><strong class="units">{{ data.today.currentAccount.units }} u</strong><span class="sales-count">{{ data.today.currentAccount.count }} vta</span></td>
-              <td class="month-table__today" data-label="Hoy · importe" *ngIf="canViewFinancials">{{ data.today.currentAccount.amount | currency:'ARS':'code':'1.0-0' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="data-panel rhythm-panel">
-      <div class="data-panel__head rhythm-panel__head">
-        <div class="data-panel__title-group">
-          <span class="data-panel__eyebrow">RITMO COMERCIAL</span>
-          <h2>{{ chartTitle }}</h2>
-          <p>{{ chartSubtitle }}</p>
+      <section class="ui-card db-card db-month">
+        <div class="db-card__head">
+          <h2>Mes en curso</h2>
+          <span class="ui-badge">Mes actual</span>
         </div>
+        <div class="db-month__figure">
+          <strong *ngIf="canViewFinancials">{{ data.month.total.amount | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+          <strong *ngIf="!canViewFinancials">{{ data.month.total.units }} u</strong>
+          <span>{{ data.month.total.count }} ventas · {{ data.month.total.units }} u</span>
+        </div>
+        <div class="db-split" aria-hidden="true">
+          <i class="db-split__retail" [style.width.%]="monthRetailShare"></i>
+          <i class="db-split__cc" [style.width.%]="data.month.total.count ? 100 - monthRetailShare : 0"></i>
+        </div>
+        <div class="db-month__parts">
+          <span>
+            <b>Minorista</b>
+            <strong *ngIf="canViewFinancials">{{ data.month.retail.amount | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+            <small>{{ data.month.retail.count }} ventas · {{ data.month.retail.units }} u</small>
+          </span>
+          <span>
+            <b>Cta. corriente</b>
+            <strong *ngIf="canViewFinancials">{{ data.month.currentAccount.amount | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+            <small>{{ data.month.currentAccount.count }} ventas · {{ data.month.currentAccount.units }} u</small>
+          </span>
+        </div>
+      </section>
 
-        <div class="chart-controls">
+      <section class="ui-card db-card db-collect">
+        <div class="db-card__head"><h2>Cobranza del mes</h2></div>
+        <div class="db-collect__row">
+          <span>Cobrado <small>· {{ data.collections.paidCount }} ventas</small></span>
+          <strong class="is-in" *ngIf="canViewFinancials">{{ data.collections.paidAmount | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+        </div>
+        <div class="db-collect__row">
+          <span>Pendiente <small>· {{ data.collections.pendingCount }} ventas</small></span>
+          <strong class="is-warn" *ngIf="canViewFinancials">{{ data.collections.pendingAmount | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+        </div>
+        <div class="db-split db-split--thin" aria-hidden="true">
+          <i class="db-split__paid" [style.width.%]="paidShare"></i>
+          <i class="db-split__pending" [style.width.%]="data.collections.paidCount + data.collections.pendingCount ? 100 - paidShare : 0"></i>
+        </div>
+        <div class="db-collect__row db-collect__row--foot" *ngIf="canViewFinancials">
+          <span>Ticket promedio</span>
+          <strong>{{ data.collections.avgTicket | currency:'ARS':'symbol-narrow':'1.0-0' }}</strong>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+
+  <section class="ui-card db-digest digest-panel" *ngIf="canUseAssistant" aria-live="polite">
+    <span class="db-digest__mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M19 15l.8 1.7 1.7.8-1.7.8L19 20l-.8-1.7-1.7-.8 1.7-.8z"/></svg>
+    </span>
+    <div class="db-digest__body">
+      <span class="db-digest__eyebrow">Eitisito</span>
+      <h2>{{ digestTitle }}</h2>
+    <div class="digest-loading" *ngIf="digestLoading">
+      <div class="skeleton digest-skeleton"></div>
+      <div class="skeleton digest-skeleton digest-skeleton--short"></div>
+      <div class="skeleton digest-skeleton"></div>
+      <span>Preparando las novedades…</span>
+    </div>
+
+    <p class="digest-error" *ngIf="!digestLoading && digestFailed">
+      No pude preparar las novedades.
+      <button type="button" (click)="loadDigest()">Reintentar</button>
+    </p>
+
+    <div class="digest-content" *ngIf="!digestLoading && !digestFailed && digest" [innerHTML]="digest.content | markdownLite"></div>
+    </div>
+    <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm digest-ask" (click)="askEitisito()">Preguntarle a Eitisito</button>
+  </section>
+
+  <ng-container *ngIf="!loading && !loadFailed && summary as data">
+    <div class="db-mid">
+      <section class="ui-card db-card rhythm-panel">
+        <div class="db-card__head rhythm-panel__head">
+          <div>
+            <h2>{{ chartTitle }}</h2>
+            <p>{{ chartSubtitle }}</p>
+          </div>
+
+          <div class="chart-controls">
           <div class="chart-control" *ngIf="showsSegmentToggle">
             <span class="chart-control__label" id="db-chart-segment">Tipo</span>
             <div class="panel-toggle" role="group" aria-labelledby="db-chart-segment">
@@ -216,7 +223,7 @@
             </div>
           </div>
         </div>
-      </div>
+        </div>
 
       <ng-container *ngIf="isSeriesView">
         <div class="chart-legend">
@@ -308,12 +315,28 @@
         </article>
       </div>
       <div class="data-empty" *ngIf="chartView === 'products' && rankedProducts.length === 0">Sin productos vendidos con estos filtros.</div>
-    </section>
+      </section>
 
-    <section class="data-panel sales-panel">
-      <div class="data-panel__head">
-        <div class="data-panel__title-group">
-          <span class="data-panel__eyebrow">VENTAS</span>
+      <section class="ui-card db-card pulse-panel">
+        <div class="db-card__head"><h2>Pulso del día</h2></div>
+        <div class="pulse-grid">
+          <div class="pulse-card"><span>Ventas</span><strong>{{ data.todayStatus.activeCount }}</strong></div>
+          <button type="button" class="pulse-card pulse-card--paid" [class.is-active]="selectedStatusKey === 'paid'" [attr.aria-pressed]="selectedStatusKey === 'paid'" (click)="selectStatus('paid')"><span>Pagadas</span><strong>{{ data.todayStatus.paidCount }}</strong></button>
+          <button type="button" class="pulse-card pulse-card--pending" [class.is-active]="selectedStatusKey === 'pending'" [attr.aria-pressed]="selectedStatusKey === 'pending'" (click)="selectStatus('pending')"><span>En espera</span><strong>{{ data.todayStatus.pendingCount }}</strong></button>
+          <button type="button" class="pulse-card pulse-card--cancelled" [class.is-active]="selectedStatusKey === 'cancelled'" [attr.aria-pressed]="selectedStatusKey === 'cancelled'" (click)="selectStatus('cancelled')"><span>Canceladas</span><strong>{{ data.todayStatus.cancelledCount }}</strong></button>
+        </div>
+        <div class="alert-stack">
+          <div class="ui-banner alert-item" *ngFor="let alert of operationalAlerts"
+            [ngClass]="alert.tone === 'warn' ? 'ui-banner--warning' : 'ui-banner--' + alert.tone">
+            <span><strong>{{ alert.label }}</strong>{{ alert.detail }}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="ui-card db-sales sales-panel">
+      <div class="db-card__head db-sales__head">
+        <div>
           <h2>{{ selectedDayKey || selectedStatusKey ? 'Detalle filtrado' : 'Últimas ventas' }}</h2>
           <p *ngIf="selectedDayKey || selectedStatusKey">
             {{ selectedDayKey ? selectedDayLabel : 'Hoy' }}<span *ngIf="selectedStatusKey"> · {{ selectedStatusLabel }}</span>
@@ -321,8 +344,8 @@
           <p *ngIf="!selectedDayKey && !selectedStatusKey">Las seis operaciones más recientes del período.</p>
         </div>
         <div class="head-actions">
-          <button type="button" *ngIf="selectedDayKey" (click)="clearDay()">Quitar día</button>
-          <button type="button" *ngIf="selectedStatusKey" (click)="selectedStatusKey = null">Quitar estado</button>
+          <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" *ngIf="selectedDayKey" (click)="clearDay()">Quitar día</button>
+          <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" *ngIf="selectedStatusKey" (click)="selectedStatusKey = null">Quitar estado</button>
           <a routerLink="/sales" *ngIf="auth.hasPermission(permissionCodes.salesAccess)">Ver ventas →</a>
         </div>
       </div>
@@ -344,57 +367,5 @@
       </div>
       <div class="data-empty" *ngIf="!drillDownLoading && displayedSales.length === 0">Sin ventas para el filtro actual.</div>
     </section>
-
-    <section class="secondary-grid">
-      <article class="data-panel compact-panel collections-panel">
-        <div class="data-panel__title-group">
-          <span class="data-panel__eyebrow">COBRANZA</span>
-          <h2>Estado del mes</h2>
-        </div>
-        <div class="collection-list">
-          <div>
-            <span><i class="legend-dot legend-dot--cc"></i>Cobrado</span>
-            <strong *ngIf="canViewFinancials">{{ data.collections.paidAmount | currency:'ARS':'code':'1.0-0' }}</strong>
-            <small>{{ data.collections.paidCount }} ventas</small>
-          </div>
-          <div>
-            <span><i class="legend-dot legend-dot--retail"></i>Pendiente</span>
-            <strong *ngIf="canViewFinancials">{{ data.collections.pendingAmount | currency:'ARS':'code':'1.0-0' }}</strong>
-            <small>{{ data.collections.pendingCount }} ventas</small>
-          </div>
-          <div *ngIf="canViewFinancials">
-            <span>Ticket promedio</span>
-            <strong>{{ data.collections.avgTicket | currency:'ARS':'code':'1.0-0' }}</strong>
-            <small>Sobre ventas activas</small>
-          </div>
-        </div>
-      </article>
-
-      <article class="data-panel compact-panel pulse-panel">
-        <div class="data-panel__title-group">
-          <span class="data-panel__eyebrow">PULSO DEL DÍA</span>
-          <h2>Corte operativo</h2>
-        </div>
-        <div class="pulse-grid">
-          <div class="pulse-card"><span>Ventas</span><strong>{{ data.todayStatus.activeCount }}</strong></div>
-          <button type="button" class="pulse-card" [class.is-active]="selectedStatusKey === 'paid'" (click)="selectStatus('paid')"><span>Pagadas</span><strong>{{ data.todayStatus.paidCount }}</strong></button>
-          <button type="button" class="pulse-card" [class.is-active]="selectedStatusKey === 'pending'" (click)="selectStatus('pending')"><span>En espera</span><strong>{{ data.todayStatus.pendingCount }}</strong></button>
-          <button type="button" class="pulse-card" [class.is-active]="selectedStatusKey === 'cancelled'" (click)="selectStatus('cancelled')"><span>Canceladas</span><strong>{{ data.todayStatus.cancelledCount }}</strong></button>
-        </div>
-      </article>
-
-      <article class="data-panel compact-panel alerts-panel">
-        <div class="data-panel__title-group">
-          <span class="data-panel__eyebrow">ALERTAS OPERATIVAS</span>
-          <h2>Lo que pide atención</h2>
-        </div>
-        <div class="alert-stack">
-          <div class="alert-item" *ngFor="let alert of operationalAlerts" [ngClass]="'alert-item--' + alert.tone">
-            <span class="alert-item__dot"></span>
-            <div><strong>{{ alert.label }}</strong><p>{{ alert.detail }}</p></div>
-          </div>
-        </div>
-      </article>
-    </section>
   </ng-container>
-</div>
+</main>

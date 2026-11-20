@@ -1,0 +1,3 @@
+.concepts-page .ui-tabs a { display: inline-flex; align-items: center; min-height: var(--control-md); padding: 0 var(--space-4); border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--text-2); font: 600 15px/22px var(--font-sans); text-decoration: none; }
+.concepts-page .ui-tabs a:hover { color: var(--text); }
+.concepts-page .ui-tabs a.is-active { color: var(--text); border-bottom-color: var(--brand); }

@@ -1,0 +1,2 @@
+.ccm { display: grid; gap: var(--space-3); }
+.ccm__hint { margin: 0; font-size: 14px; color: var(--text-2); }

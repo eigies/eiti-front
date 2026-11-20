@@ -1,0 +1,7 @@
+:host { display: inline-flex; }
+.vp { display: inline-grid; justify-items: center; min-width: 108px; border-radius: 6px; font: 700 17px/1 var(--font-mono); letter-spacing: .06em; overflow: hidden; }
+.vp__text { padding: 6px 10px 7px; }
+.vp--mercosur { background: #ffffff; color: #111111; border: 2px solid #111111; }
+.vp__strip { width: 100%; padding: 2px 0; background: #1d4ed8; color: #ffffff; font: 700 11px/14px var(--font-sans); letter-spacing: .1em; text-align: center; }
+.vp--old { background: #111111; color: #ffffff; border: 2px solid #9aa0aa; }
+.vp--other { background: var(--surface-sunken); color: var(--text); border: 1px solid var(--border-control); }

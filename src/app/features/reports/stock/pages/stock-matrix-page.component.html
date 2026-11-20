@@ -1,0 +1,83 @@
+<main class="ui-page" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Productos</span>
+      <h1>Stock por sucursal</h1>
+      <p>Disponibilidad de cada producto por sucursal, con totales para ver concentración, faltantes y cobertura.</p>
+    </div>
+  </header>
+
+  <section class="ui-card sm-filters">
+    <label class="ui-field sm-filters__branch" *ngIf="f.branches.length > 1"><span class="ui-field__label">Sucursal</span>
+      <app-searchable-select [ngModel]="f.branchId" (ngModelChange)="f.selectBranch($event)" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" ariaLabel="Sucursal" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+    </label>
+    <label class="ui-field sm-filters__search"><span class="ui-field__label">Buscar</span>
+      <span class="ui-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input class="ui-input" type="text" placeholder="Producto, código o marca" [(ngModel)]="f.search" />
+      </span>
+    </label>
+    <label class="ui-switch sm-filters__toggle">
+      <input type="checkbox" [(ngModel)]="f.hideEmpty" />
+      <span class="ui-switch__track" aria-hidden="true"></span>
+      <span>Ocultar sin stock</span>
+    </label>
+  </section>
+
+  <div class="rep-totals" *ngIf="f.data">
+    <div class="rep-stat sm-kpi"><span class="rep-stat__label">Unidades disponibles</span><strong class="rep-stat__value">{{ f.datasetGrandTotal | number: '1.0-0' }}</strong><span class="rep-stat__hint">Total del inventario</span></div>
+    <div class="rep-stat sm-kpi"><span class="rep-stat__label">Productos con stock</span><strong class="rep-stat__value">{{ f.activeProductCount | number: '1.0-0' }}</strong><span class="rep-stat__hint">de {{ f.productCount | number: '1.0-0' }} cargados</span></div>
+    <div class="rep-stat sm-kpi"><span class="rep-stat__label">Sucursales</span><strong class="rep-stat__value">{{ f.branchCount | number: '1.0-0' }}</strong><span class="rep-stat__hint">Una columna por sucursal</span></div>
+    <div class="rep-stat sm-kpi" [class.rep-stat--warn]="f.emptyProductCount > 0"><span class="rep-stat__label">Sin disponibilidad</span><strong class="rep-stat__value">{{ f.emptyProductCount | number: '1.0-0' }}</strong><span class="rep-stat__hint">Productos en cero</span></div>
+  </div>
+
+  <ui-card heading="Matriz de stock" [count]="f.data ? f.filteredRows.length : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.load()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18 2v4h4"/><path d="M6 22v-4H2"/></svg>Actualizar</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="!f.data || f.filteredRows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportPdf()" [disabled]="!f.data || f.filteredRows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button>
+    </div>
+
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.data && f.filteredRows.length === 0">
+      <ui-empty icon="box" heading="No hay productos para mostrar" text="Revisá la búsqueda o mostrá también los productos sin stock."></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.data && f.filteredRows.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table sm-table">
+          <thead>
+            <tr>
+              <th class="rep-sticky">Producto</th>
+              <th class="is-num" *ngFor="let b of f.data.branches">{{ b.name }}</th>
+              <th class="is-num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of f.filteredRows">
+              <td class="rep-sticky"><div class="sm-product"><strong>{{ r.name }}</strong><span><span class="ui-num">{{ r.code }}</span> · {{ r.brand || 'Sin marca' }}</span></div></td>
+              <td class="is-num" *ngFor="let b of f.data.branches; let i = index"><span [class]="f.stockCellClass(r.available[i])">{{ r.available[i] || 0 }}</span></td>
+              <td class="is-num rep-main">{{ r.total | number: '1.0-0' }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="rep-sticky">Total{{ f.hasActiveFilters ? ' de la vista' : '' }}</td>
+              <td class="is-num" *ngFor="let b of f.data.branches; let i = index">{{ f.branchTotal(i) | number: '1.0-0' }}</td>
+              <td class="is-num">{{ f.grandTotal | number: '1.0-0' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="rep-notes sm-notes">
+        <p>{{ f.filteredRows.length }} de {{ f.productCount }} productos · {{ f.branchCount }} sucursales.{{ f.hasActiveFilters ? ' Los totales de la tabla respetan los filtros.' : '' }}</p>
+        <p class="sm-legend">
+          <span><i class="sm-dot sm-dot--zero"></i>Sin stock</span>
+          <span><i class="sm-dot sm-dot--low"></i>Bajo (2 o menos)</span>
+          <span><i class="sm-dot sm-dot--ok"></i>Disponible</span>
+          <span><i class="sm-dot sm-dot--high"></i>Concentrado</span>
+        </p>
+      </div>
+    </ng-container>
+  </ui-card>
+</main>

@@ -1,9 +1,9 @@
 .page {
     min-height: calc(100vh - 64px);
-    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
-    padding: 2.5rem 2rem;
-    max-width: 720px;
-    margin: 0 auto;
+  background: transparent;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
 }
 
 .page__back {
@@ -11,9 +11,9 @@
 }
 
 .back-link {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    letter-spacing: .01em;
     color: var(--text-dim);
     text-decoration: none;
     transition: color 0.2s;
@@ -29,8 +29,8 @@
     align-items: center;
     gap: 1rem;
     padding: 5rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
+    font-family: var(--font-sans);
+    font-size: 14px;
     color: var(--text-mute);
 }
 
@@ -64,15 +64,15 @@
 }
 
 .error-state__msg {
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--text-soft);
 }
 
 .btn-secondary {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    letter-spacing: .01em;
     color: var(--text-dim);
     text-decoration: none;
     border: 1px solid var(--border-2);
@@ -124,22 +124,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1.75rem;
     color: var(--amber);
     flex-shrink: 0;
 }
 
 .customer-card__tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.2em;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    letter-spacing: .01em;
     color: var(--amber);
     margin-bottom: 0.3rem;
 }
 
 .customer-card__name {
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text);
@@ -154,8 +154,7 @@
 
 @media (max-width: 540px) {
     .fields-grid {
-        grid-template-columns: 1fr;
-    }
+        grid-template-columns: 1fr;}
 }
 
 .detail-field {
@@ -170,24 +169,23 @@
 
 .detail-field__label {
     display: block;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.2em;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    letter-spacing: 0;
     color: var(--text-dim);
-    text-transform: uppercase;
     margin-bottom: 0.4rem;
 }
 
 .detail-field__value {
     display: block;
-    font-family: 'Crimson Pro', serif;
+    font-family: var(--font-sans);
     font-size: 1rem;
     color: var(--text);
     word-break: break-word;
 }
 
 .detail-field__value--mono {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.82rem;
+    font-family: var(--font-sans);
+    font-size: 14px;
     color: var(--text-soft);
 }

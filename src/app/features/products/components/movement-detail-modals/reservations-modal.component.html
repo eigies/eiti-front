@@ -1,0 +1,23 @@
+<ui-modal eyebrow="Reservas" heading="Stock reservado" (closed)="closed.emit()">
+  <div class="mdm" *ngIf="!loading && reservations as res; else loadingTpl">
+    <div class="mdm__meta mdm__meta--2">
+      <div><span class="ui-stat__label">Alcance</span><strong>{{ scope }}</strong></div>
+      <div><span class="ui-stat__label">Total reservado</span><strong class="ui-num">{{ res.totalReserved }}</strong></div>
+    </div>
+    <div class="mdm__list" *ngIf="res.items.length > 0; else noItems">
+      <div class="mdm__list-row mdm__list-row--resv mdm__list-row--head"><span>Venta / Cliente</span><span>Cant</span><span>Saldo</span><span></span></div>
+      <button class="mdm__list-row mdm__list-row--resv mdm__list-row--link" type="button" *ngFor="let it of res.items" (click)="openSale.emit(it.saleId)">
+        <span class="mdm__resv">
+          <strong class="ui-num">{{ it.saleCode || '—' }}</strong>
+          <span class="mdm__resv-name">{{ it.customerName }}</span>
+          <span class="mdm__resv-meta">{{ it.branchName }} · {{ it.createdAt | date:'dd/MM/yy' }}<ng-container *ngIf="!it.isCuentaCorriente"> · venta pendiente</ng-container></span>
+        </span>
+        <span class="ui-num mdm__qty">{{ it.quantity }}</span>
+        <span class="ui-num">{{ it.pendingAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
+    </div>
+    <ng-template #noItems><ui-empty icon="list" text="No hay reservas activas para este alcance."></ui-empty></ng-template>
+  </div>
+  <ng-template #loadingTpl><div class="mdm__loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div></ng-template>
+</ui-modal>

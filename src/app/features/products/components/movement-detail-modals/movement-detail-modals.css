@@ -1,0 +1,31 @@
+.mdm { display: grid; gap: var(--space-4); }
+.mdm__meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.mdm__meta--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mdm__meta > div { display: grid; gap: 2px; min-width: 0; }
+.mdm__meta strong { font: 600 15px/22px var(--font-sans); overflow-wrap: anywhere; }
+.mdm__line { display: grid; grid-template-columns: minmax(0, 1fr) 48px 130px; gap: var(--space-2); padding: 4px 0; }
+.mdm__line > span:nth-child(n+2) { text-align: right; }
+.mdm__line--head { padding-bottom: 6px; font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.mdm__due { color: var(--danger); font-weight: 600; }
+.mdm__pays { margin-top: var(--space-2); padding-top: 10px; border-top: 1px solid var(--border); }
+.mdm__list { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.mdm__list-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px; gap: var(--space-2); align-items: center; width: 100%; min-height: 52px; padding: 6px 14px; border: 0; border-top: 1px solid var(--border); background: none; color: var(--text); font: inherit; text-align: left; }
+.mdm__list-row:first-child { border-top: 0; }
+.mdm__list-row > span:nth-child(n+2) { text-align: right; }
+.mdm__list-row--head { min-height: 0; padding: 8px 14px; background: var(--surface-sunken); font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.mdm__list-row--resv { grid-template-columns: minmax(0, 1fr) 48px 130px 20px; min-height: 64px; }
+.mdm__list-row--resv.mdm__list-row--head { min-height: 0; }
+.mdm__list-row--link { cursor: pointer; }
+.mdm__list-row--link:hover { background: var(--surface-hover); }
+.mdm__list-row svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: var(--text-3); }
+.mdm__code { color: var(--text-3); font-size: 13px; }
+.mdm__qty { font-weight: 600; }
+.mdm__resv { display: grid; }
+.mdm__resv strong { font-size: 14px; }
+.mdm__resv-name { font-weight: 600; }
+.mdm__resv-meta { font-size: 13px; color: var(--text-3); }
+.mdm__loading { display: grid; gap: var(--space-3); padding: var(--space-2) 0; }
+@media (max-width: 560px) {
+  .mdm__meta { grid-template-columns: 1fr 1fr; }
+  .mdm__line { grid-template-columns: minmax(0, 1fr) 40px 110px; }
+}

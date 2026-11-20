@@ -1,0 +1,44 @@
+<section class="pir" aria-label="Resultado de importación">
+  <header class="pir__head">
+    <strong>Resultado de importación</strong>
+    <button uiBtn="ghost" size="sm" type="button" (click)="closed.emit()">Cerrar</button>
+  </header>
+
+  <ng-container *ngIf="report as r">
+    <span class="ui-eyebrow">Productos</span>
+    <div class="ui-stats pir__stats">
+      <div class="ui-stat"><span class="ui-stat__label">Filas</span><strong class="ui-stat__value">{{ r.totalRows }}</strong></div>
+      <div class="ui-stat"><span class="ui-stat__label">Creados</span><strong class="ui-stat__value">{{ r.createdCount }}</strong></div>
+      <div class="ui-stat"><span class="ui-stat__label">Actualizados</span><strong class="ui-stat__value">{{ r.updatedCount }}</strong></div>
+      <div class="ui-stat pir__bad"><span class="ui-stat__label">Rechazados</span><strong class="ui-stat__value">{{ r.errorCount }}</strong></div>
+    </div>
+    <ul class="pir__rows" *ngIf="r.errorCount > 0; else okProducts">
+      <li *ngFor="let row of reportErrors">
+        <span class="ui-num pir__line">Fila {{ row.rowNumber }}</span>
+        <strong class="ui-num">{{ row.code || 'Sin código' }}</strong>
+        <span class="ui-badge ui-badge--danger">{{ row.action }}</span>
+        <span class="pir__msg">{{ row.message }}</span>
+      </li>
+    </ul>
+    <ng-template #okProducts><p class="pir__ok">No hubo rechazos en la importación.</p></ng-template>
+  </ng-container>
+
+  <ng-container *ngIf="pricing as p">
+    <span class="ui-eyebrow">Precios por sucursal</span>
+    <div class="ui-stats pir__stats">
+      <div class="ui-stat"><span class="ui-stat__label">Filas</span><strong class="ui-stat__value">{{ p.totalRows }}</strong></div>
+      <div class="ui-stat"><span class="ui-stat__label">Actualizados</span><strong class="ui-stat__value">{{ p.updatedCount }}</strong></div>
+      <div class="ui-stat"><span class="ui-stat__label">Omitidos</span><strong class="ui-stat__value">{{ p.skippedCount }}</strong></div>
+      <div class="ui-stat pir__bad"><span class="ui-stat__label">Rechazados</span><strong class="ui-stat__value">{{ p.errorCount }}</strong></div>
+    </div>
+    <ul class="pir__rows" *ngIf="p.errorCount > 0; else okPricing">
+      <li *ngFor="let row of pricingErrors">
+        <span class="ui-num pir__line">Fila {{ row.rowNumber }}</span>
+        <strong><span class="ui-num">{{ row.code || 'Sin código' }}</span> · {{ row.branchName || 'Sin sucursal' }}</strong>
+        <span class="ui-badge ui-badge--danger">{{ row.action }}</span>
+        <span class="pir__msg">{{ row.message }}</span>
+      </li>
+    </ul>
+    <ng-template #okPricing><p class="pir__ok">No hubo rechazos en precios por sucursal.</p></ng-template>
+  </ng-container>
+</section>

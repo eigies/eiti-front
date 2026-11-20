@@ -1,157 +1,58 @@
-/* Mismo lenguaje que el dialogo de confirmacion: queda arriba de las pantallas y debajo de los toasts. */
-:host {
-  position: relative;
-  z-index: 1400;
-}
-
-.due-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: color-mix(in srgb, var(--overlay) 92%, #000 8%);
-  backdrop-filter: blur(8px) saturate(.8);
-}
+/* Aviso de cheques propios que vencen hoy (EITI 2): popup con el total en el ticket. */
+.due-backdrop { position: fixed; inset: 0; z-index: 9000; background: var(--overlay); }
 
 .due-shell {
   position: fixed;
   inset: 0;
-  z-index: 1001;
+  z-index: 9001;
   display: grid;
   place-items: center;
-  padding: 1.25rem;
+  padding: var(--space-4);
   pointer-events: none;
 }
 
 .due-card {
-  display: grid;
-  gap: .5rem;
-  width: min(100%, 510px);
-  max-height: calc(100vh - 2.5rem);
-  overflow-y: auto;
-  box-sizing: border-box;
-  padding: 1.5rem;
-  border: 1px solid color-mix(in srgb, var(--amber) 28%, var(--border));
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--bg-panel) 97%, transparent);
-  box-shadow: 0 35px 90px rgba(0, 0, 0, .42);
   pointer-events: auto;
-}
-
-.due-card__eyebrow {
-  color: var(--amber);
-  font-family: 'DM Mono', monospace;
-  font-size: .68rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-
-.due-card h2 {
-  margin: 0;
-  color: var(--text);
-  font-size: 1.5rem;
-  line-height: 1.15;
-}
-
-.due-card p {
-  margin: 0;
-  color: var(--text-dim);
-}
-
-.due-list {
   display: grid;
-  margin: .6rem 0 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid var(--border-2);
+  gap: var(--space-4);
+  width: min(520px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-3);
+  animation: ui-pop-in var(--dur-in) var(--ease-out);
 }
+
+.due-card__eyebrow { font: 600 12px/16px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--brand-text); }
+.due-card h2 { margin: 2px 0 0; font: 700 22px/28px var(--font-sans); }
+
+.due-ticket { gap: var(--space-1); padding: 22px 24px 30px; }
+.due-ticket .ui-ticket__figure { font-size: 36px; line-height: 42px; }
+.due-ticket__hint { font-size: 14px; color: var(--text-2); }
+
+.due-list { display: grid; margin: 0; padding: 0; list-style: none; }
 
 .due-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: .65rem 0;
-  border-bottom: 1px solid var(--border-2);
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
 }
 
-.due-row__main {
-  display: grid;
-  gap: .15rem;
-  min-width: 0;
-}
+.due-row__main { display: grid; gap: 2px; min-width: 0; }
+.due-row__number { font: 600 15px/22px var(--font-mono); }
+.due-row__meta { font-size: 14px; color: var(--text-2); }
+.due-row__amount { font: 700 15px/22px var(--font-mono); white-space: nowrap; }
 
-.due-row__number {
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .8rem;
-  overflow-wrap: anywhere;
-}
+.due-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
 
-.due-row__meta {
-  color: var(--text-dim);
-  font-size: .85rem;
-}
-
-.due-row__amount,
-.due-total__amount {
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .85rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.due-total {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-top: .25rem;
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: .72rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.due-total__amount {
-  color: var(--amber);
-  font-size: 1rem;
-  letter-spacing: 0;
-}
-
-.due-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: .6rem;
-  margin-top: .9rem;
-}
-
-.due-actions button {
-  padding: .6rem 1.1rem;
-  border-radius: 10px;
-  font-family: 'DM Mono', monospace;
-  font-size: .72rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.due-actions__go {
-  border: 1px solid var(--border-2);
-  background: transparent;
-  color: var(--text);
-}
-
-.due-actions__close {
-  border: 1px solid var(--amber);
-  background: var(--amber);
-  color: var(--bg);
-}
-
-.due-actions button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--amber) 60%, transparent);
-  outline-offset: 2px;
+@media (max-width: 520px) {
+  .due-actions { flex-direction: column-reverse; }
+  .due-actions .ui-btn { width: 100%; }
 }

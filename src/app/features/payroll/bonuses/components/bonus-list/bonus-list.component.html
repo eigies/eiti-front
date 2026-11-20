@@ -1,0 +1,23 @@
+<div class="ui-table-scroll">
+  <table class="ui-table advance-table">
+    <thead>
+      <tr><th>Empleado</th><th>Concepto</th><th class="is-num">Monto</th><th>Estado</th><th><span class="ui-sr-only">Acciones</span></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let bonus of bonuses; trackBy: trackById">
+        <td>
+          <div class="advance-who">
+            <ui-avatar [name]="nameOf(bonus.employeeId)" [key]="bonus.employeeId" [size]="32"></ui-avatar>
+            <span class="ui-table__main">{{ nameOf(bonus.employeeId) }}</span>
+          </div>
+        </td>
+        <td class="advance-pay">{{ conceptOf(bonus.conceptId) }}</td>
+        <td class="is-num advance-amount">{{ amountOf(bonus) }}</td>
+        <td><span [class]="badgeOf(bonus.status)">{{ statusOf(bonus.status) }}</span></td>
+        <td class="advance-actions">
+          <button *ngIf="canManage && bonus.status === 1" class="ui-btn ui-btn--danger-ghost ui-btn--sm" type="button" [disabled]="cancellingId === bonus.id" (click)="cancel.emit(bonus)">Cancelar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

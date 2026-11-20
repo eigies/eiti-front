@@ -1,0 +1,22 @@
+<ui-table-wrap>
+  <table class="ui-table dl">
+    <thead><tr><th>Conductor</th><th>Licencia</th><th>Vence</th><th>Estado</th><th><span class="ui-sr-only">Acciones</span></th></tr></thead>
+    <tbody>
+      <tr *ngFor="let driver of drivers">
+        <td><div class="dl__who"><ui-avatar [name]="driver.fullName" [key]="driver.employeeId" [size]="36"></ui-avatar><span class="ui-table__main">{{ driver.fullName }}</span></div></td>
+        <td class="ui-num">{{ driver.licenseNumber }}</td>
+        <td class="ui-num" [class.dl__expired]="driver.isLicenseExpired">{{ driver.licenseExpiresAt ? (driver.licenseExpiresAt | date:'dd/MM/yyyy') : '—' }}</td>
+        <td>
+          <span class="ui-badge" [class.ui-badge--danger]="driver.isLicenseExpired" [class.ui-badge--success]="!driver.isLicenseExpired">{{ driver.isLicenseExpired ? 'Vencida' : 'Activa' }}</span>
+          <span class="dl__note" *ngIf="driver.isLicenseExpired">No se puede asignar a un vehículo.</span>
+        </td>
+        <td>
+          <div class="dl__actions">
+            <button uiBtn="ghost" size="sm" [iconOnly]="true" type="button" [attr.aria-label]="'Editar ' + driver.fullName" (click)="edit.emit(driver)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
+            <button *ngIf="canDelete" uiBtn="danger-ghost" size="sm" type="button" [disabled]="deletingId === driver.employeeId" (click)="remove.emit(driver)">{{ deletingId === driver.employeeId ? 'Eliminando...' : 'Eliminar' }}</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</ui-table-wrap>

@@ -72,14 +72,33 @@ src/app/
 ## Layout Architecture
 
 - **`NavbarComponent` lives in `app.component.html`**, not in individual feature pages. It is rendered once at the root level above a `<div class="app-content">` wrapper that holds `<router-outlet>`.
-- **Sidebar push effect:** `NavbarComponent` toggles `document.body.classList` with `sidebar-open`. Global `styles.css` applies `margin-left: 260px` to `.app-content` on that class. The sidebar itself is `position: fixed; top: 64px; left: 0`.
+- **Menú lateral (EITI 2):** fijo a la izquierda en escritorio (248 px, se achica a riel de 72 px y se guarda en `localStorage` `eiti_nav_rail`); en ≤1024 px es un cajón con barra superior. Las entradas, grupos y permisos están en `shared/components/navbar/nav.config.ts`. `NavbarComponent` pone en `<body>` las clases `nav-shell`, `nav-rail` y `sidebar-open`; `styles.css` corre `.app-content` según esas clases.
+- **Páginas nuevas:** envolver en `<main class="ui-page">` y usar las piezas `ui-*` de `src/styles/ui.css`.
 - **No icon library** — icons are inline SVG with `stroke`-based paths (Lucide-style, 24×24 viewBox).
+
+## Arquitectura por feature (EITI 2)
+
+Cada pantalla rehecha sigue esta forma (Productos es la primera):
+
+```
+features/<feature>/
+├── data-access/<feature>.facade.ts   # estado (campos / BehaviorSubject) y reglas; habla con core/services
+├── data-access/*.service.ts          # exportaciones / importaciones (Excel, PDF) con el mismo código de armado
+├── pages/<feature>-page.component.*  # contenedor de la ruta: inyecta la facade, maneja rutas y eventos
+├── components/*                      # presentación: @Input/@Output + OnPush, sin servicios
+└── models/*                          # funciones puras de la vista (formularios, cálculos de presentación)
+```
+
+- La facade se provee en la página (`providers: [XFacade]`), así cada visita arranca con estado limpio.
+- La lógica se mueve tal cual (mismos nombres, llamadas, validaciones y mensajes); solo cambia de lugar.
+- Plantillas y estilos siempre en `.html` / `.css` aparte, nunca dentro del `.ts`.
+- `shared/ui/` tiene las piezas standalone: `ui-modal` (popup con entrada/salida y sacudida en confirmaciones irreversibles), `ui-card`, `ui-ticket`, `ui-receipt`, `ui-empty`, `ui-mov-pill`, `button[uiBtn]`, `ui-table-wrap`. Se importan desde `shared/ui`.
 
 ## Key Conventions
 
 - **Services** return `Observable<T>` (never Promises). Use `HttpClient` directly with `environment.apiUrl` as base.
 - **Permission codes** are defined as constants in `src/app/core/models/permission.models.ts` — use those constants rather than raw strings.
 - **Toast notifications** go through `ToastService.success()` / `ToastService.error()` (auto-dismiss 4 s).
-- **Theming:** CSS custom properties in `src/styles.css`. Dark theme is default; `ThemeService` toggles a class on `<body>`.
+- **Theming:** CSS custom properties in `src/styles.css`. Tokens de EITI 2 en `src/styles/tokens.css` (claro por defecto, oscuro grafito con `data-theme="dark"` en `<html>`). Piezas compartidas `ui-*` en `src/styles/ui.css`, movimiento en `src/styles/motion.css`. `ThemeService` pone `data-theme` en `<html>` y mantiene las clases viejas en `<body>`.
 - **Exports:** PDF via jsPDF, Excel via XLSX — both used inside feature components directly.
 - **Onboarding:** `OnboardingService` controls a guided setup banner. `authGuard` checks onboarding status and may redirect before reaching the requested route.

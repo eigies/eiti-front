@@ -1,0 +1,88 @@
+<main class="ui-page" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Productos</span>
+      <h1>Movimientos de stock</h1>
+      <p>Historial por modelo y fecha: entradas, salidas, ventas, compras, ajustes y traspasos.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.search()" novalidate>
+    <app-report-filters [hasMore]="true" [open]="moreOpen" [count]="chips.length" [canApply]="!f.filterForm.invalid" [showClear]="false" [chips]="chips" moreId="stock-mov-more-filters" (toggle)="moreOpen = !moreOpen" (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateFrom')"><span class="ui-field__label">Desde</span><input class="ui-input" type="date" formControlName="dateFrom" /></label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateTo')"><span class="ui-field__label">Hasta</span><input class="ui-input" type="date" formControlName="dateTo" /></label>
+      <label reportMain class="ui-field rep-field--grow"><span class="ui-field__label">Modelo</span>
+        <app-searchable-select formControlName="productId" [options]="f.productOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los modelos" searchPlaceholder="Buscar modelo..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field" *ngIf="f.branches.length > 1"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Tipo</span>
+        <app-searchable-select formControlName="type" [options]="f.typeOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los tipos" searchPlaceholder="Buscar tipo..."></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+    <div class="rep-stat"><span class="rep-stat__label">Entradas</span><strong class="rep-stat__value sm-in">+{{ f.qty(f.data.totals.entradas) }}</strong><span class="rep-stat__hint">Unidades que ingresaron</span></div>
+    <div class="rep-stat"><span class="rep-stat__label">Salidas</span><strong class="rep-stat__value sm-out">−{{ f.qty(f.data.totals.salidas) }}</strong><span class="rep-stat__hint">Unidades que salieron</span></div>
+    <div class="rep-stat"><span class="rep-stat__label">Neto</span><strong class="rep-stat__value">{{ f.data.totals.neto >= 0 ? '+' : '' }}{{ f.qty(f.data.totals.neto) }}</strong><span class="rep-stat__hint">Entradas menos salidas</span></div>
+    <div class="rep-stat"><span class="rep-stat__label">Movimientos</span><strong class="rep-stat__value">{{ f.data.totals.count }}</strong><span class="rep-stat__hint">En el período</span></div>
+  </div>
+
+  <ui-card heading="Movimientos" [count]="f.data ? f.data.totalCount : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="!f.data || f.data.totalCount === 0 || f.exporting"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportPdf()" [disabled]="!f.data || f.data.totalCount === 0 || f.exporting"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button>
+    </div>
+
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && !f.data">
+      <ui-empty icon="box" heading="Elegí las fechas" text="Aplicá los filtros para ver los movimientos."></ui-empty>
+    </div>
+    <div class="rep-state" *ngIf="!f.loading && f.data && f.data.rows.length === 0">
+      <ui-empty icon="search" heading="No hay movimientos" text="No hay movimientos para los filtros seleccionados."></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table smv-table">
+          <thead>
+            <tr><th class="rep-sticky">Fecha</th><th>Sucursal</th><th>Producto</th><th>Tipo</th><th class="is-num">Cantidad</th><th>Documento</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of f.data.rows">
+              <td class="rep-sticky smv-date">{{ f.formatDate(r.date) }}</td>
+              <td>{{ r.branchName }}</td>
+              <td><div class="smv-product"><strong>{{ r.brand }} {{ r.name }}</strong><span class="ui-num">{{ r.code }}</span></div></td>
+              <td><ui-mov-pill [kind]="r.direction > 0 ? 'in' : (r.direction < 0 ? 'out' : 'neutral')" [label]="r.typeName"></ui-mov-pill></td>
+              <td class="is-num rep-main" [class.sm-in]="r.direction > 0" [class.sm-out]="r.direction < 0">{{ f.signed(r) }}</td>
+              <td>
+                <button *ngIf="f.isTransfer(r); else docPlain" uiBtn="ghost" size="sm" type="button" class="smv-transfer" (click)="f.openTransfer(r)">Ver traspaso</button>
+                <ng-template #docPlain><span class="ui-num smv-doc">{{ r.referenceCode || '—' }}</span></ng-template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ui-pager" *ngIf="f.data.totalPages > 1">
+        <span class="ui-pager__info">Mostrando {{ f.rangeFrom }} a {{ f.rangeTo }} de {{ f.data.totalCount }}</span>
+        <div class="ui-pager__nav">
+          <button uiBtn="ghost" size="sm" type="button" [disabled]="f.loading || f.data.page <= 1" (click)="f.goToPage(1)" aria-label="Primera página">«</button>
+          <button uiBtn="ghost" size="sm" type="button" [disabled]="f.loading || f.data.page <= 1" (click)="f.goToPage(f.data.page - 1)">Anterior</button>
+          <span class="ui-pager__info">Página {{ f.data.page }} de {{ f.data.totalPages }}</span>
+          <button uiBtn="ghost" size="sm" type="button" [disabled]="f.loading || f.data.page >= f.data.totalPages" (click)="f.goToPage(f.data.page + 1)">Siguiente</button>
+          <button uiBtn="ghost" size="sm" type="button" [disabled]="f.loading || f.data.page >= f.data.totalPages" (click)="f.goToPage(f.data.totalPages)" aria-label="Última página">»</button>
+        </div>
+      </div>
+      <div class="rep-notes"><p>Los totales de arriba son de todo el período filtrado, no solo de esta página.</p></div>
+    </ng-container>
+  </ui-card>
+</main>
+
+<app-transfer-detail-modal *ngIf="facade.transferPopup || facade.transferLoading"
+  [transfer]="facade.transferPopup" [loading]="facade.transferLoading"
+  [date]="facade.transferPopup ? facade.formatDate(facade.transferPopup.date) : ''"
+  [totalQuantity]="facade.qty(facade.transferTotalQuantity)"
+  (closed)="facade.closeTransfer()"></app-transfer-detail-modal>

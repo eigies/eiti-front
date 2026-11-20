@@ -1,0 +1,28 @@
+<div class="emp-scroll">
+  <table class="ui-table emp-table">
+    <thead>
+      <tr><th>Empleado</th><th>Estado</th><th class="is-num">Sueldo base</th><th>Periodicidad</th><th><span class="ui-sr-only">Acciones</span></th></tr>
+    </thead>
+    <tbody>
+      <tr class="employee-item" *ngFor="let employee of employees; trackBy: trackById">
+        <td>
+          <div class="emp-who">
+            <ui-avatar [name]="employee.fullName" [key]="employee.id" [size]="36"></ui-avatar>
+            <div><span class="ui-table__main employee-row__name">{{ employee.fullName }}</span><span class="emp-sub">{{ employee.employeeRoleName }}</span></div>
+          </div>
+        </td>
+        <td><span class="ui-badge" [class.ui-badge--success]="employee.isActive">{{ employee.isActive ? 'Activo' : 'Inactivo' }}</span></td>
+        <td class="is-num">
+          <ng-container *ngIf="employee.baseSalary !== null; else noSalary">{{ employee.baseSalary | currency:'ARS':'symbol-narrow':'1.2-2' }}</ng-container>
+          <ng-template #noSalary><span class="emp-muted">Sin definir</span></ng-template>
+        </td>
+        <td class="emp-period" [class.emp-muted]="!employee.payrollPeriodicity">{{ periodicityOf(employee.payrollPeriodicity) }}</td>
+        <td class="emp-actions">
+          <button *ngIf="canManage" class="ui-btn ui-btn--ghost ui-btn--sm" type="button" [attr.aria-label]="'Configurar sueldo de ' + employee.fullName" (click)="configure.emit(employee)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Sueldo
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,24 @@
+<ui-table-wrap>
+  <table class="ui-table qt">
+    <thead><tr><th>Código</th><th>Cliente</th><th class="is-num">Total</th><th>Vence</th><th>Estado</th><th><span class="ui-sr-only">Acciones</span></th></tr></thead>
+    <tbody>
+      <tr class="is-clickable" *ngFor="let quote of quotes" (click)="open.emit(quote.id)">
+        <td class="ui-num qt__code">{{ quote.code }}</td>
+        <td>
+          <span class="ui-table__main">{{ quote.customerFullName ?? quote.prospectName }}</span>
+          <span class="ui-badge qt__prospect" *ngIf="!quote.customerFullName">Prospecto</span>
+        </td>
+        <td class="is-num">{{ quote.grandTotal | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+        <td class="ui-num qt__date">{{ quote.expiresAt | date:'dd/MM/yyyy' }}</td>
+        <td><span class="ui-badge" [ngClass]="statusClass(quote)">{{ statusLabel(quote) }}</span></td>
+        <td (click)="$event.stopPropagation()">
+          <div class="qt__actions">
+            <button uiBtn="ghost" size="sm" type="button" (click)="open.emit(quote.id)">Ver</button>
+            <button *ngIf="canConvertFn(quote)" uiBtn="secondary" size="sm" type="button" (click)="convert.emit(quote)">Convertir</button>
+            <button *ngIf="quote.idQuoteStatus === 1" uiBtn="danger-ghost" size="sm" type="button" (click)="cancel.emit(quote)">Cancelar</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</ui-table-wrap>
