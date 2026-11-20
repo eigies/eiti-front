@@ -7,10 +7,12 @@ import { SupplierAccountService } from '../../core/services/supplier-account.ser
 import { SupplierAccountListItem } from '../../core/models/supplier-account.models';
 import { ToastService } from '../../shared/services/toast.service';
 
+import { UiAvatarComponent, UiButtonComponent, UiEmptyComponent } from '../../shared/ui';
+
 @Component({
   selector: 'app-purchases-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, UiAvatarComponent, UiButtonComponent, UiEmptyComponent],
   templateUrl: './purchases-list.component.html',
   styleUrls: ['./purchases-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

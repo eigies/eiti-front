@@ -8,11 +8,10 @@
   top: 80px;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--amber) 6%, transparent), transparent 8rem),
-    color-mix(in srgb, var(--bg-panel) 96%, transparent);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, .1);
+    var(--surface);
+  box-shadow: none;
 }
 
 .quick-summary__head {
@@ -29,21 +28,20 @@
 .quick-summary dt,
 .quick-summary__total span,
 .quick-summary__action {
-  font-family: 'DM Mono', monospace;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
 }
 
 .quick-summary__head p {
   margin: 0;
   color: var(--text);
-  font-size: .72rem;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: .1em;
+  letter-spacing: .01em;
 }
 
 .quick-summary__head span {
   color: var(--text-soft);
-  font-size: .62rem;
+  font-size: 12px;
 }
 
 .quick-summary__details {
@@ -62,16 +60,16 @@
 
 .quick-summary dt {
   color: var(--text-soft);
-  font-size: .62rem;
-  letter-spacing: .08em;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 .quick-summary dd {
   overflow: hidden;
   margin: 0;
   color: var(--text);
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-size: .92rem;
+  font-family: var(--font-sans);
+  font-size: 15px;
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -97,8 +95,8 @@
   gap: .6rem;
   min-height: 28px;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .68rem;
+  font-family: var(--font-sans);
+  font-size: 12px;
 }
 
 .quick-summary__product-name {
@@ -112,7 +110,7 @@
 }
 
 .quick-summary__product strong {
-  font-size: .68rem;
+  font-size: 12px;
   font-weight: 600;
   text-align: right;
   white-space: nowrap;
@@ -123,8 +121,8 @@
   border: 0;
   color: color-mix(in srgb, var(--amber) 78%, var(--text));
   background: transparent;
-  font-family: 'DM Mono', monospace;
-  font-size: .66rem;
+  font-family: var(--font-sans);
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -151,13 +149,13 @@
 
 .quick-summary__total span {
   color: var(--text-dim);
-  font-size: .65rem;
-  letter-spacing: .1em;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 .quick-summary__total strong {
   color: color-mix(in srgb, var(--amber) 80%, var(--text));
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-sans);
   font-size: clamp(1.2rem, 2vw, 1.65rem);
 }
 
@@ -177,9 +175,9 @@
   border-radius: 8px;
   color: var(--bg);
   background: var(--amber);
-  font-size: .68rem;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: .01em;
   cursor: pointer;
 }
 
@@ -201,44 +199,36 @@
     z-index: 45;
     display: grid;
     grid-template-columns: 1fr auto;
-    align-items: center;
-  }
+    align-items: center;}
 
   .quick-summary__head,
   .quick-summary__details,
   .quick-summary__products {
-    display: none;
-  }
+    display: none;}
 
   .quick-summary__mobile-count {
-    display: inline;
-  }
+    display: inline;}
 
   .quick-summary__total {
     min-height: 58px;
-    border-top: 0;
-  }
+    border-top: 0;}
 
   .quick-summary__action {
     width: auto;
     min-width: 190px;
-    margin: .65rem;
-  }
+    margin: .65rem;}
 }
 
 @media (max-width: 560px) {
   .quick-summary {
-    grid-template-columns: 1fr;
-  }
+    grid-template-columns: 1fr;}
 
   .quick-summary__total {
-    padding-bottom: .35rem;
-  }
+    padding-bottom: .35rem;}
 
   .quick-summary__action {
     width: calc(100% - 1.3rem);
-    margin: .35rem .65rem .65rem;
-  }
+    margin: .35rem .65rem .65rem;}
 }
 
 /* Mientras se guarda (y factura, que puede tardar unos segundos) el boton muestra que esta trabajando. */
@@ -257,6 +247,5 @@
 
 @media (prefers-reduced-motion: reduce) {
     .quick-summary__spinner {
-        animation-duration: 1.6s;
-    }
+        animation-duration: 1.6s;}
 }

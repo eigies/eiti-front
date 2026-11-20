@@ -1,0 +1,7 @@
+:host { display: grid; gap: var(--space-3); }
+.pf { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) auto; gap: var(--space-3); align-items: end; }
+.pf__active { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.pf__tag { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--brand); border-radius: var(--radius-pill); background: var(--brand-soft); color: var(--text); font: 600 14px/20px var(--font-sans); cursor: pointer; }
+.pf__tag svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+@media (max-width: 1180px) { .pf { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pf { grid-template-columns: 1fr 1fr; } }

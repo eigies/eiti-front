@@ -1,0 +1,35 @@
+<ui-modal eyebrow="Sueldos" heading="Generar liquidaciones" [closable]="!generating" (closed)="closed.emit()">
+  <form id="generate-liquidations-form" class="pm" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <div class="pm__grid">
+      <label class="ui-field">
+        <span class="ui-field__label">Periodicidad</span>
+        <app-searchable-select formControlName="periodicity" [options]="periodicities" placeholder="Seleccionar periodicidad" searchPlaceholder="Buscar periodicidad..." (valueChange)="periodChanged.emit()"></app-searchable-select>
+      </label>
+      <label class="ui-field">
+        <span class="ui-field__label">Período</span>
+        <input class="ui-input" type="text" formControlName="periodLabel" placeholder="2026-11" (change)="periodChanged.emit()" />
+      </label>
+      <label class="ui-field">
+        <span class="ui-field__label">Desde</span>
+        <input class="ui-input" type="date" formControlName="periodStart" />
+      </label>
+      <label class="ui-field">
+        <span class="ui-field__label">Hasta</span>
+        <input class="ui-input" type="date" formControlName="periodEnd" />
+      </label>
+    </div>
+
+    <div class="result-box pm__result pm__result--ok" *ngIf="result">
+      <strong>{{ result.generatedCount }} {{ result.generatedCount === 1 ? 'liquidación generada' : 'liquidaciones generadas' }}</strong>
+      <div class="pm__line" *ngFor="let item of result.generated"><span>{{ item.employeeName }}</span><span class="ui-num">{{ item.netAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+    </div>
+    <div class="pm__result pm__result--warn" *ngIf="result && result.skipped.length > 0">
+      <strong>No se generó</strong>
+      <span *ngFor="let item of result.skipped">{{ item.employeeName }} — {{ item.reason }}</span>
+    </div>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" [disabled]="generating" (click)="closed.emit()">Cerrar</button>
+    <button uiBtn="primary" type="submit" form="generate-liquidations-form" [disabled]="form.invalid || generating">{{ generating ? 'Generando...' : 'Generar' }}</button>
+  </footer>
+</ui-modal>

@@ -1,0 +1,79 @@
+<main class="ui-page tradeins-report" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Ventas</span>
+      <h1>Productos recibidos en canje por sucursal</h1>
+      <p>Productos que entraron como canje, por sucursal y producto: unidades, valor reconocido y valor unitario promedio en el período.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.search()" novalidate>
+    <app-report-filters [hasMore]="true" [open]="f.advancedFiltersOpen" [count]="f.activeOptionalFiltersCount" [canApply]="!f.filterForm.invalid" [chips]="chips" moreId="tradeins-advanced-filters" (toggle)="f.toggleAdvancedFilters()" (clear)="f.clearFilters()" (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateFrom')"><span class="ui-field__label">Desde</span><input class="ui-input" type="date" formControlName="dateFrom" /></label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateTo')"><span class="ui-field__label">Hasta</span><input class="ui-input" type="date" formControlName="dateTo" /></label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="f.customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="f.saleTypeOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+    <ui-ticket class="ui-ticket--compact" label="Valor reconocido en canjes" [figure]="f.data.totals.amount | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="ui-ticket__sub">{{ f.data.totals.operations }} {{ f.data.totals.operations === 1 ? 'venta' : 'ventas' }} con canje</span>
+    </ui-ticket>
+    <div class="rep-stat"><span class="rep-stat__label">Unidades recibidas</span><strong class="rep-stat__value">{{ f.data.totals.units }} u</strong><span class="rep-stat__hint">{{ f.data.rows.length }} productos · {{ f.branchCount }} sucursales</span></div>
+    <div class="rep-stat"><span class="rep-stat__label">Valor unitario promedio</span><strong class="rep-stat__value">{{ f.data.totals.avgUnitValue | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">De todo el período</span></div>
+  </div>
+
+  <ui-card heading="Resultados" [count]="f.data ? f.data.rows.length : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportPdf()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button>
+    </div>
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.hasSearched && f.data && f.data.rows.length === 0">
+      <ui-empty icon="search" heading="No se recibieron canjes con esos filtros" text="Probá ampliar el rango de fechas o quitar el filtro de sucursal."></ui-empty>
+    </div>
+    <ng-container *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table">
+          <thead>
+            <tr><th class="rep-sticky">Sucursal</th><th>Producto</th><th>Marca</th><th>SKU</th><th class="is-num">Operaciones</th><th class="is-num">Unidades</th><th class="is-num">Valor total</th><th class="is-num">Valor unit. prom.</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of f.data.rows; let i = index; trackBy: f.trackByRow" [class.rep-break]="f.isFirstRowOfBranch(i)">
+              <td class="rep-main rep-sticky">{{ r.branchName }}</td>
+              <td>{{ r.productName }}</td>
+              <td class="rep-dim">{{ r.productBrand || '-' }}</td>
+              <td class="rep-dim ui-num">{{ r.productSku || '-' }}</td>
+              <td class="is-num">{{ r.operations }}</td>
+              <td class="is-num">{{ r.units }}</td>
+              <td class="is-num">{{ r.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num rep-dim">{{ r.avgUnitValue | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="rep-sticky">Total</td><td></td><td></td><td></td>
+              <td class="is-num">{{ f.data.totals.operations }}</td>
+              <td class="is-num">{{ f.data.totals.units }}</td>
+              <td class="is-num">{{ f.data.totals.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num">{{ f.data.totals.avgUnitValue | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="rep-notes">
+        <p>La fecha del canje es la de la venta que lo recibió: el ingreso de stock se registra cuando se crea la venta. Las ventas anuladas no se cuentan.</p>
+        <p>Valor total = lo que se le reconoció al cliente por el canje, es decir lo que se descontó del total de la venta.</p>
+        <p>Operaciones del total = ventas distintas con canje; una venta que entregó dos productos distintos cuenta una sola vez, por eso no es la suma de la columna.</p>
+      </div>
+    </ng-container>
+  </ui-card>
+</main>

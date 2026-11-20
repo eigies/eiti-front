@@ -1,0 +1,4 @@
+.branches__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.branches__card { overflow: hidden; }
+.branches__state { padding: 0 20px 20px; }
+.page--guided-lock .branches__card, .page--guided-lock .branches__actions { opacity: .35; pointer-events: none; }

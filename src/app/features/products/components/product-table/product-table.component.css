@@ -1,0 +1,22 @@
+.pt th { white-space: nowrap; }
+.pt th:first-child, .pt td:first-child { padding-left: var(--space-5); }
+.pt th:last-child, .pt td:last-child { padding-right: var(--space-5); }
+.pt__check { width: 52px; }
+.pt__code { font-size: 14px; white-space: nowrap; }
+.pt__muted { color: var(--text-2); font-size: 14px; }
+.pt__brand { font-weight: 600; white-space: nowrap; }
+.pt__name { min-width: 200px; }
+.pt__desc { min-width: 220px; color: var(--text-2); font-size: 14px; }
+.pt__date { font-size: 14px; white-space: nowrap; }
+.pt__ovr { margin-left: 4px; color: var(--brand-text); font-weight: 700; }
+.pt__in { min-width: 110px; }
+.pt__in--wide { min-width: 200px; }
+.pt__switch { min-height: 36px; font-size: 14px; gap: var(--space-2); }
+.pt__row--edit td { background: var(--surface-sunken); }
+.pt__row--changed td { background: var(--brand-soft); }
+.pt__cell--changed .ui-input, .pt__cell--changed .ui-textarea { border-color: var(--brand); }
+.pt__cell--invalid .ui-input, .pt__cell--invalid .ui-textarea { border-color: var(--danger); }
+.pt__row--invalid td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
+.pt--bulk tr:hover td { background: inherit; }
+.pt th, .pt td { padding-left: 10px; padding-right: 10px; }
+.pt .is-num { font-size: 14px; }

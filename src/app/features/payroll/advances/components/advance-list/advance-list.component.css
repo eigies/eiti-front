@@ -1,0 +1,12 @@
+:host { display: block; min-width: 0; }
+.ui-table-scroll { overflow-x: auto; }
+.advance-table { min-width: 760px; }
+.advance-table th:first-child, .advance-table th:last-child { border-radius: 0; }
+.advance-who { display: flex; align-items: center; gap: 12px; }
+.advance-date { font-size: 14px; white-space: nowrap; }
+.advance-amount { font-weight: 700; }
+.advance-pay { font-size: 14px; }
+.advance-notes { font-size: 14px; color: var(--text-2); }
+.advance-actions { text-align: right; }
+.advance-actions .ui-btn { min-height: 40px; }
+.advance-table tbody tr:last-child td { border-bottom: 0; }

@@ -32,6 +32,8 @@ import {
   UserAccessDraft
 } from '../../users-ui.models';
 
+export interface UserAccessStep { id: string; index: string; label: string; done: boolean; hint: string; }
+
 type PermissionCatalogEntry = Readonly<{
   code: string;
   label: string;
@@ -122,6 +124,58 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit, OnDes
 
   get inheritedPermissionCount(): number {
     return this.permissionModules.reduce((count, module) => count + module.permissions.length, 0);
+  }
+
+  /** Barra lateral del popup: los 4 pasos con lo que falta en cada uno. */
+  get steps(): UserAccessStep[] {
+    const c = this.form.controls;
+    const editing = this.mode === 'edit';
+    const fullName = `${c.firstName.value} ${c.lastName.value}`.trim();
+    const personalDone = c.firstName.valid && c.lastName.valid;
+    const missingIdentity = editing ? [] : [
+      c.username.invalid ? 'el usuario' : '',
+      c.password.invalid ? 'la contraseña' : '',
+      c.email.invalid ? 'el email' : ''
+    ].filter(Boolean);
+    const profile = this.selectedProfile;
+    return [
+      {
+        id: 'personal', index: '01', label: 'Datos personales', done: personalDone,
+        hint: personalDone ? fullName : (fullName ? 'Revisá nombre y apellido' : 'Falta nombre y apellido')
+      },
+      {
+        id: 'identity', index: '02', label: 'Identidad', done: missingIdentity.length === 0,
+        hint: editing
+          ? (this.user?.username ?? '')
+          : (missingIdentity.length ? `Falta ${missingIdentity.join(', ')}` : c.username.value.trim())
+      },
+      {
+        id: 'profile', index: '03', label: 'Perfil', done: !!profile,
+        hint: profile
+          ? `${profile.name} · ${this.inheritedPermissionCount} ${this.inheritedPermissionCount === 1 ? 'permiso' : 'permisos'}`
+          : 'Falta elegir el perfil'
+      },
+      { id: 'branches', index: '04', label: 'Sucursales', done: true, hint: this.branchScopeLabel }
+    ];
+  }
+
+  get branchScopeLabel(): string {
+    if (this.allBranchesSelected) return 'Todas las sucursales';
+    const names = this.branches.filter(branch => this.selectedBranchIds.has(branch.id)).map(branch => branch.name);
+    if (names.length === 1 && this.selectedBranchIds.size === 1) return names[0];
+    return `${this.selectedBranchIds.size} sucursales`;
+  }
+
+  get footerSummary(): string {
+    const profile = this.selectedProfile?.name ?? 'Sin perfil';
+    if (this.allBranchesSelected) return `${profile} · acceso a todas las sucursales`;
+    const count = this.selectedBranchIds.size;
+    return `${profile} · acceso restringido a ${count} ${count === 1 ? 'sucursal' : 'sucursales'}`;
+  }
+
+  scrollToStep(stepId: string): void {
+    const target = this.panel?.nativeElement.querySelector<HTMLElement>(`[data-step="${stepId}"]`);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   get allBranchesSelected(): boolean {
@@ -280,6 +334,10 @@ export class UserAccessPanelComponent implements OnChanges, AfterViewInit, OnDes
       event.preventDefault();
       first.focus();
     }
+  }
+
+  trackByStepId(_: number, step: UserAccessStep): string {
+    return step.id;
   }
 
   trackByBranchId(_: number, branch: BranchResponse): string {

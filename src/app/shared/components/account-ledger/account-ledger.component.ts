@@ -131,6 +131,26 @@ export class AccountLedgerComponent implements OnChanges {
     return row.kind === 'credit_note' ? 'Anular nota' : this.labels.cancelGroup;
   }
 
+  /** Pastilla de color del movimiento: venta/compra, cobro/pago y nota de crédito. */
+  movKind(row: LedgerRow): string {
+    const supplier = this.labels === SUPPLIER_LEDGER_LABELS;
+    if (row.kind === 'invoice') return supplier ? 'supplier' : 'sale';
+    if (row.kind === 'payment') return supplier ? 'out' : 'cc';
+    return supplier ? 'supplier-nc' : 'customer-nc';
+  }
+
+  /** Pastilla de color de cada medio de un cobro o pago. */
+  meansKind(method: string): string {
+    switch (method) {
+      case 'cash': return 'in';
+      case 'transfer': return 'transfer-in';
+      case 'check': return 'supplier';
+      case 'card': return 'transfer-out';
+      case 'trade_in': return 'customer-nc';
+      default: return 'neutral';
+    }
+  }
+
   tagLabel(row: LedgerRow): string {
     if (row.kind === 'invoice') return this.labels.invoice;
     if (row.kind === 'payment') return this.labels.payment;

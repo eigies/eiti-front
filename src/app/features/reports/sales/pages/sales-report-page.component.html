@@ -1,0 +1,128 @@
+<main class="ui-page sales-report" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Ventas</span>
+      <h1>{{ f.meta.title }}</h1>
+      <p>Facturación, costo, ganancia y margen en el período.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.search()" novalidate>
+    <app-report-filters
+      [hasMore]="true"
+      [open]="f.advancedFiltersOpen"
+      [count]="f.activeOptionalFiltersCount"
+      [canApply]="!f.filterForm.invalid"
+      [chips]="chips"
+      moreId="sales-advanced-filters"
+      (toggle)="f.toggleAdvancedFilters()"
+      (clear)="f.clearFilters()"
+      (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateFrom')">
+        <span class="ui-field__label">Desde</span>
+        <input class="ui-input" type="date" formControlName="dateFrom" />
+      </label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateTo')">
+        <span class="ui-field__label">Hasta</span>
+        <input class="ui-input" type="date" formControlName="dateTo" />
+      </label>
+      <div reportExtra class="rep-seg" *ngIf="f.isTransport" role="group" aria-label="Agrupar por">
+        <button type="button" [attr.aria-pressed]="f.transportMode === 'installer'" (click)="f.setTransportMode('installer')">Por instalador</button>
+        <button type="button" [attr.aria-pressed]="f.transportMode === 'vehicle'" (click)="f.setTransportMode('vehicle')">Por vehículo</button>
+      </div>
+
+      <label reportMore class="ui-field"><span class="ui-field__label">Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="f.customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Instalador</span>
+        <app-searchable-select formControlName="installerId" [options]="f.driverOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar instalador..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Vehículo</span>
+        <app-searchable-select formControlName="vehicleId" [options]="f.vehicleOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar vehículo..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Canal</span>
+        <app-searchable-select formControlName="channel" [options]="f.channelOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar canal..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Categoría</span>
+        <app-searchable-select formControlName="categoryId" [options]="f.categoryOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas" searchPlaceholder="Buscar categoría..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Envío</span>
+        <app-searchable-select formControlName="deliveryMode" [options]="f.deliveryOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="f.saleTypeOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="f.data && f.data.rows.length > 0">
+    <ui-ticket class="ui-ticket--compact" label="Ganancia del período" [figure]="f.data.totals.profit | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="ui-ticket__sub">Margen {{ f.data.totals.marginPct | number:'1.1-1' }}% sobre lo facturado</span>
+    </ui-ticket>
+    <div class="rep-stat"><span class="rep-stat__label">Facturación</span><strong class="rep-stat__value">{{ f.data.totals.revenue | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">Lo vendido en el período</span></div>
+    <div class="rep-stat"><span class="rep-stat__label">Costo</span><strong class="rep-stat__value rep-stat__value--muted">{{ f.data.totals.cost | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">Costo guardado en cada venta</span></div>
+    <div class="rep-stat"><span class="rep-stat__label">Ventas y unidades</span><strong class="rep-stat__value">{{ f.data.totals.salesCount }} · {{ f.data.totals.units }} u</strong><span class="rep-stat__hint">Ventas = tickets distintos</span></div>
+  </div>
+
+  <ui-card heading="Resultados" [count]="f.data ? f.data.rows.length : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportPdf()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button>
+    </div>
+
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.hasSearched && f.data && f.data.rows.length === 0">
+      <ui-empty icon="search" heading="No hay ventas con esos filtros" text="Probá ampliar el rango de fechas o quitar filtros."></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table">
+          <thead>
+            <tr>
+              <th class="rep-sticky">{{ f.dimensionHeader }}</th>
+              <th *ngIf="f.isChannelBrand">Marca</th>
+              <th class="is-num">Ventas</th>
+              <th class="is-num">Unidades</th>
+              <th class="is-num">Facturación</th>
+              <th class="is-num">Costo</th>
+              <th class="is-num">Ganancia</th>
+              <th>Margen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of f.data.rows; trackBy: f.trackByKey">
+              <td class="rep-main rep-sticky">{{ r.label }}</td>
+              <td *ngIf="f.isChannelBrand" class="rep-dim">{{ r.subLabel }}</td>
+              <td class="is-num">{{ r.salesCount }}</td>
+              <td class="is-num">{{ r.units }}</td>
+              <td class="is-num">{{ r.revenue | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num rep-dim">{{ r.cost | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num" [class.rep-pos]="r.profit >= 0" [class.rep-neg]="r.profit < 0">{{ r.profit | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="rep-margin"><app-margin-bar [value]="r.marginPct"></app-margin-bar></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="rep-sticky">Total</td>
+              <td *ngIf="f.isChannelBrand"></td>
+              <td class="is-num">{{ f.data.totals.salesCount }}</td>
+              <td class="is-num">{{ f.data.totals.units }}</td>
+              <td class="is-num">{{ f.data.totals.revenue | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num">{{ f.data.totals.cost | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num rep-pos">{{ f.data.totals.profit | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num">{{ f.data.totals.marginPct | number:'1.1-1' }}%</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="rep-notes">
+        <p>La rentabilidad usa el costo guardado en la venta; las ventas previas a esta función usan el costo actual del producto.</p>
+        <p>Ventas = tickets distintos. Una venta con varios modelos se cuenta en cada uno, por eso la suma de la columna puede ser mayor que el total de ventas.</p>
+      </div>
+    </ng-container>
+  </ui-card>
+</main>

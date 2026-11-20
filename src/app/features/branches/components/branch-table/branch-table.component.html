@@ -1,0 +1,38 @@
+<div class="br-scroll">
+  <table class="ui-table br-table">
+    <thead>
+      <tr>
+        <th>Sucursal</th><th>Código</th><th>Facturación</th>
+        <ng-container *ngIf="canViewFinancials"><th class="is-num">Ventas</th><th class="is-num">Caja actual</th></ng-container>
+        <th><span class="ui-sr-only">Acciones</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of branches; trackBy: trackById">
+        <td>
+          <span class="ui-table__main">{{ item.branch.name }}</span>
+          <span class="br-sub">{{ item.branch.address || 'Sin dirección' }} · creada {{ item.branch.createdAt | date:'dd/MM/yyyy' }}</span>
+        </td>
+        <td class="br-code">{{ item.branch.code || 'Sin código' }}</td>
+        <td class="br-inv">
+          <span class="ui-badge" [class.ui-badge--success]="automaticOf(item.branch) === true" [title]="'Facturación ' + originOf(item.branch)">{{ invoicingOf(item.branch) }}</span>
+          <span class="br-sub">{{ originOf(item.branch) }} · {{ item.branch.fiscalPointOfSaleNumber ? 'Punto de venta ' + pointOfSaleOf(item.branch) : 'Sin punto de venta' }}</span>
+        </td>
+        <ng-container *ngIf="canViewFinancials">
+          <td class="is-num">{{ item.branch.salesCount }}</td>
+          <td class="is-num">{{ item.branch.cashValue | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+        </ng-container>
+        <td class="br-actions">
+          <ng-container *ngIf="canManage">
+            <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button" (click)="edit.emit(item.branch)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Editar
+            </button>
+            <button class="ui-btn ui-btn--danger-ghost ui-btn--sm ui-btn--icon" type="button" [disabled]="deletingId === item.branch.id" [attr.aria-label]="'Eliminar ' + item.branch.name" [title]="deletingId === item.branch.id ? 'Eliminando...' : 'Eliminar ' + item.branch.name" (click)="remove.emit(item.branch)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+            </button>
+          </ng-container>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -9,6 +9,7 @@ import {
     ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { UiButtonComponent, UiModalComponent, UiReceiptComponent } from '../../../shared/ui';
 import { QuoteService } from '../../../core/services/quote.service';
 import { StockService } from '../../../core/services/stock.service';
 import { QuoteDetailResponse } from '../../../core/models/quote.models';
@@ -26,7 +27,7 @@ export interface QuoteStockWarning {
 @Component({
     selector: 'app-quote-detail-modal',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, UiModalComponent, UiButtonComponent, UiReceiptComponent],
     templateUrl: './quote-detail-modal.component.html',
     styleUrls: ['./quote-detail-modal.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush

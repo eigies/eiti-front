@@ -297,7 +297,8 @@ describe('UserAccessPanelComponent', () => {
     tick();
     expect(background.inert).toBeTrue();
 
-    const first = query('.access-panel__close') as HTMLButtonElement;
+    // El primer foco del popup es el primer paso de la barra lateral.
+    const first = query('.access-panel__step') as HTMLButtonElement;
     const last = query('.access-panel__button--primary') as HTMLButtonElement;
     first.focus();
     first.dispatchEvent(new KeyboardEvent('keydown', {
@@ -440,17 +441,17 @@ describe('UserAccessPanelComponent', () => {
     expect(parseFloat(getComputedStyle(check).width)).toBeGreaterThanOrEqual(20);
   });
 
-  it('uses 720px desktop width, full host width through 900px, touch targets and no narrow overflow', async () => {
+  it('uses a centered 1000px popup, full host width through 900px, touch targets and no narrow overflow', async () => {
     render('edit', {
       ...existingUser,
       email: `${'verylongunbrokenaddress'.repeat(12)}@empresa.test`
     });
 
-    await setHostWidth(1000);
+    await setHostWidth(1100);
     let panel = query('.access-panel') as HTMLElement;
     let body = query('.access-panel__body') as HTMLElement;
     const profileTrigger = query('.search-select__trigger') as HTMLButtonElement;
-    expect(panel.getBoundingClientRect().width).toBeCloseTo(720, 0);
+    expect(panel.getBoundingClientRect().width).toBeCloseTo(1000, 0);
     expect(parseFloat(getComputedStyle(body).paddingLeft)).toBeGreaterThanOrEqual(28);
     expect(getComputedStyle(profileTrigger).borderTopLeftRadius).toBe('8px');
 

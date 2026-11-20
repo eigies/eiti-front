@@ -1,11 +1,18 @@
 <ng-container *ngIf="cheques.length > 0">
-  <div class="due-backdrop" (click)="close()" aria-hidden="true"></div>
+  <div class="due-backdrop ui-overlay" (click)="close()" aria-hidden="true"></div>
 
   <section class="due-shell" role="dialog" aria-modal="true" aria-labelledby="due-title">
     <div class="due-card">
-      <span class="due-card__eyebrow">Cheques propios</span>
-      <h2 id="due-title">{{ cheques.length === 1 ? 'Hoy vence 1 cheque' : 'Hoy vencen ' + cheques.length + ' cheques' }}</h2>
-      <p>Se debitan del banco: revisá que haya saldo.</p>
+      <header class="due-card__head">
+        <span class="due-card__eyebrow">Cheques propios</span>
+        <h2 id="due-title">{{ cheques.length === 1 ? 'Hoy vence 1 cheque' : 'Hoy vencen ' + cheques.length + ' cheques' }}</h2>
+      </header>
+
+      <div class="ui-ticket due-ticket">
+        <span class="ui-ticket__label">Se debita hoy</span>
+        <strong class="ui-ticket__figure">$ {{ money(total) }}</strong>
+        <span class="due-ticket__hint">Revisá que haya saldo en el banco.</span>
+      </div>
 
       <ul class="due-list">
         <li class="due-row" *ngFor="let cheque of cheques">
@@ -19,14 +26,9 @@
         </li>
       </ul>
 
-      <div class="due-total" *ngIf="cheques.length > 1">
-        <span>Total</span>
-        <span class="due-total__amount">$ {{ money(total) }}</span>
-      </div>
-
       <div class="due-actions">
-        <button class="due-actions__go" type="button" (click)="goToCheques()">Ver cheques</button>
-        <button class="due-actions__close" type="button" (click)="close()">Entendido</button>
+        <button class="due-actions__close ui-btn ui-btn--ghost" type="button" (click)="close()">Entendido</button>
+        <button class="due-actions__go ui-btn ui-btn--primary" type="button" (click)="goToCheques()">Ver cheques</button>
       </div>
     </div>
   </section>

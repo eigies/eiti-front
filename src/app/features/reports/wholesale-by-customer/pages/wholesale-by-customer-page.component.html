@@ -1,0 +1,90 @@
+<main class="ui-page wholesale-report" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Ventas</span>
+      <h1>Ventas por cliente</h1>
+      <p>Ventas agrupadas por cliente: operaciones, última compra, facturación, ticket promedio y rentabilidad en el período. En Minorista las ventas sin cliente cargado van juntas en Consumidor final, al final.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.search()" novalidate>
+    <app-report-filters [hasMore]="true" [open]="f.advancedFiltersOpen" [count]="f.activeOptionalFiltersCount" [canApply]="!f.filterForm.invalid" [chips]="chips" moreId="wholesale-advanced-filters" (toggle)="f.toggleAdvancedFilters()" (clear)="f.clearFilters()" (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateFrom')"><span class="ui-field__label">Desde</span><input class="ui-input" type="date" formControlName="dateFrom" /></label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateTo')"><span class="ui-field__label">Hasta</span><input class="ui-input" type="date" formControlName="dateTo" /></label>
+      <label reportMain class="ui-field"><span class="ui-field__label">Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="f.saleTypeOptions" placeholder="Mayorista (CC)"></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="f.customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+    <ui-ticket class="ui-ticket--compact" label="Ganancia del período" [figure]="f.data.totals.profit | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="ui-ticket__sub">Margen {{ f.data.totals.marginPct | number:'1.1-1' }}% · {{ f.saleTypeLabel }}</span>
+    </ui-ticket>
+    <div class="rep-stat"><span class="rep-stat__label">Facturación</span><strong class="rep-stat__value">{{ f.data.totals.revenue | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">{{ f.data.totals.operations }} operaciones</span></div>
+    <div class="rep-stat"><span class="rep-stat__label">Ticket promedio</span><strong class="rep-stat__value">{{ f.data.totals.avgTicket | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">{{ f.data.rows.length }} clientes</span></div>
+    <div class="rep-stat" *ngIf="f.showCcPending"><span class="rep-stat__label">Saldo CC</span><strong class="rep-stat__value rep-stat__value--neg">{{ f.data.totals.ccPending | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">Pendiente actual</span></div>
+  </div>
+
+  <ui-card heading="Resultados" [count]="f.data ? f.data.rows.length : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportPdf()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button>
+    </div>
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.hasSearched && f.data && f.data.rows.length === 0">
+      <ui-empty icon="search" heading="No hay ventas con esos filtros" text="Probá ampliar el rango de fechas o cambiar el tipo de venta."></ui-empty>
+    </div>
+    <ng-container *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table wh-table">
+          <thead>
+            <tr>
+              <th class="rep-sticky">Cliente</th><th>Última compra</th><th class="is-num">Operaciones</th><th class="is-num">Unidades</th>
+              <th class="is-num">Facturación</th><th class="is-num">Ticket prom.</th><th class="is-num" *ngIf="f.showCcPending">Saldo CC</th>
+              <th class="is-num">Costo</th><th class="is-num">Ganancia</th><th>Margen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of f.data.rows; trackBy: f.trackByRow" [class.dim]="f.isWalkIn(r)">
+              <td class="rep-sticky" [class.rep-main]="!f.isWalkIn(r)">{{ r.customerName }}</td>
+              <td class="rep-date">{{ f.lastSaleLabel(r) }}</td>
+              <td class="is-num">{{ r.operations }}</td>
+              <td class="is-num">{{ r.units }}</td>
+              <td class="is-num">{{ r.revenue | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num">{{ r.avgTicket | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num" *ngIf="f.showCcPending" [class.rep-neg]="r.ccPending > 0">{{ r.ccPending | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num rep-dim">{{ r.cost | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num" [class.rep-pos]="r.profit >= 0" [class.rep-neg]="r.profit < 0">{{ r.profit | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="rep-margin"><app-margin-bar [value]="r.marginPct"></app-margin-bar></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="rep-sticky">Total</td><td></td>
+              <td class="is-num">{{ f.data.totals.operations }}</td>
+              <td class="is-num">{{ f.data.totals.units }}</td>
+              <td class="is-num">{{ f.data.totals.revenue | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num">{{ f.data.totals.avgTicket | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num" *ngIf="f.showCcPending">{{ f.data.totals.ccPending | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num">{{ f.data.totals.cost | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num rep-pos">{{ f.data.totals.profit | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+              <td class="is-num">{{ f.data.totals.marginPct | number:'1.1-1' }}%</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="rep-notes">
+        <p>La rentabilidad usa el costo guardado en la venta; las ventas previas a esa función usan el costo actual del producto.</p>
+        <p>Última compra = la venta más reciente del cliente dentro del período y los filtros.</p>
+        <p *ngIf="f.showCcPending">Saldo CC = saldo de cuenta corriente pendiente actual del cliente (todas sus ventas CC, no sólo las del período).</p>
+      </div>
+    </ng-container>
+  </ui-card>
+</main>

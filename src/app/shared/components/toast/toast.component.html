@@ -1,10 +1,27 @@
-<div class="toast-container">
-    <div *ngFor="let toast of toasts" class="toast" [class.toast--success]="toast.type === 'success'"
-        [class.toast--error]="toast.type === 'error'" [class.toast--info]="toast.type === 'info'"
-        (click)="toastService.dismiss(toast.id)">
-        <span class="toast__icon">
-            {{ toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : '●' }}
-        </span>
-        <span class="toast__message">{{ toast.message }}</span>
-    </div>
+<div class="toast-stack" aria-live="polite" aria-atomic="false">
+  <div
+    *ngFor="let toast of toasts; trackBy: trackById"
+    class="ui-toast toast"
+    [class.toast--success]="toast.type === 'success'"
+    [class.toast--error]="toast.type === 'error'"
+    [class.toast--info]="toast.type === 'info'"
+    [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+    (mouseenter)="toastService.pause(toast.id)"
+    (mouseleave)="toastService.resume(toast.id)">
+    <span class="toast__icon" aria-hidden="true">
+      <svg *ngIf="toast.type === 'success'" viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>
+      <svg *ngIf="toast.type === 'error'" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      <svg *ngIf="toast.type === 'info'" viewBox="0 0 24 24"><path d="M12 11v5M12 8h.01"/></svg>
+    </span>
+    <span class="toast__message">{{ toast.message }}</span>
+    <button class="toast__close" type="button" aria-label="Cerrar mensaje" (click)="toastService.dismiss(toast.id)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <span
+      *ngIf="toast.duration !== null"
+      class="toast__timer"
+      aria-hidden="true"
+      [style.animation-duration.ms]="toast.duration"
+      [style.animation-play-state]="toast.paused ? 'paused' : 'running'"></span>
+  </div>
 </div>

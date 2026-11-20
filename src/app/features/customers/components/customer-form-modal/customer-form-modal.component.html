@@ -1,0 +1,48 @@
+<ui-modal [eyebrow]="editing ? 'Edición de cliente' : 'Alta de cliente'" [heading]="editing ? 'Editar cliente' : 'Nuevo cliente'" size="lg" (closed)="closed.emit()">
+  <form id="customer-form" class="cfm" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <section>
+      <div class="cfm__head"><h3>Identidad</h3><span>Datos básicos del cliente</span></div>
+      <div class="cfm__grid cfm__grid--2">
+        <label class="ui-field" [class.ui-field--error]="invalid('firstName')">
+          <span class="ui-field__label">Nombre</span><input class="ui-input" type="text" formControlName="firstName" placeholder="Juan" />
+          <span class="ui-field__error" *ngIf="invalid('firstName')">El nombre es obligatorio.</span>
+        </label>
+        <label class="ui-field"><span class="ui-field__label">Apellido <em>(opcional)</em></span><input class="ui-input" type="text" formControlName="lastName" placeholder="Pérez" /></label>
+        <label class="ui-field" [class.ui-field--error]="invalid('email')">
+          <span class="ui-field__label">Email <em>(opcional)</em></span><input class="ui-input" type="email" formControlName="email" placeholder="juan@empresa.com" />
+          <span class="ui-field__error" *ngIf="invalid('email')">Revisá el formato del email.</span>
+        </label>
+        <label class="ui-field"><span class="ui-field__label">Teléfono <em>(opcional)</em></span><input class="ui-input" type="tel" formControlName="phone" placeholder="+54 11 1234 5678" /></label>
+      </div>
+    </section>
+
+    <section>
+      <div class="cfm__head"><h3>Documentación</h3><span>Documento y datos fiscales</span></div>
+      <div class="cfm__grid cfm__grid--4">
+        <label class="ui-field"><span class="ui-field__label">Tipo de documento</span><app-searchable-select formControlName="documentType" [options]="documentTypeOptions" placeholder="Tipo" searchPlaceholder="Buscar tipo..."></app-searchable-select></label>
+        <label class="ui-field"><span class="ui-field__label">Número de documento</span><input class="ui-input ui-num" type="text" formControlName="documentNumber" placeholder="30111222" /></label>
+        <label class="ui-field"><span class="ui-field__label">CUIT <em>(opcional)</em></span><input class="ui-input ui-num" type="text" formControlName="taxId" placeholder="20-30111222-9" /></label>
+        <label class="ui-field"><span class="ui-field__label">Condición IVA</span><app-searchable-select formControlName="ivaCondition" [options]="ivaConditionOptions" placeholder="Sin especificar" searchPlaceholder="Buscar condición..."></app-searchable-select></label>
+      </div>
+    </section>
+
+    <section>
+      <div class="cfm__head"><h3>Domicilio</h3><span>Si cargás algún dato, completalo entero</span></div>
+      <div class="cfm__grid cfm__grid--4">
+        <label class="ui-field cfm__span-2" [class.ui-field--error]="invalid('street')"><span class="ui-field__label">Calle</span><input class="ui-input" type="text" formControlName="street" placeholder="Av. Siempre Viva" /></label>
+        <label class="ui-field" [class.ui-field--error]="invalid('streetNumber')"><span class="ui-field__label">Número</span><input class="ui-input" type="text" formControlName="streetNumber" placeholder="742" /></label>
+        <label class="ui-field" [class.ui-field--error]="invalid('postalCode')"><span class="ui-field__label">Código postal</span><input class="ui-input" type="text" formControlName="postalCode" placeholder="1000" /></label>
+        <label class="ui-field" [class.ui-field--error]="invalid('city')"><span class="ui-field__label">Localidad</span><input class="ui-input" type="text" formControlName="city" placeholder="Buenos Aires" /></label>
+        <label class="ui-field" [class.ui-field--error]="invalid('stateOrProvince')"><span class="ui-field__label">Provincia</span><input class="ui-input" type="text" formControlName="stateOrProvince" placeholder="Buenos Aires" /></label>
+        <label class="ui-field" [class.ui-field--error]="invalid('country')"><span class="ui-field__label">País</span><input class="ui-input" type="text" formControlName="country" placeholder="Argentina" /></label>
+        <label class="ui-field"><span class="ui-field__label">Piso <em>(opcional)</em></span><input class="ui-input" type="text" formControlName="floor" placeholder="3" /></label>
+        <label class="ui-field"><span class="ui-field__label">Depto <em>(opcional)</em></span><input class="ui-input" type="text" formControlName="apartment" placeholder="B" /></label>
+        <label class="ui-field cfm__span-3"><span class="ui-field__label">Referencia <em>(opcional)</em></span><input class="ui-input" type="text" formControlName="reference" placeholder="Portón negro" /></label>
+      </div>
+    </section>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="customer-form" [disabled]="saving">{{ saving ? 'Guardando...' : (editing ? 'Guardar cambios' : 'Crear cliente') }}</button>
+  </footer>
+</ui-modal>

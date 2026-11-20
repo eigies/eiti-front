@@ -1,0 +1,32 @@
+<main class="ui-page employees" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Empleados</h1>
+      <p>Sueldo base y periodicidad de cada empleado, para calcular las liquidaciones.</p>
+    </div>
+  </header>
+
+  <ui-card heading="Nómina" [count]="f.employees.length" [flush]="true" class="employees__card">
+    <div class="employees__state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="employees__state" *ngIf="!f.loading && f.employees.length === 0">
+      <ui-empty icon="list" heading="No hay empleados registrados"></ui-empty>
+    </div>
+    <app-employee-list
+      *ngIf="!f.loading && f.employees.length > 0"
+      [employees]="f.employees"
+      [canManage]="f.canManagePayroll"
+      [periodicityOf]="periodicityOf"
+      (configure)="f.openPayrollConfig($event)">
+    </app-employee-list>
+  </ui-card>
+
+  <app-salary-modal
+    *ngIf="f.selectedEmployee as employee"
+    [form]="f.payrollForm"
+    [employee]="employee"
+    [periodicities]="f.periodicities"
+    [saving]="f.savingPayroll"
+    (submitted)="f.savePayrollConfig()"
+    (closed)="f.closePayrollConfig()">
+  </app-salary-modal>
+</main>

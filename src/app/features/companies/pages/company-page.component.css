@@ -1,0 +1,11 @@
+.company__meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text-3); }
+.company__id { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company__loading { display: grid; gap: 12px; }
+.company__narrow { max-width: 360px; }
+.company__brand { display: grid; gap: 8px; align-content: start; }
+.company__preview { display: grid; place-items: center; height: 120px; border: 1px dashed var(--border-control); border-radius: var(--radius-lg); background: var(--surface-sunken); color: var(--text-3); font-size: 14px; overflow: hidden; }
+.company__preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.company__preview--watermark img { opacity: .5; }
+.company__brand-actions { display: flex; gap: 8px; }
+.company__file { position: relative; overflow: hidden; cursor: pointer; }
+.company__file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }

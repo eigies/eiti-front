@@ -45,7 +45,7 @@
       *ngFor="let option of filteredOptions; trackBy: trackByValue"
       [class.search-select__option--selected]="isSelected(option)"
       (click)="selectOption(option)">
-      <span class="search-select__label">{{ option.label }}</span>
+      <span class="search-select__label" [attr.title]="option.label">{{ option.label }}</span>
       <span class="search-select__meta" *ngIf="option.meta">{{ option.meta }}</span>
       <span class="search-select__selected-mark" *ngIf="isSelected(option)" aria-hidden="true">✓</span>
     </button>

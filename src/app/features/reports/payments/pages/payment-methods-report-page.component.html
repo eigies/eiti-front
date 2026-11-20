@@ -1,0 +1,74 @@
+<main class="ui-page payments-report" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Finanzas</span>
+      <h1>Cobros por medio de pago</h1>
+      <p>Total cobrado y cantidad de pagos por cada medio en el período. No incluye ventas canceladas.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.search()" novalidate>
+    <app-report-filters [hasMore]="true" [open]="moreOpen" [count]="chips.length" [canApply]="!f.filterForm.invalid" [showClear]="false" [chips]="chips" moreId="payments-more-filters" (toggle)="moreOpen = !moreOpen" (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateFrom')"><span class="ui-field__label">Desde</span><input class="ui-input" type="date" formControlName="dateFrom" /></label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('dateTo')"><span class="ui-field__label">Hasta</span><input class="ui-input" type="date" formControlName="dateTo" /></label>
+      <label reportMore class="ui-field" *ngIf="f.branches.length > 1"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="f.saleTypeOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="f.customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+    <ui-ticket class="ui-ticket--compact" label="Total cobrado" [figure]="f.data.totals.total | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="ui-ticket__sub">{{ f.data.totals.count }} {{ f.data.totals.count === 1 ? 'pago' : 'pagos' }} en el período</span>
+    </ui-ticket>
+    <div class="rep-stat"><span class="rep-stat__label">Medios usados</span><strong class="rep-stat__value">{{ f.data.rows.length }}</strong><span class="rep-stat__hint">Con al menos un pago</span></div>
+  </div>
+
+  <ui-card heading="Por medio de pago" [count]="f.data ? f.data.rows.length : null" [flush]="true" class="rep-card">
+    <div uiCardActions class="rep-card__actions">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel</button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportPdf()" [disabled]="!f.data || f.data.rows.length === 0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button>
+    </div>
+
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.data && f.data.rows.length === 0">
+      <ui-empty icon="search" heading="No hay pagos registrados en el período seleccionado"></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.data && f.data.rows.length > 0">
+      <div class="rep-scroll">
+        <table class="ui-table rep-table">
+          <thead><tr><th class="rep-sticky">Medio de pago</th><th class="is-num">Cantidad</th><th class="is-num">Monto</th><th>% del total</th></tr></thead>
+          <tbody>
+            <ng-container *ngFor="let r of f.data.rows">
+              <tr>
+                <td class="rep-main rep-sticky">{{ r.methodLabel }}</td>
+                <td class="is-num rep-dim">{{ r.count }}</td>
+                <td class="is-num rep-main">{{ r.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                <td class="rep-margin"><app-margin-bar [value]="r.percent" [scale]="1"></app-margin-bar></td>
+              </tr>
+              <tr class="rep-subrow" *ngFor="let s of r.subgroups">
+                <td class="rep-sticky rep-sub">{{ s.label }}</td>
+                <td class="is-num rep-dim">{{ s.count }}</td>
+                <td class="is-num rep-dim">{{ s.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                <td class="is-num rep-dim">{{ s.percent | number:'1.2-2' }}%</td>
+              </tr>
+            </ng-container>
+          </tbody>
+          <tfoot>
+            <tr><td class="rep-sticky">Total</td><td class="is-num">{{ f.data.totals.count }}</td><td class="is-num">{{ f.data.totals.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td><td class="is-num">100%</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </ng-container>
+    <div class="rep-notes">
+      <p><strong>Minorista</strong> toma los pagos de las ventas normales. <strong>Mayorista (CC)</strong> toma los cobros de cuenta corriente, que es donde queda registrado el medio real. <strong>Todas</strong> suma los dos.</p>
+    </div>
+  </ui-card>
+</main>

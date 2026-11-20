@@ -1,0 +1,8 @@
+.customers__title { display: flex; align-items: center; gap: 10px; }
+.customers__total { font-size: 13px; line-height: 24px; min-width: 32px; }
+.customers__search { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.customers__search .ui-search { flex: 1; min-width: 260px; }
+.customers__count { font-size: 14px; color: var(--text-2); white-space: nowrap; }
+.customers__count strong { color: var(--text); }
+.customers__card { overflow: hidden; }
+.customers__empty { padding: var(--space-5); }

@@ -1,0 +1,31 @@
+<main class="ui-page transport" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div><h1>Transporte</h1><p>Vehículos, conductores y registros de flota.</p></div>
+    <button *ngIf="tab === 'vehicles'" uiBtn="primary" type="button" (click)="vehicleCreateOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo vehículo</button>
+    <button *ngIf="tab === 'drivers'" uiBtn="primary" type="button" (click)="driverCreateOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo conductor</button>
+  </header>
+
+  <div class="ui-tabs" role="tablist" aria-label="Transporte">
+    <button type="button" role="tab" [attr.aria-selected]="tab === 'vehicles'" (click)="tab = 'vehicles'">Vehículos<span class="ui-count">{{ f.vehicles.length }}</span></button>
+    <button type="button" role="tab" [attr.aria-selected]="tab === 'drivers'" (click)="tab = 'drivers'">Conductores<span class="ui-count">{{ f.drivers.length }}</span></button>
+  </div>
+
+  <ng-container *ngIf="tab === 'vehicles'">
+    <ui-empty *ngIf="f.vehicles.length === 0" icon="list" heading="Todavía no hay vehículos" text="Cargá el primero con Nuevo vehículo."></ui-empty>
+    <div class="transport__split" *ngIf="f.vehicles.length > 0">
+      <app-vehicle-list [vehicles]="f.vehicles" [selectedId]="f.selectedVehicleId" (select)="f.selectVehicle($event)" (edit)="f.openVehicleEditModal($event)"></app-vehicle-list>
+      <app-vehicle-activity *ngIf="f.selectedVehicle as vehicle" [vehicle]="vehicle" [logs]="f.logs" [labelFn]="logLabel" (newLog)="logCreateOpen = true"></app-vehicle-activity>
+    </div>
+  </ng-container>
+
+  <ui-card *ngIf="tab === 'drivers'" [flush]="true" class="transport__card">
+    <div class="transport__state" *ngIf="f.drivers.length === 0"><ui-empty icon="list" text="Todavía no hay conductores."></ui-empty></div>
+    <app-driver-list *ngIf="f.drivers.length > 0" [drivers]="f.drivers" [canDelete]="f.canDeleteDriver" [deletingId]="f.deletingDriverId" (edit)="f.openEditModal($event)" (remove)="f.deleteDriver($event)"></app-driver-list>
+  </ui-card>
+
+  <app-vehicle-form-modal *ngIf="vehicleCreateOpen" [form]="f.vehicleForm" [fuelOptions]="f.fuelTypeOptions" [driverOptions]="f.activeDriverOptions" (submitted)="f.createVehicle()" (closed)="vehicleCreateOpen = false"></app-vehicle-form-modal>
+  <app-vehicle-form-modal *ngIf="f.editingVehicle" [form]="f.editVehicleForm" [editing]="true" [saving]="f.isSavingVehicleEdit" [fuelOptions]="f.fuelTypeOptions" [driverOptions]="f.activeDriverOptions" (submitted)="f.saveVehicleEdit()" (closed)="f.closeVehicleEditModal()"></app-vehicle-form-modal>
+  <app-driver-form-modal *ngIf="driverCreateOpen" [form]="f.driverForm" (submitted)="f.createDriver()" (closed)="driverCreateOpen = false"></app-driver-form-modal>
+  <app-driver-form-modal *ngIf="f.editingDriver" [form]="f.editDriverForm" [editing]="true" [saving]="f.isSavingEdit" (submitted)="f.saveDriverEdit()" (closed)="f.closeEditModal()"></app-driver-form-modal>
+  <app-log-form-modal *ngIf="logCreateOpen && f.selectedVehicle" [form]="f.logForm" [plate]="f.selectedVehicle.plate" [typeOptions]="f.logTypeOptions" (submitted)="f.createLog()" (closed)="logCreateOpen = false"></app-log-form-modal>
+</main>

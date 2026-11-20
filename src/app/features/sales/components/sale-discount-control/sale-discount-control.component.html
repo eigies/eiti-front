@@ -4,7 +4,7 @@
       {{ hasDiscount ? 'Descuento ' + draft.percent + '%' : '+ Descuento' }}
     </button>
     <span class="sale-discount__limit">{{ limitLabel }}</span>
-    <span class="sale-discount__amount" *ngIf="hasDiscount && !issue">−{{ discountAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+    <span class="sale-discount__amount" *ngIf="hasDiscount && !issue">−{{ discountAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span>
   </div>
 
   <div class="sale-discount__body" *ngIf="draft.open">
@@ -23,7 +23,7 @@
     <p class="sale-discount__error" role="alert" *ngIf="issue">{{ issue }}</p>
     <div class="sale-discount__foot" *ngIf="hasDiscount">
       <p class="sale-discount__summary" *ngIf="!issue">
-        Se descuentan {{ discountAmount | currency:'USD':'symbol':'1.2-2' }} de {{ subtotal | currency:'USD':'symbol':'1.2-2' }}.
+        Se descuentan {{ discountAmount | currency:'ARS':'symbol-narrow':'1.2-2' }} de {{ subtotal | currency:'ARS':'symbol-narrow':'1.2-2' }}.
       </p>
       <button class="sale-discount__clear" type="button" (click)="clear()">Quitar descuento</button>
     </div>

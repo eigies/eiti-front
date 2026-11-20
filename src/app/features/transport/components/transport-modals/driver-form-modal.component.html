@@ -1,0 +1,14 @@
+<ui-modal [eyebrow]="editing ? 'Edición de conductor' : 'Alta de conductor'" [heading]="editing ? 'Editar conductor' : 'Nuevo conductor'" (closed)="closed.emit()">
+  <form id="driver-form" class="tm" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <label class="ui-field"><span class="ui-field__label">Nombre</span><input class="ui-input" type="text" formControlName="firstName" /></label>
+    <label class="ui-field"><span class="ui-field__label">Apellido</span><input class="ui-input" type="text" formControlName="lastName" /></label>
+    <label class="ui-field"><span class="ui-field__label">Documento <em>(opcional)</em></span><input class="ui-input ui-num" type="text" formControlName="documentNumber" /></label>
+    <label class="ui-field"><span class="ui-field__label">Teléfono <em>(opcional)</em></span><input class="ui-input" type="tel" formControlName="phone" /></label>
+    <label class="ui-field"><span class="ui-field__label">Licencia</span><input class="ui-input ui-num" type="text" formControlName="licenseNumber" /></label>
+    <label class="ui-field"><span class="ui-field__label">Vence <em>(opcional)</em></span><input class="ui-input" type="date" formControlName="licenseExpiresAt" /></label>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="submit" form="driver-form" [disabled]="saving">{{ saving ? 'Guardando...' : (editing ? 'Guardar cambios' : 'Crear conductor') }}</button>
+  </footer>
+</ui-modal>

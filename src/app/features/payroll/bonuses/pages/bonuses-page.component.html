@@ -1,0 +1,57 @@
+<main class="ui-page bonuses" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Bonificaciones</h1>
+      <p>Presentismo, bonificación por venta u otro concepto. Se suman solas al generar la próxima liquidación.</p>
+    </div>
+    <button *ngIf="f.canManageBonuses" uiBtn="primary" type="button" (click)="f.openCreateForm()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nueva bonificación
+    </button>
+  </header>
+
+  <form class="ui-card payroll-filters" [formGroup]="f.filterForm" (ngSubmit)="f.applyFilters()">
+    <label class="ui-field payroll-filters__grow">
+      <span class="ui-field__label">Empleado</span>
+      <app-searchable-select formControlName="employeeId" [options]="f.employeeOptions" placeholder="Todos" searchPlaceholder="Buscar empleado..."></app-searchable-select>
+    </label>
+    <label class="ui-field payroll-filters__status">
+      <span class="ui-field__label">Estado</span>
+      <select class="ui-select" formControlName="status">
+        <option value="">Todos</option>
+        <option *ngFor="let option of f.statusOptions" [value]="option.value">{{ option.label }}</option>
+      </select>
+    </label>
+    <button uiBtn="secondary" type="submit">Filtrar</button>
+  </form>
+
+  <ui-card heading="Bonificaciones" [count]="f.bonuses.length" [flush]="true" class="payroll-card">
+    <div class="payroll-state" *ngIf="!f.loading && f.bonuses.length === 0">
+      <ui-empty icon="list" heading="No hay bonificaciones registradas" text="Cargá una con Nueva bonificación."></ui-empty>
+    </div>
+    <app-bonus-list
+      *ngIf="f.bonuses.length > 0"
+      [bonuses]="f.bonuses"
+      [canManage]="f.canManageBonuses"
+      [cancellingId]="f.cancellingId"
+      [nameOf]="nameOf"
+      [conceptOf]="conceptOf"
+      [amountOf]="amountOf"
+      [statusOf]="statusOf"
+      [badgeOf]="badgeOf"
+      (cancel)="f.cancelBonus($event)">
+    </app-bonus-list>
+  </ui-card>
+
+  <app-bonus-form-modal
+    *ngIf="f.showCreate && f.canManageBonuses"
+    [form]="f.createForm"
+    [employeeOptions]="f.employeeOptions"
+    [conceptOptions]="f.conceptOptions"
+    [amountTypes]="f.amountTypes"
+    [isPercentage]="f.isPercentage"
+    [percentagePreview]="f.percentagePreview"
+    [saving]="f.savingCreate"
+    (submitted)="f.submitCreate()"
+    (closed)="f.closeCreateForm()">
+  </app-bonus-form-modal>
+</main>

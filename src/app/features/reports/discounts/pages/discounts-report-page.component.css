@@ -1,0 +1,4 @@
+.disc-table { min-width: 1080px; }
+.disc-pct { color: var(--brand-text); font-weight: 700; }
+.disc-reason { min-width: 12rem; max-width: 22rem; white-space: normal; overflow-wrap: anywhere; }
+.disc-reason--empty { color: var(--text-3); font-style: italic; }

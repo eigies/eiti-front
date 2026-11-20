@@ -1,0 +1,38 @@
+<div class="ui-overlay" [class.is-leaving]="leaving" (click)="onBackdrop()"></div>
+<div class="ui-modal-shell" (click)="onBackdrop()">
+  <section
+    #dialog
+    class="ui-modal"
+    tabindex="-1"
+    [attr.role]="tone === 'danger' ? 'alertdialog' : 'dialog'"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    [class.ui-modal--sm]="size === 'sm'"
+    [class.ui-modal--lg]="size === 'lg'"
+    [class.ui-modal--danger]="tone === 'danger'"
+    [class.is-leaving]="leaving"
+    [class.is-shaking]="shaking"
+    [style.width]="width"
+    (animationend)="shaking = false"
+    (click)="$event.stopPropagation()">
+    <header class="ui-modal__head">
+      <div class="ui-modal__heading">
+        <span class="ui-modal__icon" *ngIf="tone === 'danger'" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+        </span>
+        <div>
+          <span class="ui-modal__eyebrow" *ngIf="eyebrow">{{ eyebrow }}</span>
+          <h2 class="ui-modal__title" [id]="titleId">{{ heading }}</h2>
+          <p class="ui-modal__sub" *ngIf="sub">{{ sub }}</p>
+        </div>
+      </div>
+      <button *ngIf="showClose" class="ui-btn ui-btn--ghost ui-btn--icon" type="button" aria-label="Cerrar" (click)="close()">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div class="ui-modal__body">
+      <ng-content></ng-content>
+    </div>
+    <ng-content select="[uiModalFoot]"></ng-content>
+  </section>
+</div>

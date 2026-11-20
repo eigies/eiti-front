@@ -57,7 +57,7 @@ export class ConfirmationService {
       this.stateSubject.next({
         title: options.title,
         message: options.message,
-        eyebrow: options.eyebrow ?? 'Confirmacion requerida',
+        eyebrow: options.eyebrow ?? 'Confirmación requerida',
         confirmLabel: options.confirmLabel ?? 'Confirmar',
         cancelLabel: options.cancelLabel ?? 'Volver',
         tone: options.tone ?? 'warning',

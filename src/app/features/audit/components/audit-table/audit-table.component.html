@@ -1,0 +1,87 @@
+<div class="au-scroll">
+  <table class="ui-table au-table data-table">
+    <colgroup><col class="c-time" /><col class="c-user" /><col class="c-action" /><col class="c-id" /><col class="c-result" /><col class="c-detail" /></colgroup>
+    <thead>
+      <tr><th>Hora</th><th>Usuario</th><th>Acción</th><th>Identificador</th><th>Resultado</th><th><span class="ui-sr-only">Detalle</span></th></tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let group of groups; trackBy: trackGroup">
+        <tr class="au-day"><td colspan="6">{{ group.title }}</td></tr>
+        <ng-container *ngFor="let item of group.items; trackBy: trackById">
+          <tr class="data-row is-clickable" [class.au-open]="expandedId === item.id" (click)="toggleDetail.emit(item.id)">
+            <td class="au-time ui-num" [title]="item.timestamp | date:'dd/MM/yyyy HH:mm'">{{ item.timestamp | date:'HH:mm' }}</td>
+            <td>
+              <div class="au-user" *ngIf="item.userName; else system">
+                <ui-avatar [name]="item.userName" [key]="item.userId || item.userName" [size]="28"></ui-avatar>
+                <span>{{ item.userName }}</span>
+              </div>
+              <ng-template #system><span class="au-muted">Sistema</span></ng-template>
+            </td>
+            <td><span class="ui-mov" [ngClass]="tone(item.actionType)" [title]="item.actionType">{{ actionLabelOf(item.actionType) }}</span></td>
+            <td class="au-id">{{ item.succeeded ? identifierOf(item) : '-' }}</td>
+            <td>
+              <span class="ui-badge" [class.ui-badge--success]="item.succeeded" [class.ui-badge--danger]="!item.succeeded">
+                {{ item.succeeded ? 'OK' : 'Error' }}<ng-container *ngIf="!item.succeeded && item.errorCode"> · {{ item.errorCode }}</ng-container>
+              </span>
+            </td>
+            <td class="au-actions">
+              <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button" [attr.aria-expanded]="expandedId === item.id" (click)="$event.stopPropagation(); toggleDetail.emit(item.id)">
+                {{ expandedId === item.id ? 'Ocultar' : 'Ver datos' }}
+              </button>
+            </td>
+          </tr>
+          <tr class="detail-row au-open" *ngIf="expandedId === item.id">
+            <td colspan="6" class="au-detail">
+              <div class="ui-card au-card">
+                <ng-container *ngIf="changesOf(item) as changes">
+                  <section *ngIf="changes.length > 0">
+                    <span class="au-label">Cambios</span>
+                    <table class="ui-table au-changes">
+                      <thead><tr><th>Campo</th><th>Antes</th><th>Después</th></tr></thead>
+                      <tbody>
+                        <tr *ngFor="let change of changes">
+                          <td class="au-field">{{ change.label }}</td>
+                          <td class="au-before">{{ change.before }}</td>
+                          <td class="au-after">{{ change.after }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </section>
+                </ng-container>
+
+                <div class="au-snapshots" *ngIf="item.beforeJson || item.afterJson">
+                  <section>
+                    <span class="au-label">Antes</span>
+                    <ng-container *ngIf="snapshotOf(item, 'before') as beforeRows">
+                      <dl class="au-dl" *ngIf="beforeRows.length > 0"><div class="ui-kv" *ngFor="let row of beforeRows"><dt class="ui-kv__key">{{ row.label }}</dt><dd class="ui-kv__val">{{ row.value }}</dd></div></dl>
+                      <p class="au-muted" *ngIf="beforeRows.length === 0">Sin estado previo.</p>
+                    </ng-container>
+                  </section>
+                  <section>
+                    <span class="au-label">Después</span>
+                    <ng-container *ngIf="snapshotOf(item, 'after') as afterRows">
+                      <dl class="au-dl" *ngIf="afterRows.length > 0"><div class="ui-kv" *ngFor="let row of afterRows"><dt class="ui-kv__key">{{ row.label }}</dt><dd class="ui-kv__val">{{ row.value }}</dd></div></dl>
+                      <p class="au-muted" *ngIf="afterRows.length === 0">Sin estado posterior.</p>
+                    </ng-container>
+                  </section>
+                </div>
+
+                <ng-container *ngIf="rowsOf(item) as rows">
+                  <dl class="au-dl" *ngIf="rows.length > 0"><div class="ui-kv" *ngFor="let row of rows"><dt class="ui-kv__key">{{ row.label }}</dt><dd class="ui-kv__val">{{ row.value }}</dd></div></dl>
+                  <p class="au-muted" *ngIf="rows.length === 0">Esta acción no registró datos adicionales.</p>
+                </ng-container>
+
+                <div class="au-raw">
+                  <button class="ui-btn ui-btn--ghost ui-btn--sm raw-toggle" type="button" (click)="toggleRaw.emit(item.id)">
+                    {{ rawVisibleId === item.id ? 'Ocultar datos técnicos' : 'Ver datos técnicos' }}
+                  </button>
+                  <pre class="payload" *ngIf="rawVisibleId === item.id">{{ payloadOf(item.payloadJson) }}</pre>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </ng-container>
+    </tbody>
+  </table>
+</div>

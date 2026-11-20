@@ -1,0 +1,22 @@
+.cheques__top { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: var(--space-5); align-items: stretch; }
+.cheques__ticket { gap: 6px; }
+.cheques__ticket ::ng-deep .ui-ticket__figure { font-size: 40px; line-height: 46px; }
+.cheques__hint { font-size: 14px; color: var(--text-2); }
+.cheques__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cheques__stat { display: grid; gap: 4px; align-content: center; padding: 20px 22px; }
+.cheques__stat + .cheques__stat { border-left: 1px solid var(--border); }
+.cheques__stat strong { font-size: 28px; line-height: 34px; }
+.cheques__stat > span:last-child { font-size: 13px; color: var(--text-3); }
+.cheques__warn { color: var(--warning); }
+.cheques__filters { align-items: flex-end; }
+.cheques__filters .ui-field { min-width: 150px; flex: 1; }
+.cheques__filter-actions { display: flex; gap: var(--space-2); align-items: center; }
+.cheques__card { overflow: hidden; }
+.cheques__state { padding: var(--space-5); display: grid; gap: var(--space-3); }
+@media (max-width: 1100px) { .cheques__top { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .cheques__stats { grid-template-columns: 1fr; } .cheques__stat + .cheques__stat { border-left: 0; border-top: 1px solid var(--border); } }
+.cheques__filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-3); }
+.cheques__filters .ui-segmented { grid-column: 1 / -1; justify-self: start; }
+.cheques__filters .ui-field { min-width: 0; }
+.cheques__filter-actions { grid-column: 1 / -1; justify-content: flex-end; }
+@media (max-width: 1000px) { .cheques__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

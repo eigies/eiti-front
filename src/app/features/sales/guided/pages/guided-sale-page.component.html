@@ -1,0 +1,262 @@
+<main class="ui-page guided" *ngIf="facade as f">
+  <header class="guided__head">
+    <div>
+      <span class="guided__crumb">Ventas</span>
+      <h1>Venta guiada</h1>
+      <p>Paso a paso, para ventas con cliente nuevo, domicilio o envío. Para cobrar rápido en el mostrador usá Vender.</p>
+    </div>
+    <a uiBtn="secondary" routerLink="/sales">Ir a Vender</a>
+  </header>
+
+  <app-guided-stepper [labels]="f.stepLabels" [step]="f.step" (jump)="f.jumpToStep($event)"></app-guided-stepper>
+
+  <div class="guided__body">
+    <section class="ui-card guided__step" [attr.aria-label]="currentTitle">
+      <!-- Paso 1: cliente -->
+      <ng-container *ngIf="f.step === 1">
+        <header class="guided__step-head">
+          <span>Paso 1 de {{ f.totalSteps }}</span>
+          <h2>¿Para quién es la venta?</h2>
+          <p>Buscá un cliente que ya tengas o dalo de alta en el paso siguiente.</p>
+        </header>
+
+        <div class="guided__modes" role="radiogroup" aria-label="Cliente">
+          <button type="button" role="radio" class="guided__mode" [class.is-on]="f.customerMode === 'existing'" [attr.aria-checked]="f.customerMode === 'existing'" (click)="f.setCustomerMode('existing')">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <span><strong>Cliente que ya existe</strong><small>Lo buscás por nombre, email o documento</small></span>
+          </button>
+          <button type="button" role="radio" class="guided__mode" [class.is-on]="f.customerMode === 'new'" [attr.aria-checked]="f.customerMode === 'new'" (click)="f.setCustomerMode('new')">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M3 20c0-3.3 3.1-6 7-6s7 2.7 7 6M19 8v6M16 11h6"/></svg>
+            <span><strong>Cliente nuevo</strong><small>Cargás sus datos en el paso siguiente</small></span>
+          </button>
+        </div>
+
+        <ng-container *ngIf="f.customerMode === 'existing'">
+          <form class="guided__search" [formGroup]="f.searchForm" (ngSubmit)="f.searchCustomers()">
+            <label class="ui-field guided__grow">
+              <span class="ui-field__label">Buscar cliente</span>
+              <span class="ui-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input class="ui-input" type="text" formControlName="query" placeholder="Nombre, email o documento" />
+              </span>
+            </label>
+            <button uiBtn="secondary" type="submit">Buscar</button>
+          </form>
+          <p class="guided__hint">Se buscan solo los clientes de tu empresa.</p>
+
+          <div class="guided__results" *ngIf="f.searchResults.length > 0; else noResults" role="radiogroup" aria-label="Resultados">
+            <button *ngFor="let customer of f.searchResults" type="button" role="radio" class="guided__result"
+              [class.is-on]="f.selectedExistingCustomer?.id === customer.id"
+              [attr.aria-checked]="f.selectedExistingCustomer?.id === customer.id"
+              (click)="f.selectExistingCustomer(customer)">
+              <ui-avatar [name]="customer.fullName || customer.name" [key]="customer.id" [size]="36"></ui-avatar>
+              <span class="guided__result-copy"><strong>{{ customer.fullName || customer.name }}</strong><small>{{ customer.email || 'Sin email' }}</small></span>
+              <svg class="guided__check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
+            </button>
+          </div>
+          <ng-template #noResults>
+            <ui-empty icon="search" heading="Todavía no hay resultados" text="Escribí algo y tocá Buscar."></ui-empty>
+          </ng-template>
+        </ng-container>
+
+        <ui-empty *ngIf="f.customerMode === 'new'" icon="list" heading="Alta de cliente" text="En el paso siguiente cargás nombre, contacto y documento."></ui-empty>
+      </ng-container>
+
+      <!-- Paso 2: datos del cliente -->
+      <form *ngIf="f.step === 2" [formGroup]="f.customerForm" class="guided__form">
+        <header class="guided__step-head">
+          <span>Paso 2 de {{ f.totalSteps }}</span>
+          <h2>Datos del cliente</h2>
+          <p>Nombre y contacto primero; el documento sirve para facturar.</p>
+        </header>
+        <div class="guided__grid">
+          <label class="ui-field"><span class="ui-field__label">Nombre</span><input class="ui-input" type="text" formControlName="firstName" autocomplete="given-name" /></label>
+          <label class="ui-field"><span class="ui-field__label">Apellido</span><input class="ui-input" type="text" formControlName="lastName" autocomplete="family-name" /></label>
+          <label class="ui-field"><span class="ui-field__label">Email</span><input class="ui-input" type="email" formControlName="email" autocomplete="email" /></label>
+          <label class="ui-field"><span class="ui-field__label">Teléfono</span><input class="ui-input" type="tel" inputmode="tel" formControlName="phone" autocomplete="tel" /></label>
+        </div>
+        <h3 class="guided__sub">Documento</h3>
+        <div class="guided__grid">
+          <label class="ui-field"><span class="ui-field__label">Tipo</span>
+            <app-searchable-select formControlName="documentType" [options]="f.documentTypeOptions" placeholder="Tipo de documento" searchPlaceholder="Buscar tipo..."></app-searchable-select>
+          </label>
+          <label class="ui-field"><span class="ui-field__label">Número</span><input class="ui-input ui-num" type="text" inputmode="numeric" formControlName="documentNumber" /></label>
+          <label class="ui-field guided__span"><span class="ui-field__label">CUIT <span class="guided__opt">(opcional)</span></span><input class="ui-input ui-num" type="text" inputmode="numeric" formControlName="taxId" /></label>
+        </div>
+      </form>
+
+      <!-- Paso 3: domicilio -->
+      <form *ngIf="f.step === 3" [formGroup]="f.addressForm" class="guided__form">
+        <header class="guided__step-head">
+          <span>Paso 3 de {{ f.totalSteps }}</span>
+          <h2>Domicilio</h2>
+          <p>La dirección principal del cliente; piso, depto y referencia son opcionales.</p>
+        </header>
+        <div class="guided__grid guided__grid--address">
+          <label class="ui-field guided__span-2"><span class="ui-field__label">Calle</span><input class="ui-input" type="text" formControlName="street" autocomplete="address-line1" /></label>
+          <label class="ui-field"><span class="ui-field__label">Número</span><input class="ui-input" type="text" formControlName="streetNumber" /></label>
+          <label class="ui-field"><span class="ui-field__label">Código postal</span><input class="ui-input" type="text" formControlName="postalCode" autocomplete="postal-code" /></label>
+          <label class="ui-field"><span class="ui-field__label">Localidad</span><input class="ui-input" type="text" formControlName="city" autocomplete="address-level2" /></label>
+          <label class="ui-field"><span class="ui-field__label">Provincia</span><input class="ui-input" type="text" formControlName="stateOrProvince" autocomplete="address-level1" /></label>
+          <label class="ui-field"><span class="ui-field__label">País</span><input class="ui-input" type="text" formControlName="country" autocomplete="country-name" /></label>
+        </div>
+        <h3 class="guided__sub">Para llegar <span class="guided__opt">(opcional)</span></h3>
+        <div class="guided__grid guided__grid--address">
+          <label class="ui-field"><span class="ui-field__label">Piso</span><input class="ui-input" type="text" formControlName="floor" /></label>
+          <label class="ui-field"><span class="ui-field__label">Depto</span><input class="ui-input" type="text" formControlName="apartment" /></label>
+          <label class="ui-field guided__span-2"><span class="ui-field__label">Referencia</span><input class="ui-input" type="text" formControlName="reference" placeholder="Ej.: portón verde, timbre 2" /></label>
+        </div>
+      </form>
+
+      <!-- Paso 4: venta -->
+      <div *ngIf="f.step === 4" class="guided__form">
+        <header class="guided__step-head">
+          <span>Paso 4 de {{ f.totalSteps }}</span>
+          <h2>La venta</h2>
+          <p>Sucursal, canal y entrega; después los productos y el cobro.</p>
+        </header>
+
+        <form class="guided__grid" [formGroup]="f.saleForm">
+          <label class="ui-field"><span class="ui-field__label">Sucursal</span>
+            <app-searchable-select formControlName="branchId" [options]="f.branchOptions" placeholder="Sucursal" searchPlaceholder="Buscar sucursal..." (valueChange)="f.handleBranchChange()"></app-searchable-select>
+          </label>
+          <label class="ui-field"><span class="ui-field__label">Estado de la venta</span>
+            <app-searchable-select formControlName="idSaleStatus" [options]="f.saleStatusOptions" placeholder="Estado de venta" searchPlaceholder="Buscar estado..."></app-searchable-select>
+          </label>
+          <label class="ui-field"><span class="ui-field__label">Canal de origen</span>
+            <app-searchable-select formControlName="sourceChannel" [options]="f.channelOptions" placeholder="Elegí el canal" searchPlaceholder="Buscar canal..."></app-searchable-select>
+          </label>
+          <div class="ui-field"><span class="ui-field__label">Entrega</span>
+            <label class="ui-switch guided__switch">
+              <input type="checkbox" formControlName="hasDelivery" (change)="f.handleDeliveryToggle()" />
+              <span class="ui-switch__track" aria-hidden="true"></span>
+              <span>{{ deliveryLabel(f.requiresDelivery) }}</span>
+            </label>
+          </div>
+        </form>
+
+        <section class="guided__products">
+          <header class="guided__products-head">
+            <h3 class="guided__sub">Productos <span class="ui-count" *ngIf="f.draftItems.length > 0">{{ f.draftItems.length }}</span></h3>
+            <button *ngIf="f.auth.hasPermission(f.permissionCodes.salesCreate)" uiBtn="secondary" type="button" (click)="f.openProductModal()">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Agregar productos
+            </button>
+          </header>
+          <div class="ui-table-wrap" *ngIf="f.draftItems.length > 0; else noItems">
+            <table class="ui-table guided__items">
+              <thead><tr><th>Producto</th><th class="is-num">Cantidad</th><th class="is-num">{{ f.canOverridePrice ? 'Precio unitario' : 'Importe' }}</th><th><span class="ui-sr-only">Quitar</span></th></tr></thead>
+              <tbody>
+                <tr *ngFor="let item of f.draftItems">
+                  <td><strong>{{ item.product.name }}</strong><small class="guided__brand">{{ item.product.brand }}</small></td>
+                  <td class="is-num ui-num">{{ item.quantity }}</td>
+                  <td class="is-num" *ngIf="f.canOverridePrice; else staticPrice">
+                    <input class="ui-input ui-num guided__price" type="number" min="0" step="0.01" aria-label="Precio unitario"
+                      [value]="item.unitPriceOverride ?? (item.product.publicPrice ?? item.product.price)"
+                      (change)="f.setDraftItemPrice(item, $any($event.target).value)" />
+                  </td>
+                  <ng-template #staticPrice><td class="is-num ui-num">{{ item.total | currency:'ARS':'symbol-narrow':'1.2-2' }}</td></ng-template>
+                  <td class="guided__remove"><button uiBtn="ghost" size="sm" type="button" (click)="f.removeItem(item.product.id)">Quitar</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ng-template #noItems>
+            <ui-empty icon="box" heading="Todavía no agregaste productos" text="Tocá Agregar productos para buscar el stock de la sucursal."></ui-empty>
+          </ng-template>
+        </section>
+
+        <section class="guided__payment">
+          <app-sale-payment-inline
+            [total]="f.total"
+            [statusId]="f.saleForm.get('idSaleStatus')?.value ?? 1"
+            [products]="f.products"
+            [cashDrawers]="f.cashDrawers"
+            [state]="f.paymentState"
+            [cashDrawerId]="f.saleForm.get('cashDrawerId')?.value ?? null"
+            [banks]="f.banks"
+            headline="Cobro"
+            description="Cargá el pago, combiná medios si hace falta y registrá canjes."
+            (cashDrawerIdChange)="f.setCashDrawerId($event)">
+          </app-sale-payment-inline>
+        </section>
+      </div>
+
+      <!-- Paso 5 (con envío): asignación -->
+      <form *ngIf="f.isTransportStep" [formGroup]="f.transportForm" class="guided__form">
+        <header class="guided__step-head">
+          <span>Paso 5 de {{ f.totalSteps }}</span>
+          <h2>Envío</h2>
+          <p>Quién lo lleva, en qué vehículo y alguna nota para el reparto.</p>
+        </header>
+        <div class="guided__grid">
+          <label class="ui-field"><span class="ui-field__label">Conductor</span>
+            <app-searchable-select formControlName="driverEmployeeId" [options]="f.driverOptions" placeholder="Elegí el conductor" searchPlaceholder="Buscar conductor..."></app-searchable-select>
+          </label>
+          <label class="ui-field"><span class="ui-field__label">Vehículo</span>
+            <app-searchable-select formControlName="vehicleId" [options]="f.vehicleOptions" placeholder="Elegí el vehículo" searchPlaceholder="Buscar vehículo..."></app-searchable-select>
+          </label>
+          <label class="ui-field guided__span"><span class="ui-field__label">Notas de envío <span class="guided__opt">(opcional)</span></span><input class="ui-input" type="text" formControlName="notes" /></label>
+        </div>
+      </form>
+
+      <!-- Último paso: repaso -->
+      <ng-container *ngIf="f.isConfirmationStep">
+        <header class="guided__step-head">
+          <span>Paso {{ f.confirmationStepNumber }} de {{ f.totalSteps }}</span>
+          <h2>Revisá antes de confirmar</h2>
+          <p>Con "Cambiar" volvés al paso para corregir.</p>
+        </header>
+        <app-guided-review
+          [customerName]="f.summaryCustomerName" [document]="f.summaryDocument" [email]="f.summaryEmail"
+          [addressLine]="f.summaryAddressLine" [addressLocation]="f.summaryAddressLocation"
+          [paid]="f.isPaid" [delivery]="deliveryLabel(f.requiresDelivery)" [itemCount]="f.draftItems.length"
+          [branchName]="f.selectedBranchName" [paymentPreview]="f.paymentMethodPreview" [paymentCoverage]="f.paymentCoverage" [drawerName]="f.selectedDrawerName"
+          [requiresDelivery]="f.requiresDelivery" [driverName]="f.selectedDriverName" [vehicleName]="f.selectedVehicleName" [transportNotes]="f.transportForm.get('notes')?.value || ''"
+          (edit)="f.jumpToSummaryStep($event)">
+        </app-guided-review>
+      </ng-container>
+    </section>
+
+    <aside class="guided__aside" aria-label="Resumen de la venta">
+      <ui-ticket class="ui-ticket--compact" label="Total de la venta" [figure]="(f.total | currency:'ARS':'symbol-narrow':'1.2-2')">
+        <!-- Solo productos: lo cobrado lo calcula el cobro del paso 4 mientras se dibuja y se ve en el repaso. -->
+        <span class="ui-ticket__sub">{{ f.draftItems.length }} {{ f.draftItems.length === 1 ? 'producto' : 'productos' }}</span>
+      </ui-ticket>
+
+      <dl class="guided__facts">
+        <div><dt>Cliente</dt><dd>{{ f.summaryCustomerName }}</dd></div>
+        <div><dt>Sucursal</dt><dd>{{ f.selectedBranchName }}</dd></div>
+        <div><dt>Entrega</dt><dd>{{ deliveryLabel(f.requiresDelivery) }}</dd></div>
+        <div><dt>Estado</dt><dd>{{ f.isPaid ? 'Pagada' : 'En espera' }}</dd></div>
+      </dl>
+
+      <div class="guided__nav">
+        <button *ngIf="!f.isConfirmationStep" uiBtn="primary" size="lg" type="button" class="guided__next" [disabled]="f.saving" (click)="f.nextStep()">
+          Seguir{{ nextTitle ? ': ' + nextTitle : '' }}
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+        </button>
+        <button *ngIf="f.isConfirmationStep && f.auth.hasPermission(f.permissionCodes.salesCreate)" uiBtn="primary" size="lg" type="button" class="guided__next" [disabled]="f.saving" (click)="f.submit()">
+          {{ f.saving ? 'Guardando...' : 'Confirmar venta' }}
+        </button>
+        <button uiBtn="ghost" type="button" [disabled]="f.step === 1 || f.saving" (click)="f.previousStep()">Volver al paso anterior</button>
+      </div>
+    </aside>
+  </div>
+
+  <app-product-picker-modal *ngIf="f.productModalOpen" [rows]="f.pickerRows" (confirm)="f.onPickerConfirm($event)" (cancel)="f.closeProductModal()"></app-product-picker-modal>
+</main>
+
+<ui-modal *ngIf="facade.showDrawerOverrideConfirm" size="sm" eyebrow="Caja" heading="Cambiar de caja" sub="Esta caja no es la que tenés asignada. ¿Querés seguir igual?" (closed)="facade.cancelDrawerOverride()">
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="secondary" type="button" (click)="facade.cancelDrawerOverride()">Cancelar</button>
+    <button uiBtn="primary" type="button" (click)="facade.confirmDrawerOverride()">Seguir</button>
+  </footer>
+</ui-modal>
+
+<ui-modal *ngIf="facade.showNoCashSessionModal" size="sm" eyebrow="Caja" heading="No hay caja abierta" (closed)="facade.showNoCashSessionModal = false">
+  <p class="guided__modal-text">No tenés una caja con sesión abierta para registrar el cobro. Pedí que te asignen una o abrí una sesión antes de cobrar.</p>
+  <p class="guided__modal-text guided__modal-text--soft">Hace falta una caja abierta para cobrar en efectivo, transferencia o tarjeta.</p>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="primary" type="button" (click)="facade.showNoCashSessionModal = false">Entendido</button>
+  </footer>
+</ui-modal>

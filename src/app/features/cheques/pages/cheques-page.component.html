@@ -1,0 +1,52 @@
+<main class="ui-page cheques" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div><h1>Cheques</h1><p>Cartera, depósitos y vencimientos en una sola vista.</p></div>
+  </header>
+
+  <div class="cheques__top">
+    <ui-ticket class="cheques__ticket" label="Monto visible" [figure]="f.totalAmount | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="cheques__hint">{{ f.cheques.length }} {{ f.cheques.length === 1 ? 'cheque en pantalla' : 'cheques en pantalla' }}</span>
+    </ui-ticket>
+    <section class="ui-card cheques__stats">
+      <div class="cheques__stat"><span class="ui-stat__label">En cartera</span><strong class="ui-num">{{ f.portfolioCount }}</strong><span>Listos para seguimiento</span></div>
+      <div class="cheques__stat"><span class="ui-stat__label">Depositados</span><strong class="ui-num">{{ f.depositedCount }}</strong><span>Esperando acreditación</span></div>
+      <div class="cheques__stat"><span class="ui-stat__label">Urgentes</span><strong class="ui-num" [class.cheques__warn]="f.urgentCount > 0">{{ f.urgentCount }}</strong><span>Vencen en {{ f.soonWindowDays }} días o menos</span></div>
+    </section>
+  </div>
+
+  <form class="ui-strip cheques__filters" [formGroup]="f.filterForm" (ngSubmit)="f.applyFilters()">
+    <div class="ui-segmented" role="radiogroup" aria-label="Origen">
+      <label><input type="radio" name="chequeOrigen" [checked]="origenValue === null" (change)="setOrigen(null)" /><span>Todos</span></label>
+      <label><input type="radio" name="chequeOrigen" [checked]="origenValue === origen.Tercero" (change)="setOrigen(origen.Tercero)" /><span>Terceros</span></label>
+      <label><input type="radio" name="chequeOrigen" [checked]="origenValue === origen.Propio" (change)="setOrigen(origen.Propio)" /><span>Propios</span></label>
+    </div>
+    <label class="ui-field"><span class="ui-field__label">Estado</span><app-searchable-select formControlName="estado" [options]="f.statusOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar estado..."></app-searchable-select></label>
+    <label class="ui-field"><span class="ui-field__label">Banco emisor</span><app-searchable-select formControlName="bankId" [options]="f.bankOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar banco emisor..."></app-searchable-select></label>
+    <label class="ui-field"><span class="ui-field__label">Número</span><input class="ui-input" type="text" formControlName="numero" placeholder="Buscar número" /></label>
+    <label class="ui-field"><span class="ui-field__label">Vence desde</span><input class="ui-input" type="date" formControlName="fechaVencFrom" /></label>
+    <label class="ui-field"><span class="ui-field__label">Vence hasta</span><input class="ui-input" type="date" formControlName="fechaVencTo" /></label>
+    <div class="cheques__filter-actions">
+      <button uiBtn="primary" type="submit">Filtrar</button>
+      <button uiBtn="ghost" type="button" (click)="f.clearFilters()">Limpiar</button>
+      <span class="ui-badge" *ngIf="f.activeFilterCount > 0">{{ f.activeFilterCount }} {{ f.activeFilterCount === 1 ? 'filtro activo' : 'filtros activos' }}</span>
+    </div>
+  </form>
+
+  <ui-card [flush]="true" class="cheques__card">
+    <div class="cheques__state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="cheques__state" *ngIf="!f.loading && f.cheques.length === 0">
+      <ui-empty icon="search" heading="No se encontraron cheques con esos filtros" text="Probá limpiar la búsqueda o ampliar el rango de vencimiento.">
+        <button uiBtn="secondary" size="sm" type="button" (click)="f.clearFilters()">Restablecer filtros</button>
+      </ui-empty>
+    </div>
+    <app-cheques-table *ngIf="!f.loading && f.cheques.length > 0" [cheques]="f.cheques" [statusLabels]="f.statusLabels"
+      [isUrgentFn]="isUrgent" [urgencyLabelFn]="urgencyLabel" [dateLabelFn]="dateLabel" (open)="f.openDetail($event)">
+    </app-cheques-table>
+  </ui-card>
+
+  <app-cheque-detail-modal *ngIf="f.detailModalOpen"
+    [cheque]="f.detailCheque" [loading]="f.detailLoading" [updating]="f.updatingStatus" [statusLabels]="f.statusLabels"
+    [nextStates]="f.detailCheque ? f.getNextStates(f.detailCheque.estado) : []" [terminalLabel]="f.detailCheque ? f.terminalStateLabel(f.detailCheque) : ''"
+    [dateLabelFn]="dateLabel" (closed)="f.closeDetail()" (changeStatus)="f.changeStatus($event)">
+  </app-cheque-detail-modal>
+</main>

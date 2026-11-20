@@ -1,0 +1,22 @@
+<div class="as">
+  <ui-ticket class="as__ticket" label="Saldo pendiente" [figure]="pending | currency:'ARS':'symbol-narrow':'1.2-2'">
+    <span class="as__hint">{{ pendingHint }}</span>
+  </ui-ticket>
+  <section class="ui-card as__card">
+    <div class="as__cell">
+      <span class="ui-stat__label">Deuda total</span>
+      <strong class="ui-num as__value">{{ total | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
+      <span class="as__meta">{{ totalHint }}</span>
+    </div>
+    <div class="as__cell">
+      <span class="ui-stat__label">{{ paidLabel }}</span>
+      <strong class="ui-num as__value as__value--paid">{{ paid | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
+      <span class="as__meta">{{ paidHint }}</span>
+    </div>
+    <div class="as__cell">
+      <span class="ui-stat__label">Saldo a favor</span>
+      <strong class="ui-num as__value" [class.as__value--paid]="favor > 0" [class.as__value--zero]="favor <= 0">{{ favor | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
+      <span class="as__meta">{{ favorHint }}</span>
+    </div>
+  </section>
+</div>

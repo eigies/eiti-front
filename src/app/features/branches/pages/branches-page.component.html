@@ -1,0 +1,77 @@
+<main class="ui-page branches" [class.page--guided-lock]="facade.isOnboardingFocusLocked" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Sucursales</h1>
+      <p>Las sucursales disponibles para ventas, caja y operación.</p>
+    </div>
+    <div class="branches__actions">
+      <button *ngIf="f.canTransferStock" uiBtn="secondary" type="button" (click)="transferOpen = true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-4-4M17 17H4l4 4"/></svg>Traspaso de stock
+      </button>
+      <button *ngIf="f.canManageBranches" uiBtn="primary" type="button" (click)="createOpen = true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nueva sucursal
+      </button>
+    </div>
+  </header>
+
+  <app-onboarding-banner *ngIf="f.isOnboardingStep" [step]="1" [total]="5" [focused]="f.isOnboardingFocusLocked"
+    title="Paso 1. Creá tu primera sucursal"
+    text="Necesitás al menos una sucursal para poder asociar ventas y cajas. Leé este paso y tocá Entendido para habilitar la pantalla."
+    [actionLabel]="f.isOnboardingFocusLocked ? 'Entendido' : ''" (action)="f.acceptOnboardingStep()">
+  </app-onboarding-banner>
+
+  <ui-card heading="Sucursales" [count]="f.branches.length" [flush]="true" class="branches__card">
+    <div class="branches__state" *ngIf="f.branches.length === 0">
+      <ui-empty icon="list" heading="No hay sucursales registradas todavía" text="Creá la primera con Nueva sucursal."></ui-empty>
+    </div>
+    <app-branch-table
+      *ngIf="f.branches.length > 0"
+      [branches]="f.branches"
+      [canManage]="f.canManageBranches"
+      [canViewFinancials]="f.canViewFinancials"
+      [deletingId]="f.deletingBranchId"
+      [invoicingOf]="invoicingOf"
+      [originOf]="originOf"
+      [automaticOf]="automaticOf"
+      [pointOfSaleOf]="pointOfSaleOf"
+      (edit)="f.beginEdit($event)"
+      (remove)="f.deleteBranch($event)">
+    </app-branch-table>
+  </ui-card>
+
+  <app-branch-form-modal
+    *ngIf="createOpen && f.canManageBranches"
+    [form]="f.createForm"
+    [saving]="f.savingCreate"
+    (submitted)="f.createBranch()"
+    (closed)="createOpen = false">
+  </app-branch-form-modal>
+
+  <app-branch-form-modal
+    *ngIf="f.editingBranch"
+    [form]="f.editForm"
+    [editing]="true"
+    [saving]="f.savingEdit"
+    [invoicingOptions]="f.automaticInvoicingOptions"
+    [canAssignPointOfSale]="f.canAssignPointOfSale"
+    [pointOfSaleOptions]="f.pointOfSaleOptions"
+    (submitted)="f.saveEdit()"
+    (closed)="f.closeEdit()">
+  </app-branch-form-modal>
+
+  <app-stock-transfer-modal
+    *ngIf="transferOpen && f.canTransferStock"
+    [form]="f.transferForm"
+    [items]="f.transferItems"
+    [sourceOptions]="f.branchSelectOptions"
+    [destinationOptions]="f.transferDestinationOptions"
+    [productOptionsFor]="productOptionsFor"
+    [availableFor]="availableFor"
+    [stockLoading]="f.transferStockLoading"
+    [saving]="f.savingTransfer"
+    (addItem)="f.addTransferItem()"
+    (removeItem)="f.removeTransferItem($event)"
+    (submitted)="f.submitTransfer()"
+    (closed)="transferOpen = false">
+  </app-stock-transfer-modal>
+</main>

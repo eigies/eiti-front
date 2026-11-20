@@ -1,0 +1,135 @@
+<main class="ui-page company" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Datos de la empresa</h1>
+      <p>Identidad, canales y reglas globales de la operación.</p>
+    </div>
+    <div class="company__meta" *ngIf="f.company">
+      <span>Alta <span class="ui-num">{{ f.company.createdAt | date: 'dd/MM/yyyy' }}</span></span>
+      <span class="company__id" [title]="f.company.id">ID <span class="ui-num">{{ f.company.id }}</span></span>
+    </div>
+  </header>
+
+  <div class="company__loading" *ngIf="f.loading" aria-live="polite"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-sr-only">Cargando configuracion...</span></div>
+
+  <section class="ui-card ui-settings" *ngIf="!f.loading">
+    <form [formGroup]="f.form" (ngSubmit)="f.save()" novalidate>
+      <div class="ui-srow">
+        <div class="ui-srow__copy">
+          <h2>Perfil de la empresa</h2>
+          <p>El nombre con el que aparece en el sistema y su dominio principal.</p>
+        </div>
+        <div class="ui-srow__body">
+          <div class="ui-srow__fields">
+            <label class="ui-field" [class.ui-field--error]="f.isInvalid('name')">
+              <span class="ui-field__label">Nombre</span>
+              <input class="ui-input" type="text" formControlName="name" autocomplete="organization" />
+              <span class="ui-field__error" *ngIf="f.isInvalid('name')">Requerido</span>
+            </label>
+            <label class="ui-field" [class.ui-field--error]="f.isInvalid('primaryDomain')">
+              <span class="ui-field__label">Dominio principal</span>
+              <input class="ui-input" type="text" formControlName="primaryDomain" />
+              <span class="ui-field__error" *ngIf="f.isInvalid('primaryDomain')">Requerido</span>
+            </label>
+          </div>
+          <div class="ui-srow__actions"><button uiBtn="primary" type="submit" [disabled]="f.saving">{{ f.saving ? 'Guardando...' : 'Guardar cambios' }}</button></div>
+        </div>
+      </div>
+
+      <div class="ui-srow">
+        <div class="ui-srow__copy">
+          <h2>WhatsApp de ventas</h2>
+          <p>Si el cliente tiene teléfono cargado, se le envía el comprobante al cobrar la venta.</p>
+        </div>
+        <div class="ui-srow__body">
+          <label class="ui-switch">
+            <input type="checkbox" formControlName="whatsAppEnabled" />
+            <span class="ui-switch__track"></span>
+            Envío automático al cobrar
+          </label>
+          <label class="ui-field company__narrow" [class.ui-field--error]="f.form.get('whatsAppEnabled')?.value && !f.form.get('whatsAppPhoneNumber')?.value && f.form.get('whatsAppPhoneNumber')?.touched">
+            <span class="ui-field__label">Número emisor</span>
+            <input class="ui-input" type="text" formControlName="whatsAppPhoneNumber" placeholder="+54 11 1234 5678" />
+            <span class="ui-field__error" *ngIf="f.form.get('whatsAppEnabled')?.value && !f.form.get('whatsAppPhoneNumber')?.value && f.form.get('whatsAppPhoneNumber')?.touched">Obligatorio si el envío está activo</span>
+          </label>
+          <div class="ui-srow__actions"><button uiBtn="primary" type="submit" [disabled]="f.saving">{{ f.saving ? 'Guardando...' : 'Guardar cambios' }}</button></div>
+        </div>
+      </div>
+
+      <div class="ui-srow">
+        <div class="ui-srow__copy">
+          <h2>Cargo por no entrega</h2>
+          <p>Aplica a todos los productos sin cargo propio configurado. Dejá 0 o vacío para desactivarlo.</p>
+        </div>
+        <div class="ui-srow__body">
+          <label class="ui-field company__narrow">
+            <span class="ui-field__label">Cargo global por no entrega en canje ($)</span>
+            <input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="defaultNoDeliverySurcharge" placeholder="0" />
+          </label>
+          <div class="ui-srow__actions"><button uiBtn="primary" type="submit" [disabled]="f.saving">{{ f.saving ? 'Guardando...' : 'Guardar cambios' }}</button></div>
+        </div>
+      </div>
+
+      <div class="ui-srow">
+        <div class="ui-srow__copy">
+          <h2>Identidad de los PDF</h2>
+          <p>Logo principal y marca de agua para remitos y reportes.</p>
+        </div>
+        <div class="ui-srow__body">
+          <div class="ui-srow__fields">
+            <div class="company__brand">
+              <span class="ui-field__label">Logo de la empresa</span>
+              <div class="company__preview">
+                <img *ngIf="f.imagePreview('pdfLogoUrl')" [src]="f.imagePreview('pdfLogoUrl')!" alt="Logo empresa" />
+                <span *ngIf="!f.imagePreview('pdfLogoUrl')">Sin logo</span>
+              </div>
+              <input class="ui-input" type="text" formControlName="pdfLogoUrl" placeholder="URL o data:image..." aria-label="Logo de la empresa (URL)" />
+              <div class="company__brand-actions">
+                <label class="ui-btn ui-btn--secondary ui-btn--sm company__file">
+                  Cargar imagen
+                  <input type="file" accept="image/png,image/jpeg,image/jpg" (change)="f.onImageSelected('pdfLogoUrl', $event)" />
+                </label>
+                <button uiBtn="ghost" size="sm" type="button" (click)="f.clearImage('pdfLogoUrl')">Quitar</button>
+              </div>
+            </div>
+            <div class="company__brand">
+              <span class="ui-field__label">Marca de agua</span>
+              <div class="company__preview company__preview--watermark">
+                <img *ngIf="f.imagePreview('pdfWatermarkUrl')" [src]="f.imagePreview('pdfWatermarkUrl')!" alt="Marca de agua" />
+                <span *ngIf="!f.imagePreview('pdfWatermarkUrl')">Texto automático</span>
+              </div>
+              <input class="ui-input" type="text" formControlName="pdfWatermarkUrl" placeholder="URL o data:image..." aria-label="Marca de agua (URL)" />
+              <div class="company__brand-actions">
+                <label class="ui-btn ui-btn--secondary ui-btn--sm company__file">
+                  Cargar imagen
+                  <input type="file" accept="image/png,image/jpeg,image/jpg" (change)="f.onImageSelected('pdfWatermarkUrl', $event)" />
+                </label>
+                <button uiBtn="ghost" size="sm" type="button" (click)="f.clearImage('pdfWatermarkUrl')">Quitar</button>
+              </div>
+            </div>
+          </div>
+          <div class="ui-srow__actions"><button uiBtn="primary" type="submit" [disabled]="f.saving">{{ f.saving ? 'Guardando...' : 'Guardar cambios' }}</button></div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Fuera del formulario de la empresa: se guarda solo, con su endpoint y su permiso. -->
+    <div class="ui-srow" *ngIf="f.canConfigureDiscount">
+      <div class="ui-srow__copy">
+        <h2>Descuento minorista</h2>
+        <p>Hasta cuánto puede descontar un vendedor sobre el total de una venta minorista. En 0 el descuento no aparece al vender. Las ventas en cuenta corriente no tienen tope.</p>
+      </div>
+      <div class="ui-srow__body">
+        <label class="ui-field company__narrow" [class.ui-field--error]="f.discountLimitControl.invalid && f.discountLimitControl.touched">
+          <span class="ui-field__label">Descuento máximo en ventas minoristas (%)</span>
+          <input id="retail-discount-limit" data-testid="retail-discount-limit" class="ui-input ui-input--num" type="number" min="0" max="100" step="0.5"
+            [formControl]="f.discountLimitControl" placeholder="0" (keydown.enter)="$event.preventDefault(); f.saveDiscountLimit()" />
+          <span class="ui-field__error" *ngIf="f.discountLimitControl.invalid && f.discountLimitControl.touched">Entre 0 y 100</span>
+        </label>
+        <div class="ui-srow__actions">
+          <button uiBtn="primary" type="button" [disabled]="f.savingDiscountLimit || f.discountLimitControl.pristine" (click)="f.saveDiscountLimit()">{{ f.savingDiscountLimit ? 'Guardando...' : 'Guardar descuento' }}</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

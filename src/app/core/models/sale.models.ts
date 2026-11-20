@@ -176,10 +176,10 @@ export function cancelInvoicingNotice(sale: {
     const invoice = `${fiscalDocumentLabel(sale.fiscalDocumentType)}${number ? ' ' + number : ''}`;
     switch (sale.invoicingStatus) {
         case 3:
-            return { text: `Esta venta tiene la ${invoice}. Al cancelarla se emite automáticamente la nota de crédito que la anula.`, tone: 'info' };
+            return { text: `Esta venta tiene la ${invoice}. Al anularla se emite automáticamente la nota de crédito que la anula.`, tone: 'info' };
         case 2:
             // Anular solo emite NC sobre una factura autorizada: si la que esta en tramite se autoriza despues, queda viva.
-            return { text: 'La factura de esta venta todavía está en trámite: la nota de crédito no se emite sola. Esperá a que se autorice antes de cancelar.', tone: 'warning' };
+            return { text: 'La factura de esta venta todavía está en trámite: la nota de crédito no se emite sola. Esperá a que se autorice antes de anularla.', tone: 'warning' };
         default:
             return null;
     }
@@ -302,6 +302,11 @@ export interface CreateSaleRequest {
     requestInvoicing?: boolean;
     /** Letra elegida por el vendedor; el back frena la venta si no coincide con el cliente. */
     invoiceLetter?: InvoiceLetter | null;
+    /**
+     * Id del intento de alta (ver RequestAttempt). Si el mismo pedido llega dos veces, el back devuelve la venta
+     * que creo el primero en vez de crear otra.
+     */
+    clientRequestId?: string | null;
 }
 
 export interface CreateSaleDetailRequest {
@@ -435,6 +440,8 @@ export interface CreateCcSaleRequest {
     requestInvoicing?: boolean;
     invoiceLetter?: InvoiceLetter | null;
     notes?: string | null;
+    /** Igual que en mostrador: id del intento de alta, para que un pedido repetido no cree otra venta. */
+    clientRequestId?: string | null;
 }
 
 export interface SaleTradeInDetail {

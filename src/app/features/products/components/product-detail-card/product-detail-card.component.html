@@ -1,0 +1,28 @@
+<ui-card heading="Detalle">
+  <div class="pdc">
+    <div>
+      <span class="ui-eyebrow">Identidad</span>
+      <div class="ui-kv"><span class="ui-kv__key">Código</span><span class="ui-kv__val ui-num">{{ product.code }}</span></div>
+      <div class="ui-kv"><span class="ui-kv__key">SKU</span><span class="ui-kv__val ui-num">{{ product.sku || '—' }}</span></div>
+      <div class="ui-kv"><span class="ui-kv__key">Marca</span><span class="ui-kv__val">{{ product.brand }}</span></div>
+      <div class="ui-kv"><span class="ui-kv__key">Nombre</span><strong class="ui-kv__val">{{ product.name }}</strong></div>
+      <div class="ui-kv"><span class="ui-kv__key">Categoría</span><span class="ui-kv__val">{{ product.categoryName || 'Sin categoría' }}</span></div>
+      <div class="ui-kv" *ngIf="product.description"><span class="ui-kv__key">Descripción</span><span class="ui-kv__val">{{ product.description }}</span></div>
+    </div>
+    <div class="pdc__stock">
+      <div class="pdc__stock-head">
+        <span class="ui-eyebrow">Stock global</span>
+        <span class="ui-badge" *ngIf="product.companyAvailableQuantity !== product.totalAvailableQuantity">Global empresa: <span class="ui-num">{{ product.companyAvailableQuantity }}</span> disp.</span>
+      </div>
+      <div class="ui-stats">
+        <div class="ui-stat"><span class="ui-stat__label">Stock</span><strong class="ui-stat__value">{{ product.totalOnHandQuantity }}</strong></div>
+        <button class="ui-stat" type="button" [disabled]="product.totalReservedQuantity <= 0" (click)="openReservations.emit()">
+          <span class="ui-stat__label">Reservado</span>
+          <strong class="ui-stat__value">{{ product.totalReservedQuantity }}</strong>
+          <span class="ui-stat__hint" *ngIf="product.totalReservedQuantity > 0">Ver detalle</span>
+        </button>
+        <div class="ui-stat ui-stat--success"><span class="ui-stat__label">Disponible</span><strong class="ui-stat__value">{{ product.totalAvailableQuantity }}</strong></div>
+      </div>
+    </div>
+  </div>
+</ui-card>

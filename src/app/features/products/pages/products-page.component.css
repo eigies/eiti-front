@@ -1,0 +1,14 @@
+.products__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.products__tools { display: grid; gap: var(--space-4); padding: 0 var(--space-5) var(--space-4); }
+.products__alert { align-items: center; }
+.products__grow { flex: 1; min-width: 0; }
+.products__context { width: 240px; }
+.products__status { display: flex; align-items: center; gap: var(--space-2); font-size: 14px; color: var(--text-2); }
+.products__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex: none; }
+.products__dot--branch { background: var(--brand); }
+.products__strip-actions { margin-left: auto; display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.products__state { display: grid; gap: var(--space-3); padding: 0 var(--space-5) var(--space-5); }
+.products__danger { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-5); }
+.page--guided-lock .products__catalog { opacity: .35; pointer-events: none; }
+.ui-segmented svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 720px) { .products__context { width: 100%; } }

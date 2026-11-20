@@ -1,0 +1,24 @@
+<main class="ui-page reports-index">
+  <header class="ui-page-head">
+    <div>
+      <h1>Reportes</h1>
+      <p>Elegí qué querés mirar. Todos se pueden filtrar por fecha y exportar.</p>
+    </div>
+  </header>
+
+  <section class="reports-index__group" *ngFor="let group of groups">
+    <h2 class="reports-index__label">
+      <span class="ui-mov" [ngClass]="'ui-mov--' + group.tone">{{ group.label }}</span>
+      <small>{{ group.reports.length }} {{ group.reports.length === 1 ? 'reporte' : 'reportes' }}</small>
+    </h2>
+    <div class="reports-index__grid">
+      <a class="reports-index__card" *ngFor="let report of group.reports" [routerLink]="report.link">
+        <strong>{{ report.title }}</strong>
+        <span>{{ report.hint }}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <p class="reports-index__empty" *ngIf="groups.length === 0">No tenés permiso para ver reportes. Pedíselo a quien administra la cuenta.</p>
+</main>

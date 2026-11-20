@@ -1,0 +1,7 @@
+.cht th:first-child, .cht td:first-child { padding-left: var(--space-5); }
+.cht th:last-child, .cht td:last-child { padding-right: var(--space-5); }
+.cht__hint { display: block; font-size: 13px; line-height: 18px; color: var(--text-3); }
+.cht__amount { font-weight: 600; }
+.cht__due { display: block; font-size: 14px; }
+.cht__urgent { margin-top: 4px; }
+.cht__type { margin-left: 6px; }

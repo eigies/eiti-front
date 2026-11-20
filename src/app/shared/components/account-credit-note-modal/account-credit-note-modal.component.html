@@ -1,0 +1,21 @@
+<ui-modal eyebrow="Nota de crédito" [heading]="heading" [sub]="sub" (closed)="closed.emit()">
+  <div class="cnm">
+    <label class="ui-field"><span class="ui-field__label">Importe</span>
+      <input class="ui-input ui-input--num" type="number" min="0" step="0.01" placeholder="0,00" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" />
+    </label>
+    <label class="ui-field"><span class="ui-field__label">Fecha</span>
+      <input class="ui-input" type="date" [ngModel]="date" (ngModelChange)="dateChange.emit($event)" />
+    </label>
+    <label class="ui-field cnm__wide"><span class="ui-field__label">Motivo</span>
+      <input class="ui-input" type="text" maxlength="250" [placeholder]="reasonPlaceholder" [ngModel]="reason" (ngModelChange)="reasonChange.emit($event)" />
+      <span class="ui-field__hint">Queda en el estado de cuenta: es la explicación de por qué bajó la deuda.</span>
+    </label>
+    <label class="ui-field cnm__wide"><span class="ui-field__label">{{ linkLabel }} <em>(opcional)</em></span>
+      <app-searchable-select [ngModel]="saleId" (ngModelChange)="saleIdChange.emit($event)" [options]="saleOptions" [placeholder]="linkPlaceholder" [searchPlaceholder]="linkSearchPlaceholder"></app-searchable-select>
+    </label>
+  </div>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" (click)="closed.emit()">Cancelar</button>
+    <button uiBtn="primary" type="button" [disabled]="!canSubmit" (click)="submitted.emit()">{{ submitting ? submittingLabel : submitLabel }}</button>
+  </footer>
+</ui-modal>

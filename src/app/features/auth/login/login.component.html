@@ -1,23 +1,27 @@
 <div class="auth-layout">
     <section class="auth-panel auth-panel--deco" aria-hidden="true">
-        <div class="deco-orbit deco-orbit--one"></div>
-        <div class="deco-orbit deco-orbit--two"></div>
+        <div class="deco-brand">
+            <img src="assets/brand/eiti-icon-light.svg" alt="" width="40" height="40">
+            <span class="deco-label">EITI</span>
+        </div>
 
-        <div class="deco-lines">
-            <div class="deco-line" *ngFor="let i of lines" [style.animation-delay]="i * 0.07 + 's'"></div>
+        <div class="mosaic">
+            <span class="mosaic__b mosaic__b--brand"></span>
+            <span class="mosaic__b mosaic__b--ink"></span>
+            <span class="mosaic__b mosaic__b--soft"></span>
+            <span class="mosaic__b mosaic__b--line"></span>
+            <span class="mosaic__b mosaic__b--soft"></span>
+            <span class="mosaic__b mosaic__b--brand mosaic__b--tall"></span>
+            <span class="mosaic__b mosaic__b--teal"></span>
+            <span class="mosaic__b mosaic__b--ink"></span>
         </div>
 
         <div class="deco-content">
-            <div class="deco-brand">
-                <span class="deco-label">EITI</span>
-                <span class="deco-kicker">Acceso interno</span>
-            </div>
-
+            <span class="deco-kicker">Acceso</span>
             <div class="deco-copy">
-                <h2>La operacion en un solo punto de entrada.</h2>
-                <p>Ventas, caja, stock y gestion de usuarios con una lectura clara desde el primer minuto de la jornada.</p>
+                <h2>Toda la operación en un solo lugar.</h2>
+                <p>Ventas, caja, stock y usuarios, claros desde el primer minuto de la jornada.</p>
             </div>
-
         </div>
     </section>
 
@@ -30,9 +34,8 @@
 
             <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <header class="auth-form__header">
-                    <div class="auth-form__tag">_ ACCESO</div>
-                    <h1 class="auth-form__title">Acceso al panel</h1>
-                    <p class="auth-form__subtitle">Ingresa con tu usuario de trabajo para continuar con la operacion.</p>
+                    <h1 class="auth-form__title">Entrar a EITI</h1>
+                    <p class="auth-form__subtitle">Ingresá con tu usuario de trabajo.</p>
                 </header>
 
                 <div class="field" [class.field--error]="isInvalid('usernameOrEmail')">
@@ -45,12 +48,12 @@
                 </div>
 
                 <div class="field" [class.field--error]="isInvalid('password')">
-                    <label class="field__label">Contrasena</label>
+                    <label class="field__label">Contraseña</label>
                     <div class="field__input-wrap">
                         <input class="field__input field__input--with-toggle" [type]="showPass ? 'text' : 'password'" formControlName="password"
                             placeholder="********" autocomplete="current-password" />
-                        <button type="button" class="field__toggle" (click)="showPass = !showPass" [attr.aria-label]="showPass ? 'Ocultar contrasena' : 'Mostrar contrasena'">
-                            <span aria-hidden="true">{{ showPass ? '◐' : '◌' }}</span>
+                        <button type="button" class="field__toggle" (click)="showPass = !showPass" [attr.aria-label]="showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                            <svg *ngIf="!showPass" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg *ngIf="showPass" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.7 6.7C3.8 8.5 2 12 2 12s3.5 7 10 7c1.8 0 3.4-.5 4.7-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
                         </button>
                     </div>
                     <span class="field__error" *ngIf="isInvalid('password')">
@@ -65,11 +68,11 @@
 
                 <div class="auth-form__footer">
                     <p class="auth-form__link">
-                        <a routerLink="/forgot-password">Olvidaste tu contrasena?</a>
+                        <a routerLink="/forgot-password">¿Olvidaste tu contraseña?</a>
                     </p>
 
                     <p class="auth-form__link">
-                        No tenes cuenta?
+                        ¿No tenés cuenta?
                         <a routerLink="/register">Registrate</a>
                     </p>
                 </div>

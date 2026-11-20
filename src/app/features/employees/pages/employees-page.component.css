@@ -1,0 +1,2 @@
+.employees__card { overflow: hidden; }
+.employees__state { display: grid; gap: 12px; padding: 0 20px 20px; }

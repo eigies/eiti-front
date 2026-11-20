@@ -1,0 +1,86 @@
+<main class="ui-page comparison-report" *ngIf="facade as f">
+  <header class="rep-head">
+    <div>
+      <span class="rep-head__crumb">Reportes · Ventas</span>
+      <h1>Comparativo entre fechas</h1>
+      <p>Compará dos períodos: ventas, facturación, costo, ganancia y margen, con su variación.</p>
+    </div>
+  </header>
+
+  <form [formGroup]="f.filterForm" (ngSubmit)="f.search()" novalidate>
+    <app-report-filters
+      [hasMore]="true" [open]="f.advancedFiltersOpen" [count]="f.activeOptionalFiltersCount" [canApply]="!f.filterForm.invalid"
+      applyLabel="Comparar" [chips]="chips" moreId="comparison-advanced-filters"
+      (toggle)="f.toggleAdvancedFilters()" (clear)="f.clearFilters()" (removeChip)="removeChip($event)">
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('aFrom')"><span class="ui-field__label">A · Desde</span><input class="ui-input" type="date" formControlName="aFrom" /></label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('aTo')"><span class="ui-field__label">A · Hasta</span><input class="ui-input" type="date" formControlName="aTo" /></label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('bFrom')"><span class="ui-field__label">B · Desde</span><input class="ui-input" type="date" formControlName="bFrom" /></label>
+      <label reportMain class="ui-field" [class.ui-field--error]="f.isInvalid('bTo')"><span class="ui-field__label">B · Hasta</span><input class="ui-input" type="date" formControlName="bTo" /></label>
+
+      <label reportMore class="ui-field"><span class="ui-field__label">Cliente</span>
+        <app-searchable-select formControlName="customerId" [options]="f.customerOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos los clientes" searchPlaceholder="Buscar cliente..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Instalador</span>
+        <app-searchable-select formControlName="installerId" [options]="f.driverOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar instalador..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Vehículo</span>
+        <app-searchable-select formControlName="vehicleId" [options]="f.vehicleOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar vehículo..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Canal</span>
+        <app-searchable-select formControlName="channel" [options]="f.channelOptions" [allowClear]="true" clearLabel="Todos" [clearValue]="null" placeholder="Todos" searchPlaceholder="Buscar canal..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Categoría</span>
+        <app-searchable-select formControlName="categoryId" [options]="f.categoryOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas" searchPlaceholder="Buscar categoría..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Sucursal</span>
+        <app-searchable-select formControlName="branchId" [options]="f.branchOptions" [allowClear]="true" clearLabel="Todas" [clearValue]="null" placeholder="Todas las sucursales" searchPlaceholder="Buscar sucursal..."></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Envío</span>
+        <app-searchable-select formControlName="deliveryMode" [options]="f.deliveryOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+      <label reportMore class="ui-field"><span class="ui-field__label">Tipo de venta</span>
+        <app-searchable-select formControlName="saleType" [options]="f.saleTypeOptions" placeholder="Todas"></app-searchable-select>
+      </label>
+    </app-report-filters>
+  </form>
+
+  <div class="rep-totals" *ngIf="!f.loading && f.totalsA && f.totalsB">
+    <ui-ticket class="ui-ticket--compact" label="Ganancia del período B" [figure]="f.totalsB.profit | currency:'ARS':'symbol-narrow':'1.2-2'">
+      <span class="ui-ticket__sub" *ngIf="delta('Ganancia') as d; else zeroDelta">{{ d >= 0 ? '+' : '' }}{{ d }}% contra el período A</span>
+      <ng-template #zeroDelta><span class="ui-ticket__sub">Igual que el período A</span></ng-template>
+    </ui-ticket>
+    <div class="rep-stat"><span class="rep-stat__label">Facturación B</span><strong class="rep-stat__value">{{ f.totalsB.revenue | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong><span class="rep-stat__hint">A: {{ f.totalsA.revenue | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+    <div class="rep-stat"><span class="rep-stat__label">Margen B</span><strong class="rep-stat__value">{{ f.totalsB.marginPct | number:'1.1-1' }}%</strong><span class="rep-stat__hint">A: {{ f.totalsA.marginPct | number:'1.1-1' }}%</span></div>
+  </div>
+
+  <ui-card heading="Resultado" [flush]="true" class="rep-card">
+    <div class="rep-state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="rep-state" *ngIf="!f.loading && f.hasSearched && (!f.totalsA || !f.totalsB)">
+      <ui-empty icon="search" heading="No se pudo comparar"></ui-empty>
+    </div>
+    <div class="rep-scroll" *ngIf="!f.loading && f.totalsA && f.totalsB">
+      <table class="ui-table rep-table">
+        <thead>
+          <tr>
+            <th class="rep-sticky">Métrica</th>
+            <th class="is-num">Período A<span class="rep-th-sub">{{ f.rangeLabel('aFrom', 'aTo') }}</span></th>
+            <th class="is-num">Período B<span class="rep-th-sub">{{ f.rangeLabel('bFrom', 'bTo') }}</span></th>
+            <th class="is-num">Variación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of f.rows; trackBy: trackLabel">
+            <td class="rep-main rep-sticky">{{ r.label }}</td>
+            <td class="is-num">{{ r.money ? (r.a | currency:'ARS':'symbol-narrow':'1.2-2') : r.a }}</td>
+            <td class="is-num">{{ r.money ? (r.b | currency:'ARS':'symbol-narrow':'1.2-2') : r.b }}</td>
+            <td class="is-num"><span class="ui-badge" [class.ui-badge--success]="r.delta > 0" [class.ui-badge--danger]="r.delta < 0">{{ r.delta >= 0 ? '+' : '' }}{{ r.delta }}{{ r.label === 'Margen %' ? ' pp' : '%' }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="rep-notes" *ngIf="!f.loading && f.totalsA && f.totalsB">
+      <p>La variación compara B contra A. El margen se mide en puntos porcentuales (pp).</p>
+      <p>Los filtros adicionales se aplican por igual a los dos períodos.</p>
+    </div>
+  </ui-card>
+</main>

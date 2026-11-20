@@ -29,11 +29,10 @@
     border-radius: 999px;
     background: color-mix(in srgb, var(--amber) 8%, transparent);
     color: var(--amber);
-    font-family: 'DM Mono', monospace;
-    font-size: .68rem;
+    font-family: var(--font-sans);
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
+    letter-spacing: .01em;
     text-align: left;
     cursor: pointer;
     transition: background-color .2s ease, border-color .2s ease;
@@ -47,8 +46,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .sale-discount__toggle {
-        transition: none;
-    }
+        transition: none;}
 }
 
 .sale-discount__toggle:focus-visible,
@@ -60,17 +58,16 @@
 
 .sale-discount__limit {
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-    font-size: .62rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    letter-spacing: 0;
 }
 
 .sale-discount__amount {
     margin-left: auto;
     color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: .8rem;
+    font-family: var(--font-sans);
+    font-size: 14px;
     font-weight: 600;
 }
 
@@ -89,10 +86,9 @@
 
 .sale-discount__label {
     color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: .69rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    letter-spacing: 0;
 }
 
 .sale-discount__optional {
@@ -109,7 +105,7 @@
     border-radius: 8px;
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: var(--font-sans);
     outline: none;
     transition: border-color .2s ease, box-shadow .2s ease;
 }
@@ -120,12 +116,12 @@
 
 .sale-discount__input:focus {
     border-color: color-mix(in srgb, var(--amber) 45%, var(--border-2));
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 10%, transparent);
+    box-shadow: none;
 }
 
 .sale-discount__input[aria-invalid='true'] {
     border-color: color-mix(in srgb, var(--danger) 72%, var(--border-2));
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 10%, transparent);
+    box-shadow: none;
 }
 
 .sale-discount__error,
@@ -136,8 +132,8 @@
 
 .sale-discount__error {
     color: color-mix(in srgb, var(--danger) 76%, var(--text));
-    font-family: 'DM Mono', monospace;
-    font-size: .65rem;
+    font-family: var(--font-sans);
+    font-size: 12px;
     line-height: 1.4;
 }
 
@@ -152,8 +148,8 @@
 .sale-discount__summary {
     margin: 0;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-    font-size: .65rem;
+    font-family: var(--font-sans);
+    font-size: 12px;
 }
 
 .sale-discount__clear {
@@ -161,8 +157,8 @@
     border: 0;
     background: none;
     color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-    font-size: .65rem;
+    font-family: var(--font-sans);
+    font-size: 12px;
     text-decoration: underline;
     cursor: pointer;
 }
@@ -173,6 +169,5 @@
 
 @media (max-width: 520px) {
     .sale-discount__body {
-        grid-template-columns: 1fr;
-    }
+        grid-template-columns: 1fr;}
 }

@@ -1,0 +1,50 @@
+<ui-card heading="Modificar producto">
+  <form id="product-edit-form" class="pec" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <div class="pec__grid">
+      <label class="ui-field" [class.ui-field--error]="invalid('code')"><span class="ui-field__label">Código</span><input class="ui-input" type="text" formControlName="code" /></label>
+      <label class="ui-field" [class.ui-field--error]="invalid('sku')"><span class="ui-field__label">SKU</span><input class="ui-input" type="text" formControlName="sku" /></label>
+      <label class="ui-field" [class.ui-field--error]="invalid('brand')"><span class="ui-field__label">Marca</span><input class="ui-input" type="text" formControlName="brand" /></label>
+      <label class="ui-field" [class.ui-field--error]="invalid('name')"><span class="ui-field__label">Nombre</span><input class="ui-input" type="text" formControlName="name" /></label>
+      <label class="ui-field" [class.ui-field--error]="invalid('description')"><span class="ui-field__label">Descripción <em>(opcional)</em></span><input class="ui-input" type="text" formControlName="description" /></label>
+      <label class="ui-field"><span class="ui-field__label">Categoría</span><app-searchable-select formControlName="category" [options]="categoryOptions" [allowClear]="true" clearLabel="Sin categoría" [clearValue]="null" placeholder="Sin categoría" searchPlaceholder="Buscar categoría..."></app-searchable-select></label>
+    </div>
+
+    <div class="pec__modes">
+      <div class="ui-field">
+        <span class="ui-field__label">Modo de precio</span>
+        <div class="ui-segmented" role="radiogroup" aria-label="Modo de precio">
+          <label><input type="radio" name="editPriceMode" [checked]="priceMode === 'public'" (change)="priceModeChange.emit('public')" /><span>Precio público</span></label>
+          <label *ngIf="canViewCostPrice"><input type="radio" name="editPriceMode" [checked]="priceMode === 'margin'" [disabled]="manual" (change)="priceModeChange.emit('margin')" /><span>Margen</span></label>
+        </div>
+      </div>
+      <div class="ui-field">
+        <span class="ui-field__label">Uso en venta</span>
+        <label class="ui-switch">
+          <input type="checkbox" formControlName="allowsManualSaleValue" (change)="manualSaleValueChange.emit($any($event.target).checked)" />
+          <span class="ui-switch__track"></span>Parte de pago / canje
+        </label>
+      </div>
+    </div>
+
+    <div class="pec__prices">
+      <label class="ui-field" *ngIf="priceMode === 'public'" [class.ui-field--error]="invalid('publicPrice')"><span class="ui-field__label">Precio público</span><input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="publicPrice" /></label>
+      <label class="ui-field" *ngIf="priceMode === 'margin'"><span class="ui-field__label">Margen %</span><input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="marginPercent" (input)="syncFromMargin()" /></label>
+      <label class="ui-field" *ngIf="canViewCostPrice" [class.ui-field--error]="invalid('costPrice')"><span class="ui-field__label">Precio costo</span><input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="costPrice" (input)="syncFromMargin()" /></label>
+      <label class="ui-field" [class.ui-field--error]="invalid('unitPrice')"><span class="ui-field__label">Precio unitario <em>(opcional)</em></span><input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="unitPrice" /></label>
+      <div class="pec__read">
+        <span class="ui-field__label">Lectura comercial</span>
+        <strong class="ui-num pec__read-figure">{{ manual ? 'Valor en venta' : (price | currency:'ARS':'symbol-narrow':'1.2-2') }}</strong>
+        <span class="pec__read-meta" *ngIf="canViewCostPrice">Costo <span class="ui-num">{{ cost | currency:'ARS':'symbol-narrow':'1.2-2' }}</span> · Margen <span class="ui-num">{{ margin | number:'1.0-0' }}%</span></span>
+      </div>
+    </div>
+
+    <label class="ui-field pec__narrow" [class.ui-field--error]="invalid('noDeliverySurcharge')">
+      <span class="ui-field__label">Cargo si no entrega en canje <em>(opcional)</em></span>
+      <input class="ui-input ui-input--num" type="number" min="0" step="0.01" formControlName="noDeliverySurcharge" />
+      <span class="ui-field__hint">Vacío = usa el valor global. Un monto = sobreescribe el cargo global para este producto.</span>
+    </label>
+  </form>
+  <footer uiCardFoot class="ui-modal__foot pec__foot">
+    <button uiBtn="primary" type="submit" form="product-edit-form" [disabled]="saving">{{ saving ? 'Actualizando...' : 'Guardar cambios' }}</button>
+  </footer>
+</ui-card>

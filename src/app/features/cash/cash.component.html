@@ -1,0 +1,783 @@
+<main class="ui-page cash" [class.page--guided-lock]="isOnboardingFocusLocked">
+  <header class="ui-page-head cash-head">
+    <div>
+      <h1>Caja</h1>
+      <p>{{ selectedBranchName || 'Elegí una sucursal para operar' }}</p>
+    </div>
+    <div class="cash-head__tools">
+      <label class="cash-head__branch">
+        <span class="ui-field__label">Sucursal</span>
+        <app-searchable-select [ngModel]="selectedBranchId" (ngModelChange)="selectBranch($event)" [ngModelOptions]="{ standalone: true }" [options]="branchOptions" placeholder="Selecciona sucursal" searchPlaceholder="Buscar sucursal..." [disabled]="isRestrictedToAssignedDrawer" [compact]="true"></app-searchable-select>
+      </label>
+      <button *ngIf="auth.hasPermission(permissionCodes.cashDrawerManage)" class="ui-btn ui-btn--ghost" type="button" (click)="toggleCreateDrawer()" [disabled]="!selectedBranchId">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>{{ showCreateDrawer ? 'Ocultar alta' : 'Crear caja' }}
+      </button>
+    </div>
+  </header>
+
+  <app-onboarding-banner
+    *ngIf="showCashDrawerOnboarding"
+    [step]="2"
+    [total]="5"
+    [focused]="cashDrawerFocusLocked"
+    title="Paso 2. Creá tu primera caja"
+    text="Elegí una sucursal y tocá Entendido para habilitar este paso. Después usá Crear caja para dejar la estructura mínima lista."
+    [actionLabel]="cashDrawerFocusLocked ? 'Entendido' : 'Crear caja'"
+    [actionDisabled]="!cashDrawerFocusLocked && !selectedBranchId"
+    (action)="handleCashDrawerBannerAction()">
+  </app-onboarding-banner>
+
+  <app-onboarding-banner
+    *ngIf="showInitialCashOpenOnboarding"
+    [step]="3"
+    [total]="5"
+    [focused]="initialCashOpenFocusLocked"
+    title="Paso 3. Hacé la apertura inicial"
+    text="Leé este paso y tocá Entendido para habilitar la apertura. Abrí una caja una sola vez para dejar la operación lista."
+    [actionLabel]="initialCashOpenFocusLocked ? 'Entendido' : ''"
+    (action)="acceptInitialCashOpenStep()">
+  </app-onboarding-banner>
+
+  <form class="ui-card cash-create" *ngIf="showCreateDrawer && auth.hasPermission(permissionCodes.cashDrawerManage)" [formGroup]="drawerForm" (ngSubmit)="createDrawer()">
+    <label class="ui-field cash-create__field">
+      <span class="ui-field__label">Nombre de la caja nueva</span>
+      <input class="ui-input" type="text" placeholder="Caja principal" formControlName="name" />
+    </label>
+    <div class="cash-create__actions">
+      <button class="ui-btn ui-btn--ghost" type="button" (click)="cancelCreateDrawer()">Cancelar</button>
+      <button class="ui-btn ui-btn--primary" type="submit">Guardar caja</button>
+    </div>
+  </form>
+
+  <div class="ui-empty" *ngIf="branches.length === 0">
+    <svg viewBox="0 0 24 24"><path d="M3 9 12 4l9 5M5 9v9M10 9v9M14 9v9M19 9v9M3 20h18"/></svg>
+    <strong>No hay sucursales</strong>
+    <span>Creá una desde Administración › Sucursales.</span>
+  </div>
+
+  <div class="ui-empty" *ngIf="selectedBranchId && drawers.length === 0">
+    <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18M7 3h10v4H7z"/></svg>
+    <strong>Esta sucursal todavía no tiene cajas</strong>
+    <span>Usá Crear caja para agregar la primera.</span>
+  </div>
+
+  <div class="ui-tabs cash-tabs" role="tablist" aria-label="Cajas de la sucursal" *ngIf="canViewAllCashDrawers && drawers.length > 0">
+    <button type="button" role="tab" *ngFor="let drawer of drawers"
+      [attr.aria-selected]="drawer.id === selectedDrawerId" (click)="selectDrawer(drawer.id)">
+      <span class="cash-tabs__dot" *ngIf="drawer.id === selectedDrawerId && currentSession" aria-hidden="true"></span>
+      {{ drawer.name }}
+    </button>
+  </div>
+  <p class="cash-hint" *ngIf="canViewAllCashDrawers && drawers.length > 0 && !selectedDrawerId">Elegí una caja para abrirla, cerrarla o ver su historial.</p>
+
+  <ng-container *ngIf="selectedDrawerId">
+    <div class="ui-banner ui-banner--warning" *ngIf="currentSession && isCurrentSessionStale">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.8 2.4 17.5A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.5L13.7 3.8a2 2 0 0 0-3.4 0Z"/></svg>
+      <span><strong>Esta caja lleva más de 20 horas abierta</strong>Acordate de cerrarla al final del turno.</span>
+    </div>
+
+    <div class="cash-loading" *ngIf="loadingSession">
+      <div class="ui-skeleton cash-loading__ticket"></div>
+      <div class="ui-skeleton cash-loading__side"></div>
+    </div>
+
+    <!-- Caja cerrada: apertura -->
+    <section class="ui-card cash-open" *ngIf="!loadingSession && !currentSession">
+      <div class="cash-open__copy">
+        <span class="ui-badge"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Cerrada</span>
+        <h2>Abrir {{ selectedDrawerName || 'la caja' }}</h2>
+        <p>Contá el efectivo con el que arrancás el turno.</p>
+      </div>
+      <form *ngIf="auth.hasPermission(permissionCodes.cashOpen); else noOpenPermission" class="cash-open__form" [formGroup]="openForm" (ngSubmit)="openSession()">
+        <label class="ui-field">
+          <span class="ui-field__label">Monto inicial</span>
+          <input class="ui-input ui-input--num cash-open__amount" type="number" min="0" step="0.01" placeholder="0,00" formControlName="openingAmount" />
+        </label>
+        <label class="ui-field">
+          <span class="ui-field__label">Notas <em>(opcional)</em></span>
+          <input class="ui-input" type="text" placeholder="Notas" formControlName="notes" />
+        </label>
+        <button class="ui-btn ui-btn--primary ui-btn--lg" type="submit">{{ showInitialCashOpenOnboarding ? 'Abrir caja inicial' : 'Abrir caja' }}</button>
+      </form>
+      <ng-template #noOpenPermission><p class="cash-hint">No tenés permiso para abrir la caja.</p></ng-template>
+    </section>
+
+    <!-- Caja abierta -->
+    <ng-container *ngIf="!loadingSession && currentSession">
+      <div class="cash-top">
+        <div class="cash-top__main">
+          <section class="ui-ticket cash-ticket">
+            <div class="cash-ticket__head">
+              <div class="cash-ticket__state">
+                <span class="ui-badge ui-badge--success"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg>Abierta</span>
+                <span class="cash-ticket__since">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  {{ selectedDrawerName }} · desde {{ currentSession.openedAt | date: 'short' }}
+                </span>
+              </div>
+              <button *ngIf="auth.hasPermission(permissionCodes.cashClose)" class="ui-btn ui-btn--primary ui-btn--lg" type="button" (click)="startCloseSessionFlow()" [disabled]="checkingPendingCloseSales">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Cerrar caja
+              </button>
+            </div>
+            <div class="cash-ticket__figure">
+              <span class="ui-ticket__label">Efectivo esperado en caja</span>
+              <strong class="ui-ticket__figure">{{ (currentSummary?.expectedClosingAmount ?? currentSession.expectedClosingAmount) | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
+              <span class="cash-ticket__diff" *ngIf="currentSummary">Diferencia actual <b>{{ currentSummary.difference | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></span>
+            </div>
+          </section>
+
+          <div class="cash-actions" *ngIf="auth.hasPermission(permissionCodes.cashWithdraw) || auth.hasPermission(permissionCodes.cashIncome)">
+            <button *ngIf="auth.hasPermission(permissionCodes.cashIncome)" class="cash-action" type="button" (click)="openDepositModal()">
+              <span class="cash-action__icon cash-action__icon--in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Registrar ingreso
+            </button>
+            <button *ngIf="auth.hasPermission(permissionCodes.cashWithdraw)" class="cash-action" type="button" (click)="openWithdrawModal()">
+              <span class="cash-action__icon cash-action__icon--out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></span>Registrar extracción
+            </button>
+            <button *ngIf="auth.hasPermission(permissionCodes.cashWithdraw) && otherDrawers.length > 0" class="cash-action" type="button" (click)="openTransferModal()">
+              <span class="cash-action__icon cash-action__icon--transfer"><svg viewBox="0 0 24 24"><path d="M7 7h13l-4-4M17 17H4l4 4"/></svg></span>Transferir a otra caja
+            </button>
+          </div>
+        </div>
+
+        <section class="ui-card cash-flow" *ngIf="currentSummary">
+          <h2 class="ui-card__title">Cómo se llega al esperado</h2>
+          <div class="cash-flow__rows">
+            <div><span>Inicial</span><b>{{ currentSession.openingAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></div>
+            <div><span>Ventas</span><b>+ {{ currentSummary.salesIncome | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></div>
+            <div><span>Ingresos</span><b>+ {{ currentSummary.manualDeposits | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></div>
+            <div><span>Extracciones</span><b>− {{ currentSummary.withdrawals | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></div>
+            <div *ngIf="currentSummary.salesCancellations > 0"><span>Cancelaciones</span><b>− {{ currentSummary.salesCancellations | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></div>
+          </div>
+          <div class="cash-flow__total"><strong>Esperado</strong><strong>{{ currentSummary.expectedClosingAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong></div>
+        </section>
+      </div>
+
+      <div class="cash-mid" *ngIf="currentPaymentBars.length > 0 || currentTransferBankBreakdown.length > 0 || currentCardBankBreakdown.length > 0">
+        <section class="ui-card cash-card" *ngIf="currentPaymentBars.length > 0">
+          <h2 class="ui-card__title">Por medio de pago</h2>
+          <div class="cash-bar" *ngFor="let bar of currentPaymentBars; let first = first">
+            <div class="cash-bar__row"><span>{{ bar.name }}</span><b [class.is-neg]="bar.amount < 0">{{ bar.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></div>
+            <div class="cash-bar__track"><i [style.width.%]="bar.pct" [class.is-main]="first"></i></div>
+          </div>
+        </section>
+        <section class="ui-card cash-card" *ngIf="currentTransferBankBreakdown.length > 0 || currentCardBankBreakdown.length > 0">
+          <div>
+            <h2 class="ui-card__title">Fuera de caja</h2>
+            <p class="ui-card__sub">Transferencias y tarjetas: no suman al efectivo esperado.</p>
+          </div>
+          <div class="cash-out" *ngIf="currentTransferBankBreakdown.length > 0">
+            <span class="ui-field__label">Transferencias por banco</span>
+            <div class="cash-out__row" *ngFor="let tb of currentTransferBankBreakdown"><span>{{ tb.bankName }}</span><b>{{ tb.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></div>
+          </div>
+          <div class="cash-out" *ngIf="currentCardBankBreakdown.length > 0">
+            <span class="ui-field__label">Tarjetas por banco</span>
+            <div class="cash-out__row" *ngFor="let cb of currentCardBankBreakdown"><span>{{ cb.bankName }}</span><b>{{ cb.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></div>
+          </div>
+        </section>
+      </div>
+    </ng-container>
+
+    <!-- Historial -->
+    <section class="ui-card cash-history">
+      <header class="ui-card__head cash-history__head">
+        <div>
+          <h2 class="ui-card__title">Historial de caja</h2>
+          <p class="ui-card__sub">Sesiones, movimientos y exportaciones · {{ historySessions.length }} {{ historySessions.length === 1 ? 'sesión' : 'sesiones' }}</p>
+        </div>
+        <div class="cash-history__exports" *ngIf="auth.hasPermission(permissionCodes.cashHistoryExport)">
+          <button class="ui-btn ui-btn--secondary ui-btn--sm" type="button" (click)="exportFilteredHistory()" [disabled]="historySessions.length === 0">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exportar caja XLSX
+          </button>
+          <button class="ui-btn ui-btn--secondary ui-btn--sm" type="button" (click)="exportFilteredHistoryPdf()" [disabled]="historySessions.length === 0">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exportar caja PDF
+          </button>
+        </div>
+      </header>
+
+      <div class="ui-card__body cash-history__body">
+        <div class="cash-history__filters">
+          <label class="ui-field">
+            <span class="ui-field__label">Desde</span>
+            <input class="ui-input" type="date" [(ngModel)]="historyFrom" [ngModelOptions]="{ standalone: true }" />
+          </label>
+          <label class="ui-field">
+            <span class="ui-field__label">Hasta</span>
+            <input class="ui-input" type="date" [(ngModel)]="historyTo" [ngModelOptions]="{ standalone: true }" />
+          </label>
+          <button class="ui-btn ui-btn--secondary" type="button" (click)="applyHistoryFilters()">Aplicar</button>
+          <button class="ui-btn ui-btn--ghost" type="button" (click)="clearHistoryFilters()" [disabled]="!historyFrom && !historyTo">Limpiar</button>
+        </div>
+
+        <div class="cash-hint" *ngIf="loadingHistory">Cargando historial…</div>
+        <div class="cash-hint" *ngIf="!loadingHistory && historySessions.length === 0">No hay sesiones para ese rango en esta caja.</div>
+
+        <div class="cash-history__scroll" *ngIf="historySessions.length > 0">
+          <table class="ui-table cash-sessions">
+            <thead>
+              <tr>
+                <th class="cash-sessions__toggle"><span class="sr-only">Detalle</span></th>
+                <th>Apertura</th>
+                <th>Estado</th>
+                <th class="is-num">Inicial</th>
+                <th class="is-num">Ventas</th>
+                <th class="is-num">Ingresos</th>
+                <th class="is-num">Extracciones</th>
+                <th class="is-num">Esperado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let item of historySessions">
+                <tr class="cash-sessions__row" (click)="toggleSession(item.session.id)">
+                  <td>
+                    <button class="ui-btn ui-btn--ghost ui-btn--icon cash-sessions__chev" type="button" [attr.aria-expanded]="item.expanded" aria-label="Ver detalle de la sesión" (click)="$event.stopPropagation(); toggleSession(item.session.id)">
+                      <svg viewBox="0 0 24 24" [class.is-open]="item.expanded"><path d="m9 6 6 6-6 6"/></svg>
+                    </button>
+                  </td>
+                  <td class="ui-num">{{ item.session.openedAt | date: 'short' }}</td>
+                  <td>
+                    <span class="ui-badge" [class.ui-badge--success]="!isClosedSession(item.session.statusName)">
+                      {{ isClosedSession(item.session.statusName) ? 'Cerrada' : 'Abierta' }}
+                    </span>
+                  </td>
+                  <td class="is-num">{{ item.session.openingAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                  <td class="is-num">{{ item.salesIncome | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                  <td class="is-num">{{ item.manualDeposits | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                  <td class="is-num">{{ item.withdrawals | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                  <td class="is-num">{{ item.expectedClosingAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                </tr>
+                <tr class="cash-sessions__detail" *ngIf="item.expanded">
+                  <td colspan="8">
+                    <div class="cash-detail">
+                      <div class="cash-detail__bar">
+                        <span class="ui-field__label" *ngIf="computePaymentBreakdown(item.session).length > 0">Por medio de pago</span>
+                        <span class="cash-chip" *ngFor="let bd of computePaymentBreakdown(item.session)">
+                          {{ bd.methodName }} <b [class.is-neg]="(bd.amount + (bd.surchargeAmount ?? 0)) < 0">{{ (bd.amount + (bd.surchargeAmount ?? 0)) | currency:'ARS':'symbol-narrow':'1.2-2' }}</b>
+                        </span>
+                        <span class="cash-detail__exports" *ngIf="auth.hasPermission(permissionCodes.cashHistoryExport)">
+                          <button class="ui-btn ui-btn--secondary ui-btn--sm" type="button" (click)="exportSession(item.session, item.expectedClosingAmount)">Exportar sesión XLSX</button>
+                          <button class="ui-btn ui-btn--secondary ui-btn--sm" type="button" (click)="exportSessionPdf(item.session, item.expectedClosingAmount)">Exportar sesión PDF</button>
+                        </span>
+                      </div>
+                      <div class="cash-detail__bar" *ngIf="computeTransferBankBreakdown(item.session).length > 0">
+                        <span class="ui-field__label">Transferencias por banco <em>(no incluido en caja)</em></span>
+                        <span class="cash-chip" *ngFor="let tb of computeTransferBankBreakdown(item.session)">{{ tb.bankName }} <b>{{ tb.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></span>
+                      </div>
+                      <div class="cash-detail__bar" *ngIf="computeCardBankBreakdown(item.session).length > 0">
+                        <span class="ui-field__label">Tarjetas por banco <em>(no incluido en caja)</em></span>
+                        <span class="cash-chip" *ngFor="let cb of computeCardBankBreakdown(item.session)">{{ cb.bankName }} <b>{{ cb.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></span>
+                      </div>
+                      <div class="cash-detail__bar">
+                        <span class="cash-chip">Cierre real <b>{{ item.session.actualClosingAmount == null ? '—' : (item.session.actualClosingAmount | currency:'ARS':'symbol-narrow':'1.2-2') }}</b></span>
+                        <span class="cash-chip">Diferencia <b [class.is-neg]="item.session.difference < 0">{{ item.session.difference | currency:'ARS':'symbol-narrow':'1.2-2' }}</b></span>
+                      </div>
+                      <div class="cash-detail__table">
+                        <table class="ui-table">
+                          <thead>
+                            <tr>
+                              <th>Movimiento</th>
+                              <th>Tipo</th>
+                              <th>Sentido</th>
+                              <th class="is-num">Monto</th>
+                              <th>Medio de pago</th>
+                              <th>Código venta</th>
+                              <th>Usuario</th>
+                              <th>Descripción</th>
+                              <th><span class="sr-only">Ver detalle</span></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let row of getDisplayRows(item.session)"
+                              [class.history-table__row--clickable]="isLinkedMovement(row)"
+                              (click)="openLinkedMovement(row)">
+                              <td class="ui-num cash-detail__when">{{ row.occurredAt | date: 'short' }}</td>
+                              <td><span class="ui-mov" [ngClass]="'ui-mov--' + movTone(row)">{{ translateType(row.typeName) }}</span></td>
+                              <td>
+                                <span class="ui-dir" [class.ui-dir--in]="row.directionName === 'In'" [class.ui-dir--out]="row.directionName === 'Out'">
+                                  <svg *ngIf="row.directionName === 'In'" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                  <svg *ngIf="row.directionName === 'Out'" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                                  {{ translateDirection(row.directionName) }}
+                                </span>
+                              </td>
+                              <td class="is-num">{{ row.amount | currency:'ARS':'symbol-narrow':'1.2-2' }}</td>
+                              <td>{{ row.paymentMethodLabel }}</td>
+                              <td class="ui-num">{{ row.saleCode || '—' }}</td>
+                              <td>{{ row.username || '—' }}</td>
+                              <td class="cash-detail__desc">{{ translateDescription(row.description) }}</td>
+                              <td class="cash-detail__go"><svg *ngIf="isLinkedMovement(row)" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</main>
+
+<!-- Close Confirm Modal -->
+<div class="modal-backdrop ui-overlay" *ngIf="showCloseConfirmModal" (click)="closeCloseConfirmModal()">
+  <div class="modal" role="dialog" aria-labelledby="cash-close-title" (click)="$event.stopPropagation()">
+    <div class="modal__head">
+      <div>
+        <span class="modal__title" id="cash-close-title">Confirmar cierre de caja</span>
+        <p class="modal__sub" *ngIf="currentSession">{{ selectedDrawerName }} · desde {{ currentSession.openedAt | date: 'short' }}</p>
+      </div>
+      <button class="modal__close" type="button" aria-label="Cerrar" aria-label="Cerrar" (click)="closeCloseConfirmModal()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="cash-receipt" *ngIf="currentSummary && currentSession">
+      <div class="ui-receipt is-printing">
+        <div class="ui-receipt__row"><span>Inicial</span><span>{{ currentSession.openingAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__row"><span>Ventas</span><span>+ {{ currentSummary.salesIncome | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__row"><span>Ingresos</span><span>+ {{ currentSummary.manualDeposits | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__row"><span>Extracciones</span><span>− {{ currentSummary.withdrawals | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__row" *ngIf="currentSummary.salesCancellations > 0"><span>Cancelaciones</span><span>− {{ currentSummary.salesCancellations | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+        <div class="ui-receipt__total close-confirm-row"><span class="close-confirm-row__label">Esperado en caja</span><span class="close-confirm-row__value">{{ currentSummary.expectedClosingAmount | currency:'ARS':'symbol-narrow':'1.2-2' }}</span></div>
+      </div>
+      <div class="ui-receipt-edge"></div>
+    </div>
+    <div class="modal__body">
+      <form [formGroup]="closeForm" (ngSubmit)="closeSession()">
+        <label class="ui-field">
+          <span class="ui-field__label">Recuento de efectivo</span>
+          <input class="ui-input ui-input--num cash-count" type="number" min="0" step="0.01" placeholder="Ingresá el conteo real" formControlName="actualClosingAmount" autofocus />
+        </label>
+        <div class="cash-diff" *ngIf="closeForm.get('actualClosingAmount')?.value !== null && closeForm.get('actualClosingAmount')?.value !== ''"
+          [class.cash-diff--neg]="closeDifference < 0" [class.cash-diff--pos]="closeDifference > 0">
+          <span>Diferencia · {{ closeDifference < 0 ? 'faltante' : closeDifference > 0 ? 'sobrante' : 'sin diferencia' }}</span>
+          <strong>{{ closeDifference >= 0 ? '+' : '' }}{{ closeDifference | currency:'ARS':'symbol-narrow':'1.2-2' }}</strong>
+        </div>
+        <label class="ui-field">
+          <span class="ui-field__label">Notas <em>(opcional)</em></span>
+          <input class="ui-input" type="text" placeholder="Notas opcionales" formControlName="notes" />
+        </label>
+        <div class="modal__actions">
+          <button class="ui-btn ui-btn--ghost" type="button" (click)="closeCloseConfirmModal()">Cancelar</button>
+          <button class="ui-btn ui-btn--danger" type="submit" [disabled]="closeForm.invalid">Confirmar cierre</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Deposit Modal -->
+<div class="modal-backdrop ui-overlay" *ngIf="showDepositModal" (click)="closeDepositModal()">
+  <div class="modal modal--deposit" (click)="$event.stopPropagation()">
+    <div class="modal__head">
+      <span class="modal__title">Registrar ingreso de efectivo</span>
+      <button class="modal__close" type="button" aria-label="Cerrar" (click)="closeDepositModal()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <p class="cash-movement-hint">Este monto entra físicamente en la caja y aumenta el efectivo esperado.</p>
+      <form [formGroup]="depositForm" (ngSubmit)="deposit()">
+        <label class="ui-field">
+          <span class="ui-field__label">Monto</span>
+          <input class="ui-input" type="number" min="0.01" step="0.01" placeholder="0.00" formControlName="amount" />
+        </label>
+        <label class="ui-field">
+          <span class="ui-field__label">Origen / motivo</span>
+          <input class="ui-input" type="text" placeholder="Ej. Retiro del banco" formControlName="description" />
+        </label>
+        <div class="modal__actions">
+          <button class="ui-btn ui-btn--ghost" type="button" (click)="closeDepositModal()">Cancelar</button>
+          <button class="ui-btn ui-btn--primary" type="submit" [disabled]="depositForm.invalid">Confirmar ingreso</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal-backdrop ui-overlay" *ngIf="showWithdrawModal" (click)="closeWithdrawModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal__head">
+      <span class="modal__title">Registrar extraccion</span>
+      <button class="modal__close" type="button" aria-label="Cerrar" (click)="closeWithdrawModal()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <form [formGroup]="withdrawForm" (ngSubmit)="withdraw()">
+        <label class="ui-field">
+          <span class="ui-field__label">Monto</span>
+          <input class="ui-input" type="number" min="0.01" step="0.01" placeholder="0.00" formControlName="amount" />
+        </label>
+        <label class="ui-field">
+          <span class="ui-field__label">Motivo</span>
+          <input class="ui-input" type="text" placeholder="Motivo de la extraccion" formControlName="description" />
+        </label>
+        <div class="modal__actions">
+          <button class="ui-btn ui-btn--ghost" type="button" (click)="closeWithdrawModal()">Cancelar</button>
+          <button class="ui-btn ui-btn--primary" type="submit" [disabled]="withdrawForm.invalid">Confirmar extraccion</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop ui-overlay" *ngIf="showPendingCloseSalesModal" (click)="closePendingCloseSalesModal()">
+  <div class="modal modal--pending-close" (click)="$event.stopPropagation()">
+    <div class="modal__head">
+      <span class="modal__title">No se puede cerrar la caja</span>
+      <button class="modal__close" type="button" aria-label="Cerrar" (click)="closePendingCloseSalesModal()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <div class="pending-close-copy">
+        <p>Hay ventas en espera asociadas a esta caja. Primero tienen que resolverse antes de cerrar la caja.</p>
+        <div class="pending-close-total">
+          <span>Ventas bloqueantes</span>
+          <strong>{{ pendingCloseSales.length }}</strong>
+        </div>
+      </div>
+
+      <div class="pending-close-list">
+        <article class="pending-close-sale" *ngFor="let sale of pendingCloseSales">
+          <div class="pending-close-sale__row">
+            <span class="pending-close-sale__code">{{ sale.code || 'S/N' }}</span>
+            <strong class="pending-close-sale__amount">&#36;{{ getBlockingSaleAmount(sale) | number:'1.2-2' }}</strong>
+          </div>
+          <div class="pending-close-sale__meta">
+            <span>{{ sale.customerFullName || 'Sin cliente' }}</span>
+            <span>{{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="modal__actions">
+        <button class="ui-btn ui-btn--ghost" type="button" (click)="closePendingCloseSalesModal()">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Transfer Modal -->
+<div class="modal-backdrop ui-overlay" *ngIf="showTransferModal" (click)="closeTransferModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal__head">
+      <span class="modal__title">Pase entre cajas</span>
+      <button class="modal__close" type="button" aria-label="Cerrar" (click)="closeTransferModal()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+        <label class="ui-field">
+          <span class="ui-field__label">Caja destino</span>
+          <app-searchable-select formControlName="targetCashDrawerId" [options]="otherDrawerOptions" placeholder="Selecciona caja destino" searchPlaceholder="Buscar caja..."></app-searchable-select>
+        </label>
+        <label class="ui-field">
+          <span class="ui-field__label">Monto</span>
+          <input class="ui-input" type="number" min="0.01" step="0.01" placeholder="0.00" formControlName="amount" />
+        </label>
+        <label class="ui-field">
+          <span class="ui-field__label">Descripcion</span>
+          <input class="ui-input" type="text" placeholder="Motivo del pase" formControlName="description" />
+        </label>
+        <div class="modal__actions">
+          <button class="ui-btn ui-btn--ghost" type="button" (click)="closeTransferModal()">Cancelar</button>
+          <button class="ui-btn ui-btn--primary" type="submit" [disabled]="transferForm.invalid || submittingTransfer">Confirmar transferencia</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- CC Sale Popup -->
+<div class="modal-backdrop ui-overlay" *ngIf="ccPopupSaleId" (click)="closeCcPopup()">
+  <div class="modal modal--cc-popup" (click)="$event.stopPropagation()">
+    <div class="modal__head modal__head--cc-popup">
+      <div class="cc-popup-head">
+        <span class="cc-popup-head__eyebrow">Movimiento vinculado</span>
+        <span class="modal__title">Detalle cuenta corriente</span>
+      </div>
+      <button class="modal__close" type="button" aria-label="Cerrar" (click)="closeCcPopup()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="modal__body modal__body--cc-popup" *ngIf="ccPopupLoading">
+      <div class="cc-popup-loading">
+        <span class="cc-popup-loading__dot" aria-hidden="true"></span>
+        <p>Cargando detalle de la cuenta…</p>
+      </div>
+    </div>
+    <ng-container *ngIf="!ccPopupLoading && ccPopupSale as sale">
+      <div class="cc-popup-body">
+        <div class="cc-popup-hero">
+          <div class="cc-popup-header__row">
+            <span class="cc-popup-header__code">{{ sale.code || 'S/N' }}</span>
+            <span class="badge"
+              [class.badge--in]="sale.idSaleStatus === 2"
+              [class.badge--out]="sale.idSaleStatus === 3"
+              [class.badge--type]="sale.idSaleStatus !== 2 && sale.idSaleStatus !== 3">
+              {{ sale.idSaleStatus === 3 ? 'Cancelada' : sale.idSaleStatus === 2 ? 'Pagada' : (sale.ccPaidTotal > 0 && sale.ccPaidTotal < sale.totalAmount) ? 'Pago parcial' : 'En espera' }}
+            </span>
+          </div>
+          <div class="cc-popup-header__meta">
+            <span>{{ sale.customerFullName || 'Sin cliente' }}</span>
+            <span>{{ sale.createdAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <p class="cc-popup-hero__copy">Consulta el estado general de la cuenta y el historial de pagos aplicados a esta venta.</p>
+        </div>
+
+        <div class="cc-popup-totals">
+          <div class="cc-popup-totals__card">
+            <span class="cc-popup-totals__label">Total venta</span>
+            <strong>&#36;{{ sale.totalAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="cc-popup-totals__card cc-popup-totals__card--paid">
+            <span class="cc-popup-totals__label">Cobrado</span>
+            <strong>&#36;{{ sale.ccPaidTotal | number:'1.2-2' }}</strong>
+          </div>
+          <div class="cc-popup-totals__card cc-popup-totals__card--pending">
+            <span class="cc-popup-totals__label">Pendiente</span>
+            <strong>&#36;{{ sale.ccPendingAmount | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="cc-popup-payments">
+          <div class="cc-popup-payments__head">
+            <div>
+              <span class="cc-popup-payments__title">Historial de pagos</span>
+              <strong>{{ ccPopupPayments.length }} registro{{ ccPopupPayments.length === 1 ? '' : 's' }}</strong>
+            </div>
+            <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm cc-popup-receipt-btn" *ngIf="ccPopupPayments.length > 0" (click)="downloadAllCcReceipts()">
+              Descargar todos los recibos
+            </button>
+          </div>
+          <div *ngIf="ccPopupPayments.length === 0" class="cc-popup-payments__empty">Sin pagos registrados</div>
+          <div *ngFor="let p of ccPopupPayments" class="cc-popup-payment" [class.cc-popup-payment--cancelled]="p.status === 2">
+            <div class="cc-popup-payment__row">
+              <div class="cc-popup-payment__copy">
+                <span class="cc-popup-payment__date">{{ p.date | date:'dd/MM/yyyy' }}</span>
+                <span class="cc-popup-payment__method">{{ paymentMethodLabel(p.idPaymentMethod) }}</span>
+              </div>
+              <span class="cc-popup-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</span>
+              <span class="badge" [class.badge--in]="p.status === 1" [class.badge--out]="p.status !== 1">{{ p.status === 1 ? 'Activo' : 'Anulado' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Customer Payment Popup -->
+<div class="modal-backdrop ui-overlay" *ngIf="customerPaymentPopupId" (click)="closeCustomerPaymentPopup()">
+  <div class="modal modal--cc-popup" (click)="$event.stopPropagation()">
+    <div class="modal__head modal__head--cc-popup">
+      <div class="cc-popup-head">
+        <span class="cc-popup-head__eyebrow">Movimiento vinculado</span>
+        <span class="modal__title">Detalle cobro cuenta corriente</span>
+      </div>
+      <div class="cc-popup-head__actions">
+        <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm cc-popup-receipt-btn" *ngIf="customerPaymentPopupLink" (click)="downloadCustomerPaymentReceipt()">
+          Descargar recibo
+        </button>
+        <button class="modal__close" type="button" aria-label="Cerrar" (click)="closeCustomerPaymentPopup()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+    </div>
+    <div class="modal__body modal__body--cc-popup" *ngIf="customerPaymentPopupLoading">
+      <div class="cc-popup-loading">
+        <span class="cc-popup-loading__dot" aria-hidden="true"></span>
+        <p>Cargando detalle del cobro…</p>
+      </div>
+    </div>
+    <ng-container *ngIf="!customerPaymentPopupLoading && customerPaymentPopupLink as payment">
+      <div class="cc-popup-body">
+        <div class="cc-popup-hero">
+          <div class="cc-popup-header__row">
+            <span class="cc-popup-header__code">{{ customerPaymentPopupAccount?.customerName || 'Cliente' }}</span>
+            <span class="badge" [class.badge--in]="payment.status === 1" [class.badge--out]="payment.status !== 1">
+              {{ payment.status === 1 ? 'Activo' : 'Anulado' }}
+            </span>
+          </div>
+          <div class="cc-popup-header__meta">
+            <span>{{ payment.date | date:'dd/MM/yyyy' }}</span>
+            <span>{{ paymentMethodLabel(payment.method) }}</span>
+            <span *ngIf="customerPaymentPopupAccount?.phone">{{ customerPaymentPopupAccount?.phone }}</span>
+          </div>
+          <p class="cc-popup-hero__copy">Cobro registrado sobre la cuenta corriente del cliente.</p>
+        </div>
+
+        <div class="cc-popup-totals">
+          <div class="cc-popup-totals__card cc-popup-totals__card--paid">
+            <span class="cc-popup-totals__label">Cobro</span>
+            <strong>&#36;{{ payment.amount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="cc-popup-totals__card">
+            <span class="cc-popup-totals__label">Imputado</span>
+            <strong>&#36;{{ customerPaymentPopupImputed | number:'1.2-2' }}</strong>
+          </div>
+          <div class="cc-popup-totals__card cc-popup-totals__card--pending">
+            <span class="cc-popup-totals__label">Saldo a favor</span>
+            <strong>&#36;{{ customerPaymentPopupCredit | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="cc-popup-payments">
+          <div class="cc-popup-payments__head">
+            <div>
+              <span class="cc-popup-payments__title">Ventas vinculadas</span>
+              <strong>{{ customerPaymentPopupImputaciones.length }} venta{{ customerPaymentPopupImputaciones.length === 1 ? '' : 's' }}</strong>
+            </div>
+          </div>
+          <div *ngIf="customerPaymentPopupImputaciones.length === 0" class="cc-popup-payments__empty">Sin ventas imputadas. El cobro quedó como saldo a favor.</div>
+          <div *ngFor="let item of customerPaymentPopupImputaciones" class="cc-popup-payment">
+            <div class="cc-popup-payment__row">
+              <div class="cc-popup-payment__copy">
+                <span class="cc-popup-payment__date">Venta vinculada</span>
+                <span class="cc-popup-payment__method">{{ item.code || 'S/N' }}</span>
+              </div>
+              <span class="cc-popup-payment__amount">&#36;{{ item.amount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Purchase Popup -->
+<div class="modal-backdrop ui-overlay" *ngIf="purchasePopupId" (click)="closePurchasePopup()">
+  <div class="modal modal--purchase-popup" (click)="$event.stopPropagation()">
+    <div class="modal__head modal__head--purchase-popup">
+      <div class="purchase-popup-head">
+        <span class="purchase-popup-head__eyebrow">Movimiento vinculado</span>
+        <span class="modal__title">Detalle compra proveedor</span>
+      </div>
+      <button class="modal__close" type="button" aria-label="Cerrar" (click)="closePurchasePopup()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="modal__body modal__body--purchase-popup" *ngIf="purchasePopupLoading">
+      <div class="purchase-popup-loading">
+        <span class="purchase-popup-loading__dot" aria-hidden="true"></span>
+        <p>Cargando detalle de la compra…</p>
+      </div>
+    </div>
+    <ng-container *ngIf="!purchasePopupLoading && purchasePopupData as purchase">
+      <div class="purchase-popup-body">
+        <div class="purchase-popup-hero">
+          <div class="purchase-popup-header__row">
+            <span class="purchase-popup-header__code">{{ purchase.code }}</span>
+            <span class="badge"
+              [class.badge--in]="purchase.status === 2"
+              [class.badge--out]="purchase.status === 3"
+              [class.badge--type]="purchase.status === 1">
+              {{ purchase.statusName }}
+            </span>
+          </div>
+          <div class="purchase-popup-header__meta">
+            <span>{{ purchase.supplierName || 'Sin proveedor' }}</span>
+            <span *ngIf="purchase.invoiceNumber">Factura: {{ purchase.invoiceNumber }}</span>
+            <span>{{ purchase.createdAt | date:'dd/MM/yyyy' }}</span>
+            <span *ngIf="purchase.ivaPct != null">IVA {{ purchase.ivaPct }}%</span>
+            <span *ngIf="purchase.ingresosBrutosPct != null">IIBB {{ purchase.ingresosBrutosPct }}%</span>
+          </div>
+        </div>
+
+        <div class="purchase-popup-totals">
+          <div class="purchase-popup-totals__card">
+            <span class="purchase-popup-totals__label">Total compra</span>
+            <strong>&#36;{{ purchase.totalAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="purchase-popup-totals__card purchase-popup-totals__card--paid">
+            <span class="purchase-popup-totals__label">Pagado</span>
+            <strong>&#36;{{ purchase.totalPaid | number:'1.2-2' }}</strong>
+          </div>
+          <div class="purchase-popup-totals__card purchase-popup-totals__card--pending">
+            <span class="purchase-popup-totals__label">Pendiente</span>
+            <strong>&#36;{{ purchase.pendingAmount | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="purchase-popup-products">
+          <div class="purchase-popup-section-title">Productos</div>
+          <div class="purchase-popup-products__table">
+            <div class="purchase-popup-products__head">
+              <span>Producto</span>
+              <span>Cantidad</span>
+              <span>Costo unit.</span>
+              <span>Subtotal</span>
+            </div>
+            <div *ngFor="let d of purchase.details" class="purchase-popup-products__row">
+              <span>{{ d.productName }}</span>
+              <span>{{ d.quantity }}</span>
+              <span>&#36;{{ d.unitCost | number:'1.2-2' }}</span>
+              <span>&#36;{{ d.totalAmount | number:'1.2-2' }}</span>
+            </div>
+            <div *ngIf="purchase.details.length === 0" class="purchase-popup-products__empty">Sin productos registrados</div>
+          </div>
+        </div>
+
+        <div class="purchase-popup-payments">
+          <div class="purchase-popup-section-title">Pagos registrados</div>
+          <div *ngIf="purchase.payments.length === 0" class="purchase-popup-payments__empty">Sin pagos registrados</div>
+          <div *ngFor="let p of purchase.payments" class="purchase-popup-payment">
+            <div class="purchase-popup-payment__row">
+              <div class="purchase-popup-payment__copy">
+                <span class="purchase-popup-payment__date">{{ p.date | date:'dd/MM/yyyy' }}</span>
+                <span class="purchase-popup-payment__method">{{ purchasePaymentMethodLabel(p.method) }}</span>
+              </div>
+              <strong class="purchase-popup-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Cancel Detail Popup -->
+<div class="modal-backdrop ui-overlay" *ngIf="cancelDetailPopupRow" (click)="closeCancelDetailPopup()">
+  <div class="modal modal--cancel-detail-popup" (click)="$event.stopPropagation()">
+    <div class="modal__head modal__head--cancel-detail">
+      <div class="cancel-detail-head">
+        <span class="cancel-detail-head__eyebrow">Referencia cruzada</span>
+        <span class="modal__title">Detalle de anulación</span>
+      </div>
+      <button class="modal__close" type="button" aria-label="Cerrar" (click)="closeCancelDetailPopup()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="modal__body modal__body--cancel-detail">
+      <div class="cancel-detail-hero">
+        <span class="cancel-detail-hero__kicker">Venta anulada vinculada</span>
+        <strong class="cancel-detail-hero__code">{{ cancelDetailPopupRow.saleCode || '—' }}</strong>
+        <span class="cancel-detail-hero__copy">Esta anulación corresponde a una venta registrada originalmente en otra caja.</span>
+      </div>
+
+      <div class="cancel-detail-meta-grid">
+        <div class="cancel-detail-meta-card">
+          <span class="cancel-detail-meta-card__label">Anulada el</span>
+          <strong>{{ cancelDetailPopupRow.occurredAt | date:'short' }}</strong>
+        </div>
+        <ng-container *ngIf="cancelDetailPopupRow.originalCashSessionId">
+          <div class="cancel-detail-meta-card">
+            <span class="cancel-detail-meta-card__label">Sesión original</span>
+            <strong class="cancel-detail-session-id">{{ cancelDetailPopupRow.originalCashSessionId | slice:0:8 }}…</strong>
+          </div>
+        </ng-container>
+      </div>
+
+      <ng-container *ngIf="cancelDetailSale as sale">
+        <div class="cancel-detail-section-title">Pagos originales</div>
+        <div class="cancel-detail-payments">
+          <div *ngFor="let p of (sale.payments ?? [])" class="cancel-detail-payment">
+            <div class="cancel-detail-payment__copy">
+              <span class="cancel-detail-payment__method">{{ p.paymentMethodName || 'Método' }}</span>
+              <span class="cancel-detail-payment__note">Registrado en la venta original</span>
+            </div>
+            <strong class="cancel-detail-payment__amount">&#36;{{ p.amount | number:'1.2-2' }}</strong>
+          </div>
+          <div *ngIf="(sale.payments ?? []).length === 0" class="cancel-detail-payments__empty">Sin información de pagos</div>
+        </div>
+        <div class="cancel-detail-total">
+          <span class="cancel-detail-total__label">Total original</span>
+          <strong>&#36;{{ sale.totalAmount | number:'1.2-2' }}</strong>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="!cancelDetailSale">
+        <div class="cancel-detail-loading">
+          <span class="cancel-detail-loading__dot" aria-hidden="true"></span>
+          <p>Cargando datos de la venta…</p>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

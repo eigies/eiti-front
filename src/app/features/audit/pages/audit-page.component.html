@@ -1,0 +1,71 @@
+<main class="ui-page audit" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Auditoría</h1>
+      <p>Todo lo que hicieron los usuarios, por usuario y rango de fechas.</p>
+    </div>
+  </header>
+
+  <form class="ui-card audit__filters" [formGroup]="f.filterForm" (ngSubmit)="f.search()">
+    <label class="ui-field audit__user">
+      <span class="ui-field__label">Usuario</span>
+      <app-searchable-select formControlName="userId" [options]="f.userOptions" [allowClear]="true" clearLabel="Todos los usuarios" [clearValue]="null" placeholder="Todos los usuarios" searchPlaceholder="Buscar usuario..."></app-searchable-select>
+    </label>
+    <label class="ui-field audit__date" [class.ui-field--error]="f.isInvalid('dateFrom')">
+      <span class="ui-field__label">Desde</span>
+      <input class="ui-input" type="date" formControlName="dateFrom" />
+    </label>
+    <label class="ui-field audit__date" [class.ui-field--error]="f.isInvalid('dateTo')">
+      <span class="ui-field__label">Hasta</span>
+      <input class="ui-input" type="date" formControlName="dateTo" />
+    </label>
+    <button uiBtn="primary" type="submit" [disabled]="f.filterForm.invalid">Aplicar</button>
+    <button uiBtn="ghost" type="button" (click)="f.clearFilters()">Limpiar</button>
+    <span class="ui-field__hint audit__hint">Las dos fechas son obligatorias.</span>
+  </form>
+
+  <ui-card heading="Resultados" [count]="f.totalCount" [flush]="true" class="audit__card">
+    <div uiCardActions class="audit__export">
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportExcel()" [disabled]="f.items.length === 0">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Excel
+      </button>
+      <button uiBtn="ghost" size="sm" type="button" (click)="f.exportPdf()" [disabled]="f.items.length === 0">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF
+      </button>
+    </div>
+
+    <div class="audit__state" *ngIf="f.loading"><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span><span class="ui-skeleton"></span></div>
+    <div class="audit__state" *ngIf="!f.loading && f.hasSearched && f.items.length === 0">
+      <ui-empty icon="search" heading="No se registraron acciones con esos filtros" text="Probá ampliar el rango de fechas o cambiar el usuario."></ui-empty>
+    </div>
+
+    <ng-container *ngIf="!f.loading && f.items.length > 0">
+      <app-audit-table
+        [items]="f.items"
+        [expandedId]="f.expandedId"
+        [rawVisibleId]="f.rawVisibleId"
+        [actionLabelOf]="actionLabelOf"
+        [identifierOf]="identifierOf"
+        [changesOf]="changesOf"
+        [snapshotOf]="snapshotOf"
+        [rowsOf]="rowsOf"
+        [payloadOf]="payloadOf"
+        (toggleDetail)="f.toggleDetail($event)"
+        (toggleRaw)="f.toggleRaw($event)">
+      </app-audit-table>
+
+      <div class="ui-pager">
+        <label class="ui-pager__size">Por página
+          <select class="ui-select" [value]="f.pageSize" (change)="onPageSize($any($event.target).value)">
+            <option *ngFor="let size of f.pageSizeOptions" [value]="size" [selected]="size === f.pageSize">{{ size }}</option>
+          </select>
+        </label>
+        <div class="ui-pager__nav">
+          <button uiBtn="ghost" size="sm" type="button" [disabled]="f.page <= 1" (click)="f.goToPage(f.page - 1)">Anterior</button>
+          <span class="ui-pager__info">Página {{ f.page }} de {{ f.totalPages }}</span>
+          <button uiBtn="ghost" size="sm" type="button" [disabled]="f.page >= f.totalPages" (click)="f.goToPage(f.page + 1)">Siguiente</button>
+        </div>
+      </div>
+    </ng-container>
+  </ui-card>
+</main>

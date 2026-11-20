@@ -1,0 +1,25 @@
+.pc { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); padding: 0 var(--space-5) var(--space-5); }
+.pc__card { display: grid; gap: var(--space-3); align-content: start; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); cursor: pointer; }
+.pc__card:hover { background: var(--surface-hover); }
+.pc__card.is-selected { border-color: var(--brand); background: var(--brand-soft); }
+.pc__head { display: flex; align-items: center; gap: var(--space-2); }
+.pc__check { display: inline-flex; }
+.pc__code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--text-2); }
+.pc__identity { display: grid; gap: 2px; }
+.pc__brand { font: 600 13px/18px var(--font-sans); color: var(--text-2); }
+.pc__name { margin: 0; font: 600 17px/24px var(--font-sans); }
+.pc__desc { margin: 0; font-size: 14px; line-height: 20px; color: var(--text-3); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pc__tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.pc__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
+.pc__metrics--cost { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pc__metrics > div { display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--surface-sunken); min-width: 0; }
+.pc__metrics dt { font: 600 12px/16px var(--font-sans); color: var(--text-2); }
+.pc__metrics dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.pc__metrics small { font-size: 12px; color: var(--brand-text); }
+.pc__ok { color: var(--success); }
+.pc__foot { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--border); font-size: 14px; color: var(--text-2); }
+.pc__foot b { color: var(--text); font-weight: 500; }
+.pc__metrics, .pc__metrics--cost { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pc__metrics > div:first-child { grid-column: 1 / -1; }
+.pc__metrics dd { white-space: nowrap; }
+.pc__metrics > div:first-child dd { font-size: 20px; line-height: 26px; }

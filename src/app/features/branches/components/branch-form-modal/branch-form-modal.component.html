@@ -1,0 +1,32 @@
+<ui-modal eyebrow="Empresa" [heading]="editing ? 'Editar sucursal' : 'Nueva sucursal'" [closable]="!saving" (closed)="closed.emit()">
+  <form id="branch-form" class="bf" [formGroup]="form" (ngSubmit)="submitted.emit()" novalidate>
+    <label class="ui-field bf__wide" [class.ui-field--error]="form.get('name')?.touched && form.get('name')?.invalid">
+      <span class="ui-field__label">Nombre</span>
+      <input class="ui-input" type="text" formControlName="name" placeholder="Casa central" />
+      <span class="ui-field__error" *ngIf="form.get('name')?.touched && form.get('name')?.invalid">Ingresá el nombre de la sucursal.</span>
+    </label>
+    <label class="ui-field">
+      <span class="ui-field__label">Código <em>(opcional)</em></span>
+      <input class="ui-input" type="text" formControlName="code" placeholder="CC" />
+    </label>
+    <label class="ui-field">
+      <span class="ui-field__label">Dirección <em>(opcional)</em></span>
+      <input class="ui-input" type="text" formControlName="address" />
+    </label>
+    <ng-container *ngIf="editing">
+      <label class="ui-field bf__wide">
+        <span class="ui-field__label">Facturación</span>
+        <app-searchable-select formControlName="automaticInvoicing" [options]="invoicingOptions" placeholder="Facturacion automatica" searchPlaceholder="Buscar opcion..."></app-searchable-select>
+      </label>
+      <label class="ui-field bf__wide" *ngIf="canAssignPointOfSale">
+        <span class="ui-field__label">Punto de venta de ARCA</span>
+        <app-searchable-select formControlName="fiscalPointOfSaleId" [options]="pointOfSaleOptions" placeholder="Punto de venta de ARCA" searchPlaceholder="Buscar punto de venta..." ariaLabel="Punto de venta de ARCA de la sucursal"></app-searchable-select>
+        <span class="ui-field__hint">Los puntos de venta se cargan en <a routerLink="/fiscal-settings" (click)="closed.emit()">Facturación electrónica</a>.</span>
+      </label>
+    </ng-container>
+  </form>
+  <footer uiModalFoot class="ui-modal__foot">
+    <button uiBtn="ghost" type="button" [disabled]="saving" (click)="closed.emit()">{{ editing ? 'Cerrar' : 'Cancelar' }}</button>
+    <button uiBtn="primary" type="submit" form="branch-form" [disabled]="saving">{{ editing ? 'Guardar cambios' : 'Crear sucursal' }}</button>
+  </footer>
+</ui-modal>

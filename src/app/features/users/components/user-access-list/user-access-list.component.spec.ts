@@ -203,7 +203,7 @@ describe('UserAccessListComponent', () => {
       expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
       expect(style.borderTopLeftRadius).toBe('8px');
     }
-    expect(getComputedStyle(input).fontFamily).toContain('Crimson Pro');
+    expect(getComputedStyle(input).fontFamily).toContain('Figtree');
   });
 
   it('renders inactive status with the same solid danger treatment as active status', () => {
@@ -222,14 +222,16 @@ describe('UserAccessListComponent', () => {
     expect(activeDot.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
   });
 
-  it('emits create and reload requests from the toolbar', () => {
+  it('emits reload from the toolbar and create from the empty catalog', () => {
     const createRequested = jasmine.createSpy('createRequested');
     const reloadRequested = jasmine.createSpy('reloadRequested');
     component.createRequested.subscribe(createRequested);
     component.reloadRequested.subscribe(reloadRequested);
 
-    fixture.nativeElement.querySelector('.user-list__create').click();
     fixture.nativeElement.querySelector('.user-list__reload').click();
+    component.users = [];
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.user-list__create').click();
 
     expect(createRequested).toHaveBeenCalledTimes(1);
     expect(reloadRequested).toHaveBeenCalledTimes(1);
@@ -255,7 +257,7 @@ describe('UserAccessListComponent', () => {
     expect(bubbled).not.toHaveBeenCalled();
   });
 
-  it('uses stable desktop header and responsive card class structure', async () => {
+  it('uses a stable desktop header aligned with each row column', async () => {
     await setViewport(1280);
     const list = fixture.nativeElement.querySelector('.user-list__table') as HTMLElement;
     const head = fixture.nativeElement.querySelector('.user-list__head') as HTMLElement;
@@ -263,44 +265,24 @@ describe('UserAccessListComponent', () => {
     const edit = fixture.nativeElement.querySelector('.user-list__open') as HTMLButtonElement;
 
     expect(list).not.toBeNull();
-    expect(head.textContent).toContain('Usuario');
-    expect(head.textContent).toContain('Perfil');
-    expect(head.textContent).toContain('Sucursales');
-    expect(head.textContent).toContain('Estado');
-    expect(head.textContent).toContain('Acciones');
+    for (const label of ['Usuario', 'Empleado', 'Perfil', 'Sucursales', 'Estado', 'Acciones']) {
+      expect(head.textContent).toContain(label);
+    }
     expect(row.querySelector('.user-list__identity')).not.toBeNull();
     expect(row.querySelector('.user-list__access')).not.toBeNull();
     expect(row.querySelector('.user-list__actions')).not.toBeNull();
 
-    const headings = head.querySelectorAll(':scope > span');
-    const profileCell = row.querySelector('.user-list__profile') as HTMLElement;
-    const accessCell = row.querySelector('.user-list__access') as HTMLElement;
-    const stateCell = row.querySelector('.user-list__state') as HTMLElement;
-    const actionsCell = row.querySelector('.user-list__actions') as HTMLElement;
-
-    for (const heading of Array.from(headings).slice(1)) {
-      expect(getComputedStyle(heading).textAlign).toBe('center');
+    // Las columnas de la cabecera y de cada fila arrancan en el mismo lugar.
+    const headings = Array.from(head.querySelectorAll(':scope > span')) as HTMLElement[];
+    const cells = Array.from(row.children) as HTMLElement[];
+    expect(cells.length).toBe(headings.length);
+    for (const [index, heading] of headings.slice(0, -1).entries()) {
+      expect(cells[index].getBoundingClientRect().left)
+        .withContext(`desktop column ${index + 1} shares one edge`)
+        .toBeCloseTo(heading.getBoundingClientRect().left, 0);
     }
-    expect(getComputedStyle(profileCell).textAlign).toBe('center');
-    expect(getComputedStyle(accessCell).textAlign).toBe('center');
-    expect(getComputedStyle(stateCell).justifyContent).toBe('center');
-    expect(getComputedStyle(actionsCell).justifyContent).toBe('center');
-
-    const rowCells = [profileCell, accessCell, stateCell, actionsCell];
-    for (const [index, heading] of Array.from(headings).slice(1).entries()) {
-      const headingRect = heading.getBoundingClientRect();
-      const cellRect = rowCells[index].getBoundingClientRect();
-      const headingCenter = headingRect.left + headingRect.width / 2;
-      const cellCenter = cellRect.left + cellRect.width / 2;
-
-      expect(cellCenter)
-        .withContext(`desktop column ${index + 2} shares one axis`)
-        .toBeCloseTo(headingCenter, 0);
-    }
-
-    expect(getComputedStyle(head).borderTopWidth).toBe('1px');
-    expect(getComputedStyle(head).borderTopLeftRadius).toBe('10px');
-    expect(row.getBoundingClientRect().height).toBeLessThanOrEqual(72);
+    expect(getComputedStyle(row.querySelector('.user-list__actions') as HTMLElement).justifyContent).toBe('flex-end');
+    expect(row.getBoundingClientRect().height).toBeLessThanOrEqual(80);
     expect(getComputedStyle(edit).borderTopLeftRadius).toBe('8px');
   });
 
@@ -343,10 +325,14 @@ describe('UserAccessListComponent', () => {
       .toBeLessThanOrEqual(row.getBoundingClientRect().right + 0.5);
   });
 
-  it('computes two responsive columns at 768px and one at 375px', async () => {
+  it('keeps the table at 768px and computes two card columns at 640px and one at 375px', async () => {
     await setViewport(768);
     let row = fixture.nativeElement.querySelector('.user-list__row') as HTMLElement;
-    expect(fixture.nativeElement.clientWidth).toBe(768);
+    expect(columnCount(row)).toBe(6);
+
+    await setViewport(640);
+    row = fixture.nativeElement.querySelector('.user-list__row') as HTMLElement;
+    expect(fixture.nativeElement.clientWidth).toBe(640);
     expect(columnCount(row)).toBe(2);
     expect(minimumPixelHeight(
       fixture.nativeElement.querySelector('.user-list__open') as HTMLElement

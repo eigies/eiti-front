@@ -244,6 +244,17 @@ export class GroupedPaymentModalComponent implements AfterViewInit, OnDestroy {
     return this.codeOf(line) === 'ownCheck';
   }
 
+  /**
+   * En escritorio, el detalle de estos medios va en un renglón propio: en la columna de detalle no entran
+   * (los datos del cheque; banco + cuotas de la tarjeta y banco + referencia de la transferencia, que se
+   * montaban sobre el importe).
+   */
+  detailOnOwnRow(line: FormGroup<LineForm>): boolean {
+    const code = this.codeOf(line);
+    const transferWithBank = code === 'transfer' && this.mode === 'customer' && this.transferBankOptions.length > 0;
+    return this.isReceivedCheque(line) || this.isOwnCheque(line) || code === 'card' || transferWithBank;
+  }
+
   // ── Cheques de cartera (proveedor) ─────────────────────────
 
   chequeOptionsFor(line: FormGroup<LineForm>): SearchableSelectOption[] {

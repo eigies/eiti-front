@@ -35,10 +35,13 @@ export class ThemeService {
 
     private loadTheme(): ThemeMode {
         const stored = localStorage.getItem(this.storageKey);
-        return stored === 'light' ? 'light' : 'dark';
+        // EITI 2: claro por defecto; el oscuro (grafito) se elige y queda guardado en el navegador.
+        return stored === 'dark' ? 'dark' : 'light';
     }
 
     private applyTheme(theme: ThemeMode): void {
+        // data-theme en <html> maneja los tokens de EITI 2; las clases en <body> quedan para los estilos viejos.
+        this.document.documentElement.setAttribute('data-theme', theme);
         const body = this.document.body;
         body.classList.toggle('theme-light', theme === 'light');
         body.classList.toggle('theme-dark', theme === 'dark');

@@ -12,16 +12,15 @@
 
 .sale-notes__label {
   color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: .62rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0;
 }
 
 .sale-notes__text {
   margin: 0;
   color: var(--text);
-  font-size: .85rem;
+  font-size: 14px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -44,7 +43,7 @@
   background: var(--bg-panel);
   color: var(--text);
   font: inherit;
-  font-size: .85rem;
+  font-size: 14px;
   resize: vertical;
 }
 
@@ -63,8 +62,8 @@
 .sale-notes__count {
   margin-right: auto;
   color: var(--text-mute);
-  font-family: 'DM Mono', monospace;
-  font-size: .62rem;
+  font-family: var(--font-sans);
+  font-size: 12px;
 }
 
 .sale-notes__action {
@@ -73,8 +72,8 @@
   border-radius: 8px;
   background: transparent;
   color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: .66rem;
+  font-family: var(--font-sans);
+  font-size: 12px;
   cursor: pointer;
 }
 

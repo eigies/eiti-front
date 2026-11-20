@@ -1,0 +1,36 @@
+<main class="ui-page concepts-page" *ngIf="facade as f">
+  <header class="ui-page-head">
+    <div>
+      <h1>Conceptos de sueldo</h1>
+      <p>Los tipos de bonificación y de descuento que se usan en las liquidaciones.</p>
+    </div>
+  </header>
+
+  <nav class="ui-tabs" aria-label="Tipo de concepto">
+    <a routerLink="/payroll/bonus-concepts" routerLinkActive="is-active" ariaCurrentWhenActive="page">Bonificación</a>
+    <a routerLink="/payroll/deduction-concepts" routerLinkActive="is-active" ariaCurrentWhenActive="page">Descuento</a>
+  </nav>
+
+  <app-concept-table
+    [concepts]="f.concepts"
+    [withPercentage]="false"
+    [canManage]="f.canManage"
+    [createForm]="f.createForm"
+    [savingCreate]="f.savingCreate"
+    [savingToggle]="f.savingToggle"
+    namePlaceholder="Presentismo"
+    (create)="f.submitCreate()"
+    (edit)="f.startEdit($any($event))"
+    (toggleActive)="f.toggleActive($any($event))">
+  </app-concept-table>
+  <span class="ui-field__hint">Los conceptos de bonificación tienen solo nombre; los de descuento, nombre y porcentaje.</span>
+
+  <app-concept-edit-modal
+    *ngIf="f.editingConcept"
+    [form]="f.editForm"
+    [withPercentage]="false"
+    [saving]="f.savingEdit"
+    (submitted)="f.submitEdit()"
+    (closed)="f.cancelEdit()">
+  </app-concept-edit-modal>
+</main>
